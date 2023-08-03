@@ -20,47 +20,42 @@ in {
       nixos-23-05.system.stateVersion = "23.05";
 
       # Wg defs:
-      wireguardIps = {
-        eu-central-1 = "10.200.0";
-      };
+      # wireguardIps = {
+      #   eu-central-1 = "10.200.0";
+      # };
 
-      wireguard = region: suffix: {
-        networking.wireguard.interfaces.wg0.ips = ["${wireguardIps.${region}}.${toString suffix}/32"];
-      };
+      # wireguard = region: suffix: {
+      #   networking.wireguard.interfaces.wg0.ips = ["${wireguardIps.${region}}.${toString suffix}/32"];
+      # };
 
       # Helper defs:
-      delete.aws.instance.count = 0;
+      # delete.aws.instance.count = 0;
 
       # Helper fns:
       volume = size: {aws.instance.root_block_device.volume_size = size;};
-
-      mkNode = num: region: imports: let
-        shortRegion = lib.substring 0 2 region.aws.region;
-        suffix = lib.fixedWidthNumber 2 num;
-        wg = wireguard region.aws.region (num + 1);
-      in {
-        "client-${shortRegion}-${suffix}" = {imports = [region (volume 60) wg] ++ imports;};
+      # mkNode = num: region: imports: let
+      #   shortRegion = lib.substring 0 2 region.aws.region;
+      #   suffix = lib.fixedWidthNumber 2 num;
+      #   wg = wireguard region.aws.region (num + 1);
+      # in {
+      #   "client-${shortRegion}-${suffix}" = {imports = [region (volume 60) wg] ++ imports;};
+      # };
+      # mkNodes = count: region: imports:
+      #   lib.foldl' lib.recursiveUpdate {} (
+      #     lib.genList (num: mkNode (num + 1) region imports) count
+      #   );
+    in {
+      meta.nixpkgs = import inputs.nixpkgs {
+        system = "x86_64-linux";
       };
 
-      mkNodes = count: region: imports:
-        lib.foldl' lib.recursiveUpdate {} (
-          lib.genList (num: mkNode (num + 1) region imports) count
-        );
+      defaults.imports = [
+        nixosModules.common
+        nixosModules.aws-ec2
+        nixos-23-05
+      ];
 
-    in (
-      {
-        meta.nixpkgs = import inputs.nixpkgs {
-          system = "x86_64-linux";
-        };
-
-        defaults.imports = [
-          nixosModules.common
-          nixosModules.aws-ec2
-          nixos-23-05
-        ];
-
-        play-rel-a-1 = {imports = [eu-central-1 t3a-small (volume 30)];};
-      }
-    );
+      play-rel-a-1 = {imports = [eu-central-1 t3a-small (volume 30)];};
+    };
   };
 }

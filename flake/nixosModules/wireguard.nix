@@ -1,9 +1,7 @@
 {self, ...}: {
   flake.nixosModules.wireguard = {
     name,
-    lib,
     config,
-    nodes,
     ...
   }: {
     sops.secrets.wg.sopsFile = "${self}/secrets/wireguard_${name}.enc";

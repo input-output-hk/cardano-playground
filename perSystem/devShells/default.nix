@@ -1,6 +1,5 @@
 flake: {
   perSystem = {
-    system,
     lib,
     pkgs,
     config,

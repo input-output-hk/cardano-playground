@@ -6,7 +6,6 @@
   perSystem = {
     inputs',
     pkgs,
-    lib,
     ...
   }: {
     packages = {

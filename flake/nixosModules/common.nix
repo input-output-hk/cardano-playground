@@ -1,19 +1,13 @@
-parts @ {
+{
   self,
   inputs,
   moduleWithSystem,
   ...
 }: {
-  flake.nixosModules.common = moduleWithSystem ({
-    inputs',
-    self',
-  }: {
+  flake.nixosModules.common = moduleWithSystem ({inputs'}: {
     name,
-    options,
     config,
     pkgs,
-    lib,
-    nodes,
     ...
   }: {
     imports = [

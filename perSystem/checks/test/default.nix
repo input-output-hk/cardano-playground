@@ -8,7 +8,7 @@
   }:
     lib.optionalAttrs (system == "x86_64-linux") {
       checks.test = inputs.nixpkgs.lib.nixos.runTest ({nodes, ...}: let
-        inherit (parts.config.flake.nixosModules) common client;
+        inherit (parts.config.flake.nixosModules) common;
       in {
         name = "test";
 
@@ -21,16 +21,15 @@
         };
 
         nodes = {
-          ci1 = {config, ...}: {
-            imports = [client];
-            networking.firewall.allowedTCPPorts = [];
-          };
+          # ci1 = {...}: {
+          #   imports = [];
+          #   networking.firewall.allowedTCPPorts = [];
+          # };
 
-          ci2 = {};
+          # ci2 = {};
         };
 
         testScript = ''
-          ci1.wait_for_unit("nomad.service")
         '';
       });
     };

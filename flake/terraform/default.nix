@@ -14,7 +14,7 @@
   nixosConfigurations = lib.mapAttrs (_: node: node.config) config.flake.nixosConfigurations;
   nodes = lib.filterAttrs (_: node: node.aws != null) nixosConfigurations;
   mapNodes = f: lib.mapAttrs f nodes;
-  pp = v: lib.traceSeq v v;
+  # pp = v: lib.traceSeq v v;
 
   regions =
     lib.mapAttrsToList (region: enabled: {
@@ -42,9 +42,9 @@ in {
 
           backend = {
             s3 = {
+              inherit (cluster) region;
               bucket = cluster.bucketName;
               key = "terraform";
-              region = cluster.region;
               dynamodb_table = "terraform";
             };
           };
@@ -64,9 +64,8 @@ in {
 
         resource = {
           aws_instance = mapNodes (name: node: {
-            count = node.aws.instance.count;
+            inherit (node.aws.instance) count instance_type;
             provider = awsProviderFor node.aws.region;
-            instance_type = node.aws.instance.instance_type;
             ami = amis.${node.system.stateVersion}.${node.aws.region}.hvm-ebs;
             iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
             monitoring = true;
@@ -159,14 +158,14 @@ in {
           });
 
           aws_eip = mapNodes (name: node: {
-            count = node.aws.instance.count;
+            inherit (node.aws.instance) count;
             provider = awsProviderFor node.aws.region;
             instance = "\${aws_instance.${name}[0].id}";
             tags.Name = name;
           });
 
           aws_eip_association = mapNodes (name: node: {
-            count = node.aws.instance.count;
+            inherit (node.aws.instance) count;
             provider = awsProviderFor node.aws.region;
             instance_id = "\${aws_instance.${name}[0].id}";
             allocation_id = "\${aws_eip.${name}[0].id}";
@@ -228,7 +227,7 @@ in {
           });
 
           aws_route53_record = mapNodes (
-            nodeName: node: {
+            nodeName: _: {
               zone_id = "\${data.aws_route53_zone.selected.zone_id}";
               name = "${nodeName}.\${data.aws_route53_zone.selected.name}";
               type = "A";

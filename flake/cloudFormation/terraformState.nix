@@ -1,9 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  ...
-}: {
+{config, ...}: {
   flake.cloudFormation.terraformState = let
     inherit (config.flake.cluster) domain bucketName;
   in {
