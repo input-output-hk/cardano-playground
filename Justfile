@@ -12,6 +12,10 @@ apply *ARGS:
 apply-all:
   colmena apply --verbose
 
+lint:
+  deadnix -f
+  statix check
+
 cf STACKNAME:
   mkdir cloudFormation
   nix eval --json '.#cloudFormation.{{STACKNAME}}' | jq | save --force 'cloudFormation/{{STACKNAME}}.json'

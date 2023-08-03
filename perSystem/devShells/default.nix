@@ -13,14 +13,15 @@ flake: {
       pkgs.mkShell {
         packages =
           (with pkgs; [
+            awscli2
+            deadnix
             just
-            statix
-            wireguard-tools
             nushell
             self'.packages.rain
-            self'.packages.terraform
-            awscli2
             sops
+            statix
+            self'.packages.terraform
+            wireguard-tools
           ])
           ++ (with inputs'; [
             colmena.packages.colmena
