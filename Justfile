@@ -67,11 +67,13 @@ wg-genkey KMS HOSTNAME:
   let public = 'secrets/wireguard_{{HOSTNAME}}.txt'
 
   if not ($private | path exists) {
+    print $"Generating ($private) ..."
     wg genkey | sops --kms "{{KMS}}" -e /dev/stdin | save $private
     git add $private
   }
 
   if not ($public | path exists) {
+    print $"Deriving ($public) ..."
     sops -d $private | wg pubkey | save $public
     git add $public
   }

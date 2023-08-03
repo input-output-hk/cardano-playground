@@ -52,8 +52,8 @@ parts @ {
         ${config.system.activationScripts.setupSecrets.text}
 
         # For wireguard enabled machines
-        systemctl list-unit-files wireguard-wg0.service &> /dev/null \
-          && systemctl restart wireguard-wg0.service
+        { systemctl list-unit-files wireguard-wg0.service &> /dev/null \
+          && systemctl restart wireguard-wg0.service; } || true
       '';
 
       serviceConfig = {
@@ -105,6 +105,7 @@ parts @ {
     programs.auth-keys-hub = {
       enable = true;
       package = inputs'.auth-keys-hub.packages.auth-keys-hub;
+      dataDir = "/var/auth-keys-hub";
       github = {
         teams = [
           "input-output-hk/node-sre"

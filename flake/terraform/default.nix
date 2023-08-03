@@ -246,6 +246,8 @@ in {
                 UserKnownHostsFile /dev/null
                 StrictHostKeyChecking no
                 IdentityFile .ssh_key
+                ServerAliveCountMax 2
+                ServerAliveInterval 60
 
               ${
                 builtins.concatStringsSep "\n" (map (name: ''
