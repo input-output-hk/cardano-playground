@@ -113,7 +113,11 @@
       fail2ban.enable = true;
       openssh = {
         enable = true;
-        settings.PasswordAuthentication = false;
+        settings = {
+          PasswordAuthentication = false;
+          RequiredRSASize = 2048;
+          PubkeyAcceptedAlgorithms = "-*nist*";
+        };
       };
     };
 
