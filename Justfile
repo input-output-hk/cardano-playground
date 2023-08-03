@@ -1,14 +1,38 @@
 set shell := ["nu", "-c"]
 set positional-arguments
 
+alias tf := terraform
+
 default:
   just --list
+
+apply *ARGS:
+  colmena apply --verbose --on {{ARGS}}
 
 apply-all:
   colmena apply --verbose
 
-apply *ARGS:
-  colmena apply --verbose --on {{ARGS}}
+cf STACKNAME:
+  mkdir cloudFormation
+  nix eval --json '.#cloudFormation.{{STACKNAME}}' | jq | save --force 'cloudFormation/{{STACKNAME}}.json'
+  rain deploy --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
+
+save-bootstrap-ssh-key:
+  #!/usr/bin/env nu
+  print "Retrieving ssh key from terraform..."
+  let tf = (terraform show -json | from json)
+  let key = ($tf.values.root_module.resources | where type == tls_private_key and name == bootstrap)
+  $key.values.private_key_openssh | save .ssh_key
+  chmod 0600 .ssh_key
+
+show-nameservers:
+  #!/usr/bin/env bash
+  DOMAIN=$(nix eval --raw '.#cluster.domain')
+  ID=$(aws route53 list-hosted-zones-by-name | jq --arg DOMAIN "$DOMAIN" -r '.HostedZones[] | select(.Name | startswith($DOMAIN)).Id')
+  NS=$(aws route53 list-resource-record-sets --hosted-zone-id "$ID" | jq -r '.ResourceRecordSets[] | select(.Type == "NS").ResourceRecords[].Value')
+  echo "Nameservers for the following hosted zone need to be added to the NS record of the delegating authority"
+  echo "Nameservers for domain: $DOMAIN (hosted zone id: $ID) are:"
+  echo "$NS"
 
 ssh HOSTNAME *ARGS:
   #!/usr/bin/env nu
@@ -19,7 +43,7 @@ ssh HOSTNAME *ARGS:
 
   ssh -F .ssh_config {{HOSTNAME}} {{ARGS}}
 
-bootstrap-ssh HOSTNAME *ARGS:
+ssh-bootstrap HOSTNAME *ARGS:
   #!/usr/bin/env nu
   if not ('.ssh_config' | path exists) {
     print "Please run terraform first to create the .ssh_config file"
@@ -32,18 +56,10 @@ bootstrap-ssh HOSTNAME *ARGS:
 
   ssh -F .ssh_config -i .ssh_key {{HOSTNAME}} {{ARGS}}
 
-save-bootstrap-ssh-key:
-  #!/usr/bin/env nu
-  print "Retrieving ssh key from terraform..."
-  let tf = (terraform show -json | from json)
-  let key = ($tf.values.root_module.resources | where type == tls_private_key and name == bootstrap)
-  $key.values.private_key_openssh | save .ssh_key
-  chmod 0600 .ssh_key
-
-cf STACKNAME:
-  mkdir cloudFormation
-  nix eval --json '.#cloudFormation.{{STACKNAME}}' | jq | save --force 'cloudFormation/{{STACKNAME}}.json'
-  rain deploy --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
+terraform *ARGS:
+  rm --force cluster.tf.json
+  nix build .#terraform.cluster --out-link cluster.tf.json
+  terraform {{ARGS}}
 
 wg-genkey KMS HOSTNAME:
   #!/usr/bin/env nu
@@ -65,13 +81,3 @@ wg-genkeys:
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   let kms = (nix eval --raw '.#cluster.kms')
   for node in $nodes { just wg-genkey $kms $node }
-
-bootstrap HOSTNAME:
-  nix run '.#bootstrap' -- --verbose --flake '.#{{HOSTNAME}}'
-
-terraform *ARGS:
-  rm --force cluster.tf.json
-  nix build .#terraform.cluster --out-link cluster.tf.json
-  terraform {{ARGS}}
-
-alias tf := terraform
