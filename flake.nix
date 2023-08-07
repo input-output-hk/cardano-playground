@@ -1,21 +1,16 @@
 {
-  description = "Cardano Performance Testing Cluster";
+  description = "Cardano Playground: cardano testnet clusters";
 
   inputs = {
     auth-keys-hub.url = "github:input-output-hk/auth-keys-hub";
     auth-keys-hub.inputs.nixpkgs.follows = "nixpkgs";
     colmena.url = "github:zhaofengli/colmena/v0.4.0";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
-    disko.url = "github:nix-community/disko";
-    disko.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     sops-nix.url = "github:Mic92/sops-nix";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-    nixos-images.url = "github:nix-community/nixos-images";
-    nixos-images.inputs.nixos-unstable.follows = "nixpkgs";
-    impermanence.url = "github:nix-community/impermanence";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     terraform-providers.url = "github:nix-community/nixpkgs-terraform-providers-bin";
     terranix.url = "github:terranix/terranix";
