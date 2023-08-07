@@ -6,3 +6,4 @@
 /.terraform
 /.terraform*
 /cluster.tf.json
+/.gcroots
