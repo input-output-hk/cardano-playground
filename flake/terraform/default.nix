@@ -174,57 +174,51 @@ in {
           # To remove or rename a security group, keep it here while removing
           # the reference from the instance. Then apply, and if that succeeds,
           # remove the group here and apply again.
-          aws_security_group = mapRegions ({
-            region,
-            count,
-          }: {
-            "common_${region}" = {
-              inherit count;
-              provider = awsProviderFor region;
-              name = "common";
-              description = "Allow common ports";
-              lifecycle = [{create_before_destroy = true;}];
-
-              ingress = [
-                {
-                  description = "Allow SSH";
-                  from_port = 22;
-                  to_port = 22;
-                  protocol = "tcp";
-                  cidr_blocks = ["0.0.0.0/0"];
-                  ipv6_cidr_blocks = ["::/0"];
-                  prefix_list_ids = [];
-                  security_groups = [];
-                  self = true;
-                }
-                {
-                  description = "Allow Wireguard";
-                  from_port = 51820;
-                  to_port = 51820;
-                  protocol = "udp";
-                  cidr_blocks = ["0.0.0.0/0"];
-                  ipv6_cidr_blocks = ["::/0"];
-                  prefix_list_ids = [];
-                  security_groups = [];
-                  self = true;
-                }
-              ];
-
-              egress = [
-                {
-                  description = "Allow outbound traffic";
-                  from_port = 0;
-                  to_port = 0;
-                  protocol = "-1";
-                  cidr_blocks = ["0.0.0.0/0"];
-                  ipv6_cidr_blocks = ["::/0"];
-                  prefix_list_ids = [];
-                  security_groups = [];
-                  self = true;
-                }
-              ];
+          aws_security_group = let
+            mkRule = lib.recursiveUpdate {
+              protocol = "tcp";
+              cidr_blocks = ["0.0.0.0/0"];
+              ipv6_cidr_blocks = ["::/0"];
+              prefix_list_ids = [];
+              security_groups = [];
+              self = true;
             };
-          });
+          in
+            mapRegions ({
+              region,
+              count,
+            }: {
+              "common_${region}" = {
+                inherit count;
+                provider = awsProviderFor region;
+                name = "common";
+                description = "Allow common ports";
+                lifecycle = [{create_before_destroy = true;}];
+
+                ingress = [
+                  (mkRule {
+                    description = "Allow SSH";
+                    from_port = 22;
+                    to_port = 22;
+                  })
+                  (mkRule {
+                    description = "Allow Wireguard";
+                    from_port = 51820;
+                    to_port = 51820;
+                    protocol = "udp";
+                  })
+                ];
+
+                egress = [
+                  (mkRule {
+                    description = "Allow outbound traffic";
+                    from_port = 0;
+                    to_port = 0;
+                    protocol = "-1";
+                  })
+                ];
+              };
+            });
 
           aws_route53_record = mapNodes (
             nodeName: _: {
