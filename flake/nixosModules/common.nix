@@ -73,6 +73,7 @@
       fd
       file
       htop
+      helix
       jq
       lsof
       ncdu
@@ -80,13 +81,21 @@
       tree
       nano
       tcpdump
-      tmux
       glances
       gitMinimal
       sops
       awscli2
       pciutils
     ];
+
+    programs.tmux = {
+      enable = true;
+      aggressiveResize = true;
+      clock24 = true;
+      escapeTime = 0;
+      historyLimit = 10000;
+      newSession = true;
+    };
 
     sops.defaultSopsFormat = "binary";
 
