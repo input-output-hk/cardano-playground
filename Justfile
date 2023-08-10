@@ -12,6 +12,14 @@ apply *ARGS:
 apply-all:
   colmena apply --verbose
 
+build-machine MACHINE *ARGS:
+  nix build -L .#nixosConfigurations.{{MACHINE}}.config.system.build.toplevel {{ARGS}}
+
+build-machines *ARGS:
+  #!/usr/bin/env nu
+  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
+  for node in $nodes { just build-machine $node {{ARGS}} }
+
 lint:
   deadnix -f
   statix check
