@@ -62,6 +62,11 @@ ssh-bootstrap HOSTNAME *ARGS:
 
   ssh -F .ssh_config -i .ssh_key {{HOSTNAME}} {{ARGS}}
 
+ssh-for-each *ARGS:
+  #!/usr/bin/env nu
+  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
+  for node in $nodes { just ssh $node {{ARGS}} }
+
 terraform *ARGS:
   rm --force cluster.tf.json
   nix build .#terraform.cluster --out-link cluster.tf.json

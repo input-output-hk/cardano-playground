@@ -20,9 +20,11 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
   };
 
-  outputs = inputs:
+  outputs = inputs: let
+    inherit ((import ./flake/lib.nix {inherit inputs;}).flake.lib) recursiveImports;
+  in
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
-      imports = [
+      imports = recursiveImports [
         ./flake
         ./perSystem
         # inputs.cardano-parts.flakeModules.shell

@@ -27,7 +27,6 @@
     };
 
     time.timeZone = "UTC";
-    programs.sysdig.enable = true;
     i18n.supportedLocales = ["en_US.UTF-8/UTF-8" "en_US/ISO-8859-1"];
 
     boot = {
@@ -66,35 +65,54 @@
     };
 
     environment.systemPackages = with pkgs; [
+      awscli2
       bat
       bind
+      cloud-utils
       di
       dnsutils
       fd
       file
-      htop
+      git
+      glances
       helix
+      htop
+      iptables
       jq
       lsof
-      ncdu
-      ripgrep
-      tree
       nano
-      tcpdump
-      glances
-      gitMinimal
-      sops
-      awscli2
+      ncdu
+      parted
       pciutils
+      ripgrep
+      rsync
+      sops
+      sysstat
+      tcpdump
+      tree
     ];
 
-    programs.tmux = {
-      enable = true;
-      aggressiveResize = true;
-      clock24 = true;
-      escapeTime = 0;
-      historyLimit = 10000;
-      newSession = true;
+    programs = {
+      tmux = {
+        enable = true;
+        aggressiveResize = true;
+        clock24 = true;
+        escapeTime = 0;
+        historyLimit = 10000;
+        newSession = true;
+      };
+
+      auth-keys-hub = {
+        enable = true;
+        package = inputs'.auth-keys-hub.packages.auth-keys-hub;
+        github = {
+          teams = [
+            "input-output-hk/node-sre"
+          ];
+
+          tokenFile = config.sops.secrets.github-token.path;
+        };
+      };
     };
 
     sops.defaultSopsFormat = "binary";
@@ -105,20 +123,9 @@
       inherit (config.programs.auth-keys-hub) group;
     };
 
-    programs.auth-keys-hub = {
-      enable = true;
-      package = inputs'.auth-keys-hub.packages.auth-keys-hub;
-      dataDir = "/var/auth-keys-hub";
-      github = {
-        teams = [
-          "input-output-hk/node-sre"
-        ];
-        tokenFile = config.sops.secrets.github-token.path;
-      };
-    };
-
     services = {
       chrony.enable = true;
+      cron.enable = true;
       fail2ban.enable = true;
       openssh = {
         enable = true;
@@ -129,6 +136,10 @@
         };
       };
     };
+
+    system.extraSystemBuilderCmds = ''
+      ln -sv ${pkgs.path} $out/nixpkgs
+    '';
 
     nix = {
       registry.nixpkgs.flake = inputs.nixpkgs;
