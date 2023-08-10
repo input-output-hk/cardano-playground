@@ -4,7 +4,7 @@ set positional-arguments
 alias tf := terraform
 
 default:
-  just --list
+  @just --list
 
 apply *ARGS:
   colmena apply --verbose --on {{ARGS}}

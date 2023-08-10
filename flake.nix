@@ -14,6 +14,10 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     terraform-providers.url = "github:nix-community/nixpkgs-terraform-providers-bin";
     terranix.url = "github:terranix/terranix";
+
+    # Experimental
+    # cardano-parts.url = "github:input-output-hk/cardano-parts";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
   };
 
   outputs = inputs:
@@ -21,6 +25,7 @@
       imports = [
         ./flake
         ./perSystem
+        # inputs.cardano-parts.flakeModules.shell
       ];
 
       systems = ["x86_64-linux"];
