@@ -14,18 +14,24 @@
         (builtins.readDir dir);
 
       # Collects all files of a directory as a list of strings of paths
-      files = dir:
-        lib.collect lib.isString (lib.mapAttrsRecursive
-          (path: _type: lib.concatStringsSep "/" path)
-          (getDir dir));
+      files = path:
+        if lib.pathType path == "directory"
+        then
+          lib.collect lib.isString (lib.mapAttrsRecursive
+            (path: _type: lib.concatStringsSep "/" path)
+            (getDir path))
+        else [path];
 
-      # Filters out directories that don't end with .nix or are this file, also makes the strings absolute
-      validFiles = dir:
+      # Filters out files that don't end with .nix and also make the strings absolute path based
+      validFiles = path:
         map
-        (file: dir + "/${file}")
+        (file:
+          if lib.hasPrefix "/nix/store" file
+          then file
+          else path + "/${file}")
         (lib.filter
-          (file: lib.hasSuffix ".nix" file && file != "default.nix")
-          (files dir));
+          (lib.hasSuffix ".nix")
+          (files path));
     in
       lib.concatMap validFiles;
   });
