@@ -39,7 +39,7 @@ save-bootstrap-ssh-key:
 
 show-nameservers:
   #!/usr/bin/env nu
-  let domain = (nix eval --raw '.#cluster.domain')
+  let domain = (nix eval --raw '.#cardano-parts.cluster.domain')
   let zones = (aws route53 list-hosted-zones-by-name | from json).HostedZones
   let id = ($zones | where Name == $"($domain).").Id.0
   let sets = (aws route53 list-resource-record-sets --hosted-zone-id $id | from json).ResourceRecordSets
@@ -99,6 +99,6 @@ wg-genkey KMS HOSTNAME:
 
 wg-genkeys:
   #!/usr/bin/env nu
-  let kms = (nix eval --raw '.#cluster.kms')
+  let kms = (nix eval --raw '.#cardano-parts.cluster.kms')
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   for node in $nodes { just wg-genkey $kms $node }

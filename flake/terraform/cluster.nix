@@ -1,11 +1,11 @@
-{
+flake @ {
   inputs,
   self,
   lib,
   config,
   ...
 }: let
-  inherit (config.flake) cluster;
+  inherit (config.flake.cardano-parts) cluster;
   amis = import "${inputs.nixpkgs}/nixos/modules/virtualisation/ec2-amis.nix";
 
   underscore = lib.replaceStrings ["-"] ["_"];
@@ -14,7 +14,6 @@
   nixosConfigurations = lib.mapAttrs (_: node: node.config) config.flake.nixosConfigurations;
   nodes = lib.filterAttrs (_: node: node.aws != null) nixosConfigurations;
   mapNodes = f: lib.mapAttrs f nodes;
-  # pp = v: lib.traceSeq v v;
 
   regions =
     lib.mapAttrsToList (region: enabled: {
@@ -28,7 +27,7 @@
 
   mapRegions = f: lib.foldl' lib.recursiveUpdate {} (lib.forEach regions f);
 in {
-  flake.terraform.cluster = inputs.terranix.lib.terranixConfiguration {
+  flake.terraform.cluster = inputs.cardano-parts.inputs.terranix.lib.terranixConfiguration {
     system = "x86_64-linux";
     modules = [
       {

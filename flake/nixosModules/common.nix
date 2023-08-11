@@ -4,15 +4,19 @@
   moduleWithSystem,
   ...
 }: {
-  flake.nixosModules.common = moduleWithSystem ({inputs'}: {
+  flake.nixosModules.common = moduleWithSystem ({
+    inputs',
+    system,
+  }: {
     name,
     config,
     pkgs,
+    lib,
     ...
   }: {
     imports = [
-      inputs.sops-nix.nixosModules.default
-      inputs.auth-keys-hub.nixosModules.auth-keys-hub
+      inputs.cardano-parts.inputs.sops-nix.nixosModules.default
+      inputs.cardano-parts.inputs.auth-keys-hub.nixosModules.auth-keys-hub
     ];
 
     deployment.targetHost = name;
@@ -104,7 +108,7 @@
 
       auth-keys-hub = {
         enable = true;
-        package = inputs'.auth-keys-hub.packages.auth-keys-hub;
+        package = inputs.cardano-parts.inputs.auth-keys-hub.packages.${system}.auth-keys-hub;
         github = {
           teams = [
             "input-output-hk/node-sre"

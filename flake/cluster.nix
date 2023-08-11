@@ -1,9 +1,8 @@
 {
   # Define some cluster-wide configuration.
   # This has to evaluate fast and is imported in various places.
-  flake.cluster = rec {
+  flake.cardano-parts.cluster = {
     orgId = "362174735783";
-    kms = "arn:aws:kms:${region}:${orgId}:alias/kmsKey";
     region = "eu-central-1";
     profile = "cardano-playground";
 
@@ -14,6 +13,9 @@
     };
 
     domain = "play.aws.iohkdev.io";
-    bucketName = "${profile}-terraform";
+
+    # Preset defaults matched to default terraform rain infra; change if desired:
+    # kms = "arn:aws:kms:${region}:${orgId}:alias/kmsKey";
+    # bucketName = "${profile}-terraform";
   };
 }
