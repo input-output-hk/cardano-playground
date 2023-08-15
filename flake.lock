@@ -105,11 +105,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1692121464,
-        "narHash": "sha256-K89Nf5yg54nD2c52WrwvQSbevwbK45q5OKbf52tlW1A=",
+        "lastModified": 1692135013,
+        "narHash": "sha256-laHU8Aw4Y3lpl5rgrB8bjexdTq77r1hkIif9O4l3TNA=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "937501db805cfda4a7c531e0016415539cadc710",
+        "rev": "d4d07f8fe08367ea734199fed47773e78f0758f8",
         "type": "github"
       },
       "original": {
@@ -651,8 +651,7 @@
         "cardano-parts": "cardano-parts",
         "flake-parts": "flake-parts_4",
         "nixpkgs": "nixpkgs_8",
-        "nixpkgs-unstable": "nixpkgs-unstable_2",
-        "treefmt-nix": "treefmt-nix_3"
+        "nixpkgs-unstable": "nixpkgs-unstable_2"
       }
     },
     "rust-analyzer-src": {
@@ -827,26 +826,6 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "rev": "2a535809ac5c9a32288f4d3b938296e056d948cc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "treefmt-nix_3": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1691522377,
-        "narHash": "sha256-1LafgFJaSk53ccsTlI2gWSmIyxRJfFVyoaGJg0c3LjM=",
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "rev": "7b380d3cce8271b37394790b521ec2f7a6b248ad",
         "type": "github"
       },
       "original": {

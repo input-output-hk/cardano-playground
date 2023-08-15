@@ -47,8 +47,9 @@ in {
     };
 
     defaults.imports = [
+      inputs.cardano-parts.nixosModules.aws-ec2
+      inputs.cardano-parts.nixosModules.common
       nixosModules.common
-      nixosModules.aws-ec2
       nixos-23-05
     ];
 

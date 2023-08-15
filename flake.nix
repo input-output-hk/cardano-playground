@@ -7,14 +7,10 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts";
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
-
-    # TODO:
-    treefmt-nix.url = "github:numtide/treefmt-nix";
-    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs: let
-    inherit ((import ./flake/lib.nix {inherit inputs;}).flake.lib) recursiveImports;
+    inherit (inputs.cardano-parts.lib) recursiveImports;
   in
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
       imports =
