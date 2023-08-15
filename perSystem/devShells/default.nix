@@ -1,5 +1,5 @@
-flake: {
-  perSystem = {config, ...}: {
-    config.cardano-parts.shell.defaultShell = "ops";
+{
+  perSystem = {
+    cardano-parts.shell.defaultShell = "ops";
   };
 }

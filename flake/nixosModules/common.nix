@@ -4,14 +4,10 @@
   moduleWithSystem,
   ...
 }: {
-  flake.nixosModules.common = moduleWithSystem ({
-    inputs',
-    system,
-  }: {
+  flake.nixosModules.common = moduleWithSystem ({system}: {
     name,
     config,
     pkgs,
-    lib,
     ...
   }: {
     imports = [
