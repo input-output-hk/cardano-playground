@@ -5,8 +5,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/pkgModule";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/pkgModule";
   };
 
   outputs = inputs: let
@@ -19,8 +19,9 @@
           ./perSystem
         ]
         ++ [
-          inputs.cardano-parts.flakeModules.shell
           inputs.cardano-parts.flakeModules.cluster
+          inputs.cardano-parts.flakeModules.pkgs
+          inputs.cardano-parts.flakeModules.shell
         ];
       systems = ["x86_64-linux"];
       debug = true;
