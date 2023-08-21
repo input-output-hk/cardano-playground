@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
   };
 
   outputs = inputs: let
