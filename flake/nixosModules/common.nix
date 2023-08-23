@@ -31,5 +31,7 @@
       owner = config.programs.auth-keys-hub.user;
       inherit (config.programs.auth-keys-hub) group;
     };
+
+    system.stateVersion = "23.05";
   });
 }

@@ -5,8 +5,15 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/node-addn";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/node-addn";
+    cardano-node-ng.url = "github:input-output-hk/cardano-node/8.3.1-pre";
+
+    cardano-node-service = {
+      url = "github:input-output-hk/cardano-node/8.3.1-pre";
+      # url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.3.1-pre";
+      flake = false;
+    };
   };
 
   outputs = inputs: let
@@ -19,7 +26,11 @@
           ./perSystem
         ]
         ++ [
+          inputs.cardano-parts.flakeModules.aws
           inputs.cardano-parts.flakeModules.cluster
+          inputs.cardano-parts.flakeModules.entrypoints
+          inputs.cardano-parts.flakeModules.jobs
+          inputs.cardano-parts.flakeModules.lib
           inputs.cardano-parts.flakeModules.pkgs
           inputs.cardano-parts.flakeModules.shell
         ];
