@@ -5,7 +5,7 @@ flake @ {
   config,
   ...
 }: let
-  inherit (config.flake.cardano-parts) cluster;
+  cluster = config.flake.cardano-parts.cluster.infra.aws;
   amis = import "${inputs.nixpkgs}/nixos/modules/virtualisation/ec2-amis.nix";
 
   underscore = lib.replaceStrings ["-"] ["_"];
@@ -199,6 +199,11 @@ in {
                     description = "Allow SSH";
                     from_port = 22;
                     to_port = 22;
+                  })
+                  (mkRule {
+                    description = "Allow Cardano";
+                    from_port = 3001;
+                    to_port = 3001;
                   })
                   (mkRule {
                     description = "Allow Wireguard";
