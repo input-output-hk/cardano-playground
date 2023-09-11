@@ -197,6 +197,7 @@ ssh-bootstrap HOSTNAME *ARGS:
 
 ssh-for-each *ARGS:
   #!/usr/bin/env nu
+  $env.SSH_CONFIG_FILE = '/home/sam/.ssh/config'
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   $nodes | par-each {|node| just ssh -q $node {{ARGS}}}
 

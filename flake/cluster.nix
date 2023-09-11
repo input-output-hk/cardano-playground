@@ -16,7 +16,7 @@ flake: {
         us-east-2 = true;
       };
 
-      domain = "play.aws.iohkdev.io";
+      domain = "lan.disasm.us";
 
       # Preset defaults matched to default terraform rain infra; change if desired:
       # kms = "arn:aws:kms:${region}:${orgId}:alias/kmsKey";
@@ -24,7 +24,7 @@ flake: {
     };
 
     group.default = {
-      groupPrefix = "play-";
+      groupPrefix = "";
       meta = {
         environmentName = "sanchonet";
       };
