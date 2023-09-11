@@ -23,10 +23,26 @@ flake: {
       # bucketName = "${profile}-terraform";
     };
 
-    group.default = {
-      groupPrefix = "play-";
-      meta = {
-        environmentName = "sanchonet";
+    group = {
+      preprod = {
+        groupPrefix = "preprod-";
+        meta.environmentName = "preprod";
+      };
+
+      preview = {
+        groupPrefix = "preview-";
+        meta.environmentName = "preview";
+      };
+
+      sanchonet = {
+        groupPrefix = "sanchonet-";
+        meta.environmentName = "sanchonet";
+
+        # For the latest genesis only compatible with 8.3.1
+        lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
+
+        # Until upstream parts ng has capkgs version, use local flake pins
+        pkgs.cardano-node-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng;
       };
     };
   };

@@ -13,7 +13,7 @@ flake @ {
 
   nixosConfigurations = lib.mapAttrs (_: node: node.config) config.flake.nixosConfigurations;
   nodes = lib.filterAttrs (_: node: node.aws != null) nixosConfigurations;
-  mapNodes = f: lib.mapAttrs f nodes;
+  mapNodes = f: lib.mapAttrs f (lib.filterAttrs (_: node: node.aws.instance.count > 0) nodes);
 
   regions =
     lib.mapAttrsToList (region: enabled: {
