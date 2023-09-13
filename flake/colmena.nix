@@ -35,6 +35,9 @@ in {
       };
     };
 
+    # Block producer secrets
+    bp = {imports = [nixosModules.block-producer];};
+
     preRelease = moduleWithSystem ({system}: {
       cardano-parts.perNode = {
         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg system;
@@ -105,6 +108,8 @@ in {
 
     # ---------------------------------------------------------------------------------------------------------
     # Sanchonet, pre-release
+    sanchonet-bp-a-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service bp];};
+    # sanchonet-bp-a-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service bp];};
     sanchonet-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
     sanchonet-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
     sanchonet-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service];};

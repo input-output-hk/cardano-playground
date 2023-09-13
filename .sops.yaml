@@ -1,0 +1,21 @@
+keys:
+  - &sre age1rj7vaq0rsarnum2fx6zq0k3l64f6mca9t9mlhqu4nfvpqhux6uts5zud2m
+  - &preprod-bp-a-1 age19zrgswdvr4j70tja96yjveywhrdsv4hcghusnsffk6jjc6xf2dtqh23rg0
+  - &preview-bp-a-1 age1vqjk6vn5yk4c8njccql33kwhq0pxpcy8mxw055su362d2wy7aftsxg2l7g
+  - &sanchonet-bp-a-1 age1ptlw8yez25r250sl3kxwc5nakuarhakz9pwgu9psdaqw5n468ptsvquk0a
+creation_rules:
+  - path_regex: preprod/[^/]+\.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preprod-bp-a-1
+  - path_regex: preview/[^/]+\.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preview-bp-a-1
+  - path_regex: sanchonet/[^/]+\.*$
+    key_groups:
+    - age:
+      - *sre
+      - *sanchonet-bp-a-1
