@@ -14,6 +14,17 @@ test:
   nohup sleep 60 &
   sleep 60
 
+run-sanchonet:
+  #!/usr/bin/env bash
+  just stop-sanchonet
+  ENV=sanchonet
+  ENVIRONMENT=$ENV \
+  DATA_DIR=~/.local/share/playground \
+  SOCKET_PATH=$(pwd)/node.socket \
+  UNSTABLE=true \
+  UNSTABLE_LIB=true \
+  nohup setsid nix run .#run-cardano-node &> node-$ENV.log & echo $! > cardano-$ENV.pid &
+
 run:
   #!/usr/bin/env bash
   just stop
@@ -111,6 +122,14 @@ stop:
     echo Stopping cardano-node
     kill $(< cardano.pid) 2> /dev/null
     rm -f cardano.pid node.socket
+  fi
+
+stop-sanchonet:
+  #!/usr/bin/env bash
+  if [ -f cardano-sanchonet.pid ]; then
+    echo Stopping cardano-node for sanchonet
+    kill $(< cardano-sanchonet.pid) 2> /dev/null
+    rm -f cardano-sanchonet.pid node.socket
   fi
 
 sync-status:

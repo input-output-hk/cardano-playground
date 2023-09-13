@@ -36,7 +36,7 @@ in {
     };
 
     # Block producer secrets
-    bp = {imports = [nixosModules.block-producer];};
+    bp = {imports = [inputs.cardano-parts.nixosModules.block-producer];};
 
     preRelease = moduleWithSystem ({system}: {
       cardano-parts.perNode = {
@@ -85,7 +85,7 @@ in {
     defaults.imports = [
       inputs.cardano-parts.nixosModules.aws-ec2
       inputs.cardano-parts.nixosModules.basic
-      inputs.cardano-parts.nixosModules.cardano-node
+      inputs.cardano-parts.nixosModules.cardano-node-group
       inputs.cardano-parts.nixosModules.cardano-parts
       nixosModules.common
       topology
