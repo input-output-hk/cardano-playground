@@ -24,19 +24,27 @@ in {
     groupPreview = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preview;};
     groupSanchonet = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.sanchonet;};
 
+    # Relay simple topology
     topology = nixos: let
       inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
       inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib topologyLib;
       inherit (cardanoLib.environments.${environmentName}) edgeNodes;
     in {
       services.cardano-node = {
-        producers = topologyLib.topoSimpleMax nixos.name nixos.nodes 3;
+        producers = topologyLib.topoSimple nixos.name nixos.nodes;
         publicProducers = topologyLib.p2pEdgeNodes edgeNodes;
       };
     };
 
-    # Block producer secrets
-    bp = {imports = [inputs.cardano-parts.nixosModules.block-producer];};
+    # Block producer secrets and topology modification
+    bp = nixos: {
+      imports = [inputs.cardano-parts.nixosModules.block-producer];
+
+      services.cardano-node = {
+        publicProducers = nixos.lib.mkForce [];
+        usePeersFromLedgerAfterSlot = -1;
+      };
+    };
 
     preRelease = moduleWithSystem ({system}: {
       cardano-parts.perNode = {
@@ -109,7 +117,6 @@ in {
     # ---------------------------------------------------------------------------------------------------------
     # Sanchonet, pre-release
     sanchonet-bp-a-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service bp];};
-    # sanchonet-bp-a-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service bp];};
     sanchonet-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
     sanchonet-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
     sanchonet-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
