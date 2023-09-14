@@ -16,13 +16,30 @@ in {
     # Instance defs:
     t3a-small.aws.instance.instance_type = "t3a.small";
 
-    # Base cardano-node-service
-    inherit (config.flake.cardano-parts.cluster.group.default.meta) cardano-node-service;
-
     # Cardano group assignments:
-    groupPreprod = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preprod;};
-    groupPreview = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preview;};
-    groupSanchonet = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.sanchonet;};
+    preprod = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preprod;};
+    preview = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preview;};
+    sanchonet = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.sanchonet;};
+
+    # Helper fns:
+    ebs = size: {aws.instance.root_block_device.volume_size = lib.mkDefault size;};
+
+    # Cardano-node modules for group deployment
+    node = {
+      imports = [
+        # Base cardano-node service
+        config.flake.cardano-parts.cluster.group.default.meta.cardano-node-service
+
+        # Config for cardano-node group deployments
+        inputs.cardano-parts.nixosModules.module-cardano-node-group
+
+        # Config enabling easy perNode customization
+        inputs.cardano-parts.nixosModules.module-cardano-parts
+
+        # Default group deployment topology
+        topology
+      ];
+    };
 
     # Relay simple topology
     topology = nixos: let
@@ -36,9 +53,16 @@ in {
       };
     };
 
+    # Relay
+    rel = nixos: let
+      inherit (nixos.config.cardano-parts.perNode.meta) cardanoNodePort;
+    in {
+      networking.firewall = {allowedTCPPorts = [cardanoNodePort];};
+    };
+
     # Block producer secrets and topology modification
     bp = nixos: {
-      imports = [inputs.cardano-parts.nixosModules.block-producer];
+      imports = [inputs.cardano-parts.nixosModules.role-block-producer];
 
       services.cardano-node = {
         publicProducers = nixos.lib.mkForce [];
@@ -46,7 +70,8 @@ in {
       };
     };
 
-    preRelease = moduleWithSystem ({system}: {
+    # Use the pre-release cardano-node-pkgs and library
+    pre = moduleWithSystem ({system}: {
       cardano-parts.perNode = {
         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg system;
 
@@ -55,12 +80,8 @@ in {
         pkgs.cardano-node-pkgs = config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng system;
       };
     });
-
     # Helper defs:
     # delete.aws.instance.count = 0;
-
-    # Helper fns:
-    ebs = size: {aws.instance.root_block_device.volume_size = lib.mkDefault size;};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -91,35 +112,33 @@ in {
     };
 
     defaults.imports = [
-      inputs.cardano-parts.nixosModules.aws-ec2
-      inputs.cardano-parts.nixosModules.basic
-      inputs.cardano-parts.nixosModules.cardano-node-group
-      inputs.cardano-parts.nixosModules.cardano-parts
+      inputs.cardano-parts.nixosModules.module-aws-ec2
+      inputs.cardano-parts.nixosModules.module-basic
+      inputs.cardano-parts.nixosModules.module-common
       nixosModules.common
-      topology
     ];
 
     # Simulate world networks with just a relay setup:
     # ---------------------------------------------------------------------------------------------------------
     # Preprod, two-thirds on release tag, one-third on pre-release tag
-    preprod-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) groupPreprod cardano-node-service];};
-    preprod-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) groupPreprod cardano-node-service];};
-    preprod-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) groupPreprod cardano-node-service preRelease];};
+    preprod-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) preprod node rel];};
+    preprod-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) preprod node rel];};
+    preprod-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) preprod node rel pre];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
     # Preview, one-third on release tag, two-thirds on pre-release tag
-    preview-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) groupPreview cardano-node-service];};
-    preview-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) groupPreview cardano-node-service preRelease];};
-    preview-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) groupPreview cardano-node-service preRelease];};
+    preview-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) preview node rel];};
+    preview-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) preview node rel pre];};
+    preview-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) preview node rel pre];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
     # Sanchonet, pre-release
-    sanchonet-bp-a-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service bp];};
-    sanchonet-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
-    sanchonet-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
-    sanchonet-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) groupSanchonet cardano-node-service];};
+    sanchonet-bp-a-1 = {imports = [us-east-2 t3a-small (ebs 40) sanchonet node bp];};
+    sanchonet-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) sanchonet node rel];};
+    sanchonet-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) sanchonet node rel];};
+    sanchonet-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) sanchonet node rel];};
     # ---------------------------------------------------------------------------------------------------------
   };
 }
