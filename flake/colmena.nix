@@ -16,13 +16,16 @@ in {
     # Instance defs:
     t3a-small.aws.instance.instance_type = "t3a.small";
 
+    # Helper fns:
+    ebs = size: {aws.instance.root_block_device.volume_size = lib.mkDefault size;};
+
+    # Helper defs:
+    # delete.aws.instance.count = 0;
+
     # Cardano group assignments:
     preprod = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preprod;};
     preview = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.preview;};
     sanchonet = {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.sanchonet;};
-
-    # Helper fns:
-    ebs = size: {aws.instance.root_block_device.volume_size = lib.mkDefault size;};
 
     # Cardano-node modules for group deployment
     node = {
@@ -33,55 +36,22 @@ in {
         # Config for cardano-node group deployments
         inputs.cardano-parts.nixosModules.module-cardano-node-group
 
-        # Config enabling easy perNode customization
-        inputs.cardano-parts.nixosModules.module-cardano-parts
-
         # Default group deployment topology
-        topology
+        topoSimple
       ];
     };
 
-    # Relay simple topology
-    topology = nixos: let
-      inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
-      inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib topologyLib;
-      inherit (cardanoLib.environments.${environmentName}) edgeNodes;
-    in {
-      services.cardano-node = {
-        producers = topologyLib.topoSimple nixos.name nixos.nodes;
-        publicProducers = topologyLib.p2pEdgeNodes edgeNodes;
-      };
-    };
-
-    # Relay
-    rel = nixos: let
-      inherit (nixos.config.cardano-parts.perNode.meta) cardanoNodePort;
-    in {
-      networking.firewall = {allowedTCPPorts = [cardanoNodePort];};
-    };
-
-    # Block producer secrets and topology modification
-    bp = nixos: {
-      imports = [inputs.cardano-parts.nixosModules.role-block-producer];
-
-      services.cardano-node = {
-        publicProducers = nixos.lib.mkForce [];
-        usePeersFromLedgerAfterSlot = -1;
-      };
-    };
-
-    # Use the pre-release cardano-node-pkgs and library
-    pre = moduleWithSystem ({system}: {
-      cardano-parts.perNode = {
-        lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg system;
-
-        # Until upstream parts ng has capkgs version, use local flake pins
-        # This also requires that we've set ng packages comprising cardano-node-pkgs to our local ng pin.
-        pkgs.cardano-node-pkgs = config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng system;
-      };
+    # Profiles
+    topoSimple = {imports = [inputs.cardano-parts.nixosModules.profile-topology-simple];};
+    pre = moduleWithSystem ({system}: nixos: {
+      # Required for forcing a local flake pkg definition
+      cardano-parts.perNode.pkgs.cardano-node-pkgs = nixos.lib.mkForce (config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng system);
+      imports = [inputs.cardano-parts.nixosModules.profile-pre-release];
     });
-    # Helper defs:
-    # delete.aws.instance.count = 0;
+
+    # Roles
+    rel = {imports = [inputs.cardano-parts.nixosModules.role-relay];};
+    bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer];};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -114,6 +84,7 @@ in {
     defaults.imports = [
       inputs.cardano-parts.nixosModules.module-aws-ec2
       inputs.cardano-parts.nixosModules.module-basic
+      inputs.cardano-parts.nixosModules.module-cardano-parts
       inputs.cardano-parts.nixosModules.module-common
       nixosModules.common
     ];
