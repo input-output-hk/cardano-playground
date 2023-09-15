@@ -2,7 +2,6 @@
   inputs,
   config,
   lib,
-  moduleWithSystem,
   ...
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
@@ -43,11 +42,7 @@ in {
 
     # Profiles
     topoSimple = {imports = [inputs.cardano-parts.nixosModules.profile-topology-simple];};
-    pre = moduleWithSystem ({system}: nixos: {
-      # Required for forcing a local flake pkg definition
-      cardano-parts.perNode.pkgs.cardano-node-pkgs = nixos.lib.mkForce (config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng system);
-      imports = [inputs.cardano-parts.nixosModules.profile-pre-release];
-    });
+    pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
     # Roles
     rel = {imports = [inputs.cardano-parts.nixosModules.role-relay];};
