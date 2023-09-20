@@ -12,6 +12,9 @@ default:
 sops-encrypt-binary FILE:
   sops --input-type binary --output-type binary --encrypt {{FILE}} | sponge {{FILE}}
 
+sops-decrypt-binary FILE:
+  sops --input-type binary --output-type binary --decrypt {{FILE}}
+
 test:
   #!/usr/bin/env bash
   nohup sleep 60 &
@@ -42,27 +45,36 @@ run:
 
   export DATA_DIR=state-demo
   export KEY_DIR=state-demo
-  export TESTNET_MAGIC=42
-  export PAYMENT_KEY=state-demo/utxo-keys/rich-utxo
-  export NUM_GENESIS_KEYS=3
-  export NUM_POOLS=3
-  export START_INDEX=1
-  export END_INDEX=3
-  export GENESIS_DIR="$DATA_DIR"
-  export BULK_CREDS=state-demo/bulk-creds.json
-  export PAYMENT_KEY=state-demo/utxo-keys/rich-utxo
-  export STAKE_POOL_DIR=state-demo/stake-pools
+  export GENESIS_DIR=state-demo
+
   export CARDANO_NODE_SOCKET_PATH=./node.socket
-  # export DEBUG=1
+  export TESTNET_MAGIC=42
+
+  export NUM_GENESIS_KEYS=3
+  export POOL_NAMES="sp-1 sp-2 sp-3"
+  export STAKE_POOL_DIR=state-demo/stake-pools
+
+  export BULK_CREDS=state-demo/stake-pools/no-deploy/bulk.creds.all.json
+  export PAYMENT_KEY=state-demo/utxo-keys/rich-utxo
+
+  export UNSTABLE=true
+  export UNSTABLE_LIB=true
+  export DEBUG=1
 
   SECURITY_PARAM=8 \
     SLOT_LENGTH=200 \
     START_TIME=$(date --utc +"%Y-%m-%dT%H:%M:%SZ" --date " now + 30 seconds") \
     nix run .#job-gen-custom-node-config
 
-  export PAYMENT_ADDRESS=$(cardano-cli address build --testnet-magic 42 --payment-verification-key-file "$PAYMENT_KEY".vkey)
+  export PAYMENT_ADDRESS=$(cat "$PAYMENT_KEY".addr)
+
   nix run .#job-create-stake-pool-keys
-  cat state-demo/delegate-keys/bulk.creds.bft.json state-demo/stake-pools/bulk.creds.pools.json | jq -s > "$BULK_CREDS"
+  echo -e \
+    "$(jq -r '.[]' < state-demo/delegate-keys/bulk.creds.bft.json)\n$(jq -r '.[]' < state-demo/stake-pools/no-deploy/bulk.creds.pools.json)" \
+    | jq -s > "$BULK_CREDS"
+
+  echo "Checking for bulk creds file"
+  ls -la "$BULK_CREDS"
 
   echo "Start cardano-node in the background. Run \"just stop\" to stop"
   NODE_CONFIG=state-demo/node-config.json \
@@ -82,7 +94,7 @@ run:
   echo
 
   echo "Registering stake pools..."
-  POOL_RELAY=sanchonet.local \
+  POOL_RELAY=demo.local \
     POOL_RELAY_PORT=3001 \
     ERA="--alonzo-era" \
     nix run .#job-register-stake-pools
@@ -118,6 +130,8 @@ run:
   echo
 
   just sync-status
+  echo "Finished sequence..."
+  echo
 
 stop:
   #!/usr/bin/env bash
