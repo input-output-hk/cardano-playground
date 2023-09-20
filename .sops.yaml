@@ -5,22 +5,41 @@ keys:
   - &sanchonet1-bp-a-1 age1apa4g9hfjaq9kp95utg5jeqm9zmdhylcfsqmekrl0ptg4wjt53fsrfffy9
   - &shelley-qa1-bp-a-1 age1e2lurmyrrsfmfen9dgmdkmjwgmfaz4y7ecysdtpc8pd9qr4htfasvs0az8
 creation_rules:
-  - path_regex: preprod1/[^/]+\.*$
+  # -------------------------------------------------------
+  # General environment secrets are admin only
+  - path_regex: secrets/envs/.*$
+    key_groups:
+    - age:
+      - *sre
+
+  # -------------------------------------------------------
+  # Group no-deploy secrets are admin only
+  - path_regex: secrets/groups/[^/]+/no-deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+
+  # -------------------------------------------------------
+  # Group producer secrets
+  - path_regex: secrets/groups/preprod1/deploy/.*$
     key_groups:
     - age:
       - *sre
       - *preprod1-bp-a-1
-  - path_regex: preview1/[^/]+\.*$
+
+  - path_regex: secrets/groups/preview1/deploy/.*$
     key_groups:
     - age:
       - *sre
       - *preview1-bp-a-1
-  - path_regex: sanchonet1/[^/]+\.*$
+
+  - path_regex: secrets/groups/sanchonet1/deploy/.*$
     key_groups:
     - age:
       - *sre
       - *sanchonet1-bp-a-1
-  - path_regex: shelley-qa1/[^/]+\.*$
+
+  - path_regex: secrets/groups/shelley-qa1/deploy/.*$
     key_groups:
     - age:
       - *sre

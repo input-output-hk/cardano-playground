@@ -9,6 +9,9 @@ default:
 # ----------
 # New recipes
 
+sops-encrypt-binary FILE:
+  sops --input-type binary --output-type binary --encrypt {{FILE}} | sponge {{FILE}}
+
 test:
   #!/usr/bin/env bash
   nohup sleep 60 &
