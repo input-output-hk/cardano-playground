@@ -43,22 +43,24 @@ run:
 
   echo "Generating state-demo config..."
 
-  export DATA_DIR=state-demo
-  export KEY_DIR=state-demo
   export GENESIS_DIR=state-demo
+  export KEY_DIR=state-demo/envs/custom
+  export DATA_DIR=state-demo/rundir
 
   export CARDANO_NODE_SOCKET_PATH=./node.socket
   export TESTNET_MAGIC=42
 
   export NUM_GENESIS_KEYS=3
   export POOL_NAMES="sp-1 sp-2 sp-3"
-  export STAKE_POOL_DIR=state-demo/stake-pools
+  export STAKE_POOL_DIR=state-demo/groups/stake-pools
 
-  export BULK_CREDS=state-demo/stake-pools/no-deploy/bulk.creds.all.json
-  export PAYMENT_KEY=state-demo/utxo-keys/rich-utxo
+  export BULK_CREDS=state-demo/bulk.creds.all.json
+  export PAYMENT_KEY=state-demo/envs/custom/utxo-keys/rich-utxo
 
   export UNSTABLE=true
   export UNSTABLE_LIB=true
+  export USE_ENCRYPTION=true
+  export USE_DECRYPTION=true
   export DEBUG=1
 
   SECURITY_PARAM=8 \
@@ -66,19 +68,16 @@ run:
     START_TIME=$(date --utc +"%Y-%m-%dT%H:%M:%SZ" --date " now + 30 seconds") \
     nix run .#job-gen-custom-node-config
 
-  export PAYMENT_ADDRESS=$(cat "$PAYMENT_KEY".addr)
-
   nix run .#job-create-stake-pool-keys
-  echo -e \
-    "$(jq -r '.[]' < state-demo/delegate-keys/bulk.creds.bft.json)\n$(jq -r '.[]' < state-demo/stake-pools/no-deploy/bulk.creds.pools.json)" \
-    | jq -s > "$BULK_CREDS"
 
-  echo "Checking for bulk creds file"
-  ls -la "$BULK_CREDS"
+  (
+    jq -r '.[]' < <(sops --input-type binary --output-type binary --decrypt "$KEY_DIR"/delegate-keys/bulk.creds.bft.json)
+    jq -r '.[]' < <(sops --input-type binary --output-type binary --decrypt "$STAKE_POOL_DIR"/no-deploy/bulk.creds.pools.json)
+  ) | jq -s > "$BULK_CREDS"
 
   echo "Start cardano-node in the background. Run \"just stop\" to stop"
-  NODE_CONFIG=state-demo/node-config.json \
-    NODE_TOPOLOGY=state-demo/topology.json \
+  NODE_CONFIG="$DATA_DIR/node-config.json" \
+    NODE_TOPOLOGY="$DATA_DIR/topology.json" \
     SOCKET_PATH=./node.socket \
     nohup setsid nix run .#run-cardano-node & echo $! > cardano.pid &
   echo "Sleeping 30 seconds until $(date -d  @$(($(date +%s) + 30)))"
@@ -86,7 +85,7 @@ run:
   echo
 
   echo "Moving genesis utxo..."
-  BYRON_SIGNING_KEY=state-demo/utxo-keys/shelley.000.skey \
+  BYRON_SIGNING_KEY="$KEY_DIR"/utxo-keys/shelley.000.skey \
     ERA="--alonzo-era" \
     nix run .#job-move-genesis-utxo
   echo "Sleeping 7 seconds until $(date -d  @$(($(date +%s) + 7)))"

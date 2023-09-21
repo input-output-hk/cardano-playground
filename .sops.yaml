@@ -44,3 +44,10 @@ creation_rules:
     - age:
       - *sre
       - *shelley-qa1-bp-a-1
+
+  # -------------------------------------------------------
+  # State-demo test
+  - path_regex: state-demo/env|groups/.*$
+    key_groups:
+    - age:
+      - *sre
