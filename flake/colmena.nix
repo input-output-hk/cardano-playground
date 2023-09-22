@@ -90,9 +90,10 @@ in {
 
     defaults.imports = [
       inputs.cardano-parts.nixosModules.module-aws-ec2
-      inputs.cardano-parts.nixosModules.module-basic
       inputs.cardano-parts.nixosModules.module-cardano-parts
-      inputs.cardano-parts.nixosModules.module-common
+      inputs.cardano-parts.nixosModules.profile-basic
+      inputs.cardano-parts.nixosModules.profile-common
+      inputs.cardano-parts.nixosModules.profile-grafana-agent
       nixosModules.common
     ];
 
