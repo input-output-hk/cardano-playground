@@ -9,12 +9,12 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/monitoring";
 
     # Local pins for additional customization:
-    cardano-node-ng.url = "github:input-output-hk/cardano-node/8.3.1-pre";
+    cardano-node-ng.url = "github:input-output-hk/cardano-node/8.4.0-pre";
 
     # For cardano-node service local debug:
     # cardano-node-service = {
-    #   # url = "github:input-output-hk/cardano-node/8.3.1-pre";
-    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.3.1-pre";
+    #   # url = "github:input-output-hk/cardano-node/8.4.0-pre";
+    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.4.0-pre";
     #   flake = false;
     # };
   };
