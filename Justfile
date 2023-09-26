@@ -230,35 +230,15 @@ ssh-bootstrap HOSTNAME *ARGS:
 
   ssh -F .ssh_config -i .ssh_key {{HOSTNAME}} {{ARGS}}
 
-ssh-for-each *ARGS:
+ssh-for-all *ARGS:
   #!/usr/bin/env nu
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   $nodes | par-each {|node| just ssh -q $node {{ARGS}}}
+
+ssh-for-each HOSTNAMES *ARGS:
+  colmena exec --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}}
 
 terraform *ARGS:
   rm --force cluster.tf.json
   nix build .#terraform.cluster --out-link cluster.tf.json
   terraform {{ARGS}}
-
-wg-genkey KMS HOSTNAME:
-  #!/usr/bin/env nu
-  let private = 'secrets/wireguard_{{HOSTNAME}}.enc'
-  let public = 'secrets/wireguard_{{HOSTNAME}}.txt'
-
-  if not ($private | path exists) {
-    print $"Generating ($private) ..."
-    wg genkey | sops --kms "{{KMS}}" -e /dev/stdin | save $private
-    git add $private
-  }
-
-  if not ($public | path exists) {
-    print $"Deriving ($public) ..."
-    sops -d $private | wg pubkey | save $public
-    git add $public
-  }
-
-wg-genkeys:
-  #!/usr/bin/env nu
-  let kms = (nix eval --raw '.#cardano-parts.cluster.infra.aws.kms')
-  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
-  for node in $nodes { just wg-genkey $kms $node }
