@@ -261,7 +261,7 @@ terraform *ARGS:
 
   echo -e "Running terraform in the ${IGREEN}$WORKSPACE${NC} workspace..."
   rm --force terraform.tf.json
-  nix build ".#terraform-$WORKSPACE" --out-link terraform.tf.json
+  nix build ".#terraform.$WORKSPACE" --out-link terraform.tf.json
 
   terraform workspace select -or-create "$WORKSPACE"
   terraform ${ARGS[@]} ${VAR_FILE:+-var-file=<("${SOPS[@]}" "$VAR_FILE")}
