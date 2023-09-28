@@ -9,6 +9,12 @@ default:
 # ----------
 # New recipes
 
+sops-encrypt-binary FILE:
+  sops --input-type binary --output-type binary --encrypt {{FILE}} | sponge {{FILE}}
+
+sops-decrypt-binary FILE:
+  sops --input-type binary --output-type binary --decrypt {{FILE}}
+
 test:
   #!/usr/bin/env bash
   nohup sleep 60 &
@@ -37,33 +43,41 @@ run:
 
   echo "Generating state-demo config..."
 
-  export DATA_DIR=state-demo
-  export KEY_DIR=state-demo
-  export TESTNET_MAGIC=42
-  export PAYMENT_KEY=state-demo/utxo-keys/rich-utxo
-  export NUM_GENESIS_KEYS=3
-  export NUM_POOLS=3
-  export START_INDEX=1
-  export END_INDEX=3
-  export GENESIS_DIR="$DATA_DIR"
-  export BULK_CREDS=state-demo/bulk-creds.json
-  export PAYMENT_KEY=state-demo/utxo-keys/rich-utxo
-  export STAKE_POOL_DIR=state-demo/stake-pools
+  export GENESIS_DIR=state-demo
+  export KEY_DIR=state-demo/envs/custom
+  export DATA_DIR=state-demo/rundir
+
   export CARDANO_NODE_SOCKET_PATH=./node.socket
-  # export DEBUG=1
+  export TESTNET_MAGIC=42
+
+  export NUM_GENESIS_KEYS=3
+  export POOL_NAMES="sp-1 sp-2 sp-3"
+  export STAKE_POOL_DIR=state-demo/groups/stake-pools
+
+  export BULK_CREDS=state-demo/bulk.creds.all.json
+  export PAYMENT_KEY=state-demo/envs/custom/utxo-keys/rich-utxo
+
+  export UNSTABLE=true
+  export UNSTABLE_LIB=true
+  export USE_ENCRYPTION=true
+  export USE_DECRYPTION=true
+  export DEBUG=1
 
   SECURITY_PARAM=8 \
     SLOT_LENGTH=200 \
     START_TIME=$(date --utc +"%Y-%m-%dT%H:%M:%SZ" --date " now + 30 seconds") \
     nix run .#job-gen-custom-node-config
 
-  export PAYMENT_ADDRESS=$(cardano-cli address build --testnet-magic 42 --payment-verification-key-file "$PAYMENT_KEY".vkey)
   nix run .#job-create-stake-pool-keys
-  cat state-demo/delegate-keys/bulk.creds.bft.json state-demo/stake-pools/bulk.creds.pools.json | jq -s > "$BULK_CREDS"
+
+  (
+    jq -r '.[]' < <(sops --input-type binary --output-type binary --decrypt "$KEY_DIR"/delegate-keys/bulk.creds.bft.json)
+    jq -r '.[]' < <(sops --input-type binary --output-type binary --decrypt "$STAKE_POOL_DIR"/no-deploy/bulk.creds.pools.json)
+  ) | jq -s > "$BULK_CREDS"
 
   echo "Start cardano-node in the background. Run \"just stop\" to stop"
-  NODE_CONFIG=state-demo/node-config.json \
-    NODE_TOPOLOGY=state-demo/topology.json \
+  NODE_CONFIG="$DATA_DIR/node-config.json" \
+    NODE_TOPOLOGY="$DATA_DIR/topology.json" \
     SOCKET_PATH=./node.socket \
     nohup setsid nix run .#run-cardano-node & echo $! > cardano.pid &
   echo "Sleeping 30 seconds until $(date -d  @$(($(date +%s) + 30)))"
@@ -71,7 +85,7 @@ run:
   echo
 
   echo "Moving genesis utxo..."
-  BYRON_SIGNING_KEY=state-demo/utxo-keys/shelley.000.skey \
+  BYRON_SIGNING_KEY="$KEY_DIR"/utxo-keys/shelley.000.skey \
     ERA="--alonzo-era" \
     nix run .#job-move-genesis-utxo
   echo "Sleeping 7 seconds until $(date -d  @$(($(date +%s) + 7)))"
@@ -79,7 +93,7 @@ run:
   echo
 
   echo "Registering stake pools..."
-  POOL_RELAY=sanchonet.local \
+  POOL_RELAY=demo.local \
     POOL_RELAY_PORT=3001 \
     ERA="--alonzo-era" \
     nix run .#job-register-stake-pools
@@ -115,6 +129,8 @@ run:
   echo
 
   just sync-status
+  echo "Finished sequence..."
+  echo
 
 stop:
   #!/usr/bin/env bash
@@ -173,6 +189,7 @@ cf STACKNAME:
 save-bootstrap-ssh-key:
   #!/usr/bin/env nu
   print "Retrieving ssh key from terraform..."
+  terraform workspace select -or-create cluster
   let tf = (terraform show -json | from json)
   let key = ($tf.values.root_module.resources | where type == tls_private_key and name == bootstrap)
   $key.values.private_key_openssh | save .ssh_key
@@ -214,35 +231,37 @@ ssh-bootstrap HOSTNAME *ARGS:
 
   ssh -F .ssh_config -i .ssh_key {{HOSTNAME}} {{ARGS}}
 
-ssh-for-each *ARGS:
+ssh-for-all *ARGS:
   #!/usr/bin/env nu
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   $nodes | par-each {|node| just ssh -q $node {{ARGS}}}
 
+ssh-for-each HOSTNAMES *ARGS:
+  colmena exec --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}}
+
 terraform *ARGS:
-  rm --force cluster.tf.json
-  nix build .#terraform.cluster --out-link cluster.tf.json
-  terraform {{ARGS}}
+  #!/usr/bin/env bash
+  IGREEN='\033[1;92m'
+  IRED='\033[1;91m'
+  NC='\033[0m'
+  SOPS=("sops" "--input-type" "binary" "--output-type" "binary" "--decrypt")
 
-wg-genkey KMS HOSTNAME:
-  #!/usr/bin/env nu
-  let private = 'secrets/wireguard_{{HOSTNAME}}.enc'
-  let public = 'secrets/wireguard_{{HOSTNAME}}.txt'
+  read -r -a ARGS <<< "{{ARGS}}"
+  if [[ ${ARGS[0]} =~ cluster|grafana ]]; then
+    WORKSPACE="${ARGS[0]}"
+    ARGS=("${ARGS[@]:1}")
+  else
+    WORKSPACE="cluster"
+  fi
 
-  if not ($private | path exists) {
-    print $"Generating ($private) ..."
-    wg genkey | sops --kms "{{KMS}}" -e /dev/stdin | save $private
-    git add $private
-  }
+  unset VAR_FILE
+  if [ -s "secrets/tf/$WORKSPACE.tfvars" ]; then
+    VAR_FILE="secrets/tf/$WORKSPACE.tfvars"
+  fi
 
-  if not ($public | path exists) {
-    print $"Deriving ($public) ..."
-    sops -d $private | wg pubkey | save $public
-    git add $public
-  }
+  echo -e "Running terraform in the ${IGREEN}$WORKSPACE${NC} workspace..."
+  rm --force terraform.tf.json
+  nix build ".#terraform.$WORKSPACE" --out-link terraform.tf.json
 
-wg-genkeys:
-  #!/usr/bin/env nu
-  let kms = (nix eval --raw '.#cardano-parts.cluster.infra.aws.kms')
-  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
-  for node in $nodes { just wg-genkey $kms $node }
+  terraform workspace select -or-create "$WORKSPACE"
+  terraform ${ARGS[@]} ${VAR_FILE:+-var-file=<("${SOPS[@]}" "$VAR_FILE")}

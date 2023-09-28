@@ -9,17 +9,18 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
 
     # Local pins for additional customization:
-    cardano-node-ng.url = "github:input-output-hk/cardano-node/8.3.1-pre";
+    cardano-node-ng.url = "github:input-output-hk/cardano-node/release/8.4.x";
 
     # For cardano-node service local debug:
     # cardano-node-service = {
-    #   # url = "github:input-output-hk/cardano-node/8.3.1-pre";
-    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.3.1-pre";
+    #   # url = "github:input-output-hk/cardano-node/8.4.0-pre";
+    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.4.0-pre";
     #   flake = false;
     # };
   };
 
   outputs = inputs: let
+    inherit (inputs.nixpkgs.lib) mkOption types;
     inherit (inputs.cardano-parts.lib) recursiveImports;
   in
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
@@ -36,6 +37,7 @@
           inputs.cardano-parts.flakeModules.lib
           inputs.cardano-parts.flakeModules.pkgs
           inputs.cardano-parts.flakeModules.shell
+          {options.flake.terraform = mkOption {type = types.attrs;};}
         ];
       systems = ["x86_64-linux"];
       debug = true;
