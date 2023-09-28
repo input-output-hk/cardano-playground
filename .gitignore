@@ -1,10 +1,10 @@
-/.envrc.local
+/cloudFormation
 /.direnv
-/treefmt.toml
+/.envrc.local
+/.gcroots
 /.ssh_config
 /.ssh_key
-/cloudFormation
 /.terraform
 /.terraform*
-/cluster.tf.json
-/.gcroots
+/terraform.tf.json
+/treefmt.toml

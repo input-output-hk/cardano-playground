@@ -46,8 +46,16 @@ creation_rules:
       - *shelley-qa1-bp-a-1
 
   # -------------------------------------------------------
+  # Secrets catch all
+  - path_regex: secrets/.*$
+    key_groups:
+    - age:
+      - *sre
+
+  # -------------------------------------------------------
   # State-demo functionality test
   - path_regex: state-demo/(env|groups)/.*$
     key_groups:
     - age:
       - *sre
+

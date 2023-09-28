@@ -189,6 +189,7 @@ cf STACKNAME:
 save-bootstrap-ssh-key:
   #!/usr/bin/env nu
   print "Retrieving ssh key from terraform..."
+  terraform workspace select -or-create cluster
   let tf = (terraform show -json | from json)
   let key = ($tf.values.root_module.resources | where type == tls_private_key and name == bootstrap)
   $key.values.private_key_openssh | save .ssh_key
@@ -239,6 +240,28 @@ ssh-for-each HOSTNAMES *ARGS:
   colmena exec --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}}
 
 terraform *ARGS:
-  rm --force cluster.tf.json
-  nix build .#terraform.cluster --out-link cluster.tf.json
-  terraform {{ARGS}}
+  #!/usr/bin/env bash
+  IGREEN='\033[1;92m'
+  IRED='\033[1;91m'
+  NC='\033[0m'
+  SOPS=("sops" "--input-type" "binary" "--output-type" "binary" "--decrypt")
+
+  read -r -a ARGS <<< "{{ARGS}}"
+  if [[ ${ARGS[0]} =~ cluster|grafana ]]; then
+    WORKSPACE="${ARGS[0]}"
+    ARGS=("${ARGS[@]:1}")
+  else
+    WORKSPACE="cluster"
+  fi
+
+  unset VAR_FILE
+  if [ -s "secrets/tf/$WORKSPACE.tfvars" ]; then
+    VAR_FILE="secrets/tf/$WORKSPACE.tfvars"
+  fi
+
+  echo -e "Running terraform in the ${IGREEN}$WORKSPACE${NC} workspace..."
+  rm --force terraform.tf.json
+  nix build ".#terraform-$WORKSPACE" --out-link terraform.tf.json
+
+  terraform workspace select -or-create "$WORKSPACE"
+  terraform ${ARGS[@]} ${VAR_FILE:+-var-file=<("${SOPS[@]}" "$VAR_FILE")}
