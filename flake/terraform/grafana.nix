@@ -29,7 +29,7 @@ with lib; let
     nullable = false;
   };
 in {
-  flake.terraform-grafana = inputs.cardano-parts.inputs.terranix.lib.terranixConfiguration {
+  flake.terraform.grafana = inputs.cardano-parts.inputs.terranix.lib.terranixConfiguration {
     system = "x86_64-linux";
     modules = [
       {
