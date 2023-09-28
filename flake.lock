@@ -537,11 +537,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1695750750,
-        "narHash": "sha256-H1xu7RWjBqz3tI9zyk831CuFNLUR96qMzMijwY549ls=",
+        "lastModified": 1695859574,
+        "narHash": "sha256-Pxssf2lH1zidTWjF4u18+4kw4KykjB0aVjfieuaKMyM=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "ed401d9a7ed404d8d33e9d6b046c8a61babea4e6",
+        "rev": "52db321f7141ca71df6757905e9a36a84d1c16f6",
         "type": "github"
       },
       "original": {
@@ -3573,15 +3573,16 @@
         "nixpkgs": "nixpkgs_20"
       },
       "locked": {
-        "lastModified": 1691628287,
-        "narHash": "sha256-g5QBHfxTKOHlvu7Ae4GmBhaE/NI7JXuy9piIipEeooM=",
-        "owner": "nix-community",
+        "lastModified": 1695775982,
+        "narHash": "sha256-uRurW6VYOcCqh4UFe2d/JdeVfOWsobdYTp9wv1NqSrY=",
+        "owner": "johnalotoski",
         "repo": "nixpkgs-terraform-providers-bin",
-        "rev": "5f77cc9ae1990a36ffd04eb03469fa0fcc07e7b9",
+        "rev": "0a76041b38ce5df5b99c91a0a6074322a196670e",
         "type": "github"
       },
       "original": {
-        "owner": "nix-community",
+        "owner": "johnalotoski",
+        "ref": "add-mimir",
         "repo": "nixpkgs-terraform-providers-bin",
         "type": "github"
       }

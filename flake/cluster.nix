@@ -23,6 +23,8 @@ with flake.lib; {
       # bucketName = "${profile}-terraform";
     };
 
+    infra.grafana.stackName = "cardanoplayground";
+
     group = let
       mkGroup = name: environmentName: groupRelayMultivalueDns: isNg: {
         ${name} =
