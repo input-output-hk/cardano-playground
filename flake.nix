@@ -5,15 +5,16 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/dbsync";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/dbsync";
 
     # Local pins for additional customization:
+    cardano-node.url = "github:input-output-hk/cardano-node/8.1.2";
     cardano-node-ng.url = "github:input-output-hk/cardano-node/release/8.4.x";
+    cardano-node-821-pre.url = "github:input-output-hk/cardano-node/8.2.1-pre";
 
     # For cardano-node service local debug:
     # cardano-node-service = {
-    #   # url = "github:input-output-hk/cardano-node/8.4.0-pre";
     #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.4.0-pre";
     #   flake = false;
     # };

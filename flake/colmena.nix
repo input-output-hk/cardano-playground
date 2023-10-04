@@ -17,6 +17,8 @@ in {
     t3a-small.aws.instance.instance_type = "t3a.small";
     t3a-medium.aws.instance.instance_type = "t3a.medium";
     m5a-large.aws.instance.instance_type = "m5a.large";
+    r5-xlarge.aws.instance.instance_type = "r5.xlarge";
+    r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
 
     # Helper fns:
     ebs = size: {aws.instance.root_block_device.volume_size = lib.mkDefault size;};
@@ -35,29 +37,45 @@ in {
 
         # Config for cardano-node group deployments
         inputs.cardano-parts.nixosModules.profile-cardano-node-group
-
-        # Default group deployment topology
-        topoSimple
       ];
     };
+
+    # Snapshots: add this to a dbsync machine defn and deploy; remove once the snapshot is restored.
+    # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html#13.1/
+    # snapshot = {services.cardano-db-sync.restoreSnapshot = "$SNAPSHOT_URL";};
 
     dbsync = {
       imports = [
         config.flake.cardano-parts.cluster.group.default.meta.cardano-node-service
         config.flake.cardano-parts.cluster.group.default.meta.cardano-db-sync-service
-        inputs.cardano-parts.nixosModules.profile-cardano-postgres
-        inputs.cardano-parts.nixosModules.profile-cardano-node-group
         inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+        inputs.cardano-parts.nixosModules.profile-cardano-node-group
+        inputs.cardano-parts.nixosModules.profile-cardano-postgres
       ];
     };
 
     # Profiles
     topoSimple = {imports = [inputs.cardano-parts.nixosModules.profile-topology-simple];};
     # pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+    node821 = {
+      imports = [
+        (nixos: {
+          cardano-parts.perNode.pkgs = rec {
+            cardano-cli = inputs.cardano-node-821-pre.packages.x86_64-linux.cardano-cli;
+            cardano-node = inputs.cardano-node-821-pre.packages.x86_64-linux.cardano-node;
+            cardano-submit-api = inputs.cardano-node-821-pre.packages.x86_64-linux.cardano-submit-api;
+            cardano-node-pkgs = {
+              inherit cardano-cli cardano-node cardano-submit-api;
+              cardanoLib = nixos.config.cardano-parts.perNode.lib.cardanoLib;
+            };
+          };
+        })
+      ];
+    };
 
     # Roles
-    rel = {imports = [inputs.cardano-parts.nixosModules.role-relay];};
-    bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer];};
+    rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoSimple];};
+    bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoSimple];};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -99,18 +117,18 @@ in {
     # Setup cardano-world networks:
     # ---------------------------------------------------------------------------------------------------------
     # Preprod, two-thirds on release tag, one-third on pre-release tag
-    preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node];}; # TODO: add bp role
+    preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node topoSimple];};
     preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preprod1") dbsync];};
 
-    # preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node];};          # TODO: add bp role
+    # preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node topoSimple];};
     # preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod2") node rel];};
     # preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel];};
     # preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod2") node rel];};
 
-    # preprod3-bp-c-1 = {imports = [us-east2 t3a-medium (ebs 40) (group "preprod3") node pre];};       # TODO: add bp role
+    # preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node topoSimple pre];};
     # preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
     # preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
     # preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
@@ -118,18 +136,18 @@ in {
 
     # ---------------------------------------------------------------------------------------------------------
     # Preview, one-third on release tag, two-thirds on pre-release tag
-    preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node];}; # TODO: add bp role
+    preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node topoSimple];};
     preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync];};
 
-    # preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node pre];};      # TODO: add bp role
+    # preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node topoSimple pre];};
     # preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
     # preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
     # preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre];};
 
-    # preview3-bp-c-1 = {imports = [us-east2 t3a-medium (ebs 40) (group "preview3") node pre];};       # TODO: add bp role
+    # preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node topoSimple pre];};
     # preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
     # preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
     # preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre];};
@@ -143,12 +161,12 @@ in {
     sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync];};
 
-    sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node];}; # TODO: add bp role
+    sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node topoSimple];};
     sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
     sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
     sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
 
-    # sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node];};      # TODO: add bp role
+    # sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node topoSimple];};
     # sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     # sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     # sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
@@ -156,15 +174,22 @@ in {
 
     # ---------------------------------------------------------------------------------------------------------
     # Shelley-qa, pre-release
-    shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node];}; # TODO: add bp role
+    shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node topoSimple];};
     shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
     shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "shelley-qa1") dbsync];};
 
-    # shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa2") node];};    # TODO: add bp role
+    # shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa2") node topoSimple];};
     # shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa2") node rel];};
 
-    # shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa3") node];};    # TODO: add bp role
+    # shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa3") node topoSimple];};
     # shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa3") node rel];};
     # ---------------------------------------------------------------------------------------------------------
+
+    # ---------------------------------------------------------------------------------------------------------
+    # Mainnet
+    mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
+    mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
+    mainnet1-rel-a-2 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
+    mainnet1-rel-a-3 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
   };
 }

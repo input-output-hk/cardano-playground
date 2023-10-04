@@ -1,4 +1,4 @@
-flake:
+flake @ {withSystem, ...}:
 with flake.lib; {
   # Define some cluster-wide configuration.
   # This has to evaluate fast and is imported in various places.
@@ -34,10 +34,13 @@ with flake.lib; {
             meta = {inherit environmentName;};
           }
           // optionalAttrs isNg {
-            # For the latest genesis only compatible with 8.3.1
+            # For the latest genesis only compatible with >= node 8.3.1
             lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
 
             # Until upstream parts ng has capkgs version, use local flake pins
+            pkgs.cardano-db-sync = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-sync-ng);
+            pkgs.cardano-db-tool = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-tool-ng);
+            pkgs.cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng;
             pkgs.cardano-node-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng;
           };
       };
@@ -53,6 +56,7 @@ with flake.lib; {
       // (mkGroup "sanchonet3" "sanchonet" null true)
       // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa.${infra.aws.domain}" true)
       // (mkGroup "shelley-qa2" "shelley_qa" null true)
-      // (mkGroup "shelley-qa3" "shelley_qa" null true);
+      // (mkGroup "shelley-qa3" "shelley_qa" null true)
+      // (mkGroup "mainnet1" "mainnet" null false);
   };
 }
