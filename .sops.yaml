@@ -7,14 +7,14 @@ keys:
 creation_rules:
   # -------------------------------------------------------
   # General environment secrets are admin only
-  - path_regex: secrets/envs/.*$
+  - path_regex: (secrets|workbench)/envs/.*$
     key_groups:
     - age:
       - *sre
 
   # -------------------------------------------------------
   # Group no-deploy secrets are admin only
-  - path_regex: secrets/groups/[^/]+/no-deploy/.*$
+  - path_regex: (secrets|workbench)/groups/[^/]+/no-deploy/.*$
     key_groups:
     - age:
       - *sre
@@ -46,16 +46,24 @@ creation_rules:
       - *shelley-qa1-bp-a-1
 
   # -------------------------------------------------------
-  # Secrets catch all
-  - path_regex: secrets/.*$
+  # Workbench pool onboarding -- modify during creation
+  # Modify and add specific block producer keys as needed
+  - path_regex: workbench/groups/deploy/[^/]+/.*$
+    key_groups:
+    - age:
+      - *sre
+  #   - *EXAMPLE_MACHINE_KEY
+
+  # -------------------------------------------------------
+  # Secrets and workbench catch all
+  - path_regex: (secrets|workbench)/.*$
     key_groups:
     - age:
       - *sre
 
   # -------------------------------------------------------
   # State-demo functionality test
-  - path_regex: state-demo/(env|groups)/.*$
+  - path_regex: state-demo/(envs|groups)/.*$
     key_groups:
     - age:
       - *sre
-
