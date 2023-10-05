@@ -177,14 +177,63 @@ build-machines *ARGS:
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   for node in $nodes { just build-machine $node {{ARGS}} }
 
-lint:
-  deadnix -f
-  statix check
-
 cf STACKNAME:
   mkdir cloudFormation
   nix eval --json '.#cloudFormation.{{STACKNAME}}' | from json | save --force 'cloudFormation/{{STACKNAME}}.json'
   rain deploy --debug --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
+
+lint:
+  deadnix -f
+  statix check
+
+list-machines:
+  #!/usr/bin/env nu
+  let nixosNodes = (do -i { ^nix eval --json '.#nixosConfigurations' --apply 'builtins.attrNames' } | complete)
+  if $nixosNodes.exit_code != 0 {
+     print "Nixos failed to evaluate the .#nixosConfigurations attribute."
+     print "The output was:"
+     print
+     print $nixosNodes
+     exit 1
+  }
+
+  if not ('.ssh_config' | path exists) {
+    print "Please run terraform first to create the .ssh_config file"
+    exit 1
+  }
+
+  let sshNodes = (do -i { ^scj dump /dev/stdout -c .ssh_config } | complete)
+  if $sshNodes.exit_code != 0 {
+     print "Ssh-config-json failed to evaluate the .ssh_config file."
+     print "The output was:"
+     print
+     print $sshNodes
+     exit 1
+  }
+
+  let nixosNodesDfr = (
+    $nixosNodes.stdout
+      | from json
+      | insert 0 "machine"
+      | each {|i| [$i] | into record }
+      | headers
+      | each {|i| insert inNixosCfg {"yes"}}
+      | dfr into-df
+  )
+  let sshNodesDfr = (
+    $sshNodes.stdout
+      | jq 'map(select(.HostName != null))'
+      | from json
+      | rename Host IP
+      | dfr into-df
+  )
+  (
+    $nixosNodesDfr
+      | dfr join -o $sshNodesDfr machine Host
+      | dfr sort-by machine
+      | dfr into-nu
+      | update cells { |v| if $v == null {"Missing"} else {$v}}
+  )
 
 save-bootstrap-ssh-key:
   #!/usr/bin/env nu
