@@ -57,21 +57,36 @@ in {
     # Profiles
     topoSimple = {imports = [inputs.cardano-parts.nixosModules.profile-topology-simple];};
     # pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+
     node821 = {
       imports = [
         (nixos: {
           cardano-parts.perNode.pkgs = rec {
-            cardano-cli = inputs.cardano-node-821-pre.packages.x86_64-linux.cardano-cli;
-            cardano-node = inputs.cardano-node-821-pre.packages.x86_64-linux.cardano-node;
-            cardano-submit-api = inputs.cardano-node-821-pre.packages.x86_64-linux.cardano-submit-api;
+            inherit (inputs.cardano-node-821-pre.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             cardano-node-pkgs = {
               inherit cardano-cli cardano-node cardano-submit-api;
-              cardanoLib = nixos.config.cardano-parts.perNode.lib.cardanoLib;
+              inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
             };
           };
         })
       ];
     };
+
+    nodeHd = {
+      imports = [
+        (nixos: {
+          cardano-parts.perNode.pkgs = rec {
+            inherit (inputs.cardano-node-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+            cardano-node-pkgs = {
+              inherit cardano-cli cardano-node cardano-submit-api;
+              inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+            };
+          };
+        })
+      ];
+    };
+
+    lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
 
     # Roles
     rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoSimple];};
@@ -189,7 +204,8 @@ in {
     # Mainnet
     mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
     mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
-    mainnet1-rel-a-2 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
-    mainnet1-rel-a-3 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
+    mainnet1-rel-a-2 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node nodeHd];};
+    mainnet1-rel-a-3 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node nodeHd lmdb];};
+    mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
   };
 }
