@@ -220,6 +220,7 @@ list-machines:
       | each {|i| insert inNixosCfg {"yes"}}
       | dfr into-df
   )
+
   let sshNodesDfr = (
     $sshNodes.stdout
       | jq 'map(select(.HostName != null))'
@@ -227,6 +228,7 @@ list-machines:
       | rename Host IP
       | dfr into-df
   )
+
   (
     $nixosNodesDfr
       | dfr join -o $sshNodesDfr machine Host
