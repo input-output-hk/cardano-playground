@@ -228,6 +228,16 @@ in {
 
                 ingress = [
                   (mkRule {
+                    description = "Allow HTTP";
+                    from_port = 80;
+                    to_port = 80;
+                  })
+                  (mkRule {
+                    description = "Allow HTTPS";
+                    from_port = 443;
+                    to_port = 443;
+                  })
+                  (mkRule {
                     description = "Allow SSH";
                     from_port = 22;
                     to_port = 22;
