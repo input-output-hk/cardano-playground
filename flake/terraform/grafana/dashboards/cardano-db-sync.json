@@ -498,7 +498,7 @@
       "type": "timeseries"
     },
     {
-      "description": "Show explorer topology file size in bytes, if available.",
+      "description": "Show registered relays dump file size in bytes, if available.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -578,7 +578,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "explorer_topology_bytes{environment=\"$environment\"}",
+          "expr": "registered_relays_dump_bytes{environment=\"$environment\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
@@ -586,7 +586,7 @@
           "refId": "A"
         }
       ],
-      "title": "Explorer Topology Size (bytes)",
+      "title": "Registered Relays Dump Size (bytes)",
       "type": "timeseries"
     },
     {
@@ -595,7 +595,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "description": "Show explorer topology file modified time in unix epoch timestamp, if available.",
+      "description": "Show registered relays dump file modified time in unix epoch timestamp, if available.",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -639,7 +639,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "explorer_topology_mtime{environment=\"$environment\"}",
+          "expr": "registered_relays_dump_mtime{environment=\"$environment\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
@@ -649,7 +649,7 @@
       ],
       "thresholds": [],
       "timeRegions": [],
-      "title": "Explorer Topology Modified Time (TS)",
+      "title": "Registered Relays Dump Modified Time (TS)",
       "tooltip": {
         "shared": true,
         "sort": 0,

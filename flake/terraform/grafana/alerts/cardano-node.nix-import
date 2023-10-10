@@ -48,7 +48,7 @@ in {
     }
     {
       alert = "blocks_utilization_too_high";
-      expr = "100 * avg(avg_over_time(cardano_node_metrics_blockfetchclient_blocksize[6h]) / on(alias) (cardano_node_protocol_maxBlockBodySize + cardano_node_protocol_maxBlockHeaderSize)) > ${highBlockUtilization}";
+      expr = "100 * avg(avg_over_time(cardano_node_metrics_blockfetchclient_blocksize[6h]) / on(instance) (cardano_node_protocol_maxBlockBodySize + cardano_node_protocol_maxBlockHeaderSize)) > ${highBlockUtilization}";
       for = "5m";
       labels.severity = "page";
       annotations = {
@@ -58,7 +58,7 @@ in {
     }
     {
       alert = "cardano_new_node_block_divergence";
-      expr = "((abs(max(cardano_node_metrics_blockNum_int) - ignoring(alias, instance, job, role) group_right(instance) cardano_node_metrics_blockNum_int) > bool 2) - (abs(max(cardano_node_metrics_slotNum_int) - ignoring(alias, instance, job, role) group_right(instance) cardano_node_metrics_slotNum_int) < bool 60)) == 1";
+      expr = "((abs(max(cardano_node_metrics_blockNum_int) - ignoring(instance, job, role) group_right(instance) cardano_node_metrics_blockNum_int) > bool 2) - (abs(max(cardano_node_metrics_slotNum_int) - ignoring(instance, job, role) group_right(instance) cardano_node_metrics_slotNum_int) < bool 60)) == 1";
       for = "5m";
       labels.severity = "page";
       annotations = {
