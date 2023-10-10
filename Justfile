@@ -315,4 +315,5 @@ terraform *ARGS:
   nix build ".#terraform.$WORKSPACE" --out-link terraform.tf.json
 
   terraform workspace select -or-create "$WORKSPACE"
+  terraform init -reconfigure
   terraform ${ARGS[@]} ${VAR_FILE:+-var-file=<("${SOPS[@]}" "$VAR_FILE")}
