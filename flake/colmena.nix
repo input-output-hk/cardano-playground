@@ -27,13 +27,13 @@ in {
     # delete.aws.instance.count = 0;
 
     # Cardano group assignments:
-    group = name: {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.group.${name};};
+    group = name: {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};};
 
     # Cardano-node modules for group deployment
     node = {
       imports = [
         # Base cardano-node service
-        config.flake.cardano-parts.cluster.group.default.meta.cardano-node-service
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
 
         # Config for cardano-node group deployments
         inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -46,8 +46,8 @@ in {
 
     dbsync = {
       imports = [
-        config.flake.cardano-parts.cluster.group.default.meta.cardano-node-service
-        config.flake.cardano-parts.cluster.group.default.meta.cardano-db-sync-service
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
         inputs.cardano-parts.nixosModules.profile-cardano-db-sync
         inputs.cardano-parts.nixosModules.profile-cardano-node-group
         inputs.cardano-parts.nixosModules.profile-cardano-postgres
@@ -57,7 +57,7 @@ in {
     faucet = {
       imports = [
         # TODO: Module import fixup for local services
-        # config.flake.cardano-parts.cluster.group.default.meta.cardano-faucet-service
+        # config.flake.cardano-parts.cluster.groups.default.meta.cardano-faucet-service
         inputs.cardano-parts.nixosModules.service-cardano-faucet
 
         inputs.cardano-parts.nixosModules.profile-cardano-faucet
@@ -67,7 +67,7 @@ in {
 
     smash = {
       imports = [
-        config.flake.cardano-parts.cluster.group.default.meta.cardano-smash-service
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-smash-service
         inputs.cardano-parts.nixosModules.profile-cardano-smash
         {services.cardano-smash.acmeEmail = "devops@iohk.io";}
       ];

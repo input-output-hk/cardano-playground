@@ -27,7 +27,7 @@ with flake.lib; {
 
     infra.grafana.stackName = "cardanoplayground";
 
-    group = let
+    groups = let
       mkGroup = name: environmentName: groupRelayMultivalueDns: isNg: {
         ${name} =
           {
