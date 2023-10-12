@@ -40,39 +40,6 @@ in {
       ];
     };
 
-    # Snapshots: add this to a dbsync machine defn and deploy; remove once the snapshot is restored.
-    # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html#13.1/
-    # snapshot = {services.cardano-db-sync.restoreSnapshot = "$SNAPSHOT_URL";};
-
-    dbsync = {
-      imports = [
-        config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-        config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-        inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-        inputs.cardano-parts.nixosModules.profile-cardano-node-group
-        inputs.cardano-parts.nixosModules.profile-cardano-postgres
-      ];
-    };
-
-    faucet = {
-      imports = [
-        # TODO: Module import fixup for local services
-        # config.flake.cardano-parts.cluster.groups.default.meta.cardano-faucet-service
-        inputs.cardano-parts.nixosModules.service-cardano-faucet
-
-        inputs.cardano-parts.nixosModules.profile-cardano-faucet
-        {services.cardano-faucet.acmeEmail = "devops@iohk.io";}
-      ];
-    };
-
-    smash = {
-      imports = [
-        config.flake.cardano-parts.cluster.groups.default.meta.cardano-smash-service
-        inputs.cardano-parts.nixosModules.profile-cardano-smash
-        {services.cardano-smash.acmeEmail = "devops@iohk.io";}
-      ];
-    };
-
     # Profiles
     topoSimple = {imports = [inputs.cardano-parts.nixosModules.profile-topology-simple];};
     pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
@@ -107,9 +74,42 @@ in {
 
     lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
 
+    smash = {
+      imports = [
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-smash-service
+        inputs.cardano-parts.nixosModules.profile-cardano-smash
+        {services.cardano-smash.acmeEmail = "devops@iohk.io";}
+      ];
+    };
+
+    # Snapshots: add this to a dbsync machine defn and deploy; remove once the snapshot is restored.
+    # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html#13.1/
+    # snapshot = {services.cardano-db-sync.restoreSnapshot = "$SNAPSHOT_URL";};
+
     # Roles
     rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoSimple];};
     bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoSimple];};
+
+    dbsync = {
+      imports = [
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+        inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+        inputs.cardano-parts.nixosModules.profile-cardano-node-group
+        inputs.cardano-parts.nixosModules.profile-cardano-postgres
+      ];
+    };
+
+    faucet = {
+      imports = [
+        # TODO: Module import fixup for local services
+        # config.flake.cardano-parts.cluster.groups.default.meta.cardano-faucet-service
+        inputs.cardano-parts.nixosModules.service-cardano-faucet
+
+        inputs.cardano-parts.nixosModules.profile-cardano-faucet
+        {services.cardano-faucet.acmeEmail = "devops@iohk.io";}
+      ];
+    };
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {

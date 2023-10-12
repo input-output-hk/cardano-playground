@@ -22,7 +22,7 @@ creation_rules:
       - *sre
 
   # -------------------------------------------------------
-  # Group producer secrets
+  # Group producer and other secrets
   - path_regex: secrets/groups/preprod1/deploy/.*faucet.*$
     key_groups:
     - age:
