@@ -3,6 +3,7 @@ keys:
   - &preprod1-bp-a-1 age1zhewzr3r8u4qmu9c5asw0vv9pw9qxvah9y60reu5uggrr8vrd95skhn3q3
   - &preview1-bp-a-1 age10mgec0e4xp87x79fsd5r9pdggt8gr4mjpnj98zhlpvzx6almhd5sxrakyh
   - &sanchonet1-bp-a-1 age1apa4g9hfjaq9kp95utg5jeqm9zmdhylcfsqmekrl0ptg4wjt53fsrfffy9
+  - &sanchonet1-faucet-a-1 age15cj5hg52ep6ccc4t5xm9ncuf94m2ds4k02lzzvmeykx2z4gc83es5ze452
   - &shelley-qa1-bp-a-1 age1e2lurmyrrsfmfen9dgmdkmjwgmfaz4y7ecysdtpc8pd9qr4htfasvs0az8
 creation_rules:
   # -------------------------------------------------------
@@ -32,6 +33,12 @@ creation_rules:
     - age:
       - *sre
       - *preview1-bp-a-1
+
+  - path_regex: secrets/groups/sanchonet1/deploy/.*faucet.*$
+    key_groups:
+    - age:
+      - *sre
+      - *sanchonet1-faucet-a-1
 
   - path_regex: secrets/groups/sanchonet1/deploy/.*$
     key_groups:

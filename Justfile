@@ -241,6 +241,7 @@ save-bootstrap-ssh-key:
   #!/usr/bin/env nu
   print "Retrieving ssh key from terraform..."
   terraform workspace select -or-create cluster
+  terraform init -reconfigure
   let tf = (terraform show -json | from json)
   let key = ($tf.values.root_module.resources | where type == tls_private_key and name == bootstrap)
   $key.values.private_key_openssh | save .ssh_key

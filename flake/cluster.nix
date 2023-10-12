@@ -16,6 +16,8 @@ with flake.lib; {
         us-east-2 = true;
       };
 
+      # DNS migration in progress
+      # domain = "play.dev.cardano.org";
       domain = "play.aws.iohkdev.io";
 
       # Preset defaults matched to default terraform rain infra; change if desired:
@@ -34,14 +36,15 @@ with flake.lib; {
             meta = {inherit environmentName;};
           }
           // optionalAttrs isNg {
-            # For the latest genesis only compatible with >= node 8.3.1
+            # For the latest genesis only compatible with >= node 8.5.0
             lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
 
             # Until upstream parts ng has capkgs version, use local flake pins
+            pkgs.cardano-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-cli-ng);
             pkgs.cardano-db-sync = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-sync-ng);
             pkgs.cardano-db-tool = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-tool-ng);
             pkgs.cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng;
-            pkgs.cardano-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-cli-ng);
+            pkgs.cardano-faucet = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
             pkgs.cardano-node = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-node-ng);
             pkgs.cardano-smash = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-smash-ng);
             pkgs.cardano-submit-api = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-submit-api-ng);

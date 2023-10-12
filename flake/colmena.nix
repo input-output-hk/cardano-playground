@@ -54,10 +54,22 @@ in {
       ];
     };
 
+    faucet = {
+      imports = [
+        # TODO: Module import fixup for local services
+        # config.flake.cardano-parts.cluster.group.default.meta.cardano-faucet-service
+        inputs.cardano-parts.nixosModules.service-cardano-faucet
+
+        inputs.cardano-parts.nixosModules.profile-cardano-faucet
+        {services.cardano-faucet.acmeEmail = "devops@iohk.io";}
+      ];
+    };
+
     smash = {
       imports = [
         config.flake.cardano-parts.cluster.group.default.meta.cardano-smash-service
         inputs.cardano-parts.nixosModules.profile-cardano-smash
+        {services.cardano-smash.acmeEmail = "devops@iohk.io";}
       ];
     };
 
@@ -182,6 +194,7 @@ in {
     sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash];};
+    sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet];};
 
     sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node topoSimple];};
     sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};

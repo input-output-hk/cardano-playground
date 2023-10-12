@@ -10,7 +10,6 @@
 
     # Local pins for additional customization:
     cardano-node.url = "github:input-output-hk/cardano-node/8.1.2";
-    cardano-node-ng.url = "github:input-output-hk/cardano-node/release/8.4.x";
     cardano-node-821-pre.url = "github:input-output-hk/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:input-output-hk/cardano-node/utxo-hd-8.2.1";
 
