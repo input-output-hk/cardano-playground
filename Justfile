@@ -223,8 +223,8 @@ list-machines:
 
   let sshNodesDfr = (
     $sshNodes.stdout
-      | jq 'map(select(.HostName != null))'
       | from json
+      | where ('HostName' in $it)
       | rename Host IP
       | dfr into-df
   )
