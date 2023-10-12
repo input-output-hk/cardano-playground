@@ -1,4 +1,4 @@
-flake:
+flake @ {withSystem, ...}:
 with flake.lib; {
   # Define some cluster-wide configuration.
   # This has to evaluate fast and is imported in various places.
@@ -16,6 +16,8 @@ with flake.lib; {
         us-east-2 = true;
       };
 
+      # DNS migration in progress
+      # domain = "play.dev.cardano.org";
       domain = "play.aws.iohkdev.io";
 
       # Preset defaults matched to default terraform rain infra; change if desired:
@@ -25,7 +27,7 @@ with flake.lib; {
 
     infra.grafana.stackName = "cardanoplayground";
 
-    group = let
+    groups = let
       mkGroup = name: environmentName: groupRelayMultivalueDns: isNg: {
         ${name} =
           {
@@ -34,10 +36,18 @@ with flake.lib; {
             meta = {inherit environmentName;};
           }
           // optionalAttrs isNg {
-            # For the latest genesis only compatible with 8.3.1
+            # For the latest genesis only compatible with >= node 8.5.0
             lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
 
             # Until upstream parts ng has capkgs version, use local flake pins
+            pkgs.cardano-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-cli-ng);
+            pkgs.cardano-db-sync = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-sync-ng);
+            pkgs.cardano-db-tool = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-tool-ng);
+            pkgs.cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng;
+            pkgs.cardano-faucet = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
+            pkgs.cardano-node = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-node-ng);
+            pkgs.cardano-smash = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-smash-ng);
+            pkgs.cardano-submit-api = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-submit-api-ng);
             pkgs.cardano-node-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng;
           };
       };
@@ -51,8 +61,6 @@ with flake.lib; {
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet.${infra.aws.domain}" true)
       // (mkGroup "sanchonet2" "sanchonet" null true)
       // (mkGroup "sanchonet3" "sanchonet" null true)
-      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa.${infra.aws.domain}" true)
-      // (mkGroup "shelley-qa2" "shelley_qa" null true)
-      // (mkGroup "shelley-qa3" "shelley_qa" null true);
+      // (mkGroup "mainnet1" "mainnet" null false);
   };
 }
