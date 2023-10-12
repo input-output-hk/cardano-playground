@@ -61,9 +61,6 @@ with flake.lib; {
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet.${infra.aws.domain}" true)
       // (mkGroup "sanchonet2" "sanchonet" null true)
       // (mkGroup "sanchonet3" "sanchonet" null true)
-      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa.${infra.aws.domain}" true)
-      // (mkGroup "shelley-qa2" "shelley_qa" null true)
-      // (mkGroup "shelley-qa3" "shelley_qa" null true)
       // (mkGroup "mainnet1" "mainnet" null false);
   };
 }
