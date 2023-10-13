@@ -16,9 +16,7 @@ with flake.lib; {
         us-east-2 = true;
       };
 
-      # DNS migration in progress
-      # domain = "play.dev.cardano.org";
-      domain = "play.aws.iohkdev.io";
+      domain = "play.dev.cardano.org";
 
       # Preset defaults matched to default terraform rain infra; change if desired:
       # kms = "arn:aws:kms:${region}:${orgId}:alias/kmsKey";
