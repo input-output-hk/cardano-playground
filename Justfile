@@ -212,8 +212,9 @@ list-machines:
   }
 
   let nixosNodesDfr = (
-    $nixosNodes.stdout
-      | from json
+    let nodeList = ($nixosNodes.stdout | from json);
+    let sanitizedList = (if ($nodeList | is-empty) { $nodeList | insert 0 "" } else { $nodeList });
+    $sanitizedList
       | insert 0 "machine"
       | each {|i| [$i] | into record }
       | headers
@@ -222,11 +223,13 @@ list-machines:
   )
 
   let sshNodesDfr = (
-    $sshNodes.stdout
-      | from json
-      | where ('HostName' in $it)
-      | rename Host IP
-      | dfr into-df
+    let sshTable = ($sshNodes.stdout | from json | where ('HostName' in $it));
+    if ($sshTable | is-empty) {
+      [[Host IP]; ["" ""]] | dfr into-df
+    }
+    else {
+      $sshTable | rename Host IP | dfr into-df
+    }
   )
 
   (
@@ -235,6 +238,7 @@ list-machines:
       | dfr sort-by machine
       | dfr into-nu
       | update cells { |v| if $v == null {"Missing"} else {$v}}
+      | where machine != ""
   )
 
 save-bootstrap-ssh-key:
