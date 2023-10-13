@@ -50,13 +50,13 @@ with flake.lib; {
           };
       };
     in
-      (mkGroup "preprod1" "preprod" "preprod.${infra.aws.domain}" false)
+      (mkGroup "preprod1" "preprod" "preprod-node.${infra.aws.domain}" false)
       // (mkGroup "preprod2" "preprod" null false)
       // (mkGroup "preprod3" "preprod" null false)
-      // (mkGroup "preview1" "preview" "preview.${infra.aws.domain}" false)
+      // (mkGroup "preview1" "preview" "preview-node.${infra.aws.domain}" false)
       // (mkGroup "preview2" "preview" null false)
       // (mkGroup "preview3" "preview" null false)
-      // (mkGroup "sanchonet1" "sanchonet" "sanchonet.${infra.aws.domain}" true)
+      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
       // (mkGroup "sanchonet2" "sanchonet" null true)
       // (mkGroup "sanchonet3" "sanchonet" null true)
       // (mkGroup "mainnet1" "mainnet" null false);
