@@ -207,7 +207,7 @@ in {
     sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
     sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
 
-    sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node topoBp];};
+    sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp];};
     sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
