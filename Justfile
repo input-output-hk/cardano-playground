@@ -43,6 +43,7 @@ run:
 
   echo "Generating state-demo config..."
 
+  export ENV=custom
   export GENESIS_DIR=state-demo
   export KEY_DIR=state-demo/envs/custom
   export DATA_DIR=state-demo/rundir
@@ -97,6 +98,13 @@ run:
     POOL_RELAY_PORT=3001 \
     ERA="--alonzo-era" \
     nix run .#job-register-stake-pools
+  echo "Sleeping 7 seconds until $(date -d  @$(($(date +%s) + 7)))"
+  sleep 7
+  echo
+
+  echo "Delegating rewards stake key..."
+  ERA="--alonzo-era" \
+    nix run .#job-delegate-rewards-stake-key
   echo "Sleeping 320 seconds until $(date -d  @$(($(date +%s) + 320)))"
   sleep 320
   echo
