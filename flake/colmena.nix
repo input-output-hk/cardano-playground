@@ -17,7 +17,7 @@ in {
     t3a-small.aws.instance.instance_type = "t3a.small";
     t3a-medium.aws.instance.instance_type = "t3a.medium";
     m5a-large.aws.instance.instance_type = "m5a.large";
-    r5-xlarge.aws.instance.instance_type = "r5.xlarge";
+    # r5-xlarge.aws.instance.instance_type = "r5.xlarge";
     r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
 
     # Helper fns:
@@ -42,6 +42,12 @@ in {
 
     # Profiles
     pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+
+    ram8gib = nixos: {
+      # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
+      services.cardano-node.totalMaxHeapSizeMiB = 5734;
+      systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
+    };
 
     node821 = {
       imports = [
@@ -115,7 +121,7 @@ in {
       ];
     };
 
-    sanchoFaucetMigrate = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.world.dev.cardano.org"];};
+    sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.play.dev.cardano.org" "faucet.sanchonet.world.dev.cardano.org"];};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -202,7 +208,7 @@ in {
     sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash];};
-    sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucetMigrate];};
+    sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
 
     sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
     sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
@@ -218,9 +224,9 @@ in {
     # ---------------------------------------------------------------------------------------------------------
     # Mainnet
     mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
-    mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
-    mainnet1-rel-a-2 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node nodeHd];};
-    mainnet1-rel-a-3 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node nodeHd lmdb];};
-    mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
+    mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node ram8gib];};
+    mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd ram8gib];};
+    mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
+    mainnet1-rel-a-4 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node node821 ram8gib];};
   };
 }
