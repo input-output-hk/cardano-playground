@@ -1,13 +1,28 @@
 keys:
+  # SRE
   - &sre age1rj7vaq0rsarnum2fx6zq0k3l64f6mca9t9mlhqu4nfvpqhux6uts5zud2m
+
+  # Misc
+  - &misc1-metadata-a-1 age187hd0pffv549vfcmnw5u9yg3fck9e4psesz2xchrklqjqepccd7s6vlkcv
+
+  # Preprod
   - &preprod1-bp-a-1 age1zhewzr3r8u4qmu9c5asw0vv9pw9qxvah9y60reu5uggrr8vrd95skhn3q3
   - &preprod1-faucet-a-1 age13mcml2m95r7rm7qmgd8vmpv3afce2ckyk0szgter6c3st75gf5cs4j6dq5
+  - &preprod2-bp-b-1 age1mcvj04swen8l0yjgkpng3rpzdk0xycg52h2g2ktflhw3szvg83rqcvdawg
+  - &preprod3-bp-c-1 age18c8cwh94uyvt0a65pashccsp7falmqhdhp4p9paug2v3af9etfwsq67ds6
+
+  # Preview
   - &preview1-bp-a-1 age10mgec0e4xp87x79fsd5r9pdggt8gr4mjpnj98zhlpvzx6almhd5sxrakyh
   - &preview1-faucet-a-1 age1mcyrt3d2d092gall6s8rm5drcffaawh29ssuqszzzeempsezxs3qh2n2uk
+  - &preview2-bp-b-1 age1jcfeznfkxx2rmeej9f4frvnjqkxdpd9kg56l57nmtamq53802fjq7x2y69
+  - &preview3-bp-c-1 age13tc9mjgu7hwfxsa84hq0tcz7eeg9m6f0fmg8gzxwme30pfxf7g4sfk2y0k
+
+  # Sanchonet
   - &sanchonet1-bp-a-1 age1apa4g9hfjaq9kp95utg5jeqm9zmdhylcfsqmekrl0ptg4wjt53fsrfffy9
   - &sanchonet1-faucet-a-1 age15cj5hg52ep6ccc4t5xm9ncuf94m2ds4k02lzzvmeykx2z4gc83es5ze452
   - &sanchonet2-bp-b-1 age10ethn6sqe2fcx03pev0vddteg9jwe7azydq9glj9eyppdkqy855sxv40k9
   - &sanchonet3-bp-c-1 age1hpyzunphtls4tfk5j4dc4rxg55essxd3ht7fweapumfzqe8h5suq0xa699
+
 creation_rules:
   # -------------------------------------------------------
   # General environment secrets are admin only
@@ -25,6 +40,7 @@ creation_rules:
 
   # -------------------------------------------------------
   # Group producer and other secrets
+  # Preprod specific
   - path_regex: secrets/groups/preprod1/deploy/.*faucet.*$
     key_groups:
     - age:
@@ -37,6 +53,19 @@ creation_rules:
       - *sre
       - *preprod1-bp-a-1
 
+  - path_regex: secrets/groups/preprod2/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preprod2-bp-b-1
+
+  - path_regex: secrets/groups/preprod3/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preprod3-bp-c-1
+
+  # Preview specific
   - path_regex: secrets/groups/preview1/deploy/.*faucet.*$
     key_groups:
     - age:
@@ -49,6 +78,19 @@ creation_rules:
       - *sre
       - *preview1-bp-a-1
 
+  - path_regex: secrets/groups/preview2/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preview2-bp-b-1
+
+  - path_regex: secrets/groups/preview3/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preview3-bp-c-1
+
+  # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*faucet.*$
     key_groups:
     - age:
