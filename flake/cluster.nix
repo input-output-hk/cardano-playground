@@ -16,9 +16,7 @@ with flake.lib; {
         us-east-2 = true;
       };
 
-      # DNS migration in progress
-      # domain = "play.dev.cardano.org";
-      domain = "play.aws.iohkdev.io";
+      domain = "play.dev.cardano.org";
 
       # Preset defaults matched to default terraform rain infra; change if desired:
       # kms = "arn:aws:kms:${region}:${orgId}:alias/kmsKey";
@@ -52,15 +50,16 @@ with flake.lib; {
           };
       };
     in
-      (mkGroup "preprod1" "preprod" "preprod.${infra.aws.domain}" false)
-      // (mkGroup "preprod2" "preprod" null false)
-      // (mkGroup "preprod3" "preprod" null false)
-      // (mkGroup "preview1" "preview" "preview.${infra.aws.domain}" false)
-      // (mkGroup "preview2" "preview" null false)
-      // (mkGroup "preview3" "preview" null false)
-      // (mkGroup "sanchonet1" "sanchonet" "sanchonet.${infra.aws.domain}" true)
-      // (mkGroup "sanchonet2" "sanchonet" null true)
-      // (mkGroup "sanchonet3" "sanchonet" null true)
-      // (mkGroup "mainnet1" "mainnet" null false);
+      (mkGroup "preprod1" "preprod" "preprod-node.${infra.aws.domain}" false)
+      // (mkGroup "preprod2" "preprod" "preprod-node.${infra.aws.domain}" false)
+      // (mkGroup "preprod3" "preprod" "preprod-node.${infra.aws.domain}" false)
+      // (mkGroup "preview1" "preview" "preview-node.${infra.aws.domain}" false)
+      // (mkGroup "preview2" "preview" "preview-node.${infra.aws.domain}" false)
+      // (mkGroup "preview3" "preview" "preview-node.${infra.aws.domain}" false)
+      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
+      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
+      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
+      // (mkGroup "mainnet1" "mainnet" null false)
+      // (mkGroup "misc1" "preprod" null false);
   };
 }

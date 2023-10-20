@@ -17,7 +17,7 @@ in {
     t3a-small.aws.instance.instance_type = "t3a.small";
     t3a-medium.aws.instance.instance_type = "t3a.medium";
     m5a-large.aws.instance.instance_type = "m5a.large";
-    r5-xlarge.aws.instance.instance_type = "r5.xlarge";
+    # r5-xlarge.aws.instance.instance_type = "r5.xlarge";
     r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
 
     # Helper fns:
@@ -41,8 +41,13 @@ in {
     };
 
     # Profiles
-    topoSimple = {imports = [inputs.cardano-parts.nixosModules.profile-topology-simple];};
     pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+
+    ram8gib = nixos: {
+      # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
+      services.cardano-node.totalMaxHeapSizeMiB = 5734;
+      systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
+    };
 
     node821 = {
       imports = [
@@ -86,9 +91,14 @@ in {
     # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html#13.1/
     # snapshot = {services.cardano-db-sync.restoreSnapshot = "$SNAPSHOT_URL";};
 
+    # Topology profiles
+    # Note: not including a topology profile will default to edge topology if module profile-cardano-node-group is imported
+    topoBp = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "bp";};}];};
+    topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
+
     # Roles
-    rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoSimple];};
-    bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoSimple];};
+    bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoBp];};
+    rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
     dbsync = {
       imports = [
@@ -110,6 +120,8 @@ in {
         {services.cardano-faucet.acmeEmail = "devops@iohk.io";}
       ];
     };
+
+    sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.play.dev.cardano.org" "faucet.sanchonet.world.dev.cardano.org"];};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -151,42 +163,42 @@ in {
     # Setup cardano-world networks:
     # ---------------------------------------------------------------------------------------------------------
     # Preprod, two-thirds on release tag, one-third on pre-release tag
-    preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node topoSimple];};
+    preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node bp];};
     preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preprod1") dbsync];};
     preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node faucet pre];};
 
-    # preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node topoSimple];};
-    # preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod2") node rel];};
-    # preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel];};
-    # preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod2") node rel];};
+    preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp];};
+    preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod2") node rel];};
+    preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel];};
+    preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod2") node rel];};
 
-    # preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node topoSimple pre];};
-    # preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
-    # preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
-    # preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
+    preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node bp pre];};
+    preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
+    preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
+    preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
     # Preview, one-third on release tag, two-thirds on pre-release tag
-    preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node topoSimple];};
+    preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node bp];};
     preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync];};
     preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre];};
 
-    # preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node topoSimple pre];};
-    # preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
-    # preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
-    # preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre];};
+    preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre];};
+    preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
+    preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
+    preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre];};
 
-    # preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node topoSimple pre];};
-    # preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
-    # preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
-    # preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre];};
+    preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node bp pre];};
+    preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
+    preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
+    preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
@@ -196,14 +208,14 @@ in {
     sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash];};
-    sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet];};
+    sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
 
-    sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node topoSimple];};
+    sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
     sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
     sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
     sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
 
-    sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node topoSimple];};
+    sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp];};
     sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
@@ -212,9 +224,15 @@ in {
     # ---------------------------------------------------------------------------------------------------------
     # Mainnet
     mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
-    mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
-    mainnet1-rel-a-2 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node nodeHd];};
-    mainnet1-rel-a-3 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node nodeHd lmdb];};
-    mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node node821];};
+    mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node ram8gib];};
+    mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
+    mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
+    mainnet1-rel-a-4 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node node821 ram8gib];};
+    # ---------------------------------------------------------------------------------------------------------
+
+    # ---------------------------------------------------------------------------------------------------------
+    # Misc
+    misc1-metadata-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "misc1")];};
+    # ---------------------------------------------------------------------------------------------------------
   };
 }
