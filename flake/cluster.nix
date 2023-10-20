@@ -51,11 +51,11 @@ with flake.lib; {
       };
     in
       (mkGroup "preprod1" "preprod" "preprod-node.${infra.aws.domain}" false)
-      // (mkGroup "preprod2" "preprod" null false)
-      // (mkGroup "preprod3" "preprod" null false)
+      // (mkGroup "preprod2" "preprod" "preprod-node.${infra.aws.domain}" false)
+      // (mkGroup "preprod3" "preprod" "preprod-node.${infra.aws.domain}" false)
       // (mkGroup "preview1" "preview" "preview-node.${infra.aws.domain}" false)
-      // (mkGroup "preview2" "preview" null false)
-      // (mkGroup "preview3" "preview" null false)
+      // (mkGroup "preview2" "preview" "preview-node.${infra.aws.domain}" false)
+      // (mkGroup "preview3" "preview" "preview-node.${infra.aws.domain}" false)
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
       // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
       // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
