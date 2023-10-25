@@ -49,21 +49,21 @@ in {
       systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
     };
 
-    # ram4gib = nixos: {
-    #   # On an 4 GiB machine, 3.5 GiB is reported as available in free -h
-    #   services.cardano-node.totalMaxHeapSizeMiB = 2867;
-    #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
-    # };
+    ram4gib = nixos: {
+      # On an 4 GiB machine, 3.5 GiB is reported as available in free -h
+      services.cardano-node.totalMaxHeapSizeMiB = 2867;
+      systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
+    };
 
     # ram2gibActual = nixos: {
     #   services.cardano-node.totalMaxHeapSizeMiB = 1638;
     #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "2G";
     # };
 
-    ram1p5gibActual = nixos: {
-      services.cardano-node.totalMaxHeapSizeMiB = 1229;
-      systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "1536M";
-    };
+    # ram1p5gibActual = nixos: {
+    #   services.cardano-node.totalMaxHeapSizeMiB = 1229;
+    #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "1536M";
+    # };
 
     # ram2gib = nixos: {
     #   # On an 2 GiB machine, 1.5 GiB is reported as available in free -h
@@ -248,7 +248,7 @@ in {
     # Mainnet
     mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
     mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node ram8gib];};
-    mainnet1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 300) (group "mainnet1") node nodeHd lmdb ram1p5gibActual];};
+    mainnet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 300) (group "mainnet1") node nodeHd lmdb ram4gib];};
     mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
     mainnet1-rel-a-4 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node node821 ram8gib];};
     # ---------------------------------------------------------------------------------------------------------
