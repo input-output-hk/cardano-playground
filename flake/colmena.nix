@@ -49,6 +49,28 @@ in {
       systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
     };
 
+    # ram4gib = nixos: {
+    #   # On an 4 GiB machine, 3.5 GiB is reported as available in free -h
+    #   services.cardano-node.totalMaxHeapSizeMiB = 2867;
+    #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
+    # };
+
+    # ram2gibActual = nixos: {
+    #   services.cardano-node.totalMaxHeapSizeMiB = 1638;
+    #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "2G";
+    # };
+
+    ram1p5gibActual = nixos: {
+      services.cardano-node.totalMaxHeapSizeMiB = 1229;
+      systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "1536M";
+    };
+
+    # ram2gib = nixos: {
+    #   # On an 2 GiB machine, 1.5 GiB is reported as available in free -h
+    #   services.cardano-node.totalMaxHeapSizeMiB = 819;
+    #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "1G";
+    # };
+
     node821 = {
       imports = [
         (nixos: {
@@ -121,6 +143,7 @@ in {
       ];
     };
 
+    previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.play.dev.cardano.org" "faucet.preview.world.dev.cardano.org"];};
     sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.play.dev.cardano.org" "faucet.sanchonet.world.dev.cardano.org"];};
   in {
     meta = {
@@ -167,7 +190,7 @@ in {
     preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel];};
     preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel];};
-    preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preprod1") dbsync];};
+    preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preprod1") dbsync smash];};
     preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node faucet pre];};
 
     preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp];};
@@ -187,8 +210,8 @@ in {
     preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel];};
-    preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync];};
-    preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre];};
+    preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync smash];};
+    preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre previewFaucet];};
 
     preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre];};
     preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
@@ -225,7 +248,7 @@ in {
     # Mainnet
     mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
     mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node ram8gib];};
-    mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
+    mainnet1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 300) (group "mainnet1") node nodeHd lmdb ram1p5gibActual];};
     mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
     mainnet1-rel-a-4 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node node821 ram8gib];};
     # ---------------------------------------------------------------------------------------------------------
