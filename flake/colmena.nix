@@ -5,6 +5,7 @@
   ...
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
+  inherit (config.flake.cardano-parts.cluster.infra.aws) domain;
 in {
   flake.colmena = let
     # Region defs:
@@ -132,6 +133,9 @@ in {
       ];
     };
 
+    previewSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
+    sanchoSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
+
     faucet = {
       imports = [
         # TODO: Module import fixup for local services
@@ -143,8 +147,8 @@ in {
       ];
     };
 
-    previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.play.dev.cardano.org" "faucet.preview.world.dev.cardano.org"];};
-    sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.play.dev.cardano.org" "faucet.sanchonet.world.dev.cardano.org"];};
+    previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
+    sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -210,7 +214,7 @@ in {
     preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel];};
     preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel];};
-    preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync smash];};
+    preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync smash previewSmash];};
     preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre previewFaucet];};
 
     preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre];};
@@ -230,7 +234,7 @@ in {
     sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
     sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
-    sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash];};
+    sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
     sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
 
     sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
@@ -242,6 +246,26 @@ in {
     sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
     sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
+    # ---------------------------------------------------------------------------------------------------------
+
+    # ---------------------------------------------------------------------------------------------------------
+    # Shelley-qa, pre-release
+    shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node bp];};
+    shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
+    shelley-qa1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
+    shelley-qa1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
+    shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "shelley-qa1") dbsync smash];};
+    shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node];};
+
+    shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa2") node bp];};
+    shelley-qa2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa2") node rel];};
+    shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa2") node rel];};
+    shelley-qa2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa2") node rel];};
+
+    shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa3") node bp];};
+    shelley-qa3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa3") node rel];};
+    shelley-qa3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa3") node rel];};
+    shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa3") node rel];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
