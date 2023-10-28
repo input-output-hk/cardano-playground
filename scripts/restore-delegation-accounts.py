@@ -26,7 +26,6 @@ network_args = []
 
 if arguments["--signing-key-file"] and os.path.exists(arguments["--signing-key-file"]):
     utxo_signing_key = Path(arguments["--signing-key-file"])
-
 else:
     print("Must specify signing key file")
     exit(1)
@@ -63,16 +62,14 @@ def derive_account_key(root_key, public=False):
     return derive_child_key(root_key, "1852H/1815H/0H", public=public)
 
 
-def derive_payment_address_cli_skey(payment_key_file):
+def derive_payment_address_cli_skey(payment_key_file_str):
     with tempfile.NamedTemporaryFile("w+") as payment_vkey:
         cli_args = [
-            "cardano-cli",
-            "key",
-            "verification-key",
-            "--signing-key-file",
-            payment_key_file,
-            "--verification-key-file",
-            payment_vkey.name,
+            "bash",
+            "-c",
+            "cardano-cli key verification-key"
+            f" --signing-key-file <(echo '{payment_key_file_str}')"
+            f" --verification-key-file {payment_vkey.name}"
         ]
         p = subprocess.run(cli_args, input=None, capture_output=True, text=True)
         if p.returncode != 0:
@@ -226,19 +223,14 @@ def get_largest_utxo_for_address(address):
     return txin
 
 
-def signTx(tx_body, utxo_signing_key, stake_signing_key, out_file):
+def signTx(tx_body, utxo_signing_key_str, stake_signing_key, out_file):
     cli_args = [
-        "cardano-cli",
-        "transaction",
-        "sign",
-        "--tx-body-file",
-        tx_body.name,
-        "--signing-key-file",
-        utxo_signing_key,
-        "--signing-key-file",
-        stake_signing_key.name,
-        "--out-file",
-        out_file,
+        "bash",
+        "-c",
+        f"cardano-cli transaction sign --tx-body-file {tx_body.name}"
+        f" --signing-key-file <(echo '{utxo_signing_key_str}')"
+        f" --signing-key-file {stake_signing_key.name}"
+        f" --out-file {out_file}"
     ]
     p = subprocess.run(cli_args, input=None, capture_output=True, text=True)
     if p.returncode != 0:
@@ -373,7 +365,14 @@ else:
     print("Must specify wallet mnemonic")
     exit(1)
 
-payment_addr = derive_payment_address_cli_skey(utxo_signing_key)
+# Read the signing key file to re-inject it with bash file substitution.
+# This allows for providing file substitution for script file arg inputs, to sops decrypt for example.
+# Otherwise, the first subprocess call will close the available fd and it won't
+# be usable for subsequent calls.
+with open(utxo_signing_key, "r") as file:
+    utxo_signing_key_str = file.read()
+
+payment_addr = derive_payment_address_cli_skey(utxo_signing_key_str)
 txin = get_largest_utxo_for_address(payment_addr)
 stake_xsk = derive_child_key(wallet_account_skey, f"2/{d_idx}", public=False, chain_code=True)
 stake_vkey_ext = derive_child_key(wallet_account_skey, f"2/{d_idx}", public=True, chain_code=True)
@@ -391,9 +390,8 @@ print(f"delegation_address = {delegation_address}")
 print(f"rewards = {rewards}")
 print("")
 print("Building transaction...")
-txid = createRecoveryTx(txin, stake_xsk, stake_vkey, stake_address, delegation_address, rewards, payment_addr, utxo_signing_key, f"tx-deleg-account-{d_idx}-restore.txsigned")
+txid = createRecoveryTx(txin, stake_xsk, stake_vkey, stake_address, delegation_address, rewards, payment_addr, utxo_signing_key_str, f"tx-deleg-account-{d_idx}-restore.txsigned")
 print(f"txid = {txid}")
 print("")
 print("Sending transaction...")
 sendTx(f"tx-deleg-account-{d_idx}-restore.txsigned")
-exit

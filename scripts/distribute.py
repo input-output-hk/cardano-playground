@@ -15,14 +15,20 @@ Options:
 
 """
 
+# Example payments-json file struct:
+# [
+#   {"addr_test1...": 10000200000},
+#   ...
+#   {"addr_test1...": 10000200000}
+# ]
+
 import json
 import os
 import subprocess
-import time
 from docopt import docopt
 from pathlib import Path
 
-arguments = docopt(__doc__, version='Distribute 0.0')
+arguments = docopt(__doc__, version='distribute 0.0')
 network_args = []
 
 if arguments["--address"]:
@@ -33,7 +39,6 @@ else:
 
 if arguments["--signing-key-file"] and os.path.exists(arguments["--signing-key-file"]):
   utxo_signing_key = Path(arguments["--signing-key-file"])
-
 else:
   print("Must specify signing key file")
   exit(1)
@@ -67,7 +72,6 @@ def createTransaction(start, end, txin, payments_txouts, utxo_signing_key):
         payments_txout_args.extend(["--tx-out", f"{k}+{v}"])
         total_payments_spent += v
 
-    num_keys = end - start + 1
     txin_str = txin[0]
     ttl=getTTL(86400)
     pparams = getPParams()
@@ -86,7 +90,7 @@ def createTransaction(start, end, txin, payments_txouts, utxo_signing_key):
     return (f"{new_txin}#0", tx_out_amount, fee)
 
 def getLargestUtxoForAddress(address):
-    p = subprocess.run(["cardano-cli", "query", "utxo", "--out-file", "tmp_utxo.json", *network_args, "--address", address])
+    subprocess.run(["cardano-cli", "query", "utxo", "--out-file", "tmp_utxo.json", *network_args, "--address", address])
     f = open("tmp_utxo.json")
     utxo = json.load(f)
     if not utxo:
@@ -118,7 +122,7 @@ def estimateFeeTx(txbody, txin_count, txout_count, pparams):
     return int(p.stdout.rstrip().split(" ")[0])
 
 def signTx(tx_body_prefix, utxo_signing_key):
-    p = subprocess.run(["cardano-cli", "transaction", "sign", "--tx-body-file", f"{tx_body_prefix}.txbody", "--out-file", f"{tx_body_prefix}.txsigned", "--signing-key-file", utxo_signing_key])
+    subprocess.run(["cardano-cli", "transaction", "sign", "--tx-body-file", f"{tx_body_prefix}.txbody", "--out-file", f"{tx_body_prefix}.txsigned", "--signing-key-file", utxo_signing_key])
     return f"{tx_body_prefix}.txsigned"
 
 def getAccountsFromFile(filename):

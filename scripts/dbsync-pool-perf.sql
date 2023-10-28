@@ -162,7 +162,7 @@ with
     order by addr_id, cert_index desc),
 
   -- Most recent faucet pool delegations per stake address
-  -- This query uses the faucet_key_addr table which is a custom added static table of: key as faucet_delegation_index, value as stake_address
+  -- This query uses the faucet_stake_addr table which is a custom added static table of: key as faucet_delegation_index, value as stake_address
   -- This query's second column is a function of the first column
   faucet_pool_last_active AS (
     select
