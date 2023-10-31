@@ -17,6 +17,12 @@ keys:
   - &preview2-bp-b-1 age1jcfeznfkxx2rmeej9f4frvnjqkxdpd9kg56l57nmtamq53802fjq7x2y69
   - &preview3-bp-c-1 age13tc9mjgu7hwfxsa84hq0tcz7eeg9m6f0fmg8gzxwme30pfxf7g4sfk2y0k
 
+  # Private
+  - &private1-bp-a-1 age1pwmcf9nez82glwzk3mfcfyv0wnc4yev8pjhxk43fwgcr3m8yjsesjdfha0
+  - &private1-faucet-a-1 age1lack6chc6czx8t9sc9ayc3wq0du82ne6l8m5h6lwz8zn6rxz5gqqtpz4z2
+  - &private2-bp-b-1 age1wewhhymvzljpgy7v9caud2zmgjt7dsdcluvpq8373ueuj5qv435qgn9xae
+  - &private3-bp-c-1 age1ay9e566ksavc46809vzjzcwlsu06dzr869fdv8qf9p9qu69qva4ssdv4af
+
   # Sanchonet
   - &sanchonet1-bp-a-1 age1apa4g9hfjaq9kp95utg5jeqm9zmdhylcfsqmekrl0ptg4wjt53fsrfffy9
   - &sanchonet1-faucet-a-1 age15cj5hg52ep6ccc4t5xm9ncuf94m2ds4k02lzzvmeykx2z4gc83es5ze452
@@ -95,6 +101,31 @@ creation_rules:
     - age:
       - *sre
       - *preview3-bp-c-1
+
+  # Private specific
+  - path_regex: secrets/groups/private1/deploy/.*faucet.*$
+    key_groups:
+    - age:
+      - *sre
+      - *private1-faucet-a-1
+
+  - path_regex: secrets/groups/private1/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *private1-bp-a-1
+
+  - path_regex: secrets/groups/private2/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *private2-bp-b-1
+
+  - path_regex: secrets/groups/private3/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *private3-bp-c-1
 
   # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*faucet.*$

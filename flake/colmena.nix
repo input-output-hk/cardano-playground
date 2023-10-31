@@ -119,6 +119,7 @@ in {
 
     preprodSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preprod-smash" "preprod-explorer"]);};
     previewSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
+    privateSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}"]) ["private-smash" "private-explorer"]);};
     sanchoSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
 
     faucet = {
@@ -134,6 +135,7 @@ in {
 
     preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
     previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
+    privateFaucet = {services.cardano-faucet.serverAliases = ["faucet.private.${domain}"];};
     sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
   in {
     meta = {
@@ -216,19 +218,19 @@ in {
 
     # ---------------------------------------------------------------------------------------------------------
     # Private, pre-release
-    private1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node topoRel];};
+    private1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node bp];};
     private1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node rel];};
     private1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private1") node rel];};
     private1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private1") node rel];};
-    private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync smash];};
-    private1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node];};
+    private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync smash privateSmash];};
+    private1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node faucet privateFaucet];};
 
-    private2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private2") node topoRel];};
+    private2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private2") node bp];};
     private2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private2") node rel];};
     private2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private2") node rel];};
     private2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private2") node rel];};
 
-    private3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private3") node topoRel];};
+    private3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private3") node bp];};
     private3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private3") node rel];};
     private3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private3") node rel];};
     private3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private3") node rel];};
