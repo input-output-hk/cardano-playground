@@ -137,6 +137,19 @@ in {
     previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
     privateFaucet = {services.cardano-faucet.serverAliases = ["faucet.private.${domain}"];};
     sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
+
+    mkWorldRelayMig = worldPort: {
+      networking.firewall = {
+        allowedTCPPorts = [worldPort];
+        extraCommands = "iptables -t nat -A PREROUTING -i ens5 -p tcp --dport ${toString worldPort} -j REDIRECT --to-port 3001";
+        extraStopCommands = "iptables -t nat -D PREROUTING -i ens5 -p tcp --dport ${toString worldPort} -j REDIRECT --to-port 3001 || true";
+      };
+    };
+
+    # Preprod to be applied once preprod pools finish their retirement forging epoch and a CNAME redirect is applied
+    # preprodRelMig = mkWorldRelayMig 30000;
+    previewRelMig = mkWorldRelayMig 30002;
+    sanchoRelMig = mkWorldRelayMig 30004;
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -199,21 +212,21 @@ in {
     # ---------------------------------------------------------------------------------------------------------
     # Preview, one-third on release tag, two-thirds on pre-release tag
     preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node bp];};
-    preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel];};
-    preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel];};
-    preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel];};
+    preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
+    preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
+    preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
     preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync smash previewSmash];};
     preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre previewFaucet];};
 
     preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre];};
-    preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
-    preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre];};
-    preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre];};
+    preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
+    preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
+    preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
 
     preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node bp pre];};
-    preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
-    preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre];};
-    preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre];};
+    preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
+    preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
+    preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
@@ -239,21 +252,21 @@ in {
     # ---------------------------------------------------------------------------------------------------------
     # Sanchonet, pre-release
     sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp];};
-    sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
-    sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
-    sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel];};
+    sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
+    sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
+    sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
     sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
 
     sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
-    sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
-    sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
-    sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet2") node rel];};
+    sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
+    sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
+    sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
 
     sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp];};
-    sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
-    sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
-    sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node rel];};
+    sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
+    sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
+    sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------

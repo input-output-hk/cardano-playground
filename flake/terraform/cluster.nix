@@ -248,6 +248,24 @@ in {
                     to_port = 3001;
                   })
                   (mkRule {
+                    description = "Allow preprod world relay migration";
+                    from_port = 30000;
+                    to_port = 30000;
+                    protocol = "tcp";
+                  })
+                  (mkRule {
+                    description = "Allow preview world relay migration";
+                    from_port = 30002;
+                    to_port = 30002;
+                    protocol = "tcp";
+                  })
+                  (mkRule {
+                    description = "Allow sanchonet world relay migration";
+                    from_port = 30004;
+                    to_port = 30004;
+                    protocol = "tcp";
+                  })
+                  (mkRule {
                     description = "Allow Wireguard";
                     from_port = 51820;
                     to_port = 51820;
