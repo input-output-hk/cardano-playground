@@ -13,6 +13,9 @@
     cardano-node-821-pre.url = "github:input-output-hk/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:input-output-hk/cardano-node/utxo-hd-8.2.1";
 
+    cardano-node-ng.url = "github:input-output-hk/cardano-node/8.6.0-pre";
+    cardano-cli-ng.url = "github:input-output-hk/cardano-cli/cardano-cli-8.13.0.0";
+
     # For cardano-node service local debug:
     # cardano-node-service = {
     #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.4.0-pre";
