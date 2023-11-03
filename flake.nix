@@ -15,7 +15,7 @@
 
     # For cardano-node service local debug:
     # cardano-node-service = {
-    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.4.0-pre";
+    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.6.0-pre";
     #   flake = false;
     # };
   };

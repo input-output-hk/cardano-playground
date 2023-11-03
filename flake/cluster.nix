@@ -56,9 +56,15 @@ with flake.lib; {
       // (mkGroup "preview1" "preview" "preview-node.${infra.aws.domain}" false)
       // (mkGroup "preview2" "preview" "preview-node.${infra.aws.domain}" false)
       // (mkGroup "preview3" "preview" "preview-node.${infra.aws.domain}" false)
+      // (mkGroup "private1" "private" "private-node.${infra.aws.domain}" true)
+      // (mkGroup "private2" "private" "private-node.${infra.aws.domain}" true)
+      // (mkGroup "private3" "private" "private-node.${infra.aws.domain}" true)
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
       // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
       // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
+      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${infra.aws.domain}" true)
+      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${infra.aws.domain}" true)
+      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${infra.aws.domain}" true)
       // (mkGroup "mainnet1" "mainnet" null false)
       // (mkGroup "misc1" "preprod" null false);
   };

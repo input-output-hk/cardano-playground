@@ -8,7 +8,7 @@
 
     # Note that these package config assignments impact not only the devShell which utilize
     # the defined cardano-parts pkgs, but also deployable cluster groups which also may utilize them.
-    # cardano-parts.pkgs.cardano-node = flake.inputs.cardano-node.packages.${system}.cardano-node;
+    # cardano-parts.pkgs.cardano-cli-ng = flake.inputs.cardano-cli-ng.packages.${system}."cardano-cli:exe:cardano-cli";
     # cardano-parts.pkgs.cardano-node-ng = flake.inputs.cardano-node-ng.packages.${system}.cardano-node;
   };
 }

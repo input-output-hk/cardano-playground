@@ -94,33 +94,39 @@ in {
         data.aws_route53_zone.selected.name = "${cluster.domain}.";
 
         resource = {
-          aws_instance = mapNodes (name: node: {
-            inherit (node.aws.instance) count instance_type;
-            provider = awsProviderFor node.aws.region;
-            ami = amis.${node.system.stateVersion}.${node.aws.region}.hvm-ebs;
-            iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
-            monitoring = true;
-            key_name = "\${aws_key_pair.bootstrap_${underscore node.aws.region}[0].key_name}";
-            vpc_security_group_ids = [
-              "\${aws_security_group.common_${underscore node.aws.region}[0].id}"
-            ];
-            tags = node.aws.instance.tags or {Name = name;};
+          aws_instance = mapNodes (
+            name: node:
+              {
+                inherit (node.aws.instance) count instance_type;
+                provider = awsProviderFor node.aws.region;
+                ami = amis.${node.system.stateVersion}.${node.aws.region}.hvm-ebs;
+                iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
+                monitoring = true;
+                key_name = "\${aws_key_pair.bootstrap_${underscore node.aws.region}[0].key_name}";
+                vpc_security_group_ids = [
+                  "\${aws_security_group.common_${underscore node.aws.region}[0].id}"
+                ];
+                tags = node.aws.instance.tags or {Name = name;};
 
-            root_block_device = {
-              inherit (node.aws.instance.root_block_device) volume_size;
-              volume_type = "gp3";
-              iops = 3000;
-              delete_on_termination = true;
-            };
+                root_block_device = {
+                  inherit (node.aws.instance.root_block_device) volume_size;
+                  volume_type = "gp3";
+                  iops = 3000;
+                  delete_on_termination = true;
+                };
 
-            metadata_options = {
-              http_endpoint = "enabled";
-              http_put_response_hop_limit = 2;
-              http_tokens = "optional";
-            };
+                metadata_options = {
+                  http_endpoint = "enabled";
+                  http_put_response_hop_limit = 2;
+                  http_tokens = "optional";
+                };
 
-            lifecycle = [{ignore_changes = ["ami" "user_data"];}];
-          });
+                lifecycle = [{ignore_changes = ["ami" "user_data"];}];
+              }
+              // lib.optionalAttrs (node.aws.instance ? availability_zone) {
+                inherit (node.aws.instance) availability_zone;
+              }
+          );
 
           aws_iam_instance_profile.ec2_profile = {
             name = "ec2Profile";
@@ -246,6 +252,24 @@ in {
                     description = "Allow Cardano";
                     from_port = 3001;
                     to_port = 3001;
+                  })
+                  (mkRule {
+                    description = "Allow preprod world relay migration";
+                    from_port = 30000;
+                    to_port = 30000;
+                    protocol = "tcp";
+                  })
+                  (mkRule {
+                    description = "Allow preview world relay migration";
+                    from_port = 30002;
+                    to_port = 30002;
+                    protocol = "tcp";
+                  })
+                  (mkRule {
+                    description = "Allow sanchonet world relay migration";
+                    from_port = 30004;
+                    to_port = 30004;
+                    protocol = "tcp";
                   })
                   (mkRule {
                     description = "Allow Wireguard";
