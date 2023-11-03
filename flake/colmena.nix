@@ -121,6 +121,7 @@ in {
     previewSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
     privateSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}"]) ["private-smash" "private-explorer"]);};
     sanchoSmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
+    shelleySmash = {services.cardano-smash.serverAliases = lib.flatten (map (e: ["${e}.${domain}"]) ["shelley-qa-smash" "shelley-qa-explorer"]);};
 
     faucet = {
       imports = [
@@ -137,6 +138,7 @@ in {
     previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
     privateFaucet = {services.cardano-faucet.serverAliases = ["faucet.private.${domain}"];};
     sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
+    shelleyFaucet = {services.cardano-faucet.serverAliases = ["faucet.shelley-qa.${domain}"];};
 
     mkWorldRelayMig = worldPort: {
       networking.firewall = {
@@ -275,8 +277,8 @@ in {
     shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
     shelley-qa1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
     shelley-qa1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "shelley-qa1") node rel];};
-    shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "shelley-qa1") dbsync smash];};
-    shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node];};
+    shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "shelley-qa1") dbsync smash shelleySmash];};
+    shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa1") node faucet shelleyFaucet];};
 
     shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "shelley-qa2") node bp];};
     shelley-qa2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "shelley-qa2") node rel];};
