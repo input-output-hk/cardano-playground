@@ -573,11 +573,11 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1698943572,
-        "narHash": "sha256-mvx8zrJ6swWXZg7Xdo1rQbJcCzCo4ElFWnT6JiJl6Os=",
+        "lastModified": 1699986148,
+        "narHash": "sha256-ACSbwCqhv1WmP/BdPvVKaPnV84KGFYZt8lSgNjwMJFY=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "3eea399d8f4cc017add189672ea5950e3732c403",
+        "rev": "b07b4c771fb7d714fa4394b6f8c5072f95da2812",
         "type": "github"
       },
       "original": {
@@ -909,6 +909,19 @@
     "cardano-node-service": {
       "flake": false,
       "locked": {
+        "lastModified": 1699563669,
+        "narHash": "sha256-BWJ760JsM3hNZN5rCFwDtH+vDLwaHrilYkN9neqD734=",
+        "path": "/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt",
+        "type": "path"
+      }
+    },
+    "cardano-node-service_2": {
+      "flake": false,
+      "locked": {
         "lastModified": 1690209950,
         "narHash": "sha256-d0V8N+y/OarYv6GQycGXnbPly7GeJRBEeE1017qj9eI=",
         "owner": "input-output-hk",
@@ -930,7 +943,7 @@
         "cardano-db-sync-schema": "cardano-db-sync-schema",
         "cardano-db-sync-schema-ng": "cardano-db-sync-schema-ng",
         "cardano-db-sync-service": "cardano-db-sync-service",
-        "cardano-node-service": "cardano-node-service",
+        "cardano-node-service": "cardano-node-service_2",
         "cardano-wallet-service": "cardano-wallet-service",
         "colmena": "colmena",
         "empty-flake": "empty-flake_4",
@@ -949,11 +962,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1699316018,
-        "narHash": "sha256-5ss0IGhqMmsVoFA6/+ddOxdS7leF+onr7XPq/GxnVuk=",
+        "lastModified": 1699903539,
+        "narHash": "sha256-uKXOBEhyxGN2TYrXS7WhrIIsH7wB3qDuw0BmCv6zrRI=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "0b852714e824d8d5ed4580c582d19863f05dabd5",
+        "rev": "4067d9a4e185929483388034663a2cee00a87afd",
         "type": "github"
       },
       "original": {
@@ -5940,6 +5953,7 @@
         "cardano-node": "cardano-node",
         "cardano-node-821-pre": "cardano-node-821-pre",
         "cardano-node-hd": "cardano-node-hd",
+        "cardano-node-service": "cardano-node-service",
         "cardano-parts": "cardano-parts",
         "flake-parts": "flake-parts_5",
         "nixpkgs": "nixpkgs_38",

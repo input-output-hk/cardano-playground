@@ -14,10 +14,10 @@
     cardano-node-hd.url = "github:input-output-hk/cardano-node/utxo-hd-8.2.1";
 
     # For cardano-node service local debug:
-    # cardano-node-service = {
-    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.6.0-pre";
-    #   flake = false;
-    # };
+    cardano-node-service = {
+      url = "path:/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt";
+      flake = false;
+    };
   };
 
   outputs = inputs: let
