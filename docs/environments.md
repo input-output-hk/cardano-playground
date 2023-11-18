@@ -44,6 +44,10 @@ Consulted: Core Tech Head of Product
 
 Informed: Cardano Core Tribe
 
+#### Configuration files
+
+Compatible with cardano-node pre-release [8.6.0-pre](https://github.com/input-output-hk/cardano-node/releases/tag/8.6.0-pre)
+
 - [Node Config](environments/sanchonet/config.json)
 - [DB Sync Config](environments/sanchonet/db-sync-config.json)
 - [Submit API Config](environments/sanchonet/submit-api-config.json)
@@ -80,6 +84,10 @@ Consulted: SPOs
 
 Informed: Cardano Core Tribe, COO, Director of Engineering
 
+#### Configuration files
+
+Compatible with cardano-node release [8.1.2](https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2)
+
 - [Node Config](environments/preview/config.json)
 - [DB Sync Config](environments/preview/db-sync-config.json)
 - [Submit API Config](environments/preview/submit-api-config.json)
@@ -114,6 +122,10 @@ Consulted: SPOs, IOG Tribes
 
 Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community
 
+#### Configuration files
+
+Compatible with cardano-node release [8.1.2](https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2)
+
 - [Node Config](environments/preprod/config.json)
 - [DB Sync Config](environments/preprod/db-sync-config.json)
 - [Submit API Config](environments/preprod/submit-api-config.json)
@@ -142,6 +154,10 @@ Accountable: Head of SRE/Release Squad Lead
 Consulted: SPOs, IOG Tribes, IOG Executive Team
 
 Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
+
+#### Configuration files
+
+Compatible with cardano-node release [8.1.2](https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2)
 
 - [Node Config](environments/mainnet/config.json)
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
