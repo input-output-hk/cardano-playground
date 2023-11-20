@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html" class="active"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="anchors/env-throw-away-devnets.html"><strong aria-hidden="true">1.1.</strong> Devnets</a></li><li class="chapter-item expanded "><a href="anchors/env-sanchonet-testnet.html"><strong aria-hidden="true">1.2.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="anchors/env-preview-testnet.html"><strong aria-hidden="true">1.3.</strong> Preview</a></li><li class="chapter-item expanded "><a href="anchors/env-pre-production-testnet.html"><strong aria-hidden="true">1.4.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="anchors/env-production-mainnet.html"><strong aria-hidden="true">1.5.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="anchors/adv-preview-testnet.html"><strong aria-hidden="true">2.1.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="anchors/adv-pre-production-testnet.html"><strong aria-hidden="true">2.2.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="anchors/cm-2023-02-14.html"><strong aria-hidden="true">3.1.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="anchors/cm-2022-11-05.html"><strong aria-hidden="true">3.2.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="anchors/cm-2022-07-01.html"><strong aria-hidden="true">3.3.</strong> 2022-07-01</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html" class="active"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-devnets.html"><strong aria-hidden="true">1.1.</strong> Devnets</a></li><li class="chapter-item expanded "><a href="env-sanchonet.html"><strong aria-hidden="true">1.2.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.3.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.4.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.5.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.1.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.2.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.1.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.2.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.3.</strong> 2022-07-01</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -151,123 +151,13 @@
                     <main>
                         <h1 id="environments"><a class="header" href="#environments">Environments</a></h1>
 <p>The official Cardano Environment configuration files.</p>
-<h2 id="throw-away-devnets"><a class="header" href="#throw-away-devnets">Throw-away Devnets</a></h2>
-<p>Usage: Hard fork testing, testing new release functionality that needs public involvement</p>
-<p>These can be spun up or torn down at any time by a release manager for specific tests, such as hard forks.
-These are shared with the community for early involvment before a release candidate is mature.
-Recieves updates for official releases, release candidates and occasionally custom tags that aren't candidates for release.</p>
-<p>Upgrade Strategy: Deploy all nodes with every request</p>
-<p>Changes Requested by: Release Manager</p>
-<p>Approvals Required: SRE Director or SRE Resident Manager</p>
-<p>Responsible: SRE</p>
-<p>Accountable: SRE Director</p>
-<p>Consulted: Release Manager</p>
-<p>Informed: Cardano Core Tribe</p>
-<h2 id="sanchonet-testnet"><a class="header" href="#sanchonet-testnet">Sanchonet Testnet</a></h2>
-<p>Usage: Testing Conway era functionality.</p>
-<p>The Sanchonet chain will be rolled back with each new node release for testing new features and fixes.
-When respun the chain will be restored from slot 7171199.  Any Sanchonet chain participants, stakepools,
-integrators, etc, will need to clear their chain state to re-sync from that point forward when the chain is respun.</p>
-<p>Epoch length of 1 day. Development flags allowed in configuration files.</p>
-<p>Upgrade Strategy: Deploy all nodes with every upgrade request</p>
-<p>Responsible: IOG SRE</p>
-<p>Accountable: SRE Director</p>
-<p>Consulted: Core Tech Head of Product</p>
-<p>Informed: Cardano Core Tribe</p>
-<h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node pre-release <a href="https://github.com/input-output-hk/cardano-node/releases/tag/8.6.0-pre">8.6.0-pre</a></p>
+<p>Environment description and configuration files available are:</p>
 <ul>
-<li><a href="environments/sanchonet/config.json">Node Config</a></li>
-<li><a href="environments/sanchonet/db-sync-config.json">DB Sync Config</a></li>
-<li><a href="environments/sanchonet/submit-api-config.json">Submit API Config</a></li>
-<li><a href="environments/sanchonet/topology.json">Node Topology</a></li>
-<li><a href="environments/sanchonet/byron-genesis.json">Byron Genesis</a></li>
-<li><a href="environments/sanchonet/shelley-genesis.json">Shelley Genesis</a></li>
-<li><a href="environments/sanchonet/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments/sanchonet/conway-genesis.json">Conway Genesis</a></li>
-</ul>
-<h2 id="preview-testnet"><a class="header" href="#preview-testnet">Preview Testnet</a></h2>
-<p>Usage: Testing release candidates and mainnet releases. Leads mainnet hard forks by at least 4 weeks.</p>
-<p>Ideally stays long running. Only if an issue is found after it forks that's breaking should it be respun.</p>
-<p>Epoch length of 1 day. Development flags allowed in configuration files.</p>
-<p>Upgrade Strategy:</p>
-<ul>
-<li>Release Candidates - 1/3 of nodes</li>
-<li>Official Releases - 2/3 of nodes</li>
-<li>Hard forks - all nodes</li>
-<li>Community requested to only deploy release candidates and official releases</li>
-</ul>
-<p>Changes Requested by: Release Squad Lead</p>
-<p>Approvals Required: SRE Tribe Lead, Cardano Head of Engineering, Cardano Head of Architecture</p>
-<p>Responsible: IOG SRE</p>
-<p>Accountable: Head of SRE/Release Squad Lead</p>
-<p>Consulted: SPOs</p>
-<p>Informed: Cardano Core Tribe, COO, Director of Engineering</p>
-<h4 id="configuration-files-1"><a class="header" href="#configuration-files-1">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2">8.1.2</a></p>
-<ul>
-<li><a href="environments/preview/config.json">Node Config</a></li>
-<li><a href="environments/preview/db-sync-config.json">DB Sync Config</a></li>
-<li><a href="environments/preview/submit-api-config.json">Submit API Config</a></li>
-<li><a href="environments/preview/topology.json">Node Topology</a></li>
-<li><a href="environments/preview/byron-genesis.json">Byron Genesis</a></li>
-<li><a href="environments/preview/shelley-genesis.json">Shelley Genesis</a></li>
-<li><a href="environments/preview/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments/preview/conway-genesis.json">Conway Genesis</a></li>
-</ul>
-<h2 id="pre-production-testnet"><a class="header" href="#pre-production-testnet">Pre-Production Testnet</a></h2>
-<p>Usage: Testing release candidates and mainnet releases. Forks at approximately same time as mainnet (within an epoch of each other).</p>
-<p>Long running. Since this parallels mainnet, if a bug occurs here, it needs fixed properly and can not be respun.</p>
-<p>Upgrade Strategy:</p>
-<ul>
-<li>Release Candidates - 1/3 of nodes</li>
-<li>Official Releases - 2/3 of nodes</li>
-<li>Hard forks - all nodes</li>
-<li>Community requested to only deploy release candidates and official releases</li>
-</ul>
-<p>Changes Requested by: Release Squad Lead</p>
-<p>Approvals Required: SRE Tribe Lead, Cardano Head of Engineering, Cardano Head of Architecture, CF Representative</p>
-<p>Responsible: IOG SRE</p>
-<p>Accountable: Head of SRE/Release Squad Lead</p>
-<p>Consulted: SPOs, IOG Tribes</p>
-<p>Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community</p>
-<h4 id="configuration-files-2"><a class="header" href="#configuration-files-2">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2">8.1.2</a></p>
-<ul>
-<li><a href="environments/preprod/config.json">Node Config</a></li>
-<li><a href="environments/preprod/db-sync-config.json">DB Sync Config</a></li>
-<li><a href="environments/preprod/submit-api-config.json">Submit API Config</a></li>
-<li><a href="environments/preprod/topology.json">Node Topology</a></li>
-<li><a href="environments/preprod/byron-genesis.json">Byron Genesis</a></li>
-<li><a href="environments/preprod/shelley-genesis.json">Shelley Genesis</a></li>
-<li><a href="environments/preprod/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments/preprod/conway-genesis.json">Conway Genesis</a></li>
-</ul>
-<h2 id="production-mainnet"><a class="header" href="#production-mainnet">Production (Mainnet)</a></h2>
-<p>Usage: Live Production. Only gets official mainnet releases.</p>
-<p>Upgrade Strategy:</p>
-<ul>
-<li>Official Releases - Deploy 1 pool and it's relays every 24 hours</li>
-<li>Community requested to only deploy official releases</li>
-</ul>
-<p>Changes Requested by: Release Squad Lead</p>
-<p>Approvals Required: SRE Tribe Lead, IOG Executive Team, CF Executive Team</p>
-<p>Responsible: IOG SRE
-Accountable: Head of SRE/Release Squad Lead</p>
-<p>Consulted: SPOs, IOG Tribes, IOG Executive Team</p>
-<p>Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community</p>
-<h4 id="configuration-files-3"><a class="header" href="#configuration-files-3">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2">8.1.2</a></p>
-<ul>
-<li><a href="environments/mainnet/config.json">Node Config</a></li>
-<li><a href="environments/mainnet/db-sync-config.json">DB Sync Config</a></li>
-<li><a href="environments/mainnet/submit-api-config.json">Submit API Config</a></li>
-<li><a href="environments/mainnet/topology.json">Node Topology</a></li>
-<li><a href="environments/mainnet/topology-p2p.json">Node Topology (P2P - SPOs only!)</a></li>
-<li><a href="environments/mainnet/byron-genesis.json">Byron Genesis</a></li>
-<li><a href="environments/mainnet/shelley-genesis.json">Shelley Genesis</a></li>
-<li><a href="environments/mainnet/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments/mainnet/conway-genesis.json">Conway Genesis</a></li>
+<li><a href="env-devnets.html">Throw-away Devnets</a></li>
+<li><a href="env-sanchonet.html">Sanchonet Testnet</a></li>
+<li><a href="env-preview.html">Preview Testnet</a></li>
+<li><a href="env-preprod.html">Pre-production Testnet</a></li>
+<li><a href="env-mainnet.html">Production (Mainnet)</a></li>
 </ul>
 
                     </main>
@@ -278,7 +168,7 @@ Accountable: Head of SRE/Release Squad Lead</p>
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="anchors/env-throw-away-devnets.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="env-devnets.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -292,7 +182,7 @@ Accountable: Head of SRE/Release Squad Lead</p>
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="anchors/env-throw-away-devnets.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="env-devnets.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

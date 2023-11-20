@@ -1,29 +1,7 @@
 # Plutus Cost Model
 
-## 2023-02-14
+Plutus cost model updates available are:
 
-Environments updated:
-
-* Mainnet
-* Preprod
-* Preview
-
-Configuration: [link](resources/cost-model-secp-preprod-mainnet.json)
-
-## 2022-11-05
-
-Environments updated:
-
-* Preview
-
-Configuration: [link](resources/plutus-costmodels-secp256k1-enabled.json)
-
-
-## 2022-07-01
-
-Environments updated:
-
-* Mainnet
-* Preprod
-
-Configuration: [link](resources/plutus-costmodels-secp256k1-3.json)
+- [2023-02-14](cm-2023-02-14.html)
+- [2022-11-05](cm-2022-11-05.html)
+- [2022-07-01](cm-2022-07-01.html)
