@@ -1,5 +1,5 @@
 <p align="center">
-  <img width='150px' src="resources/cardano-logo.png" alt='Cardano Logo' />
+  <img width='150px' src="theme/cardano-logo.png" alt='Cardano Logo' />
 </p>
 
 <p align="center">
