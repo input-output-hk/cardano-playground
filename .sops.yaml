@@ -177,6 +177,13 @@ creation_rules:
       - *sre
       - *shelley-qa3-bp-c-1
 
+  # Miscellaneous group specific
+  - path_regex: secrets/groups/misc1/deploy/.*metadata.*$
+    key_groups:
+    - age:
+      - *sre
+      - *misc1-metadata-a-1
+
   # -------------------------------------------------------
   # Workbench pool onboarding -- modify during creation
   # Modify and add specific block producer keys as needed

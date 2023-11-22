@@ -99,17 +99,17 @@ in {
     # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html#13.1/
     # snapshot = {services.cardano-db-sync.restoreSnapshot = "$SNAPSHOT_URL";};
 
-    # Topology profiles
-    # Note: not including a topology profile will default to edge topology if module profile-cardano-node-group is imported
-    topoBp = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "bp";};}];};
-    topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
-
     webserver = {
       imports = [
         inputs.cardano-parts.nixosModules.profile-cardano-webserver
         {services.cardano-webserver.acmeEmail = "devops@iohk.io";}
       ];
     };
+
+    # Topology profiles
+    # Note: not including a topology profile will default to edge topology if module profile-cardano-node-group is imported
+    topoBp = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "bp";};}];};
+    topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
 
     # Roles
     bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoBp];};
@@ -122,6 +122,7 @@ in {
         inputs.cardano-parts.nixosModules.profile-cardano-db-sync
         inputs.cardano-parts.nixosModules.profile-cardano-node-group
         inputs.cardano-parts.nixosModules.profile-cardano-postgres
+        {services.cardano-postgres.enablePsqlrc = true;}
       ];
     };
 
@@ -147,6 +148,18 @@ in {
     privateFaucet = {services.cardano-faucet.serverAliases = ["faucet.private.${domain}"];};
     sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
     shelleyFaucet = {services.cardano-faucet.serverAliases = ["faucet.shelley-qa.${domain}"];};
+
+    metadata = {
+      imports = [
+        config.flake.cardano-parts.cluster.groups.default.meta.cardano-metadata-service
+        inputs.cardano-parts.nixosModules.profile-cardano-metadata
+        inputs.cardano-parts.nixosModules.profile-cardano-postgres
+        {
+          services.cardano-metadata.acmeEmail = "devops@iohk.io";
+          services.cardano-metadata.serverAliases = ["metadata.${domain}" "metadata.world.dev.cardano.org"];
+        }
+      ];
+    };
 
     mkWorldRelayMig = worldPort: {
       networking.firewall = {
@@ -313,7 +326,7 @@ in {
 
     # ---------------------------------------------------------------------------------------------------------
     # Misc
-    misc1-metadata-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "misc1")];};
+    misc1-metadata-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "misc1") metadata];};
     misc1-webserver-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "misc1") webserver];};
     # ---------------------------------------------------------------------------------------------------------
   };
