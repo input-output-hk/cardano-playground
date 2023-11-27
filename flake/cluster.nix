@@ -26,10 +26,11 @@ with flake.lib; {
     infra.grafana.stackName = "cardanoplayground";
 
     groups = let
-      mkGroup = name: environmentName: groupRelayMultivalueDns: isNg: {
+      dns = infra.aws.domain;
+      mkGroup = name: environmentName: bookRelayMultivalueDns: groupRelayMultivalueDns: isNg: {
         ${name} =
           {
-            inherit groupRelayMultivalueDns;
+            inherit bookRelayMultivalueDns groupRelayMultivalueDns;
             groupPrefix = "${name}-";
             meta = {inherit environmentName;};
           }
@@ -50,22 +51,22 @@ with flake.lib; {
           };
       };
     in
-      (mkGroup "preprod1" "preprod" "preprod-node.${infra.aws.domain}" false)
-      // (mkGroup "preprod2" "preprod" "preprod-node.${infra.aws.domain}" false)
-      // (mkGroup "preprod3" "preprod" "preprod-node.${infra.aws.domain}" false)
-      // (mkGroup "preview1" "preview" "preview-node.${infra.aws.domain}" false)
-      // (mkGroup "preview2" "preview" "preview-node.${infra.aws.domain}" false)
-      // (mkGroup "preview3" "preview" "preview-node.${infra.aws.domain}" false)
-      // (mkGroup "private1" "private" "private-node.${infra.aws.domain}" true)
-      // (mkGroup "private2" "private" "private-node.${infra.aws.domain}" true)
-      // (mkGroup "private3" "private" "private-node.${infra.aws.domain}" true)
-      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
-      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
-      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${infra.aws.domain}" true)
-      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${infra.aws.domain}" true)
-      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${infra.aws.domain}" true)
-      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${infra.aws.domain}" true)
-      // (mkGroup "mainnet1" "mainnet" null false)
-      // (mkGroup "misc1" "preprod" null false);
+      (mkGroup "preprod1" "preprod" "preprod-node.${dns}" "preprod1-node.${dns}" false)
+      // (mkGroup "preprod2" "preprod" "preprod-node.${dns}" "preprod2-node.${dns}" false)
+      // (mkGroup "preprod3" "preprod" "preprod-node.${dns}" "preprod3-node.${dns}" false)
+      // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false)
+      // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false)
+      // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false)
+      // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true)
+      // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true)
+      // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true)
+      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true)
+      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true)
+      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true)
+      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa1-node.${dns}" true)
+      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa2-node.${dns}" true)
+      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa3-node.${dns}" true)
+      // (mkGroup "mainnet1" "mainnet" null null false)
+      // (mkGroup "misc1" "preprod" null null false);
   };
 }
