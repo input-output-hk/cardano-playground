@@ -178,7 +178,47 @@ in {
     previewRelMig = mkWorldRelayMig 30002;
     sanchoRelMig = mkWorldRelayMig 30004;
 
+    # Allow legacy group incoming connections on bps if non-p2p testing is required
+    # mkBpLegacyFwRules = nodeNameList: {
+    #   networking.firewall = let
+    #     sources = lib.concatMapStringsSep "," (n: "${n}.${domain}") nodeNameList;
+    #   in {
+    #     extraCommands = "iptables -t filter -I nixos-fw -i ens5 -p tcp -m tcp -s ${sources} --dport 3001 -j nixos-fw-accept";
+    #     extraStopCommands = "iptables -t filter -D nixos-fw -i ens5 -p tcp -m tcp -s ${sources} --dport 3001 -j nixos-fw-accept || true";
+    #   };
+    # };
+
+    # disableP2p = {services.cardano-node.useNewTopology = false;};
+
+    # sancho1bpLegacy = mkBpLegacyFwRules ["sanchonet1-rel-a-1" "sanchonet1-rel-b-1" "sanchonet1-rel-c-1"];
+    # sancho2bpLegacy = mkBpLegacyFwRules ["sanchonet2-rel-a-1" "sanchonet2-rel-b-1" "sanchonet2-rel-c-1"];
+    # sancho3bpLegacy = mkBpLegacyFwRules ["sanchonet3-rel-a-1" "sanchonet3-rel-b-1" "sanchonet3-rel-c-1"];
+
     multiInst = {services.cardano-node.instances = 2;};
+
+    netDebug = {
+      services.cardano-node = {
+        useNewTopology = false;
+        extraNodeConfig = {
+          TraceMux = true;
+          TraceConnectionManagerTransitions = true;
+          TraceDebugPeerSelection = true;
+
+          options.mapSeverity = {
+            "cardano.node.ConnectionManager" = "Debug";
+            "cardano.node.ConnectionManagerTransition" = "Debug";
+            "cardano.node.PeerSelection" = "Info";
+            "cardano.node.DebugPeerSelection" = "Debug";
+            "cardano.node.PeerSelectionActions" = "Debug";
+            "cardano.node.Handshake" = "Debug";
+            "cardano.node.Mux" = "Info";
+            "cardano.node.ChainSyncProtocol" = "Error";
+            "cardano.node.InboundGovernor" = "Debug";
+            "cardano.node.resources" = "Notice";
+          };
+        };
+      };
+    };
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -281,7 +321,7 @@ in {
     # ---------------------------------------------------------------------------------------------------------
     # Sanchonet, pre-release
     sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp];};
-    sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
+    sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig netDebug];};
     sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
     sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
@@ -289,7 +329,7 @@ in {
     sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node multiInst];};
 
     sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
-    sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
+    sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig netDebug];};
     sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
     sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
 
