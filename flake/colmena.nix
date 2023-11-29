@@ -207,18 +207,19 @@ in {
         extraNodeConfig = {
           TraceMux = true;
           TraceConnectionManagerTransitions = true;
-          TraceDebugPeerSelection = true;
+          DebugPeerSelectionInitiator = true;
+          DebugPeerSelectionInitiatorResponder = true;
 
           options.mapSeverity = {
+            "cardano.node.ChainSyncProtocol" = "Error";
             "cardano.node.ConnectionManager" = "Debug";
             "cardano.node.ConnectionManagerTransition" = "Debug";
-            "cardano.node.PeerSelection" = "Info";
             "cardano.node.DebugPeerSelection" = "Debug";
-            "cardano.node.PeerSelectionActions" = "Debug";
             "cardano.node.Handshake" = "Debug";
-            "cardano.node.Mux" = "Info";
-            "cardano.node.ChainSyncProtocol" = "Error";
             "cardano.node.InboundGovernor" = "Debug";
+            "cardano.node.Mux" = "Info";
+            "cardano.node.PeerSelectionActions" = "Debug";
+            "cardano.node.PeerSelection" = "Info";
             "cardano.node.resources" = "Notice";
           };
         };
