@@ -178,53 +178,57 @@ in {
     previewRelMig = mkWorldRelayMig 30002;
     sanchoRelMig = mkWorldRelayMig 30004;
 
-    # Allow legacy group incoming connections on bps if non-p2p testing is required
-    mkBpLegacyFwRules = nodeNameList: {
-      networking.firewall = {
-        extraCommands = lib.concatMapStringsSep "\n" (n: "iptables -t filter -I nixos-fw -i ens5 -p tcp -m tcp -s ${n}.${domain} --dport 3001 -j nixos-fw-accept") nodeNameList;
-        extraStopCommands = lib.concatMapStringsSep "\n" (n: "iptables -t filter -D nixos-fw -i ens5 -p tcp -m tcp -s ${n}.${domain} --dport 3001 -j nixos-fw-accept || true") nodeNameList;
-      };
-    };
-
-    disableP2p = {
-      services.cardano-node = {
-        useNewTopology = false;
-        extraNodeConfig.EnableP2P = false;
-      };
-    };
-
-    sancho1bpLegacy = mkBpLegacyFwRules ["sanchonet1-rel-a-1" "sanchonet1-rel-b-1" "sanchonet1-rel-c-1"];
-    sancho2bpLegacy = mkBpLegacyFwRules ["sanchonet2-rel-a-1" "sanchonet2-rel-b-1" "sanchonet2-rel-c-1"];
-    sancho3bpLegacy = mkBpLegacyFwRules ["sanchonet3-rel-a-1" "sanchonet3-rel-b-1" "sanchonet3-rel-c-1"];
-
-    extraProd = producerList: {services.cardano-node-topology.extraNodeListProducers = producerList;};
-
     multiInst = {services.cardano-node.instances = 2;};
-
-    netDebug = {
-      services.cardano-node = {
-        useNewTopology = false;
-        extraNodeConfig = {
-          TraceMux = true;
-          TraceConnectionManagerTransitions = true;
-          DebugPeerSelectionInitiator = true;
-          DebugPeerSelectionInitiatorResponder = true;
-
-          options.mapSeverity = {
-            "cardano.node.ChainSyncProtocol" = "Error";
-            "cardano.node.ConnectionManager" = "Debug";
-            "cardano.node.ConnectionManagerTransition" = "Debug";
-            "cardano.node.DebugPeerSelection" = "Debug";
-            "cardano.node.Handshake" = "Debug";
-            "cardano.node.InboundGovernor" = "Debug";
-            "cardano.node.Mux" = "Info";
-            "cardano.node.PeerSelectionActions" = "Debug";
-            "cardano.node.PeerSelection" = "Info";
-            "cardano.node.resources" = "Notice";
-          };
-        };
-      };
-    };
+    # # p2p and legacy network debugging code
+    # netDebug = {
+    #   services.cardano-node = {
+    #     useNewTopology = false;
+    #     extraNodeConfig = {
+    #       TraceMux = true;
+    #       TraceConnectionManagerTransitions = true;
+    #       DebugPeerSelectionInitiator = true;
+    #       DebugPeerSelectionInitiatorResponder = true;
+    #       options.mapSeverity = {
+    #         "cardano.node.ChainSyncProtocol" = "Error";
+    #         "cardano.node.ConnectionManager" = "Debug";
+    #         "cardano.node.ConnectionManagerTransition" = "Debug";
+    #         "cardano.node.DebugPeerSelection" = "Debug";
+    #         "cardano.node.Handshake" = "Debug";
+    #         "cardano.node.InboundGovernor" = "Debug";
+    #         "cardano.node.Mux" = "Info";
+    #         "cardano.node.PeerSelectionActions" = "Debug";
+    #         "cardano.node.PeerSelection" = "Info";
+    #         "cardano.node.resources" = "Notice";
+    #       };
+    #     };
+    #   };
+    # };
+    #
+    # # Disable p2p
+    # disableP2p = {
+    #   services.cardano-node = {
+    #     useNewTopology = false;
+    #     extraNodeConfig.EnableP2P = false;
+    #   };
+    # };
+    #
+    # # Allow legacy group incoming connections on bps if non-p2p testing is required
+    # mkBpLegacyFwRules = nodeNameList: {
+    #   networking.firewall = {
+    #     extraCommands = lib.concatMapStringsSep "\n" (n: "iptables -t filter -I nixos-fw -i ens5 -p tcp -m tcp -s ${n}.${domain} --dport 3001 -j nixos-fw-accept") nodeNameList;
+    #     extraStopCommands = lib.concatMapStringsSep "\n" (n: "iptables -t filter -D nixos-fw -i ens5 -p tcp -m tcp -s ${n}.${domain} --dport 3001 -j nixos-fw-accept || true") nodeNameList;
+    #   };
+    # };
+    #
+    # # Example add fw rules for relay to block producer connections in non-p2p network setup
+    # sancho1bpLegacy = mkBpLegacyFwRules ["sanchonet1-rel-a-1" "sanchonet1-rel-b-1" "sanchonet1-rel-c-1"];
+    # sancho2bpLegacy = mkBpLegacyFwRules ["sanchonet2-rel-a-1" "sanchonet2-rel-b-1" "sanchonet2-rel-c-1"];
+    # sancho3bpLegacy = mkBpLegacyFwRules ["sanchonet3-rel-a-1" "sanchonet3-rel-b-1" "sanchonet3-rel-c-1"];
+    #
+    # extraProd = producerList: {services.cardano-node-topology.extraNodeListProducers = producerList;};
+    #
+    # # A legacy machine will need to have at least partial peer mesh to other groups, example:
+    # sanchonet1-rel-a-1 = {imports = [ <...> disableP2p (extraProd ["sanchonet2-rel-a-1" "sanchonet3-rel-a-1"])];};
   in {
     meta = {
       nixpkgs = import inputs.nixpkgs {
@@ -326,23 +330,23 @@ in {
 
     # ---------------------------------------------------------------------------------------------------------
     # Sanchonet, pre-release
-    sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp disableP2p sancho1bpLegacy];};
-    sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig netDebug disableP2p (extraProd ["sanchonet2-rel-a-1" "sanchonet3-rel-a-1"])];};
-    sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig disableP2p (extraProd ["sanchonet2-rel-b-1" "sanchonet3-rel-b-1"])];};
-    sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig disableP2p (extraProd ["sanchonet2-rel-c-1" "sanchonet3-rel-c-1"])];};
+    sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp];};
+    sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
+    sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
+    sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
     sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
     sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
     sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node multiInst];};
 
-    sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp disableP2p sancho2bpLegacy];};
-    sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig netDebug disableP2p (extraProd ["sanchonet1-rel-a-1" "sanchonet3-rel-a-1"])];};
-    sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig disableP2p (extraProd ["sanchonet1-rel-b-1" "sanchonet3-rel-b-1"])];};
-    sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig disableP2p (extraProd ["sanchonet1-rel-c-1" "sanchonet3-rel-c-1"])];};
+    sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
+    sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
+    sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
+    sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
 
-    sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp disableP2p sancho3bpLegacy];};
-    sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig disableP2p (extraProd ["sanchonet1-rel-a-1" "sanchonet2-rel-a-1"])];};
-    sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig disableP2p (extraProd ["sanchonet1-rel-b-1" "sanchonet2-rel-b-1"])];};
-    sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig disableP2p (extraProd ["sanchonet1-rel-c-1" "sanchonet2-rel-c-1"])];};
+    sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp];};
+    sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
+    sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
+    sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
     # ---------------------------------------------------------------------------------------------------------
 
     # ---------------------------------------------------------------------------------------------------------
