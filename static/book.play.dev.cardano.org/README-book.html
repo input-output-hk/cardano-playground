@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Devnets - The Cardano Operations Book</title>
+        <title>Cardano - The Cardano Operations Book</title>
 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-devnets.html" class="active"><strong aria-hidden="true">1.1.</strong> Devnets</a></li><li class="chapter-item expanded "><a href="env-sanchonet.html"><strong aria-hidden="true">1.2.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.3.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.4.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.5.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.1.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.2.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.1.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.2.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.3.</strong> 2022-07-01</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="README-book.html" class="active">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-sanchonet.html"><strong aria-hidden="true">1.1.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.2.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.3.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.4.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.1.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.2.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.1.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.2.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.3.</strong> 2022-07-01</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -120,7 +120,7 @@
                         <a href="https://github.com/input-output-hk/cardano-playground" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/input-output-hk/cardano-playground/edit/main/docs/./env-devnets.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/input-output-hk/cardano-playground/edit/main/docs/./README-book.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -149,28 +149,25 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="environment-throw-away-devnets"><a class="header" href="#environment-throw-away-devnets">Environment: Throw-away Devnets</a></h2>
-<p>Usage: Hard fork testing, testing new release functionality that needs public involvement</p>
-<p>These can be spun up or torn down at any time by a release manager for specific tests, such as hard forks.
-These are shared with the community for early involvment before a release candidate is mature.
-Recieves updates for official releases, release candidates and occasionally custom tags that aren't candidates for release.</p>
-<p>Upgrade Strategy: Deploy all nodes with every request</p>
-<p>Changes Requested by: Release Manager</p>
-<p>Approvals Required: SRE Director or SRE Resident Manager</p>
-<p>Responsible: SRE</p>
-<p>Accountable: SRE Director</p>
-<p>Consulted: Release Manager</p>
-<p>Informed: Cardano Core Tribe</p>
+                        <p align="center">
+  <img width='150px' src="theme/cardano-logo.png" alt='Cardano Logo' />
+</p>
+<p align="center">
+  Welcome to the Cardano Playground Repository
+  <br />
+</p>
+<p>Cardano is a decentralized third-generation proof-of-stake blockchain platform and home to the ada cryptocurrency.
+It is the first blockchain platform to evolve out of a scientific philosophy and a research-first driven approach.</p>
+<h2 id="things-youll-find-here"><a class="header" href="#things-youll-find-here">Things you'll find here:</a></h2>
+<h3 id="documentation"><a class="header" href="#documentation">Documentation</a></h3>
+<p><em>Use the nagivation panel on the left to explore <a href="https://book.play.dev.cardano.org">The Cardano Book</a>.</em></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="environments.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
-                                <i class="fa fa-angle-left"></i>
-                            </a>
 
-                            <a rel="next" href="env-sanchonet.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="environments.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -180,11 +177,8 @@ Recieves updates for official releases, release candidates and occasionally cust
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="environments.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
-                        <i class="fa fa-angle-left"></i>
-                    </a>
 
-                    <a rel="next" href="env-sanchonet.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="environments.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

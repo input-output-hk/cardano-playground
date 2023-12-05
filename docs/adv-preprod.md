@@ -4,7 +4,7 @@ Users wanting to test a cardano-node pre-release version on the pre-production e
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.6.0-pre](https://github.com/input-output-hk/cardano-node/releases/tag/8.6.0-pre)
+Compatible with cardano-node pre-release [8.7.1-pre](https://github.com/input-output-hk/cardano-node/releases/tag/8.7.1-pre)
 
 - [Node Config](environments-pre/preprod/config.json)
 - [DB Sync Config](environments-pre/preprod/db-sync-config.json)
