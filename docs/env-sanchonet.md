@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.7.0-pre](https://github.com/input-output-hk/cardano-node/releases/tag/8.7.0-pre)
+Compatible with cardano-node pre-release [8.7.1-pre](https://github.com/input-output-hk/cardano-node/releases/tag/8.7.1-pre)
 
 - [Node Config](environments/sanchonet/config.json)
 - [DB Sync Config](environments/sanchonet/db-sync-config.json)

@@ -102,11 +102,7 @@ in {
     webserver = {
       imports = [
         inputs.cardano-parts.nixosModules.profile-cardano-webserver
-        {
-          services.cardano-webserver.acmeEmail = "devops@iohk.io";
-          # Until book.world.dev.cardano.org has CNAME to play
-          services.nginx.virtualHosts.tlsTerminator.serverAliases = lib.mkForce ["book.play.dev.cardano.org"];
-        }
+        {services.cardano-webserver.acmeEmail = "devops@iohk.io";}
       ];
     };
 
