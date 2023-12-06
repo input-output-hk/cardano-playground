@@ -2,11 +2,11 @@
   description = "Cardano Playground: cardano testnet clusters";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/sancho-respin";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/sancho-respin";
+    nixpkgs.follows = "cardano-parts/nixpkgs";
+    nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
+    flake-parts.follows = "cardano-parts/flake-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/nixpkgs-23-11";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/nixpkgs-23-11";
 
     # Local pins for additional customization:
     cardano-node.url = "github:input-output-hk/cardano-node/8.1.2";
@@ -47,6 +47,6 @@
   nixConfig = {
     extra-substituters = ["https://cache.iog.io"];
     extra-trusted-public-keys = ["hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="];
-    allow-import-from-derivation = "true";
+    allow-import-from-derivation = true;
   };
 }
