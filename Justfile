@@ -87,7 +87,18 @@ apply *ARGS:
 apply-all *ARGS:
   colmena apply --verbose {{ARGS}}
 
-build-book:
+build-book-prod:
+  #!/usr/bin/env bash
+  cd docs
+  ln -sf book-prod.toml book.toml
+  cd -
+  mdbook build docs/
+
+build-book-staging:
+  #!/usr/bin/env bash
+  cd docs
+  ln -sf book-staging.toml book.toml
+  cd -
   mdbook build docs/
 
 build-machine MACHINE *ARGS:
