@@ -573,11 +573,11 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1701448858,
-        "narHash": "sha256-PN9PpJCDlsw7J9ENCXrQ4HA/+2LpoCJ7XSVZHtT+51A=",
+        "lastModified": 1701987138,
+        "narHash": "sha256-aoVBfGPusUYcwFKUUSFU9w/HoqGWLmSopvM3UeAupTA=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "61bc456be37daaf41cc74738a680a8008becd078",
+        "rev": "dfae9e84465acacc040cd827063051765b48cfad",
         "type": "github"
       },
       "original": {
@@ -961,21 +961,22 @@
         "nixpkgs": "nixpkgs_34",
         "nixpkgs-unstable": "nixpkgs-unstable_5",
         "opentofu-registry": "opentofu-registry",
+        "process-compose-flake": "process-compose-flake",
         "sops-nix": "sops-nix",
         "terranix": "terranix",
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1701903945,
-        "narHash": "sha256-QHwJwUiNHY9f9jxCqj6eavQYZgzJckFSzPfsqNJdnMM=",
+        "lastModified": 1701999549,
+        "narHash": "sha256-otMW9sVLziqjs8nYAdYgqACZBKzgQS0Gl79xEbP2bYw=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "07fd1dbff9a196c25b9da0bdf7218be468ea699f",
+        "rev": "6862f2d70f9b7b38fff21fc600d83b266e2b5a82",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "nixpkgs-23-11",
+        "ref": "process-compose",
         "repo": "cardano-parts",
         "type": "github"
       }
@@ -2017,11 +2018,11 @@
         "nixpkgs-lib": "nixpkgs-lib_3"
       },
       "locked": {
-        "lastModified": 1690933134,
-        "narHash": "sha256-ab989mN63fQZBFrkk4Q8bYxQCktuHmBIBqUG1jl6/FQ=",
+        "lastModified": 1701473968,
+        "narHash": "sha256-YcVE5emp1qQ8ieHUnxt1wCZCC3ZfAS+SRRWZ2TMda7E=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "59cf3f1447cfc75087e7273b04b31e689a8599fb",
+        "rev": "34fed993f1674c8d06d58b37ce1e0fe5eebcb9f5",
         "type": "github"
       },
       "original": {
@@ -4564,11 +4565,11 @@
     "nixpkgs-lib_3": {
       "locked": {
         "dir": "lib",
-        "lastModified": 1690881714,
-        "narHash": "sha256-h/nXluEqdiQHs1oSgkOOWF+j8gcJMWhwnZ9PFabN6q0=",
+        "lastModified": 1701253981,
+        "narHash": "sha256-ztaDIyZ7HrTAfEEUt9AtTDNoCYxUdSd6NrRHaYOIxtk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "9e1960bc196baf6881340d53dccb203a951745a2",
+        "rev": "e92039b55bcd58469325ded85d4f58dd5a4eaf58",
         "type": "github"
       },
       "original": {
@@ -5864,6 +5865,21 @@
         "owner": "paisano-nix",
         "ref": "0.1.1",
         "repo": "core",
+        "type": "github"
+      }
+    },
+    "process-compose-flake": {
+      "locked": {
+        "lastModified": 1701368682,
+        "narHash": "sha256-YkZbzfOkv68YOX4fK6VQvNHpysyZ/x3gePL3wbo8giA=",
+        "owner": "Platonic-Systems",
+        "repo": "process-compose-flake",
+        "rev": "8edcd4de7c631eac2ce5f8e2a0782e0ca606da9b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Platonic-Systems",
+        "repo": "process-compose-flake",
         "type": "github"
       }
     },

@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/nixpkgs-23-11";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/nixpkgs-23-11";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/process-compose";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/process-compose";
 
     # Local pins for additional customization:
     cardano-node.url = "github:input-output-hk/cardano-node/8.1.2";
@@ -37,6 +37,7 @@
           inputs.cardano-parts.flakeModules.jobs
           inputs.cardano-parts.flakeModules.lib
           inputs.cardano-parts.flakeModules.pkgs
+          inputs.cardano-parts.flakeModules.process-compose
           inputs.cardano-parts.flakeModules.shell
           {options.flake.terraform = mkOption {type = types.attrs;};}
         ];
