@@ -25,7 +25,7 @@ Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [8.1.2](https://github.com/input-output-hk/cardano-node/releases/tag/8.1.2)
+Compatible with cardano-node release [8.7.2](https://github.com/input-output-hk/cardano-node/releases/tag/8.7.2)
 
 - [Node Config](environments/preprod/config.json)
 - [DB Sync Config](environments/preprod/db-sync-config.json)

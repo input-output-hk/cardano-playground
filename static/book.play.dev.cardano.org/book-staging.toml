@@ -1,0 +1,18 @@
+[book]
+autors = ["The Cardano Authors"]
+language = "en"
+multilingual = false
+src = "."
+title = "The Cardano Operations Book"
+
+[build]
+build-dir = "../static/book-staging.play.dev.cardano.org"
+
+[output.html]
+edit-url-template = "https://github.com/input-output-hk/cardano-playground/edit/main/docs/{path}"
+git-repository-icon = "fa-github"
+git-repository-url = "https://github.com/input-output-hk/cardano-playground"
+theme = "./theme"
+
+[preprocessor.kroki-preprocessor]
+command = "mdbook-kroki-preprocessor"

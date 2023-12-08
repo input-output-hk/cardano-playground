@@ -102,7 +102,15 @@ in {
     webserver = {
       imports = [
         inputs.cardano-parts.nixosModules.profile-cardano-webserver
-        {services.cardano-webserver.acmeEmail = "devops@iohk.io";}
+        {
+          services.cardano-webserver = {
+            acmeEmail = "devops@iohk.io";
+
+            # Always keep the book staging alias present so we aren't making frequent ACME cert requests
+            # when temporarily publishing a staging environment and then removing it shortly later.
+            serverAliases = ["book-staging.${domain}"];
+          };
+        }
       ];
     };
 

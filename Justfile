@@ -87,7 +87,18 @@ apply *ARGS:
 apply-all *ARGS:
   colmena apply --verbose {{ARGS}}
 
-build-book:
+build-book-prod:
+  #!/usr/bin/env bash
+  cd docs
+  ln -sf book-prod.toml book.toml
+  cd -
+  mdbook build docs/
+
+build-book-staging:
+  #!/usr/bin/env bash
+  cd docs
+  ln -sf book-staging.toml book.toml
+  cd -
   mdbook build docs/
 
 build-machine MACHINE *ARGS:
@@ -378,11 +389,11 @@ ssh-for-each HOSTNAMES *ARGS:
 
 ssh-list-ips HOSTNAME_REGEX_PATTERN:
   #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config | from json | default "" Host | where Host =~ "{{HOSTNAME_REGEX_PATTERN}}" | get HostName | str join " "
+  scj dump /dev/stdout -c .ssh_config | from json | default "" Host | default "" HostName | where Host =~ "{{HOSTNAME_REGEX_PATTERN}}" | get HostName | str join " "
 
 ssh-list-names HOSTNAME_REGEX_PATTERN:
   #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config | from json | default "" Host | where Host =~ "{{HOSTNAME_REGEX_PATTERN}}" | get Host | str join " "
+  scj dump /dev/stdout -c .ssh_config | from json | default "" Host | default "" HostName | where Host =~ "{{HOSTNAME_REGEX_PATTERN}}" | get Host | str join " "
 
 start-demo:
   #!/usr/bin/env bash
