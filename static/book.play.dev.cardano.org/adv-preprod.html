@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js light">
+<html lang="en" class="light" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -10,7 +10,7 @@
         
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#ffffff">
 
         <link rel="shortcut icon" href="favicon.png">
         <link rel="stylesheet" href="css/variables.css">
@@ -30,7 +30,7 @@
         <!-- Custom theme stylesheets -->
 
     </head>
-    <body>
+    <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -60,24 +60,29 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
-            html.classList.remove('no-js')
             html.classList.remove('light')
             html.classList.add(theme);
-            html.classList.add('js');
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
         </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var html = document.querySelector('html');
+            var body = document.querySelector('body');
             var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
             }
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
@@ -87,15 +92,37 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
-                        </button>
+                        </label>
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -150,18 +177,20 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="advanced-configuration-pre-production-testnet"><a class="header" href="#advanced-configuration-pre-production-testnet">Advanced Configuration: Pre-Production Testnet</a></h2>
-<p>Users wanting to test a cardano-node pre-release version on the pre-production environment may obtain compatible configuration files below.</p>
+<p>There is currently no pre-release version available for the preprod environment.</p>
+<p>The latest version available is cardano-node release 8.7.2.</p>
+<p>When a new pre-release becomes available the configuration files for the pre-release on the preprod environment will be made available here.</p>
 <h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node pre-release <a href="https://github.com/input-output-hk/cardano-node/releases/tag/8.7.1-pre">8.7.1-pre</a></p>
+<p>Compatible with cardano-node release <a href="https://github.com/input-output-hk/cardano-node/releases/tag/8.7.2">8.7.2</a></p>
 <ul>
-<li><a href="environments-pre/preprod/config.json">Node Config</a></li>
-<li><a href="environments-pre/preprod/db-sync-config.json">DB Sync Config</a></li>
-<li><a href="environments-pre/preprod/submit-api-config.json">Submit API Config</a></li>
-<li><a href="environments-pre/preprod/topology.json">Node Topology</a></li>
-<li><a href="environments-pre/preprod/byron-genesis.json">Byron Genesis</a></li>
-<li><a href="environments-pre/preprod/shelley-genesis.json">Shelley Genesis</a></li>
-<li><a href="environments-pre/preprod/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments-pre/preprod/conway-genesis.json">Conway Genesis</a></li>
+<li><a href="environments/preprod/config.json">Node Config</a></li>
+<li><a href="environments/preprod/db-sync-config.json">DB Sync Config</a></li>
+<li><a href="environments/preprod/submit-api-config.json">Submit API Config</a></li>
+<li><a href="environments/preprod/topology.json">Node Topology</a></li>
+<li><a href="environments/preprod/byron-genesis.json">Byron Genesis</a></li>
+<li><a href="environments/preprod/shelley-genesis.json">Shelley Genesis</a></li>
+<li><a href="environments/preprod/alonzo-genesis.json">Alonzo Genesis</a></li>
+<li><a href="environments/preprod/conway-genesis.json">Conway Genesis</a></li>
 </ul>
 
                     </main>
@@ -172,7 +201,7 @@
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="cost-model.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="cost-model.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -186,7 +215,7 @@
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="cost-model.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="cost-model.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
