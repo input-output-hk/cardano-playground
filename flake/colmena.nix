@@ -18,7 +18,6 @@ in {
     t3a-small.aws.instance.instance_type = "t3a.small";
     t3a-medium.aws.instance.instance_type = "t3a.medium";
     m5a-large.aws.instance.instance_type = "m5a.large";
-    # r5-large.aws.instance.instance_type = "r5.large";
     r5-xlarge.aws.instance.instance_type = "r5.xlarge";
     r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
 
@@ -29,7 +28,16 @@ in {
     # delete.aws.instance.count = 0;
 
     # Cardano group assignments:
-    group = name: {cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};};
+    group = name: {
+      cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
+
+      # Since all machines are assigned a group, this is a good place to include default aws instance tags
+      aws.instance.tags = {
+        inherit (config.flake.cardano-parts.cluster.infra.generic) organization tribe function repo;
+        environment = config.flake.cardano-parts.cluster.groups.${name}.meta.environmentName;
+        group = name;
+      };
+    };
 
     # Cardano-node modules for group deployment
     node = {
