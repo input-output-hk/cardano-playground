@@ -1,0 +1,13 @@
+# Endpoint in this list will be blackbox probed by the monitoring server
+# deployed from https://github.com/input-output-hk/cardano-monitoring
+[
+  "https://book.play.dev.cardano.org"
+  "https://book.world.dev.cardano.org"
+  "https://faucet.preprod.play.dev.cardano.org"
+  "https://faucet.preview.play.dev.cardano.org"
+  "https://faucet.private.play.dev.cardano.org"
+  "https://faucet.sanchonet.play.dev.cardano.org"
+  "https://faucet.shelley-qa.play.dev.cardano.org"
+  "https://metadata.play.dev.cardano.org"
+  "https://metadata.world.dev.cardano.org"
+]
