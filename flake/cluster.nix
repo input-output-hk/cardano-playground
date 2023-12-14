@@ -30,7 +30,7 @@ with flake.lib; {
       repo = "https://github.com/input-output-hk/cardano-playground";
     };
 
-    infra.grafana.stackName = "cardanoplayground";
+    infra.grafana.stackName = "playground";
 
     groups = let
       dns = infra.aws.domain;
