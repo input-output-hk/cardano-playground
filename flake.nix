@@ -18,6 +18,8 @@
     #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt";
     #   flake = false;
     # };
+
+    iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
   };
 
   outputs = inputs: let

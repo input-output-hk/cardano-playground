@@ -67,28 +67,48 @@ in {
 
     node821 = {
       imports = [
-        (nixos: {
-          cardano-parts.perNode.pkgs = rec {
+        (nixos: let
+          inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
+        in {
+          cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-legacy;
+          cardano-parts.perNode.pkgs = {
             inherit (inputs.cardano-node-821-pre.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            cardano-node-pkgs = {
-              inherit cardano-cli cardano-node cardano-submit-api;
-              inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
-            };
           };
+          services.cardano-node.publicProducers = [
+            {
+              accessPoints = [
+                {
+                  address = "backbone.cardano.iog.io";
+                  port = 3001;
+                }
+              ];
+              advertise = false;
+            }
+          ];
         })
       ];
     };
 
     nodeHd = {
       imports = [
-        (nixos: {
-          cardano-parts.perNode.pkgs = rec {
+        (nixos: let
+          inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
+        in {
+          cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-legacy;
+          cardano-parts.perNode.pkgs = {
             inherit (inputs.cardano-node-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            cardano-node-pkgs = {
-              inherit cardano-cli cardano-node cardano-submit-api;
-              inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
-            };
           };
+          services.cardano-node.publicProducers = [
+            {
+              accessPoints = [
+                {
+                  address = "backbone.cardano.iog.io";
+                  port = 3001;
+                }
+              ];
+              advertise = false;
+            }
+          ];
         })
       ];
     };
@@ -306,7 +326,7 @@ in {
     preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig];};
     preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig];};
     preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig];};
-    preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preview1") dbsync smash pre previewSmash];};
+    preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preview1") dbsync smash pre previewSmash];};
     preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre previewFaucet];};
 
     preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre];};
