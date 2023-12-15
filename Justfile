@@ -309,7 +309,7 @@ set-default-cardano-env ENV TESTNET_MAGIC=null PPID=null:
   if [[ "$SH" =~ bash$|zsh$ ]]; then
     # Modifying a parent shells env vars is generally not done
     # This is a hacky way to accomplish it in bash and zsh
-    gdb /proc/$SHELLPID/exe $SHELLPID <<END >/dev/null
+    gdb -iex "set auto-load no" /proc/$SHELLPID/exe $SHELLPID <<END >/dev/null
       call (int) setenv("CARDANO_NODE_SOCKET_PATH", "$DEFAULT_PATH", 1)
       call (int) setenv("CARDANO_NODE_NETWORK_ID", "$MAGIC", 1)
       call (int) setenv("TESTNET_MAGIC", "$MAGIC", 1)
