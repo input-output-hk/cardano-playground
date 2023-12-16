@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/compose-entry";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/compose-entry";
+    cardano-parts.url = "github:input-output-hk/cardano-parts";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
 
     # Local pins for additional customization:
     cardano-node.url = "github:input-output-hk/cardano-node/8.1.2";
@@ -18,6 +18,8 @@
     #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt";
     #   flake = false;
     # };
+
+    iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
   };
 
   outputs = inputs: let

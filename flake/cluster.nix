@@ -23,7 +23,14 @@ with flake.lib; {
       # bucketName = "${profile}-terraform";
     };
 
-    infra.grafana.stackName = "cardanoplayground";
+    infra.generic = {
+      organization = "iog";
+      tribe = "coretech";
+      function = "cardano-parts";
+      repo = "https://github.com/input-output-hk/cardano-playground";
+    };
+
+    infra.grafana.stackName = "playground";
 
     groups = let
       dns = infra.aws.domain;
