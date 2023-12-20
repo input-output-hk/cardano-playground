@@ -59,6 +59,113 @@ in
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
+      vva-be = {
+        imports = [
+          (nixos @ {
+            pkgs,
+            lib,
+            name,
+            ...
+          }: let
+            inherit (groupCfg) groupName groupFlake meta;
+            inherit (meta) environmentName;
+            inherit (opsLib) mkSopsSecret;
+
+            groupOutPath = groupFlake.self.outPath;
+            groupCfg = nixos.config.cardano-parts.cluster.group;
+            opsLib = config.flake.cardano-parts.lib.opsLib nixos.pkgs;
+          in {
+            environment.systemPackages = [inputs.vva.packages.x86_64-linux.vva-be];
+
+            systemd.services.vva-be = {
+              wantedBy = ["multi-user.target"];
+              after = ["network-online.target" "postgresql.service"];
+              startLimitIntervalSec = 0;
+              serviceConfig = {
+                ExecStart = lib.getExe (pkgs.writeShellApplication {
+                  name = "vva-be";
+                  runtimeInputs = [inputs.vva.packages.x86_64-linux.vva-be];
+                  text = "vva-be -c /run/secrets/vva-be-cfg.json start-app";
+                });
+                Restart = "always";
+                RestartSec = "30s";
+              };
+            };
+
+            users.users.vva-be = {
+              isSystemUser = true;
+              group = "vva-be";
+            };
+
+            users.groups.vva-be = {};
+
+            sops.secrets = mkSopsSecret {
+              secretName = "vva-be-cfg.json";
+              keyName = "${name}-vva-be.json";
+              inherit groupOutPath groupName;
+              fileOwner = "vva-be";
+              fileGroup = "vva-be";
+              restartUnits = ["vva-be.service"];
+            };
+
+            networking.firewall.allowedTCPPorts = [80 443];
+
+            security.acme = {
+              acceptTerms = true;
+              defaults = {
+                email = "devops@iohk.io";
+                server =
+                  if true
+                  then "https://acme-v02.api.letsencrypt.org/directory"
+                  else "https://acme-staging-v02.api.letsencrypt.org/directory";
+              };
+            };
+
+            # services.nginx-vhost-exporter.enable = true;
+
+            services.nginx = {
+              enable = true;
+              eventsConfig = "worker_connections 4096;";
+              appendConfig = "worker_rlimit_nofile 16384;";
+              recommendedGzipSettings = true;
+              recommendedOptimisation = true;
+              recommendedProxySettings = true;
+
+              commonHttpConfig = ''
+                log_format x-fwd '$remote_addr - $remote_user [$time_local] '
+                                 '"$scheme://$host" "$request" "$http_accept_language" $status $body_bytes_sent '
+                                 '"$http_referer" "$http_user_agent" "$http_x_forwarded_for"';
+
+                access_log syslog:server=unix:/dev/log x-fwd;
+                limit_req_zone $binary_remote_addr zone=apiPerIP:100m rate=1r/s;
+                limit_req_status 429;
+              '';
+
+              virtualHosts = {
+                vva-be = {
+                  serverName = "${name}.${domain}";
+                  serverAliases = ["${environmentName}-govtool.${domain}" "${environmentName}-explorer.${domain}" "${environmentName}-smash.${domain}"];
+
+                  default = true;
+                  enableACME = true;
+                  forceSSL = true;
+
+                  locations = {
+                    "/".proxyPass = "http://127.0.0.1:9999";
+                    "/api/".proxyPass = "http://127.0.0.1:9999/";
+                  };
+                };
+              };
+            };
+
+            systemd.services.nginx.serviceConfig = {
+              LimitNOFILE = 65535;
+              LogNamespace = "nginx";
+            };
+          })
+        ];
+      };
+
       ram5gibActual = nixos: {
         # The amount required for doing chain re-validation after a failed startup; less crashes
         services.cardano-node.totalMaxHeapSizeMiB = 4096;
@@ -170,7 +277,7 @@ in
 
       preprodSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preprod-smash" "preprod-explorer"]);};
       previewSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
-      privateSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["private-smash" "private-explorer"]);};
+      # privateSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["private-smash" "private-explorer"]);};
       sanchoSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
       shelleySmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["shelley-qa-smash" "shelley-qa-explorer"]);};
 
@@ -352,7 +459,7 @@ in
       private1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node rel];};
       private1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private1") node rel];};
       private1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private1") node rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync smash privateSmash];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync vva-be];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node faucet privateFaucet];};
 
       private2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private2") node bp];};

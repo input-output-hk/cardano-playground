@@ -24,6 +24,9 @@
 
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
+
+    # Voltaire backend swagger ui for private chain deployment
+    vva.url = "github:input-output-hk/voltaire-era/flake";
   };
 
   outputs = inputs: let

@@ -19,6 +19,7 @@ keys:
 
   # Private
   - &private1-bp-a-1 age1pwmcf9nez82glwzk3mfcfyv0wnc4yev8pjhxk43fwgcr3m8yjsesjdfha0
+  - &private1-dbsync-a-1 age1q435aw99zpavtn5ce770jesh3th0ghne8jkt5mse8zscpp5r2ghsark64e
   - &private1-faucet-a-1 age1lack6chc6czx8t9sc9ayc3wq0du82ne6l8m5h6lwz8zn6rxz5gqqtpz4z2
   - &private2-bp-b-1 age1wewhhymvzljpgy7v9caud2zmgjt7dsdcluvpq8373ueuj5qv435qgn9xae
   - &private3-bp-c-1 age1ay9e566ksavc46809vzjzcwlsu06dzr869fdv8qf9p9qu69qva4ssdv4af
@@ -103,7 +104,13 @@ creation_rules:
       - *preview3-bp-c-1
 
   # Private specific
-  - path_regex: secrets/groups/private1/deploy/.*faucet.*$
+  - path_regex: secrets/groups/private1/deploy/.*vva-be.*$
+    key_groups:
+    - age:
+      - *sre
+      - *private1-dbsync-a-1
+
+  - path_regex: secrets/groups/private/deploy/.*faucet.*$
     key_groups:
     - age:
       - *sre
