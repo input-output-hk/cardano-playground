@@ -48,4 +48,7 @@ in {
   cname_smash_private = mkResource {name = "private-smash.${domain}"; records = ["private1-dbsync-a-1.${domain}"];};
   cname_smash_sanchonet = mkResource {name = "sanchonet-smash.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
   cname_smash_shelley_qa = mkResource {name = "shelley-qa-smash.${domain}"; records = ["shelley-qa1-dbsync-a-1.${domain}"];};
+
+  # Govtool
+  cname_govtool_private = mkResource {name = "private-govtool.${domain}"; records = ["private1-dbsync-a-1.${domain}"];};
 }

@@ -6,12 +6,12 @@
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts/next-2023-12-18";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2023-12-18";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-playground";
 
     # Local pins for additional customization:
-    cardano-node.url = "github:input-output-hk/cardano-node/8.1.2";
-    cardano-node-821-pre.url = "github:input-output-hk/cardano-node/8.2.1-pre";
-    cardano-node-hd.url = "github:input-output-hk/cardano-node/utxo-hd-8.2.1";
+    cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
+    cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
+    cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
 
     # For cardano-node service local debug:
     # cardano-node-service = {
@@ -19,7 +19,14 @@
     #   flake = false;
     # };
 
+    # Until node-8.7.3 is in capkgs with IntersectMBO script fix
+    cardano-node-ng.url = "github:IntersectMBO/cardano-node/8.7.3";
+
+    # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
+
+    # Voltaire backend swagger ui for private chain deployment
+    govtool.url = "github:IntersectMBO/govtool/flake";
   };
 
   outputs = inputs: let
