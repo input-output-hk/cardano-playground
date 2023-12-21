@@ -75,7 +75,7 @@ in
             groupCfg = nixos.config.cardano-parts.cluster.group;
             opsLib = config.flake.cardano-parts.lib.opsLib nixos.pkgs;
           in {
-            environment.systemPackages = [inputs.vva.packages.x86_64-linux.vva-be];
+            environment.systemPackages = [inputs.govtool.packages.x86_64-linux.vva-be];
 
             systemd.services.vva-be = {
               wantedBy = ["multi-user.target"];
@@ -84,7 +84,7 @@ in
               serviceConfig = {
                 ExecStart = lib.getExe (pkgs.writeShellApplication {
                   name = "vva-be";
-                  runtimeInputs = [inputs.vva.packages.x86_64-linux.vva-be];
+                  runtimeInputs = [inputs.govtool.packages.x86_64-linux.vva-be];
                   text = "vva-be -c /run/secrets/vva-be-cfg.json start-app";
                 });
                 Restart = "always";

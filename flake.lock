@@ -159,16 +159,15 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1702939833,
-        "narHash": "sha256-1ay7Lo2tKRyV/DV8lsSraZvyCurr19FJtqaAkwGZ5zc=",
+        "lastModified": 1703018934,
+        "narHash": "sha256-7h6XsWczUzsxID0H5QX0+bJks22pijAxnSJ2RYTyswQ=",
         "owner": "input-output-hk",
         "repo": "auth-keys-hub",
-        "rev": "2bc614b16d3bfd782563cb05c0e8331d0ebcb1a9",
+        "rev": "31f8d4e404bf64d559516abfd6610bb7f4cabee2",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "more-assertions",
         "repo": "auth-keys-hub",
         "type": "github"
       }
@@ -1167,11 +1166,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1702960071,
-        "narHash": "sha256-6PacmrjLnMFbc2Ox2rDO0sv80vy9y72TISwG7nv8w+Q=",
+        "lastModified": 1703117348,
+        "narHash": "sha256-s1QbyDrXy9sHQSTO5ij3zuALTNjRBMR/Q42+jc5lBow=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "56b19d2f7d1583d89e38b8336531e2b009ad895b",
+        "rev": "05d05abb15ada3e96c697481662f15bc6b52d329",
         "type": "github"
       },
       "original": {
@@ -3043,6 +3042,27 @@
         "type": "github"
       }
     },
+    "govtool": {
+      "inputs": {
+        "flake-parts": "flake-parts_4",
+        "nixpkgs": "nixpkgs_44",
+        "nixpkgs-vva-be": "nixpkgs-vva-be"
+      },
+      "locked": {
+        "lastModified": 1703089856,
+        "narHash": "sha256-kdelYrmvSu61xYnpssE4rbako4XQWtXi3Mudl2UYQJE=",
+        "owner": "IntersectMBO",
+        "repo": "govtool",
+        "rev": "eef7a843e7ab6f70be9d3f0b567a2c87ae0200d3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "IntersectMBO",
+        "ref": "flake",
+        "repo": "govtool",
+        "type": "github"
+      }
+    },
     "hackage": {
       "flake": false,
       "locked": {
@@ -4047,7 +4067,7 @@
     "iohk-nix-legacy": {
       "inputs": {
         "blst": "blst_7",
-        "nixpkgs": "nixpkgs_44",
+        "nixpkgs": "nixpkgs_45",
         "secp256k1": "secp256k1_7",
         "sodium": "sodium_7"
       },
@@ -6592,22 +6612,6 @@
     },
     "nixpkgs_44": {
       "locked": {
-        "lastModified": 1684171562,
-        "narHash": "sha256-BMUWjVWAUdyMWKk0ATMC9H0Bv4qAV/TXwwPUvTiC5IQ=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "55af203d468a6f5032a519cba4f41acf5a74b638",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "release-22.11",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_45": {
-      "locked": {
         "lastModified": 1702682804,
         "narHash": "sha256-OmLBqssY08BqwSce2MpnGQxDpzQDMzPuZj8D0zFIKkg=",
         "owner": "nixos",
@@ -6618,6 +6622,22 @@
       "original": {
         "owner": "nixos",
         "ref": "release-23.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_45": {
+      "locked": {
+        "lastModified": 1684171562,
+        "narHash": "sha256-BMUWjVWAUdyMWKk0ATMC9H0Bv4qAV/TXwwPUvTiC5IQ=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "55af203d468a6f5032a519cba4f41acf5a74b638",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "release-22.11",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -7506,6 +7526,7 @@
           "cardano-parts",
           "flake-parts"
         ],
+        "govtool": "govtool",
         "iohk-nix-legacy": "iohk-nix-legacy",
         "nixpkgs": [
           "cardano-parts",
@@ -7514,8 +7535,7 @@
         "nixpkgs-unstable": [
           "cardano-parts",
           "nixpkgs-unstable"
-        ],
-        "vva": "vva"
+        ]
       }
     },
     "rust-analyzer-src": {
@@ -8675,27 +8695,6 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "vva": {
-      "inputs": {
-        "flake-parts": "flake-parts_4",
-        "nixpkgs": "nixpkgs_45",
-        "nixpkgs-vva-be": "nixpkgs-vva-be"
-      },
-      "locked": {
-        "lastModified": 1703028398,
-        "narHash": "sha256-xWyWam3HPImBCULNtFbb23kaKNVrqXx/TpcvMv5FiII=",
-        "owner": "input-output-hk",
-        "repo": "voltaire-era",
-        "rev": "ff31ddff251e4e817522f24f58a8e1e53ad6482d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "input-output-hk",
-        "ref": "flake",
-        "repo": "voltaire-era",
         "type": "github"
       }
     },
