@@ -59,6 +59,24 @@ in
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
+      rtsOptMods = {
+        nodeResources,
+        lib,
+        ...
+      }: let
+        inherit (nodeResources) cpuCount memMiB;
+      in {
+        services.cardano-node.rtsArgs = lib.mkForce [
+          "-N${toString cpuCount}"
+          "-A16m"
+          "-M${toString (memMiB * 0.79)}M"
+        ];
+      };
+
+      gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+
+      openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
+
       vva-be = {
         imports = [
           (nixos @ {
@@ -166,40 +184,10 @@ in
         ];
       };
 
-      ram5gibActual = nixos: {
-        # The amount required for doing chain re-validation after a failed startup; less crashes
-        services.cardano-node.totalMaxHeapSizeMiB = 4096;
-        systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "5G";
-      };
-
       ram8gib = nixos: {
         # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
         services.cardano-node.totalMaxHeapSizeMiB = 5734;
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
-      };
-
-      node821 = {
-        imports = [
-          (nixos: let
-            inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
-          in {
-            cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-legacy;
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-821-pre.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-            services.cardano-node.publicProducers = [
-              {
-                accessPoints = [
-                  {
-                    address = "backbone.cardano.iog.io";
-                    port = 3001;
-                  }
-                ];
-                advertise = false;
-              }
-            ];
-          })
-        ];
       };
 
       nodeHd = {
@@ -516,11 +504,14 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Mainnet
+      # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
+      # Rel-a-{2,3} lmdb and mdb fault tests
+      # Rel-a-4 addnl current release tests
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node];};
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram5gibActual];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node node821 ram8gib];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node bp gcLogging rtsOptMods];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node openFwTcp3001];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
