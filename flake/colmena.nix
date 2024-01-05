@@ -20,6 +20,7 @@ in
       t3a-small.aws.instance.instance_type = "t3a.small";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
       m5a-large.aws.instance.instance_type = "m5a.large";
+      m5a-xlarge.aws.instance.instance_type = "m5a.xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
@@ -259,6 +260,7 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {services.cardano-node.shareNodeSocket = true;}
           {services.cardano-postgres.enablePsqlrc = true;}
         ];
       };
@@ -277,6 +279,7 @@ in
 
           inputs.cardano-parts.nixosModules.profile-cardano-faucet
           {services.cardano-faucet.acmeEmail = "devops@iohk.io";}
+          {services.cardano-node.shareNodeSocket = true;}
         ];
       };
 
@@ -310,8 +313,9 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
       sanchoRelMig = mkWorldRelayMig 30004;
-
-      multiInst = {services.cardano-node.instances = 2;};
+      #
+      # multiInst = {services.cardano-node.instances = 2;};
+      #
       # # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -469,7 +473,7 @@ in
       sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node multiInst];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
       sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
@@ -508,7 +512,7 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node bp gcLogging rtsOptMods];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-xlarge (ebs 300) (group "mainnet1") node bp gcLogging rtsOptMods];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node openFwTcp3001];};
