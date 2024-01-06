@@ -48,7 +48,7 @@
           inputs.cardano-parts.flakeModules.pkgs
           inputs.cardano-parts.flakeModules.process-compose
           inputs.cardano-parts.flakeModules.shell
-          {options.flake.terraform = mkOption {type = types.attrs;};}
+          {options.flake.opentofu = mkOption {type = types.attrs;};}
         ];
       systems = ["x86_64-linux"];
       debug = true;

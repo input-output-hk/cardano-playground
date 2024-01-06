@@ -10,8 +10,113 @@
 Cardano is a decentralized third-generation proof-of-stake blockchain platform and home to the ada cryptocurrency.
 It is the first blockchain platform to evolve out of a scientific philosophy and a research-first driven approach.
 
-## Things you'll find here:
+# Cardano Playground
 
-### Documentation
+The cardano-playground project serves as the configuration and deployment repository
+for various cardano testnets.  It utilizes [flake-parts](https://flake.parts/) and re-usable
+nixosModules and flakeModules from [cardano-parts](https://github.com/input-output-hk/cardano-parts).
 
-Coming soon...
+The [Cardano Book](https://book.play.dev.cardano.org/) which provides configuration information for each of the testnets
+is also declared and deployed from cardano-playground.
+
+## Getting started
+
+While working on the next step, you can already start the devshell using:
+
+    nix develop
+
+This will be done automatically if you are using [direnv](https://direnv.net/).
+
+## AWS
+
+Create an AWS user with your name and `AdministratorAccess` policy in the
+cardano-playground organization, then store your access key in
+`~/.aws/credentials` under the profile name `cardano-playground`:
+
+    [cardano-playground]
+    aws_access_key_id = XXXXXXXXXXXXXXXXXXXX
+    aws_secret_access_key = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+## AGE
+
+While cluster secrets are handled using AWS KMS, per machine secrets are
+handled using sops-nix age.  For sops-nix age secrets access, place the
+SRE cluster secret in `~/.age/credentials`:
+
+    # cardano-playground: sre
+    AGE-SECRET-KEY-***********************************************************
+
+## SSH
+
+If your credentials are correct, you will be able to access SSH after creating
+an `./.ssh_config` using:
+
+    just save-ssh-config
+
+With that you can then get started with:
+* list machines: `just list-machines`
+* ssh to machines: `just ssh $MACHINE`
+* finding other operations recipes to use: `just --list`
+
+## Cloudformation
+
+We bootstrap our infrastructure using AWS Cloudformation, it creates resources
+like S3 Buckets, a DNS Zone, KMS key, and OpenTofu state storage.
+
+The distinction of what is managed by Cloudformation and OpenTofu is not very
+strict, but generally anything that is not of the mentioned resource types will
+go into OpenTofu since they are harder to configure and reuse otherwise.
+
+All configuration is in `./flake/cloudFormation/terraformState.nix`
+
+We use [Rain](https://github.com/aws-cloudformation/rain) to apply the
+configuration. There is a wrapper that evaluates the config and deploys it:
+
+    just cf terraformState
+
+## OpenTofu
+
+We use [OpenTofu](https://opentofu.org/) to create AWS instances, roles,
+profiles, policies, Route53 records, EIPs, security groups, and similar.
+
+All monitoring dashboards, alerts and recording rules are configured in `./flake/opentofu/grafana.nix`
+
+All other cluster resource configuration is in `./flake/opentofu/cluster.nix`
+
+The wrapper to setup the state, workspace, evaluate the config, and run `tofu`
+for cluster resources is:
+
+    just tofu [cluster] plan
+    just tofu [cluster] apply
+
+Similarly, for monitoring resources:
+
+    just tofu grafana plan
+    just tofu grafana apply
+
+## Colmena
+
+To deploy changes on an OS level, we use the excellent
+[Colmena](https://github.com/zhaofengli/colmena).
+
+All colmena configuration is in `./flake/colmena.nix`.
+
+To deploy a machine:
+
+    just apply $MACHINE
+
+## Secrets
+
+Secrets are encrypted using [SOPS](https://github.com/getsops/sops) and [KMS](https://aws.amazon.com/kms/).
+
+All secrets live in `./secrets/`
+
+You should be able to edit a KMS or sops age secret using:
+
+    sops ./secrets/github-token.enc
+
+Or simply decrypt a KMS or sops age secret with:
+
+    sops -d ./secrets/github-token.enc
+
+See also the `just sops-<encrypt|decrypt>-binary` recipes for encrypting or decrypting age binary blobs.
