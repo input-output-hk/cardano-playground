@@ -36,6 +36,9 @@ keys:
   - &shelley-qa2-bp-b-1 age1pzcdrzm9j4pxar6nx9wu7le95apw7gu4838s22u7evycydcunu3qw7eafy
   - &shelley-qa3-bp-c-1 age19ulgvpe2wnvmu6tujae0ekn2stz46ntw0n03et4ctjk8nawa25eq6luw8f
 
+  # Mainnet, non-prod testing machines
+  - &mainnet1-rel-a-1 age16m0sd0pyme79ds8jd380ctuc23p570djl0rnrp6xt28tce5ltvyql4hdgn
+
 creation_rules:
   # -------------------------------------------------------
   # General environment secrets are admin only
@@ -183,6 +186,13 @@ creation_rules:
     - age:
       - *sre
       - *shelley-qa3-bp-c-1
+
+  # Mainnet non-prod specific
+  - path_regex: secrets/groups/mainnet1/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *mainnet1-rel-a-1
 
   # Miscellaneous group specific
   - path_regex: secrets/groups/misc1/deploy/.*metadata.*$

@@ -20,6 +20,7 @@ in
       t3a-small.aws.instance.instance_type = "t3a.small";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
       m5a-large.aws.instance.instance_type = "m5a.large";
+      m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
@@ -58,6 +59,26 @@ in
 
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+
+      rtsOptMods = {
+        nodeResources,
+        lib,
+        ...
+      }: let
+        inherit (nodeResources) cpuCount; # memMiB;
+      in {
+        services.cardano-node.rtsArgs = lib.mkForce [
+          "-N${toString cpuCount}"
+          "-A16m"
+          # Temporarily match the m5a-xlarge spec
+          "-M12943.360000M"
+          # "-M${toString (memMiB * 0.79)}M"
+        ];
+      };
+
+      gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+
+      openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
 
       vva-be = {
         imports = [
@@ -166,40 +187,10 @@ in
         ];
       };
 
-      ram5gibActual = nixos: {
-        # The amount required for doing chain re-validation after a failed startup; less crashes
-        services.cardano-node.totalMaxHeapSizeMiB = 4096;
-        systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "5G";
-      };
-
       ram8gib = nixos: {
         # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
         services.cardano-node.totalMaxHeapSizeMiB = 5734;
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
-      };
-
-      node821 = {
-        imports = [
-          (nixos: let
-            inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
-          in {
-            cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-legacy;
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-821-pre.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-            services.cardano-node.publicProducers = [
-              {
-                accessPoints = [
-                  {
-                    address = "backbone.cardano.iog.io";
-                    port = 3001;
-                  }
-                ];
-                advertise = false;
-              }
-            ];
-          })
-        ];
       };
 
       nodeHd = {
@@ -271,6 +262,7 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {services.cardano-node.shareNodeSocket = true;}
           {services.cardano-postgres.enablePsqlrc = true;}
         ];
       };
@@ -289,6 +281,7 @@ in
 
           inputs.cardano-parts.nixosModules.profile-cardano-faucet
           {services.cardano-faucet.acmeEmail = "devops@iohk.io";}
+          {services.cardano-node.shareNodeSocket = true;}
         ];
       };
 
@@ -322,8 +315,9 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
       sanchoRelMig = mkWorldRelayMig 30004;
-
-      multiInst = {services.cardano-node.instances = 2;};
+      #
+      # multiInst = {services.cardano-node.instances = 2;};
+      #
       # # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -481,7 +475,7 @@ in
       sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node multiInst];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
       sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
@@ -516,11 +510,14 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Mainnet
+      # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
+      # Rel-a-{2,3} lmdb and mdb fault tests
+      # Rel-a-4 addnl current release tests
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node];};
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram5gibActual];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node nodeHd lmdb ram8gib];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node node821 ram8gib];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node bp gcLogging rtsOptMods];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node openFwTcp3001];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
