@@ -54,14 +54,20 @@ an `./.ssh_config` using:
     just save-ssh-config
 
 With that you can then get started with:
-* list machines: `just list-machines`
-* ssh to machines: `just ssh $MACHINE`
-* finding other operations recipes to use: `just --list`
+
+    # Listing machines
+    just list-machines
+
+    # Ssh to machines
+    just ssh $MACHINE
+
+    # Finding other operations recipes to use
+    just --list
 
 ## Cloudformation
 
 We bootstrap our infrastructure using AWS Cloudformation, it creates resources
-like S3 Buckets, a DNS Zone, KMS key, and OpenTofu state storage.
+like S3 Buckets, a DNS zone, KMS key, and OpenTofu state storage.
 
 The distinction of what is managed by Cloudformation and OpenTofu is not very
 strict, but generally anything that is not of the mentioned resource types will
@@ -73,6 +79,10 @@ We use [Rain](https://github.com/aws-cloudformation/rain) to apply the
 configuration. There is a wrapper that evaluates the config and deploys it:
 
     just cf terraformState
+
+When arranging DNS zone delegation, the nameservers to delegate to are shown with:
+
+    just show-nameservers
 
 ## OpenTofu
 
