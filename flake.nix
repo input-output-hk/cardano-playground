@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-01-10";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-01-10";
 
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
@@ -18,9 +18,6 @@
     #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt";
     #   flake = false;
     # };
-
-    # Until node-8.7.3 is in capkgs with IntersectMBO script fix
-    cardano-node-ng.url = "github:IntersectMBO/cardano-node/8.7.3";
 
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
