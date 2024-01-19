@@ -949,16 +949,15 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1705532864,
-        "narHash": "sha256-KKEH4qr2v8cpssbFBA83qA4mtA9vJataIH4xdgGelQY=",
+        "lastModified": 1705956650,
+        "narHash": "sha256-ZghZ/3FLJo96zHB3muF2HGLw1IZVvdS1Txc/z0bZqX0=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "2e72099e4fe409ccdf24feba9f667aeb858c7a61",
+        "rev": "ad0d2364f72ee371af88645265e2c4a346babda7",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "next-2024-01-10",
         "repo": "cardano-parts",
         "type": "github"
       }
@@ -5790,15 +5789,15 @@
     },
     "process-compose-flake": {
       "locked": {
-        "lastModified": 1705505543,
-        "narHash": "sha256-08T7pTpRsTTBx++DXntZBuTwnSaZa9cNdJBfeCDdmos=",
-        "owner": "Platonic-Systems",
+        "lastModified": 1705650762,
+        "narHash": "sha256-kSLMsz0tXc1N5Jx8ghEXhLmK4X3Bktt3S4ttXJXCzCo=",
+        "owner": "Platonic-systems",
         "repo": "process-compose-flake",
-        "rev": "5cc43941c05ae268d122bd7dc990b1416d3a2224",
+        "rev": "c8942208e7c7122aef4811a606f7c12ad0753a98",
         "type": "github"
       },
       "original": {
-        "owner": "Platonic-Systems",
+        "owner": "Platonic-systems",
         "repo": "process-compose-flake",
         "type": "github"
       }
@@ -6025,16 +6024,15 @@
     },
     "services-flake": {
       "locked": {
-        "lastModified": 1705460134,
-        "narHash": "sha256-yvobSDZlZiGTAeKIRKY3vdrzMSbpPJho1jKbsVny/nQ=",
-        "owner": "johnalotoski",
+        "lastModified": 1705840170,
+        "narHash": "sha256-UCKg7XSfuoLHs7rLIyQfNzohtJwtIJnBG2uXOnMXpGk=",
+        "owner": "juspay",
         "repo": "services-flake",
-        "rev": "cb0ae89c6c220b8a6098b587f4660b3ea94d5f32",
+        "rev": "8c396234dcc88e74c4d05001aa36b4f16ccdb0da",
         "type": "github"
       },
       "original": {
-        "owner": "johnalotoski",
-        "ref": "pgsocket",
+        "owner": "juspay",
         "repo": "services-flake",
         "type": "github"
       }
