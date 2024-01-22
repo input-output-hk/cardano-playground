@@ -19,9 +19,6 @@
     #   flake = false;
     # };
 
-    # Until node-8.7.3 is in capkgs with IntersectMBO script fix
-    cardano-node-ng.url = "github:IntersectMBO/cardano-node/8.7.3";
-
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
 

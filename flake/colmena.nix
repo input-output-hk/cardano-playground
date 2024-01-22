@@ -70,6 +70,7 @@ in
         services.cardano-node.rtsArgs = lib.mkForce [
           "-N${toString cpuCount}"
           "-A16m"
+          "-I3"
           # Temporarily match the m5a-xlarge spec
           "-M12943.360000M"
           # "-M${toString (memMiB * 0.79)}M"
@@ -514,6 +515,7 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
       mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node bp gcLogging rtsOptMods];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
