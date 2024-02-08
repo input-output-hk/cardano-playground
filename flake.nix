@@ -5,18 +5,14 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    # cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-02-02";
-    cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-02-02";
+    cardano-parts.url = "github:input-output-hk/cardano-parts";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
 
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
     cardano-node-bootstrap.url = "github:IntersectMBO/cardano-node/bolt12/bootstrapPeers";
-    # cardano-node-873-ghc963 = {
-    #   url = "github:IntersectMBO/cardano-node/8.7.3";
-    #   inputs.customConfig.url = "path:/home/jlotoski/work/iohk/cardano-playground-wt/next-2024-01-23/custom-config";
-    # };
 
     # For cardano-node service local debug:
     # cardano-node-service = {

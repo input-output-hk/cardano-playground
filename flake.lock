@@ -1167,14 +1167,17 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1707355023,
-        "narHash": "sha256-c2wNBVdVtYJldrnZPMVxdlGr3KAhO8HA6hqFRqHRXzw=",
-        "path": "/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-02-02",
-        "type": "path"
+        "lastModified": 1707409726,
+        "narHash": "sha256-98pBuffE5PJR1/+aAASkf2bqNSttasUQDZWZOj48Kq8=",
+        "owner": "input-output-hk",
+        "repo": "cardano-parts",
+        "rev": "b93184b8b3c3dee22e1c7917a7a5276b4bd94b5d",
+        "type": "github"
       },
       "original": {
-        "path": "/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-02-02",
-        "type": "path"
+        "owner": "input-output-hk",
+        "repo": "cardano-parts",
+        "type": "github"
       }
     },
     "cardano-shell": {

@@ -65,24 +65,24 @@ in
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
-      rtsOptMods = {
-        nodeResources,
-        lib,
-        ...
-      }: let
-        inherit (nodeResources) cpuCount; # memMiB;
-      in {
-        services.cardano-node.rtsArgs = lib.mkForce [
-          "-N${toString cpuCount}"
-          "-A16m"
-          "-I3"
-          # Temporarily match the m5a-xlarge spec
-          "-M12943.360000M"
-          # "-M${toString (memMiB * 0.79)}M"
-        ];
-      };
+      # rtsOptMods = {
+      #   nodeResources,
+      #   lib,
+      #   ...
+      # }: let
+      #   inherit (nodeResources) cpuCount; # memMiB;
+      # in {
+      #   services.cardano-node.rtsArgs = lib.mkForce [
+      #     "-N${toString cpuCount}"
+      #     "-A16m"
+      #     "-I3"
+      #     # Temporarily match the m5a-xlarge spec
+      #     "-M12943.360000M"
+      #     # "-M${toString (memMiB * 0.79)}M"
+      #   ];
+      # };
 
-      gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
 
       openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
 
@@ -223,35 +223,9 @@ in
         ];
       };
 
-      nodeGhc963 = {
-        imports = [
-          (nixos: let
-            inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
-          in {
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-873-ghc963.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-            services.cardano-node.publicProducers = [
-              {
-                accessPoints = [
-                  {
-                    address = "backbone.cardano.iog.io";
-
-                    port = 3001;
-                  }
-                ];
-                advertise = false;
-              }
-            ];
-          })
-        ];
-      };
-
       nodeBootstrap = {
         imports = [
-          (nixos: let
-            inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
-          in {
+          {
             cardano-parts.perNode.pkgs = {
               inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             };
@@ -266,7 +240,7 @@ in
                 advertise = false;
               }
             ];
-          })
+          }
         ];
       };
 
