@@ -286,6 +286,11 @@ in {
                     to_port = 3001;
                   })
                   (mkRule {
+                    description = "Allow Forwarding Proxy";
+                    from_port = 3132;
+                    to_port = 3132;
+                  })
+                  (mkRule {
                     description = "Allow preprod world relay migration";
                     from_port = 30000;
                     to_port = 30000;

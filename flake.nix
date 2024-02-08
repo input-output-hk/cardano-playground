@@ -12,6 +12,7 @@
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
+    cardano-node-bootstrap.url = "github:IntersectMBO/cardano-node/bolt12/bootstrapPeers";
 
     # For cardano-node service local debug:
     # cardano-node-service = {

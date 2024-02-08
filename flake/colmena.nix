@@ -57,27 +57,32 @@ in
         ];
       };
 
+      # Mithril signing config
+      mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
+      declMRel = privateIp: {services.mithril-signer.relayEndpoint = privateIp;};
+      declMSigner = privateIp: {services.mithril-relay.signerIp = privateIp;};
+
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
-      rtsOptMods = {
-        nodeResources,
-        lib,
-        ...
-      }: let
-        inherit (nodeResources) cpuCount; # memMiB;
-      in {
-        services.cardano-node.rtsArgs = lib.mkForce [
-          "-N${toString cpuCount}"
-          "-A16m"
-          "-I3"
-          # Temporarily match the m5a-xlarge spec
-          "-M12943.360000M"
-          # "-M${toString (memMiB * 0.79)}M"
-        ];
-      };
+      # rtsOptMods = {
+      #   nodeResources,
+      #   lib,
+      #   ...
+      # }: let
+      #   inherit (nodeResources) cpuCount; # memMiB;
+      # in {
+      #   services.cardano-node.rtsArgs = lib.mkForce [
+      #     "-N${toString cpuCount}"
+      #     "-A16m"
+      #     "-I3"
+      #     # Temporarily match the m5a-xlarge spec
+      #     "-M12943.360000M"
+      #     # "-M${toString (memMiB * 0.79)}M"
+      #   ];
+      # };
 
-      gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
 
       openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
 
@@ -215,6 +220,27 @@ in
               }
             ];
           })
+        ];
+      };
+
+      nodeBootstrap = {
+        imports = [
+          {
+            cardano-parts.perNode.pkgs = {
+              inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+            };
+            services.cardano-node.publicProducers = [
+              {
+                accessPoints = [
+                  {
+                    address = "backbone.cardano.iog.io";
+                    port = 3001;
+                  }
+                ];
+                advertise = false;
+              }
+            ];
+          }
         ];
       };
 
@@ -410,42 +436,42 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node bp pre];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node bp pre (declMRel "172.31.42.6")];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig mithrilRelay (declMSigner "172.31.43.63")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preprod1") dbsync smash pre preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node faucet pre preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp pre];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp pre (declMRel "172.31.45.137")];};
       preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod2") node rel pre preprodRelMig];};
-      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel pre preprodRelMig];};
+      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel pre preprodRelMig mithrilRelay (declMSigner "172.31.44.71")];};
       preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod2") node rel pre preprodRelMig];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node bp pre];};
+      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node bp pre (declMRel "172.31.32.40")];};
       preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig];};
       preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "172.31.37.171")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node bp pre];};
-      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig];};
+      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node bp pre (declMRel "172.31.43.156")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig mithrilRelay (declMSigner "172.31.46.81")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel pre previewRelMig];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preview1") dbsync smash pre previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet pre previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre (declMRel "172.31.34.161")];};
       preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "172.31.34.130")];};
       preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node bp pre];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node bp pre (declMRel "172.31.34.147")];};
       preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
       preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "172.31.36.174")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -514,12 +540,16 @@ in
       # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
+      # Dbsync-a-2 is kept in stopped state unless actively needed for testing
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node bp gcLogging rtsOptMods];};
+
+      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001 bp gcLogging rtsOptMods];};
+      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node openFwTcp3001];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node openFwTcp3001];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node nodeBootstrap];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
