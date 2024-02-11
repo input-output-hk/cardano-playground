@@ -441,7 +441,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig mithrilRelay (declMSigner "172.31.43.63")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel pre preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 40) (group "preprod1") dbsync smash pre preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync smash pre preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node faucet pre preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp pre (declMRel "172.31.45.137")];};
