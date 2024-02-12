@@ -342,7 +342,7 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
       # TODO: The ledger after slot modification is to be removed after the first few days of sanchonet respin on 2024-02-10
-      sanchoRelMig = recursiveUpdate (mkWorldRelayMig 30004) {services.cardano-node.usePeersFromLedgerAfterSlot = -1;};
+      sanchoRelMig = recursiveUpdate (mkWorldRelayMig 30004) {services.cardano-node.usePeersFromLedgerAfterSlot = 20908800;};
       #
       # multiInst = {services.cardano-node.instances = 2;};
       #
