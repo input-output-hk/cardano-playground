@@ -341,8 +341,7 @@ in
       # Preprod to be applied once preprod pools finish their retirement forging epoch and a CNAME redirect is applied
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
-      # TODO: The ledger after slot modification is to be removed after the first few days of sanchonet respin on 2024-02-10
-      sanchoRelMig = recursiveUpdate (mkWorldRelayMig 30004) {services.cardano-node.usePeersFromLedgerAfterSlot = 20908800;};
+      sanchoRelMig = mkWorldRelayMig 30004;
       #
       # multiInst = {services.cardano-node.instances = 2;};
       #
