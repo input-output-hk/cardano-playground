@@ -3,17 +3,19 @@
   namespace = "cardano-parts-integrations";
   name = "varnish";
   rule = [
-    {
-      alert = "VarnishCacheLowCacheHitRate";
-      annotations = {
-        description = "The Cache hit rate is {{ printf \"%.0f\" $value }} percent over the last 5 minutes on {{$labels.instance}}, which is below the threshold of 80 percent.";
-        summary = "Cache is not answering a sufficient percentage of read requests.";
-      };
-      # The webservers pipe all traffic through varnish and are subject to large amounts of spam requests making the cache rate intermittently low
-      expr = "increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) / (clamp_min((increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) + increase(varnish_main_cache_miss{instance!~\".*webserver.*\"}[10m])), 1)) * 100 < 80 and (increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) + increase(varnish_main_cache_miss{instance!~\".*webserver.*\"}[10m]) > 0)  and ((increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) + increase(varnish_main_cache_miss{instance!~\".*webserver.*\"}[10m])) > 100)\n";
-      for = "10m";
-      labels = {severity = "warning";};
-    }
+    # The low varnish cache hit rate alert generates significant false positives due to low load volume combined with random bot resource scanning
+    # Re-enable and adjust when a higher load app with varnish cache is utilized
+    # {
+    #   alert = "VarnishCacheLowCacheHitRate";
+    #   annotations = {
+    #     description = "The Cache hit rate is {{ printf \"%.0f\" $value }} percent over the last 5 minutes on {{$labels.instance}}, which is below the threshold of 80 percent.";
+    #     summary = "Cache is not answering a sufficient percentage of read requests.";
+    #   };
+    #   # The webservers pipe all traffic through varnish and are subject to large amounts of spam requests making the cache rate intermittently low
+    #   expr = "increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) / (clamp_min((increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) + increase(varnish_main_cache_miss{instance!~\".*webserver.*\"}[10m])), 1)) * 100 < 80 and (increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) + increase(varnish_main_cache_miss{instance!~\".*webserver.*\"}[10m]) > 0)  and ((increase(varnish_main_cache_hit{instance!~\".*webserver.*\"}[10m]) + increase(varnish_main_cache_miss{instance!~\".*webserver.*\"}[10m])) > 100)\n";
+    #   for = "10m";
+    #   labels = {severity = "warning";};
+    # }
     {
       alert = "VarnishCacheHighMemoryUsage";
       annotations = {
