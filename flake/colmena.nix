@@ -419,6 +419,7 @@ in
                     threadsPerCore
                     ;
                 };
+                inherit (nixosModules) ips;
               };
             })
           {} (attrNames nixosConfigurations);
@@ -431,6 +432,7 @@ in
         inputs.cardano-parts.nixosModules.profile-common
         inputs.cardano-parts.nixosModules.profile-grafana-agent
         nixosModules.common
+        nixosModules.ipmodule
       ];
 
       # Setup cardano-world networks:

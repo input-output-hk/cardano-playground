@@ -1,4 +1,4 @@
-flake @ {withSystem, ...}:
+flake:
 with flake.lib; {
   # Define some cluster-wide configuration.
   # This has to evaluate fast and is imported in various places.

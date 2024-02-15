@@ -1,6 +1,5 @@
-flake @ {
+{
   inputs,
-  self,
   lib,
   config,
   ...
