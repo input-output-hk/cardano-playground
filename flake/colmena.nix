@@ -225,21 +225,44 @@ in
 
       nodeBootstrap = {
         imports = [
+          # Base cardano-node service
+          "${inputs.cardano-node-bootstrap-service.outPath}/nix/nixos"
+
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+
           {
+            cardano-parts.perNode.lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
             cardano-parts.perNode.pkgs = {
               inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             };
-            services.cardano-node.publicProducers = [
-              {
-                accessPoints = [
-                  {
-                    address = "backbone.cardano.iog.io";
-                    port = 3001;
-                  }
-                ];
-                advertise = false;
-              }
-            ];
+            services.cardano-node = {
+              useBootstrapPeers = [];
+              producers = [
+                {
+                  accessPoints = [
+                    {
+                      address = "mainnet1-rel-a-1";
+                      port = 3001;
+                    }
+                  ];
+
+                  trustable = true;
+                }
+              ];
+
+              publicProducers = [
+                {
+                  accessPoints = [
+                    {
+                      address = "backbone.cardano.iog.io";
+                      port = 3001;
+                    }
+                  ];
+                  advertise = false;
+                }
+              ];
+            };
           }
         ];
       };
@@ -346,6 +369,18 @@ in
       # multiInst = {services.cardano-node.instances = 2;};
       #
       # # p2p and legacy network debugging code
+      netDebug = {
+        services.cardano-node = {
+          # useNewTopology = false;
+          extraNodeConfig = {
+            TraceConnectionManagerTransitions = true;
+            DebugPeerSelectionInitiatorResponder = true;
+            options.mapSeverity = {
+              "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
+            };
+          };
+        };
+      };
       # netDebug = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -549,7 +584,7 @@ in
       mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node openFwTcp3001];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node nodeBootstrap];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") netDebug nodeBootstrap];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
