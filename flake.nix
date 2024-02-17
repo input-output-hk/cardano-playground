@@ -5,20 +5,22 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-02-08";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-02-08";
 
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
-    cardano-node-bootstrap.url = "github:IntersectMBO/cardano-node/bolt12/bootstrapPeers";
+    cardano-node-bootstrap.url = "github:IntersectMBO/cardano-node/8.9.0";
+    # cardano-node-bootstrap.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.9.0";
 
     # For cardano-node service local debug:
-    # cardano-node-service = {
-    #   url = "path:/home/jlotoski/work/iohk/cardano-node-wt/svc-topo-opt";
-    #   flake = false;
-    # };
+    cardano-node-bootstrap-service = {
+      url = "github:IntersectMBO/cardano-node/8.9.0";
+      # url = "path:/home/jlotoski/work/iohk/cardano-node-wt/8.9.0";
+      flake = false;
+    };
 
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";

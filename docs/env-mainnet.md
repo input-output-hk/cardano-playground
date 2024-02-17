@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [8.7.2](https://github.com/input-output-hk/cardano-node/releases/tag/8.7.2)
+Compatible with cardano-node release [8.7.3](https://github.com/IntersectMBO/cardano-node/releases/tag/8.7.3)
 
 - [Node Config](environments/mainnet/config.json)
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
