@@ -56,6 +56,8 @@ with flake.lib; {
               cardano-smash = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-smash-ng);
               cardano-submit-api = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-submit-api-ng);
               cardano-node-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng;
+              mithril-client-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.mithril-client-cli-ng);
+              mithril-signer = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.mithril-signer-ng);
             };
           };
       };
