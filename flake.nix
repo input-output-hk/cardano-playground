@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-02-08";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-02-08";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-02-20";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-02-20";
 
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
@@ -26,7 +26,7 @@
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
 
     # Voltaire backend swagger ui for private chain deployment
-    govtool.url = "github:IntersectMBO/govtool/flake";
+    govtool.url = "github:IntersectMBO/govtool/jl/flake";
   };
 
   outputs = inputs: let

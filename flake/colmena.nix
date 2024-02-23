@@ -86,7 +86,7 @@ in
 
       openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
 
-      vva-be = {
+      govtool-backend = {
         imports = [
           (nixos @ {
             pkgs,
@@ -102,37 +102,37 @@ in
             groupCfg = nixos.config.cardano-parts.cluster.group;
             opsLib = config.flake.cardano-parts.lib.opsLib nixos.pkgs;
           in {
-            environment.systemPackages = [inputs.govtool.packages.x86_64-linux.vva-be];
+            environment.systemPackages = [inputs.govtool.packages.x86_64-linux.govtool-backend];
 
-            systemd.services.vva-be = {
+            systemd.services.govtool-backend = {
               wantedBy = ["multi-user.target"];
               after = ["network-online.target" "postgresql.service"];
               startLimitIntervalSec = 0;
               serviceConfig = {
                 ExecStart = lib.getExe (pkgs.writeShellApplication {
-                  name = "vva-be";
-                  runtimeInputs = [inputs.govtool.packages.x86_64-linux.vva-be];
-                  text = "vva-be -c /run/secrets/vva-be-cfg.json start-app";
+                  name = "govtool-backend";
+                  runtimeInputs = [inputs.govtool.packages.x86_64-linux.govtool-backend];
+                  text = "vva-be -c /run/secrets/govtool-backend-cfg.json start-app";
                 });
                 Restart = "always";
                 RestartSec = "30s";
               };
             };
 
-            users.users.vva-be = {
+            users.users.govtool-backend = {
               isSystemUser = true;
-              group = "vva-be";
+              group = "govtool-backend";
             };
 
-            users.groups.vva-be = {};
+            users.groups.govtool-backend = {};
 
             sops.secrets = mkSopsSecret {
-              secretName = "vva-be-cfg.json";
-              keyName = "${name}-vva-be.json";
+              secretName = "govtool-backend-cfg.json";
+              keyName = "${name}-govtool-backend.json";
               inherit groupOutPath groupName;
-              fileOwner = "vva-be";
-              fileGroup = "vva-be";
-              restartUnits = ["vva-be.service"];
+              fileOwner = "govtool-backend";
+              fileGroup = "govtool-backend";
+              restartUnits = ["govtool-backend.service"];
             };
 
             networking.firewall.allowedTCPPorts = [80 443];
@@ -169,7 +169,7 @@ in
               '';
 
               virtualHosts = {
-                vva-be = {
+                govtool-backend = {
                   serverName = "${name}.${domain}";
                   serverAliases = ["${environmentName}-govtool.${domain}" "${environmentName}-explorer.${domain}" "${environmentName}-smash.${domain}"];
 
@@ -237,7 +237,7 @@ in
               inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             };
             services.cardano-node = {
-              useBootstrapPeers = [];
+              bootstrapPeers = [];
               producers = [
                 {
                   accessPoints = [
@@ -515,7 +515,7 @@ in
       private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node rel];};
       private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private1") node rel];};
       private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private1") node rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync vva-be];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync govtool-backend];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node faucet privateFaucet];};
 
       private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node bp];};
