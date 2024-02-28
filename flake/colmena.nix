@@ -57,6 +57,23 @@ in
         ];
       };
 
+      node890 = {
+        imports = [
+          # Base cardano-node service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+
+          {
+            cardano-parts.perNode.lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
+            cardano-parts.perNode.pkgs = {
+              inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+            };
+          }
+        ];
+      };
+
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
       declMRel = privateIp: {services.mithril-signer.relayEndpoint = privateIp;};
@@ -220,50 +237,6 @@ in
               }
             ];
           })
-        ];
-      };
-
-      nodeBootstrap = {
-        imports = [
-          # Base cardano-node service
-          "${inputs.cardano-node-bootstrap-service.outPath}/nix/nixos"
-
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-
-          {
-            cardano-parts.perNode.lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-            services.cardano-node = {
-              bootstrapPeers = [];
-              producers = [
-                {
-                  accessPoints = [
-                    {
-                      address = "mainnet1-rel-a-1";
-                      port = 3001;
-                    }
-                  ];
-
-                  trustable = true;
-                }
-              ];
-
-              publicProducers = [
-                {
-                  accessPoints = [
-                    {
-                      address = "backbone.cardano.iog.io";
-                      port = 3001;
-                    }
-                  ];
-                  advertise = false;
-                }
-              ];
-            };
-          }
         ];
       };
 
@@ -537,7 +510,7 @@ in
       sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node {services.cardano-node.bootstrapPeers = null;}];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp (declMRel "172.31.22.202")];};
       sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
@@ -584,7 +557,7 @@ in
       mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node openFwTcp3001];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") netDebug nodeBootstrap];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") netDebug node890];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
