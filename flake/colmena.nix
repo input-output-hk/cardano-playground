@@ -504,7 +504,7 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet, pre-release
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp (declMRel "172.31.40.246")];};
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node890 bp (declMRel "172.31.40.246")];};
       sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.32.29")];};
       sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
