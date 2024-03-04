@@ -587,6 +587,7 @@ start-node ENV:
   else
     UNSTABLE=true
     UNSTABLE_LIB=true
+    UNSTABLE_MITHRIL=true
   fi
 
   # Set required entrypoint vars and run node in a new nohup background session
