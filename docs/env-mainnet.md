@@ -20,12 +20,13 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [8.7.3](https://github.com/IntersectMBO/cardano-node/releases/tag/8.7.3)
+Compatible with cardano-node release [8.9.0](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.0)
 
 - [Node Config](environments/mainnet/config.json)
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
 - [Submit API Config](environments/mainnet/submit-api-config.json)
 - [Node Topology](environments/mainnet/topology.json)
+- [Node Topology (Non bootstrap peers)](environments/mainnet/topology-non-bootstrap-peers.json)
 - [Node Topology (Legacy non-p2p)](environments/mainnet/topology-legacy.json)
 - [Byron Genesis](environments/mainnet/byron-genesis.json)
 - [Shelley Genesis](environments/mainnet/shelley-genesis.json)

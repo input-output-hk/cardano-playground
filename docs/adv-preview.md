@@ -1,17 +1,20 @@
 ## Advanced Configuration: Preview Testnet
 
-Users wanting to test a cardano-node pre-release version on the preview
-environment may obtain compatible configuration files below.
+There is currently no pre-release version available for the preview environment.
+
+The latest version available is cardano-node release 8.9.0.
+
+When a new pre-release becomes available the configuration files for the pre-release on the preview environment will be made available here.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.8.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.8.0-pre)
+Compatible with cardano-node release [8.9.0](https://github.com/input-output-hk/cardano-node/releases/tag/8.9.0)
 
-- [Node Config](environments-pre/preview/config.json)
-- [DB Sync Config](environments-pre/preview/db-sync-config.json)
-- [Submit API Config](environments-pre/preview/submit-api-config.json)
-- [Node Topology](environments-pre/preview/topology.json)
-- [Byron Genesis](environments-pre/preview/byron-genesis.json)
-- [Shelley Genesis](environments-pre/preview/shelley-genesis.json)
-- [Alonzo Genesis](environments-pre/preview/alonzo-genesis.json)
-- [Conway Genesis](environments-pre/preview/conway-genesis.json)
+- [Node Config](environments/preview/config.json)
+- [DB Sync Config](environments/preview/db-sync-config.json)
+- [Submit API Config](environments/preview/submit-api-config.json)
+- [Node Topology](environments/preview/topology.json)
+- [Byron Genesis](environments/preview/byron-genesis.json)
+- [Shelley Genesis](environments/preview/shelley-genesis.json)
+- [Alonzo Genesis](environments/preview/alonzo-genesis.json)
+- [Conway Genesis](environments/preview/conway-genesis.json)
