@@ -86,7 +86,7 @@ in
 
       openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
 
-      vva-be = {
+      govtool-backend = {
         imports = [
           (nixos @ {
             pkgs,
@@ -102,37 +102,37 @@ in
             groupCfg = nixos.config.cardano-parts.cluster.group;
             opsLib = config.flake.cardano-parts.lib.opsLib nixos.pkgs;
           in {
-            environment.systemPackages = [inputs.govtool.packages.x86_64-linux.vva-be];
+            environment.systemPackages = [inputs.govtool.packages.x86_64-linux.govtool-backend];
 
-            systemd.services.vva-be = {
+            systemd.services.govtool-backend = {
               wantedBy = ["multi-user.target"];
               after = ["network-online.target" "postgresql.service"];
               startLimitIntervalSec = 0;
               serviceConfig = {
                 ExecStart = lib.getExe (pkgs.writeShellApplication {
-                  name = "vva-be";
-                  runtimeInputs = [inputs.govtool.packages.x86_64-linux.vva-be];
-                  text = "vva-be -c /run/secrets/vva-be-cfg.json start-app";
+                  name = "govtool-backend";
+                  runtimeInputs = [inputs.govtool.packages.x86_64-linux.govtool-backend];
+                  text = "vva-be -c /run/secrets/govtool-backend-cfg.json start-app";
                 });
                 Restart = "always";
                 RestartSec = "30s";
               };
             };
 
-            users.users.vva-be = {
+            users.users.govtool-backend = {
               isSystemUser = true;
-              group = "vva-be";
+              group = "govtool-backend";
             };
 
-            users.groups.vva-be = {};
+            users.groups.govtool-backend = {};
 
             sops.secrets = mkSopsSecret {
-              secretName = "vva-be-cfg.json";
-              keyName = "${name}-vva-be.json";
+              secretName = "govtool-backend-cfg.json";
+              keyName = "${name}-govtool-backend.json";
               inherit groupOutPath groupName;
-              fileOwner = "vva-be";
-              fileGroup = "vva-be";
-              restartUnits = ["vva-be.service"];
+              fileOwner = "govtool-backend";
+              fileGroup = "govtool-backend";
+              restartUnits = ["govtool-backend.service"];
             };
 
             networking.firewall.allowedTCPPorts = [80 443];
@@ -169,7 +169,7 @@ in
               '';
 
               virtualHosts = {
-                vva-be = {
+                govtool-backend = {
                   serverName = "${name}.${domain}";
                   serverAliases = ["${environmentName}-govtool.${domain}" "${environmentName}-explorer.${domain}" "${environmentName}-smash.${domain}"];
 
@@ -223,50 +223,6 @@ in
         ];
       };
 
-      nodeBootstrap = {
-        imports = [
-          # Base cardano-node service
-          "${inputs.cardano-node-bootstrap-service.outPath}/nix/nixos"
-
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-
-          {
-            cardano-parts.perNode.lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-bootstrap.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-            services.cardano-node = {
-              useBootstrapPeers = [];
-              producers = [
-                {
-                  accessPoints = [
-                    {
-                      address = "mainnet1-rel-a-1";
-                      port = 3001;
-                    }
-                  ];
-
-                  trustable = true;
-                }
-              ];
-
-              publicProducers = [
-                {
-                  accessPoints = [
-                    {
-                      address = "backbone.cardano.iog.io";
-                      port = 3001;
-                    }
-                  ];
-                  advertise = false;
-                }
-              ];
-            };
-          }
-        ];
-      };
-
       lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
 
       smash = {
@@ -314,6 +270,24 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
           {services.cardano-node.shareNodeSocket = true;}
           {services.cardano-postgres.enablePsqlrc = true;}
+        ];
+      };
+
+      dbsync873 = {
+        imports = [
+          "${inputs.cardano-node-873-service}/nix/nixos/cardano-node-service.nix"
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-873 "x86_64-linux";
+              pkgs = {inherit (inputs.cardano-node-873.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+            };
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+          }
         ];
       };
 
@@ -475,7 +449,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "172.31.43.63")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync873 smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp (declMRel "172.31.45.137")];};
@@ -495,7 +469,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "172.31.46.81")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preview1") dbsync873 smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre (declMRel "172.31.34.161")];};
@@ -511,43 +485,43 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Private, pre-release
-      private1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node bp];};
-      private1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node rel];};
-      private1-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private1") node rel];};
-      private1-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private1") node rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync vva-be];};
-      private1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private1") node faucet privateFaucet];};
+      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node bp];};
+      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node rel];};
+      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private1") node rel];};
+      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private1") node rel];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync govtool-backend];};
+      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node faucet privateFaucet];};
 
-      private2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private2") node bp];};
-      private2-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private2") node rel];};
-      private2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private2") node rel];};
-      private2-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private2") node rel];};
+      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node bp];};
+      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private2") node rel];};
+      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node rel];};
+      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private2") node rel];};
 
-      private3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private3") node bp];};
-      private3-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "private3") node rel];};
-      private3-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "private3") node rel];};
-      private3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "private3") node rel];};
+      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private3") node bp];};
+      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private3") node rel];};
+      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private3") node rel];};
+      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private3") node rel];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet, pre-release
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp (declMRel "172.31.40.246")];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.32.29")];};
       sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node];};
 
-      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp];};
+      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp (declMRel "172.31.22.202")];};
       sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
-      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
+      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.23.214")];};
       sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp (declMRel "172.31.20.226")];};
       sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
       sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
+      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.22.127")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -576,7 +550,7 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001 bp gcLogging rtsOptMods];};
@@ -584,7 +558,7 @@ in
       mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node openFwTcp3001];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") netDebug nodeBootstrap];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") netDebug node];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
