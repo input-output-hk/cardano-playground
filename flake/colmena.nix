@@ -469,7 +469,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "172.31.46.81")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preview1") dbsync873 smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync873 smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre (declMRel "172.31.34.161")];};
