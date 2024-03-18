@@ -1219,15 +1219,16 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1710374404,
-        "narHash": "sha256-VXTTcoE/Fx4t/N6jHGfONSMs3Hof5ymT8vAl9Z49QLM=",
+        "lastModified": 1710779043,
+        "narHash": "sha256-kCE9+J2pQjzXE+O2dj8U6cYVzdt8hnhGIXSrM9sd5F4=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "50d6cf07dfb3ee7c2366ecc56e82c0e731fc4214",
+        "rev": "7babada9cf571c956ec45bffa6de936902b9f413",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "next-2024-03-15",
         "repo": "cardano-parts",
         "type": "github"
       }
@@ -3101,11 +3102,11 @@
         "nixpkgs-govtool-backend": "nixpkgs-govtool-backend"
       },
       "locked": {
-        "lastModified": 1708720556,
-        "narHash": "sha256-gL6zhLAb+jjnEXPoKMtKkq7aMZTawej9EeHZ2KHnCL0=",
+        "lastModified": 1710537862,
+        "narHash": "sha256-irkqXRN3SaXPW+dRl3D4vQAbcEdZIs0KkrkvFl0cELA=",
         "owner": "IntersectMBO",
         "repo": "govtool",
-        "rev": "d18415dd83c56041469f92cd9bb41900fb754489",
+        "rev": "9920dcb53db35ee1196ebdd77af3090bbdc7c754",
         "type": "github"
       },
       "original": {

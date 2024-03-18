@@ -32,6 +32,7 @@ in
       # ebsHighPerf = recursiveUpdate (ebsIops 10000) (ebsTp 1000);
 
       # Helper defs:
+      disableAlertCount.cardano-parts.perNode.meta.enableAlertCount = false;
       # delete.aws.instance.count = 0;
 
       # Cardano group assignments:
@@ -549,9 +550,9 @@ in
       # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
-      # Dbsync-a-2 is kept in stopped state unless actively needed for testing
+      # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001 bp gcLogging rtsOptMods];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001];};
