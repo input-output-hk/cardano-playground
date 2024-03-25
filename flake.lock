@@ -702,11 +702,11 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1710947488,
-        "narHash": "sha256-CxpehQINb0Qr/uPbi0XIw824PnDRjJBs82xt80Mx/kg=",
+        "lastModified": 1711384557,
+        "narHash": "sha256-M3DyIp+yuDlddlH2uEJ9MO+g0ZKBVeoyLKa+oQFyy58=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "492e313adac3d917a8ea340df360266bf40ba57b",
+        "rev": "923d56d844d69b1d3f64a25d0c095cae8b6d2862",
         "type": "github"
       },
       "original": {
@@ -1159,16 +1159,16 @@
     "cardano-node-service": {
       "flake": false,
       "locked": {
-        "lastModified": 1709733493,
-        "narHash": "sha256-chcwbks+HyImFk7FpbkC7FFmfpScMx5T7K0TzTkGAww=",
+        "lastModified": 1710951389,
+        "narHash": "sha256-PxMlVzTLMuVeu04QcGOxjaSMnpWJG78J0Rul3423too=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "0d98405a60d57e1c8e13406d51cce0e34356bd64",
+        "rev": "da945ea983d4722a9ffe54250edba9a193a57cf0",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "8.9.0",
+        "ref": "8.9.1",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -1176,16 +1176,16 @@
     "cardano-node-service-ng": {
       "flake": false,
       "locked": {
-        "lastModified": 1709211561,
-        "narHash": "sha256-fKUCVuGLHg64UBgoq1Wg1r4uRIGsEetaKqxxPqUMFe8=",
+        "lastModified": 1710951389,
+        "narHash": "sha256-PxMlVzTLMuVeu04QcGOxjaSMnpWJG78J0Rul3423too=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "184caa6e2d6d35c969a6bbecd6728175423682fb",
+        "rev": "da945ea983d4722a9ffe54250edba9a193a57cf0",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "8.9.0",
+        "ref": "8.9.1",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -1219,11 +1219,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1711149325,
-        "narHash": "sha256-LuD9nxb4+niA1coSFGWM/eEH6qJHgingODJDpzOBEfA=",
+        "lastModified": 1711403430,
+        "narHash": "sha256-Mnk0jr0scG6sXXcvo0/Rcs+eXv+GbTL9nIKr5cfrOCc=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "4c27b0e4c7e2cab692285023289abdfdbbd3b3d2",
+        "rev": "a61444da3a132bf6f7318e91848a5037858fd94e",
         "type": "github"
       },
       "original": {
