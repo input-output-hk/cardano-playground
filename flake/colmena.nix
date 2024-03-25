@@ -282,7 +282,14 @@ in
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
 
       # Roles
-      bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoBp];};
+      bp = {
+        imports = [
+          inputs.cardano-parts.nixosModules.role-block-producer
+          topoBp
+          # Disable machine DNS creation for block producers to avoid ip discovery
+          {cardano-parts.perNode.meta.enableDns = false;}
+        ];
+      };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
       dbsync = {
