@@ -6,6 +6,8 @@
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
   inherit (config.flake.cardano-parts.cluster.infra.aws) domain;
+
+  cfgGeneric = config.flake.cardano-parts.cluster.infra.generic;
 in
   with builtins;
   with lib; {
@@ -32,15 +34,26 @@ in
       # ebsHighPerf = recursiveUpdate (ebsIops 10000) (ebsTp 1000);
 
       # Helper defs:
+      disableAlertCount.cardano-parts.perNode.meta.enableAlertCount = false;
       # delete.aws.instance.count = 0;
 
       # Cardano group assignments:
       group = name: {
+        imports =
+          [
+            {
+              config.warnings =
+                optional (!(config.flake.nixosModules ? ip-module) && cfgGeneric.warnOnMissingIpModule)
+                ''The nixosModule "ip-module" which most clusters use is missing; builds or deployed software and services may break. Generate the module with `just update-ips`'';
+            }
+          ]
+          ++ optional (nixosModules ? ip-module) nixosModules.ip-module;
+
         cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
 
         # Since all machines are assigned a group, this is a good place to include default aws instance tags
         aws.instance.tags = {
-          inherit (config.flake.cardano-parts.cluster.infra.generic) organization tribe function repo;
+          inherit (cfgGeneric) organization tribe function repo;
           environment = config.flake.cardano-parts.cluster.groups.${name}.meta.environmentName;
           group = name;
         };
@@ -59,8 +72,8 @@ in
 
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
-      declMRel = privateIp: {services.mithril-signer.relayEndpoint = privateIp;};
-      declMSigner = privateIp: {services.mithril-relay.signerIp = privateIp;};
+      declMRel = node: {services.mithril-signer.relayEndpoint = nixosConfigurations.${node}.config.ips.privateIpv4;};
+      declMSigner = node: {services.mithril-relay.signerIp = nixosConfigurations.${node}.config.ips.privateIpv4;};
 
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
@@ -104,37 +117,6 @@ in
           in {
             environment.systemPackages = [inputs.govtool.packages.x86_64-linux.govtool-backend];
 
-            systemd.services.govtool-backend = {
-              wantedBy = ["multi-user.target"];
-              after = ["network-online.target" "postgresql.service"];
-              startLimitIntervalSec = 0;
-              serviceConfig = {
-                ExecStart = lib.getExe (pkgs.writeShellApplication {
-                  name = "govtool-backend";
-                  runtimeInputs = [inputs.govtool.packages.x86_64-linux.govtool-backend];
-                  text = "vva-be -c /run/secrets/govtool-backend-cfg.json start-app";
-                });
-                Restart = "always";
-                RestartSec = "30s";
-              };
-            };
-
-            users.users.govtool-backend = {
-              isSystemUser = true;
-              group = "govtool-backend";
-            };
-
-            users.groups.govtool-backend = {};
-
-            sops.secrets = mkSopsSecret {
-              secretName = "govtool-backend-cfg.json";
-              keyName = "${name}-govtool-backend.json";
-              inherit groupOutPath groupName;
-              fileOwner = "govtool-backend";
-              fileGroup = "govtool-backend";
-              restartUnits = ["govtool-backend.service"];
-            };
-
             networking.firewall.allowedTCPPorts = [80 443];
 
             security.acme = {
@@ -150,44 +132,88 @@ in
 
             # services.nginx-vhost-exporter.enable = true;
 
-            services.nginx = {
-              enable = true;
-              eventsConfig = "worker_connections 4096;";
-              appendConfig = "worker_rlimit_nofile 16384;";
-              recommendedGzipSettings = true;
-              recommendedOptimisation = true;
-              recommendedProxySettings = true;
+            services = {
+              nginx = {
+                enable = true;
+                eventsConfig = "worker_connections 4096;";
+                appendConfig = "worker_rlimit_nofile 16384;";
+                recommendedGzipSettings = true;
+                recommendedOptimisation = true;
+                recommendedProxySettings = true;
 
-              commonHttpConfig = ''
-                log_format x-fwd '$remote_addr - $remote_user [$time_local] '
-                                 '"$scheme://$host" "$request" "$http_accept_language" $status $body_bytes_sent '
-                                 '"$http_referer" "$http_user_agent" "$http_x_forwarded_for"';
+                commonHttpConfig = ''
+                  log_format x-fwd '$remote_addr - $remote_user [$time_local] '
+                                   '"$scheme://$host" "$request" "$http_accept_language" $status $body_bytes_sent '
+                                   '"$http_referer" "$http_user_agent" "$http_x_forwarded_for"';
 
-                access_log syslog:server=unix:/dev/log x-fwd;
-                limit_req_zone $binary_remote_addr zone=apiPerIP:100m rate=1r/s;
-                limit_req_status 429;
-              '';
+                  access_log syslog:server=unix:/dev/log x-fwd;
+                  limit_req_zone $binary_remote_addr zone=apiPerIP:100m rate=1r/s;
+                  limit_req_status 429;
+                '';
 
-              virtualHosts = {
-                govtool-backend = {
-                  serverName = "${name}.${domain}";
-                  serverAliases = ["${environmentName}-govtool.${domain}" "${environmentName}-explorer.${domain}" "${environmentName}-smash.${domain}"];
+                virtualHosts = {
+                  govtool-backend = {
+                    serverName = "${name}.${domain}";
+                    serverAliases = ["${environmentName}-govtool.${domain}" "${environmentName}-explorer.${domain}" "${environmentName}-smash.${domain}"];
 
-                  default = true;
-                  enableACME = true;
-                  forceSSL = true;
+                    default = true;
+                    enableACME = true;
+                    forceSSL = true;
 
-                  locations = {
-                    "/".proxyPass = "http://127.0.0.1:9999";
-                    "/api/".proxyPass = "http://127.0.0.1:9999/";
+                    locations = {
+                      "/".proxyPass = "http://127.0.0.1:9999";
+                      "/api/".proxyPass = "http://127.0.0.1:9999/";
+                    };
                   };
                 };
               };
+
+              # For debugging govtool failures:
+              # postgresql.settings = {
+              #   log_connections = true;
+              #   log_statement = "all";
+              #   log_disconnections = true;
+              # };
             };
 
-            systemd.services.nginx.serviceConfig = {
-              LimitNOFILE = 65535;
-              LogNamespace = "nginx";
+            systemd.services = {
+              govtool-backend = {
+                wantedBy = ["multi-user.target"];
+                after = ["network-online.target" "postgresql.service"];
+                startLimitIntervalSec = 0;
+                serviceConfig = {
+                  ExecStart = lib.getExe (pkgs.writeShellApplication {
+                    name = "govtool-backend";
+                    runtimeInputs = [inputs.govtool.packages.x86_64-linux.govtool-backend];
+                    text = "vva-be -c /run/secrets/govtool-backend-cfg.json start-app";
+                  });
+                  Restart = "always";
+                  RestartSec = "30s";
+                };
+              };
+
+              nginx.serviceConfig = {
+                LimitNOFILE = 65535;
+                LogNamespace = "nginx";
+              };
+            };
+
+            users = {
+              groups.govtool-backend = {};
+
+              users.govtool-backend = {
+                isSystemUser = true;
+                group = "govtool-backend";
+              };
+            };
+
+            sops.secrets = mkSopsSecret {
+              secretName = "govtool-backend-cfg.json";
+              keyName = "${name}-govtool-backend.json";
+              inherit groupOutPath groupName;
+              fileOwner = "govtool-backend";
+              fileGroup = "govtool-backend";
+              restartUnits = ["govtool-backend.service"];
             };
           })
         ];
@@ -234,7 +260,7 @@ in
       };
 
       # Snapshots: add this to a dbsync machine defn and deploy; remove once the snapshot is restored.
-      # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html#13.1/
+      # Snapshots for mainnet can be found at: https://update-cardano-mainnet.iohk.io/cardano-db-sync/index.html
       # snapshot = {services.cardano-db-sync.restoreSnapshot = "$SNAPSHOT_URL";};
 
       webserver = {
@@ -258,7 +284,14 @@ in
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
 
       # Roles
-      bp = {imports = [inputs.cardano-parts.nixosModules.role-block-producer topoBp];};
+      bp = {
+        imports = [
+          inputs.cardano-parts.nixosModules.role-block-producer
+          topoBp
+          # Disable machine DNS creation for block producers to avoid ip discovery
+          {cardano-parts.perNode.meta.enableDns = false;}
+        ];
+      };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
       dbsync = {
@@ -435,7 +468,7 @@ in
 
       defaults.imports = [
         inputs.cardano-parts.nixosModules.module-aws-ec2
-        inputs.cardano-parts.nixosModules.module-cardano-parts
+        inputs.cardano-parts.nixosModules.profile-cardano-parts
         inputs.cardano-parts.nixosModules.profile-basic
         inputs.cardano-parts.nixosModules.profile-common
         inputs.cardano-parts.nixosModules.profile-grafana-agent
@@ -445,42 +478,42 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node bp (declMRel "172.31.42.6")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "172.31.43.63")];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node bp (declMRel "preprod1-rel-a-1")];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod1") node rel preprodRelMig];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync873 smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod1") node faucet preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp (declMRel "172.31.45.137")];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node bp (declMRel "preprod2-rel-b-1")];};
       preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod2") node rel preprodRelMig];};
-      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "172.31.44.71")];};
+      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod2") node rel preprodRelMig];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node bp pre (declMRel "172.31.32.40")];};
+      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node bp pre (declMRel "preprod3-rel-c-1")];};
       preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig];};
       preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "172.31.37.171")];};
+      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node bp (declMRel "172.31.43.156")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "172.31.46.81")];};
+      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node bp (declMRel "preview1-rel-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preview1") dbsync873 smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync873 smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview1") node faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre (declMRel "172.31.34.161")];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node bp pre (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "172.31.34.130")];};
+      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview2") node rel pre previewRelMig];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node bp pre (declMRel "172.31.34.147")];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node bp pre (declMRel "preview3-rel-c-1")];};
       preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
       preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "172.31.36.174")];};
+      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 40) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -505,23 +538,23 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet, pre-release
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp (declMRel "172.31.40.246")];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.32.29")];};
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node bp (declMRel "sanchonet1-rel-a-1")];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
       sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 40) (group "sanchonet1") node faucet sanchoFaucet];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 40) (group "sanchonet1") node];};
 
-      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp (declMRel "172.31.22.202")];};
+      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 40) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
-      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.23.214")];};
+      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
       sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp (declMRel "172.31.20.226")];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 40) (group "sanchonet3") node bp (declMRel "sanchonet3-rel-c-1")];};
       sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
       sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "172.31.22.127")];};
+      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -549,9 +582,9 @@ in
       # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
-      # Dbsync-a-2 is kept in stopped state unless actively needed for testing
+      # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001 bp gcLogging rtsOptMods];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001];};
