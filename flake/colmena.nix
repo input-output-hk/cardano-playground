@@ -39,16 +39,6 @@ in
 
       # Cardano group assignments:
       group = name: {
-        imports =
-          [
-            {
-              config.warnings =
-                optional (!(config.flake.nixosModules ? ip-module) && cfgGeneric.warnOnMissingIpModule)
-                ''The nixosModule "ip-module" which most clusters use is missing; builds or deployed software and services may break. Generate the module with `just update-ips`'';
-            }
-          ]
-          ++ optional (nixosModules ? ip-module) nixosModules.ip-module;
-
         cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
 
         # Since all machines are assigned a group, this is a good place to include default aws instance tags
@@ -353,6 +343,7 @@ in
         inputs.cardano-parts.nixosModules.profile-common
         inputs.cardano-parts.nixosModules.profile-grafana-agent
         nixosModules.common
+        nixosModules.ip-module-check
       ];
 
       # Setup cardano-world networks:

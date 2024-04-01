@@ -28,6 +28,10 @@ with flake.lib; {
       tribe = "coretech";
       function = "cardano-parts";
       repo = "https://github.com/input-output-hk/cardano-playground";
+
+      # These options must remain true for the playground cluster as ip info is required
+      abortOnMissingIpModule = true;
+      warnOnMissingIpModule = true;
     };
 
     infra.grafana.stackName = "playground";
