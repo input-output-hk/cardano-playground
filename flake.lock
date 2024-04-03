@@ -1219,11 +1219,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1712002928,
-        "narHash": "sha256-MpiSfkvH4nhvV54tMIidYoif99tegjcDwOMs79bB+DI=",
+        "lastModified": 1712175513,
+        "narHash": "sha256-HW6Mqj7UVuarGpIJH75PKknz5CoPO8G3XKGQw2QQBBU=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "79f1a50af12003b1aa95197641f6ea4dcfea95c7",
+        "rev": "3d2a1c845979bcea0cbb60bacbdd189eb59605d1",
         "type": "github"
       },
       "original": {
