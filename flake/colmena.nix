@@ -95,6 +95,19 @@ in
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
       };
 
+      node8-10-0 = {
+        imports = [
+          (nixos: let
+            inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
+          in {
+            cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-8-10-0;
+            cardano-parts.perNode.pkgs = {
+              inherit (inputs.cardano-node-8-10-0.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+            };
+          })
+        ];
+      };
+
       nodeHd = {
         imports = [
           (nixos: let
@@ -389,22 +402,22 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Private, pre-release
-      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node bp];};
-      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node rel];};
-      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private1") node rel];};
-      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private1") node rel];};
+      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node node8-10-0 bp];};
+      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node node8-10-0 rel];};
+      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private1") node node8-10-0 rel];};
+      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private1") node node8-10-0 rel];};
       private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync nixosModules.govtool-backend];};
-      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node faucet privateFaucet];};
+      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node node8-10-0 faucet privateFaucet];};
 
-      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node bp];};
-      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private2") node rel];};
-      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node rel];};
-      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private2") node rel];};
+      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node node8-10-0 bp];};
+      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private2") node node8-10-0 rel];};
+      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node node8-10-0 rel];};
+      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private2") node node8-10-0 rel];};
 
-      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private3") node bp];};
-      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private3") node rel];};
-      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private3") node rel];};
-      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private3") node rel];};
+      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private3") node node8-10-0 bp];};
+      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private3") node node8-10-0 rel];};
+      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private3") node node8-10-0 rel];};
+      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private3") node node8-10-0 rel];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
