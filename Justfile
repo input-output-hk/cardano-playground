@@ -347,6 +347,22 @@ save-bootstrap-ssh-key:
   $key.values.private_key_openssh | to text | save --force .ssh_key
   chmod 0600 .ssh_key
 
+# Used to quickly assemble a full group bulk creds file from current or prior KES for network respin purposes
+save-bulk-creds ENV COMMIT="HEAD":
+  #!/usr/bin/env bash
+  mkdir -p workbench/custom/rundir
+  for i in 1 2 3; do
+    sops --config /dev/null --input-type binary --output-type binary --decrypt \
+    <(git cat-file blob {{COMMIT}}:secrets/groups/{{ENV}}$i/no-deploy/bulk.creds.pools.json) \
+    | jq -r '.[]'
+  done | jq -s > workbench/custom/rundir/bulk.creds.secret.{{ENV}}.{{COMMIT}}.pools.json
+
+  echo
+  echo "Bulk credentials file for environment {{ENV}}, commit {{COMMIT}} has been saved at:"
+  echo "  workbench/custom/rundir/bulk.creds.secret.{{ENV}}.{{COMMIT}}.pools.json"
+  echo
+  echo "Do not commit this file and delete it when local workbench work is completed."
+
 save-ssh-config:
   #!/usr/bin/env nu
   print "Retrieving ssh config from tofu..."
