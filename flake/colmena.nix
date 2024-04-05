@@ -406,7 +406,9 @@ in
       private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node node8-10-0 rel];};
       private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private1") node node8-10-0 rel];};
       private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 40) (group "private1") node node8-10-0 rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync nixosModules.govtool-backend];};
+      # Dbsync sancho-4.1.0 is not yet compatible with node 8.10, and node 8.9.1 can no longer run on the private network with Conway Txs
+      # private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") dbsync node8-10-0 nixosModules.govtool-backend];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node node8-10-0];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 40) (group "private1") node node8-10-0 faucet privateFaucet];};
 
       private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 40) (group "private2") node node8-10-0 bp];};
