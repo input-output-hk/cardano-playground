@@ -106,6 +106,8 @@ build-book-prod:
   ln -sf book-prod.toml book.toml
   cd -
   mdbook build docs/
+  echo
+  nu -c 'echo $"(ansi bg_light_purple)REMINDER:(ansi reset) Ensure node version statement and link for each environment are up to date."'
 
 build-book-staging:
   #!/usr/bin/env bash
@@ -114,6 +116,8 @@ build-book-staging:
   ln -sf book-staging.toml book.toml
   cd -
   mdbook build docs/
+  echo
+  nu -c 'echo $"(ansi bg_light_purple)REMINDER:(ansi reset) Ensure node version statement and link for each environment are up to date."'
 
 build-machine MACHINE *ARGS:
   nix build -L .#nixosConfigurations.{{MACHINE}}.config.system.build.toplevel {{ARGS}}
