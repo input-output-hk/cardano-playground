@@ -21,7 +21,7 @@ Informed: Cardano Core Tribe
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.9.0](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.0)
+Compatible with cardano-node pre-release [8.9.1](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.1)
 
 - [Node Config](environments/sanchonet/config.json)
 - [DB Sync Config](environments/sanchonet/db-sync-config.json)
