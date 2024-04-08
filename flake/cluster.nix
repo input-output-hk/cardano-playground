@@ -75,12 +75,13 @@ with flake.lib; {
       // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true)
       // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true)
       // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true)
-      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true)
-      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true)
-      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true)
-      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa1-node.${dns}" true)
-      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa2-node.${dns}" true)
-      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa3-node.${dns}" true)
+      # Flip sanchonet and shelley-qa back to isNg true for sanchonet respin and shelley-qa 8.10 deployed
+      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" false)
+      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" false)
+      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" false)
+      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa1-node.${dns}" false)
+      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa2-node.${dns}" false)
+      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa3-node.${dns}" false)
       // (mkGroup "mainnet1" "mainnet" null null false)
       // (mkGroup "misc1" "preprod" null null false);
   };
