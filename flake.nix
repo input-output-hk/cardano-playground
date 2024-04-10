@@ -14,15 +14,6 @@
     cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
 
-    # CC testnet respin node pinning
-    cardano-node-8-10-0.url = "github:IntersectMBO/cardano-node/sl/node-8.10-cc-testnet";
-
-    # CC testnet respin iohk-nix pinning
-    iohk-nix-8-10-0 = {
-      url = "github:input-output-hk/iohk-nix/node-8.10";
-      inputs.nixpkgs.follows = "cardano-node-8-10-0/nixpkgs";
-    };
-
     # For additional customization and debug:
     cardano-node-873-service = {
       url = "github:IntersectMBO/cardano-node/8.7.3";
