@@ -3,9 +3,9 @@
 Users wanting to test a cardano-node pre-release version on the sanchonet
 environment may obtain compatible configuration files below.
 
-NOTE: Until sanchonet is respun on 2024-04-12, node 8.10.0-pre will not
-successfully sync through Conway era transactions of the current chain
-state.
+NOTE: When respun on 2024-04-12 the chain will be restored from slot 20044800.
+Any Sanchonet chain participants, stakepools, integrators, etc, will need to
+clear their chain state to re-sync from that point forward.
 
 #### Configuration files
 
