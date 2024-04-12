@@ -197,7 +197,7 @@ in
       preprodSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preprod-smash" "preprod-explorer"]);};
       previewSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
       # privateSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["private-smash" "private-explorer"]);};
-      sanchoSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
+      # sanchoSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
       shelleySmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["shelley-qa-smash" "shelley-qa-explorer"]);};
 
       faucet = {
@@ -413,22 +413,22 @@ in
       # Sanchonet, pre-release
       sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node bp (declMRel "sanchonet1-rel-a-1")];};
       sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
-      sanchonet1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
-      sanchonet1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
+      sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
+      sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
       # Temporarily disable dbsync until dbsync has 8.10.0 availability
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 80) (group "sanchonet1") node];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
-      sanchonet2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
-      sanchonet2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
+      sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
+      sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
 
       sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (group "sanchonet3") node bp (declMRel "sanchonet3-rel-c-1")];};
-      sanchonet3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
       sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
+      sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
+      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
