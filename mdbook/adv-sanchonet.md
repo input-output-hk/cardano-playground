@@ -11,7 +11,8 @@ clear their chain state to re-sync from that point forward.
 
 Compatible with cardano-node pre-release [8.10.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre)
 
-- [Node Config](environments-pre/sanchonet/config.json)
+- [Node Config (Non-block-producers)](environments-pre/sanchonet/config.json)
+- [Node Config (Block-producers)](environments-pre/sanchonet/config-bp.json)
 - [DB Sync Config](environments-pre/sanchonet/db-sync-config.json)
 - [Submit API Config](environments-pre/sanchonet/submit-api-config.json)
 - [Node Topology](environments-pre/sanchonet/topology.json)

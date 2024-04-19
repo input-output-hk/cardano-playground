@@ -7,7 +7,8 @@ environment may obtain compatible configuration files below.
 
 Compatible with cardano-node pre-release [8.10.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre)
 
-- [Node Config](environments-pre/preview/config.json)
+- [Node Config (Non-block-producers)](environments-pre/preview/config.json)
+- [Node Config (Block-producers)](environments-pre/preview/config-bp.json)
 - [DB Sync Config](environments-pre/preview/db-sync-config.json)
 - [Submit API Config](environments-pre/preview/submit-api-config.json)
 - [Node Topology](environments-pre/preview/topology.json)

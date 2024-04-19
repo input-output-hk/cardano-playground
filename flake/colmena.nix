@@ -197,7 +197,7 @@ in
       preprodSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preprod-smash" "preprod-explorer"]);};
       previewSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
       # privateSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["private-smash" "private-explorer"]);};
-      # sanchoSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
+      sanchoSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
       shelleySmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}"]) ["shelley-qa-smash" "shelley-qa-explorer"]);};
 
       faucet = {
@@ -353,7 +353,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync873 smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync pre smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod2") node bp (declMRel "preprod2-rel-b-1")];};
@@ -373,7 +373,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync873 smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preview2") node bp pre (declMRel "preview2-rel-b-1")];};
@@ -393,9 +393,7 @@ in
       private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel];};
       private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private1") node rel];};
       private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private1") node rel];};
-      # Dbsync sancho-4.1.0 is not yet compatible with node 8.10, and node 8.9.1 can no longer run on the private network with Conway Txs
-      # private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync node8-10-0 nixosModules.govtool-backend];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node faucet privateFaucet];};
 
       private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node bp];};
@@ -416,7 +414,7 @@ in
       sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
       # Temporarily disable dbsync until dbsync has 8.10.0 availability
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 80) (group "sanchonet1") node];};
 
@@ -437,7 +435,7 @@ in
       shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node rel];};
       shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node rel];};
       shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node rel];};
-      shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "shelley-qa1") dbsync873 smash shelleySmash];};
+      shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "shelley-qa1") dbsync pre smash shelleySmash];};
       shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node faucet shelleyFaucet];};
 
       shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "shelley-qa2") node bp];};

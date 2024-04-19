@@ -23,7 +23,8 @@ Informed: Cardano Core Tribe
 
 Compatible with cardano-node pre-release [8.10.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre)
 
-- [Node Config](environments/sanchonet/config.json)
+- [Node Config (Non-block-producers)](environments/sanchonet/config.json)
+- [Node Config (Block-producers)](environments/sanchonet/config-bp.json)
 - [DB Sync Config](environments/sanchonet/db-sync-config.json)
 - [Submit API Config](environments/sanchonet/submit-api-config.json)
 - [Node Topology](environments/sanchonet/topology.json)

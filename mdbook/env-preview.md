@@ -27,9 +27,10 @@ Informed: Cardano Core Tribe, COO, Director of Engineering
 
 #### Configuration files
 
-Compatible with cardano-node release [8.9.1](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.1)
+Compatible with cardano-node release [8.9.2](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.2)
 
-- [Node Config](environments/preview/config.json)
+- [Node Config (Non-block-producers)](environments/preview/config.json)
+- [Node Config (Block-producers)](environments/preview/config-bp.json)
 - [DB Sync Config](environments/preview/db-sync-config.json)
 - [Submit API Config](environments/preview/submit-api-config.json)
 - [Node Topology](environments/preview/topology.json)
