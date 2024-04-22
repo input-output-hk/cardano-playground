@@ -291,6 +291,11 @@ in {
                     to_port = 3132;
                   })
                   (mkRule {
+                    description = "Allow postgres";
+                    from_port = 5432;
+                    to_port = 5432;
+                  })
+                  (mkRule {
                     description = "Allow preprod world relay migration";
                     from_port = 30000;
                     to_port = 30000;
