@@ -11,7 +11,16 @@ clear their chain state to re-sync from that point forward.
 
 Compatible with cardano-node pre-release [8.10.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre)
 
-- [Node Config (Non-block-producers)](environments-pre/sanchonet/config.json)
+```
+NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+```
+
+- [Node Config (Non-block-producers -- see note above)](environments-pre/sanchonet/config.json)
 - [Node Config (Block-producers)](environments-pre/sanchonet/config-bp.json)
 - [DB Sync Config](environments-pre/sanchonet/db-sync-config.json)
 - [Submit API Config](environments-pre/sanchonet/submit-api-config.json)

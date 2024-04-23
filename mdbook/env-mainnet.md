@@ -22,7 +22,16 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 Compatible with cardano-node release [8.9.2](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.2)
 
-- [Node Config (Non-block-producers)](environments/mainnet/config.json)
+```
+NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+```
+
+- [Node Config (Non-block-producers -- see note above)](environments/mainnet/config.json)
 - [Node Config (Block-producers)](environments/mainnet/config-bp.json)
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
 - [Submit API Config](environments/mainnet/submit-api-config.json)
