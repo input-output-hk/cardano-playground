@@ -449,23 +449,24 @@ in
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
-      # Private, pre-release
-      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node bp];};
-      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
-      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node faucet privateFaucet];};
+      # Private, pre-release--include-all-instances
+      # All private nodes stopped until chain truncation and respin in the near future
+      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node bp disableAlertCount];};
+      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel disableAlertCount];};
+      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private1") node rel disableAlertCount];};
+      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private1") node rel disableAlertCount];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend disableAlertCount];};
+      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node faucet privateFaucet disableAlertCount];};
 
-      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node bp];};
-      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private2") node rel];};
-      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel];};
-      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private2") node rel];};
+      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node bp disableAlertCount];};
+      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private2") node rel disableAlertCount];};
+      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel disableAlertCount];};
+      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private2") node rel disableAlertCount];};
 
-      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node bp];};
-      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private3") node rel];};
-      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private3") node rel];};
-      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel];};
+      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node bp disableAlertCount];};
+      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private3") node rel disableAlertCount];};
+      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private3") node rel disableAlertCount];};
+      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel disableAlertCount];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
