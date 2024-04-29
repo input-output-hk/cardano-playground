@@ -25,7 +25,7 @@ While working on the next step, you can already start the devshell using:
 
     nix develop
 
-This will be done automatically if you are using [direnv](https://direnv.net/).
+This will be done automatically if you are using [direnv](https://direnv.net/) and issue `direnv allow`.
 
 ## AWS
 
@@ -46,10 +46,13 @@ SRE cluster secret in `~/.age/credentials`:
     # cardano-playground: sre
     AGE-SECRET-KEY-***********************************************************
 
+If needed, a new secret can be generated with `age-keygen`.
+
 ## SSH
 
-If your credentials are correct, you will be able to access SSH after creating
-an `./.ssh_config` using:
+If your credentials are correct, and the cluster is already bootstrapped with
+openTofu infrastructure, you will be able to access SSH after creating an
+`./.ssh_config` using:
 
     just save-ssh-config
 
