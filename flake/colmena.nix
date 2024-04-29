@@ -282,8 +282,12 @@ in
 
       faucetTmpFix = {
         systemd.services.cardano-faucet = {
-          startLimitBurst = mkForce 6;
-          startLimitIntervalSec = mkForce 3600;
+          # startLimitBurst = mkForce 6;
+          # startLimitIntervalSec = mkForce 3600;
+
+          # Temporarily continue restarts indefinitely
+          startLimitBurst = mkForce 0;
+          startLimitIntervalSec = mkForce 0;
           serviceConfig.RestartSec = mkForce "600s";
         };
       };
