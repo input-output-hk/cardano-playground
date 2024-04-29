@@ -87,7 +87,7 @@ in
 
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
 
-      openFwTcp3001 = {networking.firewall.allowedTCPPorts = [3001];};
+      openFwTcp = port: {networking.firewall.allowedTCPPorts = [port];};
 
       ram8gib = nixos: {
         # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
@@ -176,22 +176,84 @@ in
         ];
       };
 
-      dbsync873 = {
-        imports = [
-          "${inputs.cardano-node-873-service}/nix/nixos/cardano-node-service.nix"
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-postgres
-          {
-            cardano-parts.perNode = {
-              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-873 "x86_64-linux";
-              pkgs = {inherit (inputs.cardano-node-873.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
-            };
-            services.cardano-node.shareNodeSocket = true;
-            services.cardano-postgres.enablePsqlrc = true;
-          }
-        ];
+      # Example of node pinning to a custom version; see also the relevant flake inputs.
+      # dbsync873 = {
+      #   imports = [
+      #     "${inputs.cardano-node-873-service}/nix/nixos/cardano-node-service.nix"
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
+      #     {
+      #       cardano-parts.perNode = {
+      #         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-873 "x86_64-linux";
+      #         pkgs = {inherit (inputs.cardano-node-873.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+      #       };
+      #       services.cardano-node.shareNodeSocket = true;
+      #       services.cardano-postgres.enablePsqlrc = true;
+      #     }
+      #   ];
+      # };
+
+      dbsyncPub = {
+        pkgs,
+        config,
+        name,
+        ...
+      }: {
+        # Override profile-cardano-postgres defaults to enable public access
+        services.postgresql = {
+          enableTCPIP = mkForce true;
+
+          authentication = mkForce ''
+            local   all all ident        map=explorer-users
+            host    all all 127.0.0.1/32 scram-sha-256
+            host    all all ::1/128      scram-sha-256
+            hostssl all all all          scram-sha-256
+          '';
+
+          # Create a tmp user manually after the system has been nixos activated:
+          # sudo -iu postgres -- psql
+          #   create user <USER> login password '<PASSWORD>'
+          #   grant pg_read_all_date to <USER>
+          settings = {
+            password_encryption = "scram-sha-256";
+            ssl = "on";
+            ssl_ca_file = "server.crt";
+            ssl_cert_file = "server.crt";
+            ssl_key_file = "server.key";
+          };
+        };
+
+        system.activationScripts.pgSelfSignedCert.text = ''
+          PG_MAJOR="${head (splitString "." config.services.postgresql.package.version)}"
+          TARGET="/var/lib/postgresql/$PG_MAJOR"
+
+          if [ -d "$TARGET" ]; then
+            cd "$TARGET"
+
+            if ! [ -s server.key ]; then
+              echo "Creating a new postgresl self-signed cert on ${name}..."
+
+              set -x
+              rm -f server.*
+              ${pkgs.openssl}/bin/openssl req \
+                -new \
+                -x509 \
+                -days 3650 \
+                -nodes \
+                -subj "/C=DE/O=IOG/OU=SRE/CN=${name}.${domain}" \
+                -keyout server.key \
+                -out server.crt
+
+              chmod 0400 server.key
+              chown postgres:postgres server*
+              set +x
+            else
+              echo "A postgresql self-signed cert exists on ${name}."
+            fi
+          fi
+        '';
       };
 
       preprodSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preprod-smash" "preprod-explorer"]);};
@@ -217,6 +279,14 @@ in
       privateFaucet = {services.cardano-faucet.serverAliases = ["faucet.private.${domain}"];};
       sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
       shelleyFaucet = {services.cardano-faucet.serverAliases = ["faucet.shelley-qa.${domain}"];};
+
+      faucetTmpFix = {
+        systemd.services.cardano-faucet = {
+          startLimitBurst = mkForce 6;
+          startLimitIntervalSec = mkForce 3600;
+          serviceConfig.RestartSec = mkForce "600s";
+        };
+      };
 
       metadata = {
         imports = [
@@ -353,7 +423,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync pre smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod2") node bp (declMRel "preprod2-rel-b-1")];};
@@ -373,7 +443,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync pre smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preview2") node bp pre (declMRel "preview2-rel-b-1")];};
@@ -388,23 +458,24 @@ in
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
-      # Private, pre-release
-      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node bp];};
-      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
-      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node faucet privateFaucet];};
+      # Private, pre-release--include-all-instances
+      # All private nodes stopped until chain truncation and respin in the near future
+      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node bp disableAlertCount];};
+      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel disableAlertCount];};
+      private1-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private1") node rel disableAlertCount];};
+      private1-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private1") node rel disableAlertCount];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend disableAlertCount];};
+      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node faucet privateFaucet disableAlertCount];};
 
-      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node bp];};
-      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private2") node rel];};
-      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel];};
-      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private2") node rel];};
+      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node bp disableAlertCount];};
+      private2-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private2") node rel disableAlertCount];};
+      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel disableAlertCount];};
+      private2-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private2") node rel disableAlertCount];};
 
-      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node bp];};
-      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private3") node rel];};
-      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private3") node rel];};
-      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel];};
+      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node bp disableAlertCount];};
+      private3-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private3") node rel disableAlertCount];};
+      private3-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private3") node rel disableAlertCount];};
+      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel disableAlertCount];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -415,7 +486,7 @@ in
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
       # Temporarily disable dbsync until dbsync has 8.10.0 availability
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
-      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet];};
+      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet faucetTmpFix];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 80) (group "sanchonet1") node];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
@@ -455,16 +526,16 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync873];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432)];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
-      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001 bp gcLogging rtsOptMods];};
-      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 openFwTcp3001];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node openFwTcp3001];};
+      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging rtsOptMods];};
+      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node openFwTcp3001 nodeHd lmdb ram8gib disableAlertCount];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") netDebug node disableAlertCount];};
       # ---------------------------------------------------------------------------------------------------------
 

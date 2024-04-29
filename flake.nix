@@ -11,16 +11,15 @@
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
-    cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
 
-    # For additional customization and debug:
-    cardano-node-873-service = {
-      url = "github:IntersectMBO/cardano-node/8.7.3";
-      flake = false;
-    };
-
-    iohk-nix-873.url = "github:input-output-hk/iohk-nix/bootstrap-peers-legacy";
+    # Example of custom node pinning; see dbsync783 in colmena.nix
+    # cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
+    # cardano-node-873-service = {
+    #   url = "github:IntersectMBO/cardano-node/8.7.3";
+    #   flake = false;
+    # };
+    # iohk-nix-873.url = "github:input-output-hk/iohk-nix/bootstrap-peers-legacy";
 
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";

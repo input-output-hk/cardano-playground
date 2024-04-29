@@ -211,8 +211,15 @@ etc, will need to clear their chain state to re-sync from that point forward.</p
 <p>Informed: Cardano Core Tribe</p>
 <h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
 <p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre">8.10.0-pre</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments/sanchonet/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments/sanchonet/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments/sanchonet/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments/sanchonet/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments/sanchonet/submit-api-config.json">Submit API Config</a></li>
@@ -241,8 +248,15 @@ etc, will need to clear their chain state to re-sync from that point forward.</p
 <p>Informed: Cardano Core Tribe, COO, Director of Engineering</p>
 <h4 id="configuration-files-1"><a class="header" href="#configuration-files-1">Configuration files</a></h4>
 <p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.2">8.9.2</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments/preview/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments/preview/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments/preview/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments/preview/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments/preview/submit-api-config.json">Submit API Config</a></li>
@@ -270,8 +284,15 @@ etc, will need to clear their chain state to re-sync from that point forward.</p
 <p>Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community</p>
 <h4 id="configuration-files-2"><a class="header" href="#configuration-files-2">Configuration files</a></h4>
 <p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.2">8.9.2</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments/preprod/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments/preprod/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments/preprod/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments/preprod/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments/preprod/submit-api-config.json">Submit API Config</a></li>
@@ -296,8 +317,15 @@ Accountable: Head of SRE/Release Squad Lead</p>
 <p>Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community</p>
 <h4 id="configuration-files-3"><a class="header" href="#configuration-files-3">Configuration files</a></h4>
 <p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.2">8.9.2</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments/mainnet/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments/mainnet/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments/mainnet/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments/mainnet/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments/mainnet/submit-api-config.json">Submit API Config</a></li>
@@ -325,8 +353,15 @@ Any Sanchonet chain participants, stakepools, integrators, etc, will need to
 clear their chain state to re-sync from that point forward.</p>
 <h4 id="configuration-files-4"><a class="header" href="#configuration-files-4">Configuration files</a></h4>
 <p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre">8.10.0-pre</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments-pre/sanchonet/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments-pre/sanchonet/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments-pre/sanchonet/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments-pre/sanchonet/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments-pre/sanchonet/submit-api-config.json">Submit API Config</a></li>
@@ -341,8 +376,15 @@ clear their chain state to re-sync from that point forward.</p>
 environment may obtain compatible configuration files below.</p>
 <h4 id="configuration-files-5"><a class="header" href="#configuration-files-5">Configuration files</a></h4>
 <p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre">8.10.0-pre</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments-pre/preview/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments-pre/preview/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments-pre/preview/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments-pre/preview/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments-pre/preview/submit-api-config.json">Submit API Config</a></li>
@@ -357,8 +399,15 @@ environment may obtain compatible configuration files below.</p>
 environment may obtain compatible configuration files below.</p>
 <h4 id="configuration-files-6"><a class="header" href="#configuration-files-6">Configuration files</a></h4>
 <p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre">8.10.0-pre</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
 <ul>
-<li><a href="environments-pre/preprod/config.json">Node Config (Non-block-producers)</a></li>
+<li><a href="environments-pre/preprod/config.json">Node Config (Non-block-producers -- see note above)</a></li>
 <li><a href="environments-pre/preprod/config-bp.json">Node Config (Block-producers)</a></li>
 <li><a href="environments-pre/preprod/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments-pre/preprod/submit-api-config.json">Submit API Config</a></li>

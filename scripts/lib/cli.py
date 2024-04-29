@@ -59,6 +59,7 @@ def createTransaction(start, end, txin, payments_txouts, utxo_address, utxo_sign
 def estimateFeeTx(txbody, txin_count, txout_count, pparams) -> int:
     cmd = [
         cardanoCliStr(), "transaction", "calculate-min-fee",
+        "--reference-script-size", "0",
         "--tx-in-count", str(txin_count),
         "--tx-out-count", str(txout_count),
         "--witness-count", "1",

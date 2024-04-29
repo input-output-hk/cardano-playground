@@ -7,7 +7,16 @@ environment may obtain compatible configuration files below.
 
 Compatible with cardano-node pre-release [8.10.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.10.0-pre)
 
-- [Node Config (Non-block-producers)](environments-pre/preprod/config.json)
+```
+NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+```
+
+- [Node Config (Non-block-producers -- see note above)](environments-pre/preprod/config.json)
 - [Node Config (Block-producers)](environments-pre/preprod/config-bp.json)
 - [DB Sync Config](environments-pre/preprod/db-sync-config.json)
 - [Submit API Config](environments-pre/preprod/submit-api-config.json)
