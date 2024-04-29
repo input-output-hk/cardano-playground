@@ -279,6 +279,14 @@ in
       sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
       shelleyFaucet = {services.cardano-faucet.serverAliases = ["faucet.shelley-qa.${domain}"];};
 
+      faucetTmpFix = {
+        systemd.services.cardano-faucet = {
+          startLimitBurst = mkForce 6;
+          startLimitIntervalSec = mkForce 3600;
+          serviceConfig.RestartSec = mkForce "600s";
+        };
+      };
+
       metadata = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-metadata-service
@@ -477,7 +485,7 @@ in
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
       # Temporarily disable dbsync until dbsync has 8.10.0 availability
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
-      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet];};
+      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet faucetTmpFix];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 80) (group "sanchonet1") node];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
