@@ -48,6 +48,12 @@ nix build github:intersectmbo/cardano-node/$VERSION_TAG#hydraJobs.x86_64-linux.c
 
 ## Version Reference:
 
+* Node `8.10.1-pre`
+  * Environment configs can be found in `result/environments-pre/config/` after running:
+    ```
+    nix run github:input-output-hk/cardano-playground/node-8.10.1-pre-config#job-gen-env-config
+    ```
+
 * Node `8.10.0-pre`
   * Environment configs can be found in `result/environments-pre/config/` after running:
     ```
