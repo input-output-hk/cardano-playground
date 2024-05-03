@@ -332,6 +332,158 @@ in
           };
         };
       };
+
+      # minLog = {
+      #   services.cardano-node.extraNodeConfig = {
+      #     TraceAcceptPolicy = false;
+      #     TraceChainDb = false;
+      #     TraceConnectionManager = false;
+      #     TraceDiffusionInitialization = false;
+      #     TraceDNSResolver = false;
+      #     TraceDNSSubscription = false;
+      #     TraceErrorPolicy = false;
+      #     TraceForge = false;
+      #     TraceHandshake = false;
+      #     TraceInboundGovernor = false;
+      #     TraceIpSubscription = false;
+      #     TraceLedgerPeers = false;
+      #     TraceLocalConnectionManager = false;
+      #     TraceLocalErrorPolicy = false;
+      #     TraceLocalHandshake = false;
+      #     TraceLocalRootPeers = false;
+      #     TraceMempool = false;
+      #     TracePeerSelectionActions = false;
+      #     TracePeerSelection = false;
+      #     TracePublicRootPeers = false;
+      #     TraceServer = false;
+      #   };
+      # };
+
+      newMetrics = {
+        imports = [
+          (
+            import
+            (config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service + "/cardano-tracer-service.nix")
+            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
+            inputs.cardano-node-8101.legacyPackages.x86_64-linux
+          )
+          ({name, ...}: {
+            services.cardano-tracer = {
+              enable = true;
+              package = inputs.cardano-parts.packages.x86_64-linux.cardano-tracer-ng;
+              executable = lib.getExe inputs.cardano-parts.packages.x86_64-linux.cardano-tracer-ng;
+              acceptingSocket = "/tmp/forwarder.sock";
+
+              # Setting these alone is not enough as the config is hardcoded to use `ForMachine` output and RTView is not included.
+              # So if we want more customization, we need to generate our own full config.
+              # logRoot = "/tmp/logs";
+              # networkMagic = 4;
+
+              configFile = builtins.toFile "cardano-tracer-config.json" (builtins.toJSON {
+                ekgRequestFreq = 1;
+
+                hasEKG = [
+                  {
+                    epHost = "127.0.0.1";
+                    epPort = 3100;
+                  }
+                  {
+                    epHost = "127.0.0.1";
+                    epPort = 3101;
+                  }
+                ];
+
+                hasPrometheus = {
+                  epHost = "127.0.0.1";
+                  epPort = 3200;
+                };
+
+                hasRTView = {
+                  epHost = "127.0.0.1";
+                  epPort = 3300;
+                };
+
+                # A cardano-tracer error will be thrown if the logging list is empty of not included.
+                logging = [
+                  {
+                    logFormat = "ForHuman";
+                    # logFormat = "ForMachine";
+
+                    # Selecting `JournalMode` seems to force `ForMachine` logFormat even if `ForHuman` is selected.
+                    logMode = "JournalMode";
+                    # logMode = "FileMode";
+
+                    # /dev/null works, but that seems to destroy some RTView capability as it must be parsing logs.
+                    # logRoot = "/dev/null";
+                    logRoot = "/tmp/cardano-node-logs";
+                  }
+                ];
+
+                network = {
+                  contents = "/tmp/forwarder.sock";
+                  tag = "AcceptAt";
+                };
+
+                networkMagic = 4;
+                resourceFreq = null;
+
+                rotation = {
+                  rpFrequencySecs = 15;
+                  rpKeepFilesNum = 10;
+                  rpLogLimitBytes = 1000000000;
+                  rpMaxAgeHours = 24;
+                };
+              });
+            };
+
+            systemd.services.cardano-tracer = {
+              wantedBy = ["multi-user.target"];
+              after = ["network-online.target"];
+              environment.HOME = "/var/lib/cardano-tracer";
+              serviceConfig = {
+                StateDirectory = "cardano-tracer";
+                WorkingDirectory = "/var/lib/cardano-tracer";
+              };
+            };
+
+            services.cardano-node = {
+              tracerSocketPathConnect = "/tmp/forwarder.sock";
+
+              # This removes most old tracing system config.
+              # It will only leave a minSeverity = "Critical" for the legacy system active.
+              useLegacyTracing = false;
+
+              # This appears to do nothing.
+              withCardanoTracer = true;
+
+              extraNodeConfig = {
+                # This option is what enables the new tracing/metrics system.
+                UseTraceDispatcher = true;
+
+                # Default options; further customization can be added per tracer.
+                TraceOptions = {
+                  "" = {
+                    severity = "Notice";
+                    detail = "DNormal";
+                    backends = [
+                      # This results in journald output for the service, like we would normally expect.
+                      "Stdout HumanFormatColoured"
+                      # "Stdout HumanFormatUncoloured"
+                      # "Stdout MachineFormat"
+
+                      # "EKGBackend"
+                      "Forwarder"
+                    ];
+                  };
+                };
+
+                # This is important to set, otherwise tracer log files and RTView will get an ugly name.
+                TraceOptionNodeName = name;
+              };
+            };
+          })
+        ];
+      };
       # netDebug = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -491,7 +643,7 @@ in
       # Temporarily disable dbsync until dbsync has 8.10.0 availability
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "sanchonet1") node faucet sanchoFaucet faucetTmpFix];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 80) (group "sanchonet1") node];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 80) (group "sanchonet1") node newMetrics];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
