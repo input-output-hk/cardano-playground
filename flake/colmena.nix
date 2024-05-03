@@ -367,7 +367,17 @@ in
             # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
             inputs.cardano-node-8101.legacyPackages.x86_64-linux
           )
-          ({name, ...}: {
+          ({
+            name,
+            config,
+            ...
+          }: let
+            inherit (config.cardano-parts.cluster.group.meta) environmentName;
+            inherit (config.cardano-parts.perNode.meta) cardanoNodePrometheusExporterPort hostAddr;
+            inherit (config.cardano-parts.perNode.lib) cardanoLib;
+            inherit (cardanoLib.environments.${environmentName}.nodeConfig) ByronGenesisFile;
+            inherit ((fromJSON (readFile ByronGenesisFile)).protocolConsts) protocolMagic;
+          in {
             services.cardano-tracer = {
               enable = true;
               package = inputs.cardano-parts.packages.x86_64-linux.cardano-tracer-ng;
@@ -377,27 +387,35 @@ in
               # Setting these alone is not enough as the config is hardcoded to use `ForMachine` output and RTView is not included.
               # So if we want more customization, we need to generate our own full config.
               # logRoot = "/tmp/logs";
-              # networkMagic = 4;
+              # networkMagic = protocolMagic;
 
               configFile = builtins.toFile "cardano-tracer-config.json" (builtins.toJSON {
                 ekgRequestFreq = 1;
 
+                # EKG interface at https.
                 hasEKG = [
+                  # Preserve legacy EKG binding unless we have a reason to switch.
+                  # Let's see how the updated nixos node service chooses for defaults.
                   {
                     epHost = "127.0.0.1";
-                    epPort = 3100;
+                    epPort = 12788;
                   }
                   {
                     epHost = "127.0.0.1";
-                    epPort = 3101;
+                    epPort = 12789;
                   }
                 ];
 
+                # Metrics exporter with a scrape path of:
+                # http://$epHost:$epPort/$TraceOptionNodeName
                 hasPrometheus = {
-                  epHost = "127.0.0.1";
-                  epPort = 3200;
+                  # Preserve legacy prometheus binding unless we have a reason to switch
+                  # Let's see how the updated nixos node service chooses for defaults.
+                  epHost = hostAddr;
+                  epPort = cardanoNodePrometheusExporterPort;
                 };
 
+                # Real time viewer at https.
                 hasRTView = {
                   epHost = "127.0.0.1";
                   epPort = 3300;
@@ -424,7 +442,7 @@ in
                   tag = "AcceptAt";
                 };
 
-                networkMagic = 4;
+                networkMagic = protocolMagic;
                 resourceFreq = null;
 
                 rotation = {
@@ -476,9 +494,14 @@ in
                     ];
                   };
                 };
+              };
 
+              extraNodeInstanceConfig = i: {
                 # This is important to set, otherwise tracer log files and RTView will get an ugly name.
-                TraceOptionNodeName = name;
+                TraceOptionNodeName =
+                  if (i == 0)
+                  then name
+                  else "${name}-${toString i}";
               };
             };
           })
@@ -650,10 +673,10 @@ in
       sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
       sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-small (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (group "sanchonet3") node bp (declMRel "sanchonet3-rel-c-1")];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
       sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
       sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
+      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
