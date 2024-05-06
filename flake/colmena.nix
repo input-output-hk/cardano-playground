@@ -176,6 +176,8 @@ in
         ];
       };
 
+      mithrilRelease = {imports = [nixosModules.mithril-release-pin];};
+
       # Example of node pinning to a custom version; see also the relevant flake inputs.
       # dbsync873 = {
       #   imports = [
@@ -610,7 +612,7 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod2") node rel preprodRelMig];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod3") node bp pre (declMRel "preprod3-rel-c-1")];};
+      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
       preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod3") node rel pre preprodRelMig];};
       preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod3") node rel pre preprodRelMig];};
       preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1")];};
