@@ -642,14 +642,14 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "Forge_NodeCannotForgeNum{environment=\"$environment\"}",
+          "expr": "sum_over_time(abs((Forge_ForgedSlotLast{environment=\"$environment\"} - Forge_ForgedSlotLast{environment=\"$environment\"} == bool 0) - 1)[1d:])",
           "interval": "",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Rejected blocks since last restart",
+      "title": "Rejected blocks during the last day",
       "type": "timeseries"
     },
     {
@@ -1702,7 +1702,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "(KESInfo_operationalCertificateExpiryKESPeriod{environment=\"$environment\"} - KESInfo_operationalCertificateStartKESPeriod{environment=\"$environment\"}) - KESInfo_currentKESPeriod{environment=\"$environment\"}",
+          "expr": "KESInfo_remainingKESPeriods{environment=\"$environment\"} - KESInfo_operationalCertificateStartKESPeriod{environment=\"$environment\"}",
           "interval": "",
           "legendFormat": "{{instance}}",
           "range": true,
