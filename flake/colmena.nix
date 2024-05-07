@@ -352,10 +352,14 @@ in
       newMetrics = {
         imports = [
           (
+            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
+            # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
             import
             (config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service + "/cardano-tracer-service.nix")
-            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-            inputs.cardano-node-8101.legacyPackages.x86_64-linux
+            (import
+              "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
+            .legacyPackages
+            .x86_64-linux
           )
           ({
             name,

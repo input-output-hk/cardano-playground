@@ -13,10 +13,6 @@
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
 
-    # New tracing WIP
-    cardano-node-892.url = "github:IntersectMBO/cardano-node/8.9.2";
-    cardano-node-8101.url = "github:IntersectMBO/cardano-node/8.10.1-pre";
-
     # Example of custom node pinning; see dbsync783 in colmena.nix
     # cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
     # cardano-node-873-service = {
