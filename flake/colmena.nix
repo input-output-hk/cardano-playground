@@ -68,25 +68,6 @@ in
       # Profiles
       pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
-      # rtsOptMods = {
-      #   nodeResources,
-      #   lib,
-      #   ...
-      # }: let
-      #   inherit (nodeResources) cpuCount; # memMiB;
-      # in {
-      #   services.cardano-node.rtsArgs = lib.mkForce [
-      #     "-N${toString cpuCount}"
-      #     "-A16m"
-      #     "-I3"
-      #     # Temporarily match the m5a-xlarge spec
-      #     "-M12943.360000M"
-      #     # "-M${toString (memMiB * 0.79)}M"
-      #   ];
-      # };
-
-      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
-
       openFwTcp = port: {networking.firewall.allowedTCPPorts = [port];};
 
       ram8gib = nixos: {
@@ -177,25 +158,6 @@ in
       };
 
       mithrilRelease = {imports = [nixosModules.mithril-release-pin];};
-
-      # Example of node pinning to a custom version; see also the relevant flake inputs.
-      # dbsync873 = {
-      #   imports = [
-      #     "${inputs.cardano-node-873-service}/nix/nixos/cardano-node-service.nix"
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
-      #     {
-      #       cardano-parts.perNode = {
-      #         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-873 "x86_64-linux";
-      #         pkgs = {inherit (inputs.cardano-node-873.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
-      #       };
-      #       services.cardano-node.shareNodeSocket = true;
-      #       services.cardano-postgres.enablePsqlrc = true;
-      #     }
-      #   ];
-      # };
 
       dbsyncPub = {
         pkgs,
@@ -306,23 +268,48 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
       sanchoRelMig = mkWorldRelayMig 30004;
-      #
-      # multiInst = {services.cardano-node.instances = 2;};
-      #
-      # # p2p and legacy network debugging code
-      netDebug = {
-        services.cardano-node = {
-          # useNewTopology = false;
-          extraNodeConfig = {
-            TraceConnectionManagerTransitions = true;
-            DebugPeerSelectionInitiatorResponder = true;
-            options.mapSeverity = {
-              "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
-            };
-          };
-        };
-      };
 
+      newMetrics = {
+        imports = [
+          (
+            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
+            # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
+            import
+            config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+            (import
+              "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
+            .legacyPackages
+            .x86_64-linux
+          )
+          inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+        ];
+      };
+      # p2p and legacy network debugging code
+      # netDebug = {
+      #   services.cardano-node = {
+      #     useNewTopology = false;
+      #     extraNodeConfig = {
+      #       TraceMux = true;
+      #       TraceConnectionManagerTransitions = true;
+      #       DebugPeerSelectionInitiator = true;
+      #       DebugPeerSelectionInitiatorResponder = true;
+      #       options.mapSeverity = {
+      #         "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
+      #         "cardano.node.ChainSyncProtocol" = "Error";
+      #         "cardano.node.ConnectionManager" = "Debug";
+      #         "cardano.node.ConnectionManagerTransition" = "Debug";
+      #         "cardano.node.DebugPeerSelection" = "Debug";
+      #         "cardano.node.Handshake" = "Debug";
+      #         "cardano.node.InboundGovernor" = "Debug";
+      #         "cardano.node.Mux" = "Info";
+      #         "cardano.node.PeerSelectionActions" = "Debug";
+      #         "cardano.node.PeerSelection" = "Info";
+      #         "cardano.node.resources" = "Notice";
+      #       };
+      #     };
+      #   };
+      # };
+      #
       # minLog = {
       #   services.cardano-node.extraNodeConfig = {
       #     TraceAcceptPolicy = false;
@@ -348,184 +335,7 @@ in
       #     TraceServer = false;
       #   };
       # };
-
-      newMetrics = {
-        imports = [
-          (
-            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-            # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
-            import
-            (config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service + "/cardano-tracer-service.nix")
-            (import
-              "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
-            .legacyPackages
-            .x86_64-linux
-          )
-          ({
-            name,
-            config,
-            ...
-          }: let
-            inherit (config.cardano-parts.cluster.group.meta) environmentName;
-            inherit (config.cardano-parts.perNode.meta) cardanoNodePrometheusExporterPort hostAddr;
-            inherit (config.cardano-parts.perNode.lib) cardanoLib;
-            inherit (cardanoLib.environments.${environmentName}.nodeConfig) ByronGenesisFile;
-            inherit ((fromJSON (readFile ByronGenesisFile)).protocolConsts) protocolMagic;
-          in {
-            services.cardano-tracer = {
-              enable = true;
-              package = inputs.cardano-parts.packages.x86_64-linux.cardano-tracer-ng;
-              executable = lib.getExe inputs.cardano-parts.packages.x86_64-linux.cardano-tracer-ng;
-              acceptingSocket = "/tmp/forwarder.sock";
-
-              # Setting these alone is not enough as the config is hardcoded to use `ForMachine` output and RTView is not included.
-              # So if we want more customization, we need to generate our own full config.
-              # logRoot = "/tmp/logs";
-              # networkMagic = protocolMagic;
-
-              configFile = builtins.toFile "cardano-tracer-config.json" (builtins.toJSON {
-                ekgRequestFreq = 1;
-
-                # EKG interface at https.
-                hasEKG = [
-                  # Preserve legacy EKG binding unless we have a reason to switch.
-                  # Let's see how the updated nixos node service chooses for defaults.
-                  {
-                    epHost = "127.0.0.1";
-                    epPort = 12788;
-                  }
-                  {
-                    epHost = "127.0.0.1";
-                    epPort = 12789;
-                  }
-                ];
-
-                # Metrics exporter with a scrape path of:
-                # http://$epHost:$epPort/$TraceOptionNodeName
-                hasPrometheus = {
-                  # Preserve legacy prometheus binding unless we have a reason to switch
-                  # Let's see how the updated nixos node service chooses for defaults.
-                  epHost = hostAddr;
-                  epPort = cardanoNodePrometheusExporterPort;
-                };
-
-                # Real time viewer at https.
-                hasRTView = {
-                  epHost = "127.0.0.1";
-                  epPort = 3300;
-                };
-
-                # A cardano-tracer error will be thrown if the logging list is empty of not included.
-                logging = [
-                  {
-                    logFormat = "ForHuman";
-                    # logFormat = "ForMachine";
-
-                    # Selecting `JournalMode` seems to force `ForMachine` logFormat even if `ForHuman` is selected.
-                    logMode = "JournalMode";
-                    # logMode = "FileMode";
-
-                    # /dev/null works, but that seems to destroy some RTView capability as it must be parsing logs.
-                    # logRoot = "/dev/null";
-                    logRoot = "/tmp/cardano-node-logs";
-                  }
-                ];
-
-                network = {
-                  contents = "/tmp/forwarder.sock";
-                  tag = "AcceptAt";
-                };
-
-                networkMagic = protocolMagic;
-                resourceFreq = null;
-
-                rotation = {
-                  rpFrequencySecs = 15;
-                  rpKeepFilesNum = 10;
-                  rpLogLimitBytes = 1000000000;
-                  rpMaxAgeHours = 24;
-                };
-              });
-            };
-
-            systemd.services.cardano-tracer = {
-              wantedBy = ["multi-user.target"];
-              after = ["network-online.target"];
-              environment.HOME = "/var/lib/cardano-tracer";
-              serviceConfig = {
-                StateDirectory = "cardano-tracer";
-                WorkingDirectory = "/var/lib/cardano-tracer";
-              };
-            };
-
-            services.cardano-node = {
-              tracerSocketPathConnect = "/tmp/forwarder.sock";
-
-              # This removes most old tracing system config.
-              # It will only leave a minSeverity = "Critical" for the legacy system active.
-              useLegacyTracing = false;
-
-              # This appears to do nothing.
-              withCardanoTracer = true;
-
-              extraNodeConfig = {
-                # This option is what enables the new tracing/metrics system.
-                UseTraceDispatcher = true;
-
-                # Default options; further customization can be added per tracer.
-                TraceOptions = {
-                  "" = {
-                    severity = "Notice";
-                    detail = "DNormal";
-                    backends = [
-                      # This results in journald output for the service, like we would normally expect.
-                      "Stdout HumanFormatColoured"
-                      # "Stdout HumanFormatUncoloured"
-                      # "Stdout MachineFormat"
-
-                      # "EKGBackend"
-                      "Forwarder"
-                    ];
-                  };
-                };
-              };
-
-              extraNodeInstanceConfig = i: {
-                # This is important to set, otherwise tracer log files and RTView will get an ugly name.
-                TraceOptionNodeName =
-                  if (i == 0)
-                  then name
-                  else "${name}-${toString i}";
-              };
-            };
-          })
-        ];
-      };
-      # netDebug = {
-      #   services.cardano-node = {
-      #     useNewTopology = false;
-      #     extraNodeConfig = {
-      #       TraceMux = true;
-      #       TraceConnectionManagerTransitions = true;
-      #       DebugPeerSelectionInitiator = true;
-      #       DebugPeerSelectionInitiatorResponder = true;
-      #       options.mapSeverity = {
-      #         "cardano.node.ChainSyncProtocol" = "Error";
-      #         "cardano.node.ConnectionManager" = "Debug";
-      #         "cardano.node.ConnectionManagerTransition" = "Debug";
-      #         "cardano.node.DebugPeerSelection" = "Debug";
-      #         "cardano.node.Handshake" = "Debug";
-      #         "cardano.node.InboundGovernor" = "Debug";
-      #         "cardano.node.Mux" = "Info";
-      #         "cardano.node.PeerSelectionActions" = "Debug";
-      #         "cardano.node.PeerSelection" = "Info";
-      #         "cardano.node.resources" = "Notice";
-      #       };
-      #     };
-      #   };
-      # };
       #
-      # # Disable p2p
       # disableP2p = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -550,6 +360,44 @@ in
       #
       # # A legacy machine will need to have at least partial peer mesh to other groups, example:
       # sanchonet1-rel-a-1 = {imports = [ <...> disableP2p (extraProd ["sanchonet2-rel-a-1" "sanchonet3-rel-a-1"])];};
+      #
+      # rtsOptMods = {
+      #   nodeResources,
+      #   lib,
+      #   ...
+      # }: let
+      #   inherit (nodeResources) cpuCount; # memMiB;
+      # in {
+      #   services.cardano-node.rtsArgs = lib.mkForce [
+      #     "-N${toString cpuCount}"
+      #     "-A16m"
+      #     "-I3"
+      #     # Temporarily match the m5a-xlarge spec
+      #     "-M12943.360000M"
+      #     # "-M${toString (memMiB * 0.79)}M"
+      #   ];
+      # };
+      #
+      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+      #
+      # Example of node pinning to a custom version; see also the relevant flake inputs.
+      # dbsync873 = {
+      #   imports = [
+      #     "${inputs.cardano-node-873-service}/nix/nixos/cardano-node-service.nix"
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
+      #     {
+      #       cardano-parts.perNode = {
+      #         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-873 "x86_64-linux";
+      #         pkgs = {inherit (inputs.cardano-node-873.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+      #       };
+      #       services.cardano-node.shareNodeSocket = true;
+      #       services.cardano-postgres.enablePsqlrc = true;
+      #     }
+      #   ];
+      # };
     in {
       meta = {
         nixpkgs = import inputs.nixpkgs {
