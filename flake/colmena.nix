@@ -57,7 +57,7 @@ in
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-node-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
         ];
       };
 

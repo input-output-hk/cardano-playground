@@ -4,7 +4,7 @@ in {
   namespace = "cardano";
   name = "cardano-node-network";
   rule = [
-    # This latency alert requires the cardano-parts profile-cardano-node-custom-metrics nixosModule
+    # This latency alert requires the cardano-parts profile-cardano-custom-metrics nixosModule
     {
       alert = "high_cardano_ping_latency";
       expr = "avg_over_time(netdata_statsd_cardano_node_ping_latency_ms_gauge_value_average[5m]) > 250";
