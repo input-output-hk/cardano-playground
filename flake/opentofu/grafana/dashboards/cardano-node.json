@@ -1235,7 +1235,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Remaining faucet funds in ADA",
+      "description": "Cardano-node ping latency measured from localhost with cardano-cli ping",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1322,14 +1322,14 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "cardano_faucet_metrics_value_available{environment=\"$environment\"} / 1e6",
+          "expr": "netdata_statsd_cardano_node_ping_latency_ms_gauge_value_average{environment=\"$environment\"}",
           "interval": "",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "C"
         }
       ],
-      "title": "Faucet (ADA)",
+      "title": "Ping latency (ms)",
       "type": "timeseries"
     },
     {
