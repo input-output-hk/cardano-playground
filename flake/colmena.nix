@@ -152,6 +152,7 @@ in
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
           {services.cardano-node.shareNodeSocket = true;}
           {services.cardano-postgres.enablePsqlrc = true;}
