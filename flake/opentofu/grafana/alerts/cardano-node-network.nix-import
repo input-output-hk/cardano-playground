@@ -7,12 +7,12 @@ in {
     # This latency alert requires the cardano-parts profile-cardano-custom-metrics nixosModule
     {
       alert = "high_cardano_ping_latency";
-      expr = "avg_over_time(netdata_statsd_cardano_node_ping_latency_ms_gauge_value_average[5m]) > 250";
-      for = "30m";
+      expr = "avg_over_time(netdata_statsd_cardano_node_ping_latency_ms_gauge_value_average[5m]) > 500";
+      for = "60m";
       labels.severity = "page";
       annotations = {
-        summary = "{{$labels.instance}}: Cardano average ping latency over 5 minutes has been above 250 milliseconds for the last 30 minutes";
-        description = "{{$labels.instance}}: Cardano average ping latency over 5 minutes has been above 250 milliseconds for the last 30 minutes.";
+        summary = "{{$labels.instance}}: Cardano average ping latency over 5 minutes has been above 500 milliseconds for the last hour.";
+        description = "{{$labels.instance}}: Cardano average ping latency over 5 minutes has been above 500 milliseconds for the last hour.";
       };
     }
     # TODO: New tracer equivalent metric?
@@ -22,8 +22,8 @@ in {
       for = "1m";
       labels.severity = "page";
       annotations = {
-        summary = "Blocks adoption delay have been above 4.5s for more than 5% of blocks";
-        description = "Node average of blocks adoption delay have been above 4.5s for more than 5% of blocks for more than 6 hours";
+        summary = "Blocks adoption delay have been above 4.5s for more than 5% of blocks.";
+        description = "Node average of blocks adoption delay have been above 4.5s for more than 5% of blocks for more than 6 hours.";
       };
     }
     # TODO: Static max block size until node publishes max block size metric
