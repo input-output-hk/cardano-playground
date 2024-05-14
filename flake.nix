@@ -13,6 +13,11 @@
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
 
+    # Sanchonet 8.11.0-pre pre-testing conway genesis on private chain
+    # cardano-node-8-11-0.url = "github:IntersectMBO/cardano-node/8.11.0-pre";
+    cardano-node-8-11-0.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/lucsanszky/integration-8.11";
+    iohk-nix-8-11-0.url = "github:input-output-hk/iohk-nix";
+
     # Example of custom node pinning; see dbsync783 in colmena.nix
     # cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
     # cardano-node-873-service = {

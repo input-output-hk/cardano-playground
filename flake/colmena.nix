@@ -61,6 +61,25 @@ in
         ];
       };
 
+      node8-11-0 = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-11-0 "x86_64-linux";
+              pkgs = {inherit (inputs.cardano-node-8-11-0.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+            };
+
+            services.cardano-node = {
+              useNewTopology = false;
+              extraNodeConfig.EnableP2P = false;
+            };
+          }
+        ];
+      };
+
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
       declMRel = node: {services.mithril-signer.relayEndpoint = nixosConfigurations.${node}.config.ips.privateIpv4;};
@@ -339,26 +358,49 @@ in
       #     TraceServer = false;
       #   };
       # };
-      #
-      # disableP2p = {
-      #   services.cardano-node = {
-      #     useNewTopology = false;
-      #     extraNodeConfig.EnableP2P = false;
-      #   };
-      # };
-      #
-      # # Allow legacy group incoming connections on bps if non-p2p testing is required
-      # mkBpLegacyFwRules = nodeNameList: {
-      #   networking.firewall = {
-      #     extraCommands = concatMapStringsSep "\n" (n: "iptables -t filter -I nixos-fw -i ens5 -p tcp -m tcp -s ${n}.${domain} --dport 3001 -j nixos-fw-accept") nodeNameList;
-      #     extraStopCommands = concatMapStringsSep "\n" (n: "iptables -t filter -D nixos-fw -i ens5 -p tcp -m tcp -s ${n}.${domain} --dport 3001 -j nixos-fw-accept || true") nodeNameList;
-      #   };
-      # };
-      #
-      # # Example add fw rules for relay to block producer connections in non-p2p network setup
-      # sancho1bpLegacy = mkBpLegacyFwRules ["sanchonet1-rel-a-1" "sanchonet1-rel-b-1" "sanchonet1-rel-c-1"];
-      # sancho2bpLegacy = mkBpLegacyFwRules ["sanchonet2-rel-a-1" "sanchonet2-rel-b-1" "sanchonet2-rel-c-1"];
-      # sancho3bpLegacy = mkBpLegacyFwRules ["sanchonet3-rel-a-1" "sanchonet3-rel-b-1" "sanchonet3-rel-c-1"];
+
+      disableP2p = {
+        services.cardano-node = {
+          useNewTopology = false;
+          extraNodeConfig.EnableP2P = false;
+        };
+      };
+
+      # Allow legacy group incoming connections on bps if non-p2p testing is required
+      mkBpLegacyFwRules = nodeNameList: nixos: {
+        networking.firewall = {
+          extraCommands = concatMapStringsSep "\n" (n: "iptables -t filter -I nixos-fw -i ens5 -p tcp -m tcp -s ${nixos.nodes.${n}.config.ips.publicIpv4} --dport 3001 -j nixos-fw-accept") nodeNameList;
+          extraStopCommands = concatMapStringsSep "\n" (n: "iptables -t filter -D nixos-fw -i ens5 -p tcp -m tcp -s ${nixos.nodes.${n}.config.ips.publicIpv4} --dport 3001 -j nixos-fw-accept || true") nodeNameList;
+        };
+      };
+
+      # Example add fw rules for relay to block producer connections in non-p2p network setup
+      private1bpLegacy = mkBpLegacyFwRules ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3"];
+      private2bpLegacy = mkBpLegacyFwRules ["private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3"];
+      private3bpLegacy = mkBpLegacyFwRules ["private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];
+
+      # Extra legacy producers for inter-region connectivity
+      priv1extraProducers = {services.cardano-node-topology.extraNodeListProducers = ["private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3" "private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];};
+      priv2extraProducers = {services.cardano-node-topology.extraNodeListProducers = ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3" "private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];};
+      priv3extraProducers = {services.cardano-node-topology.extraNodeListProducers = ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3" "private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3"];};
+      privPubProducer = {
+        services.cardano-node.producers = [
+          {
+            accessPoints = [
+              {
+                address = "private-node.play.dev.cardano.org";
+                port = 3001;
+                valency = 2;
+              }
+            ];
+            advertise = false;
+          }
+        ];
+      };
+      # Example add fw rules for relay to block producer connections in non-p2p network setup
+      # sancho1bpLegacy = mkBpLegacyFwRules ["sanchonet1-rel-a-1" "sanchonet1-rel-a-2" "sanchonet1-rel-a-3"];
+      # sancho2bpLegacy = mkBpLegacyFwRules ["sanchonet2-rel-b-1" "sanchonet2-rel-b-2" "sanchonet2-rel-b-3"];
+      # sancho3bpLegacy = mkBpLegacyFwRules ["sanchonet3-rel-c-1" "sanchonet3-rel-c-2" "sanchonet3-rel-c-3"];
       #
       # extraProd = producerList: {services.cardano-node-topology.extraNodeListProducers = producerList;};
       #
@@ -391,6 +433,7 @@ in
       #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
       #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
       #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
       #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
       #     {
       #       cardano-parts.perNode = {
@@ -485,22 +528,22 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Private, pre-release--include-all-instances
       # All private nodes stopped until chain truncation and respin in the near future
-      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node bp];};
-      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node rel];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
-      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node faucet privateFaucet];};
+      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node8-11-0 disableP2p bp private1bpLegacy];};
+      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node8-11-0 disableP2p rel priv1extraProducers];};
+      private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node8-11-0 disableP2p rel priv1extraProducers];};
+      private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node8-11-0 disableP2p rel priv1extraProducers];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync disableP2p nixosModules.govtool-backend privPubProducer];};
+      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node8-11-0 disableP2p faucet privateFaucet privPubProducer];};
 
-      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node bp];};
-      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel];};
-      private2-rel-b-2 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel];};
-      private2-rel-b-3 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node rel];};
+      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node8-11-0 disableP2p bp private2bpLegacy];};
+      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node8-11-0 disableP2p rel priv2extraProducers];};
+      private2-rel-b-2 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node8-11-0 disableP2p rel priv2extraProducers];};
+      private2-rel-b-3 = {imports = [eu-west-1 t3a-small (ebs 80) (group "private2") node8-11-0 disableP2p rel priv2extraProducers];};
 
-      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node bp];};
-      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel];};
-      private3-rel-c-2 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel];};
-      private3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node rel];};
+      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node8-11-0 disableP2p bp private3bpLegacy];};
+      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node8-11-0 disableP2p rel priv3extraProducers];};
+      private3-rel-c-2 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node8-11-0 disableP2p rel priv3extraProducers];};
+      private3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (group "private3") node8-11-0 disableP2p rel priv3extraProducers];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
