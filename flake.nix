@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-05-14";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-05-14";
 
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
@@ -14,8 +14,7 @@
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
 
     # Sanchonet 8.11.0-pre pre-testing conway genesis on private chain
-    # cardano-node-8-11-0.url = "github:IntersectMBO/cardano-node/8.11.0-pre";
-    cardano-node-8-11-0.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/lucsanszky/integration-8.11";
+    cardano-node-8-11-0.url = "github:IntersectMBO/cardano-node/8.11.0-pre";
     iohk-nix-8-11-0.url = "github:input-output-hk/iohk-nix/jl/private-sanchonet-test";
     # iohk-nix-8-11-0.url = "path:/home/jlotoski/work/iohk/iohk-nix-wt/jl/private-sanchonet-test";
 
