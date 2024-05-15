@@ -305,6 +305,9 @@ in
             .x86_64-linux
           )
           inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+          (nixos: {
+            services.cardano-node.totalMaxHeapSizeMiB = nixos.nodeResources.memMiB * 0.70;
+          })
         ];
       };
       # p2p and legacy network debugging code
