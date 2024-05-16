@@ -61,25 +61,6 @@ in
         ];
       };
 
-      node8-11-0 = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          {
-            cardano-parts.perNode = {
-              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-11-0 "x86_64-linux";
-              pkgs = {inherit (inputs.cardano-node-8-11-0.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
-            };
-
-            services.cardano-node = {
-              useNewTopology = false;
-              extraNodeConfig.EnableP2P = false;
-            };
-          }
-        ];
-      };
-
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
       declMRel = node: {services.mithril-signer.relayEndpoint = nixosConfigurations.${node}.config.ips.privateIpv4;};
@@ -531,22 +512,22 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Private, pre-release--include-all-instances
       # All private nodes stopped until chain truncation and respin in the near future
-      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node8-11-0 disableP2p bp private1bpLegacy];};
-      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node8-11-0 disableP2p rel priv1extraProducers];};
-      private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node8-11-0 disableP2p rel priv1extraProducers];};
-      private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node8-11-0 disableP2p rel priv1extraProducers];};
+      private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node disableP2p bp private1bpLegacy];};
+      private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node disableP2p rel priv1extraProducers];};
+      private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node disableP2p rel priv1extraProducers];};
+      private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node disableP2p rel priv1extraProducers];};
       private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync disableP2p nixosModules.govtool-backend privPubProducer];};
-      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node8-11-0 disableP2p faucet privateFaucet privPubProducer];};
+      private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node disableP2p faucet privateFaucet privPubProducer];};
 
-      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node8-11-0 disableP2p bp private2bpLegacy];};
-      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node8-11-0 disableP2p rel priv2extraProducers];};
-      private2-rel-b-2 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node8-11-0 disableP2p rel priv2extraProducers];};
-      private2-rel-b-3 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node8-11-0 disableP2p rel priv2extraProducers];};
+      private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node disableP2p bp private2bpLegacy];};
+      private2-rel-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node disableP2p rel priv2extraProducers];};
+      private2-rel-b-2 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node disableP2p rel priv2extraProducers];};
+      private2-rel-b-3 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node disableP2p rel priv2extraProducers];};
 
-      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node8-11-0 disableP2p bp private3bpLegacy];};
-      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node8-11-0 disableP2p rel priv3extraProducers];};
-      private3-rel-c-2 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node8-11-0 disableP2p rel priv3extraProducers];};
-      private3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node8-11-0 disableP2p rel priv3extraProducers];};
+      private3-bp-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node disableP2p bp private3bpLegacy];};
+      private3-rel-c-1 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node disableP2p rel priv3extraProducers];};
+      private3-rel-c-2 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node disableP2p rel priv3extraProducers];};
+      private3-rel-c-3 = {imports = [us-east-2 t3a-small (ebs 80) (nodeRamPct 70) (group "private3") node disableP2p rel priv3extraProducers];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
