@@ -11,7 +11,7 @@
   cardano-node repository and the desired version tag using nix with the
   following command where the configs will then be located in the result/
   directory:
-  ```
+  ```bash
   nix build github:IntersectMBO/cardano-node/$VERSION_TAG#hydraJobs.x86_64-linux.cardano-deployment
   ```
 
@@ -21,7 +21,7 @@
   1) Using the URL of the cardano-node tag commit that follows, find the
   `ci/hydra-build:required` GHA job and select `View more details on IOG
   Hydra`:
-      ```
+      ```bash
       https://github.com/IntersectMBO/cardano-node/commits/$VERSION_TAG
       ```
 
@@ -32,7 +32,7 @@
 
   3) This provides a link to `https://ci.iog.io/build/$BUILD_NUM` which has a
   report that provides a download page that configs may be downloaded from:
-      ```
+      ```bash
       https://ci.iog.io/build/$BUILD_NUM/download/1/index.html
       ```
 
@@ -50,48 +50,48 @@
 
 * Node `8.10.1-pre`
   * Environment configs can be found in `result/environments-pre/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.10.1-pre-config#job-gen-env-config
     ```
 
 * Node `8.10.0-pre`
   * Environment configs can be found in `result/environments-pre/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.10.0-pre-config#job-gen-env-config
     ```
 
 * Node `8.9.2`
   * Environment configs can be found in `result/environments/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.9.2-config#job-gen-env-config
     ```
 
 * Node `8.9.1`
   * Environment configs can be found in `result/environments/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.9.1-config#job-gen-env-config
     ```
 
 * Node `8.9.0`
   * Environment configs can be found in `result/environments/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.9.0-config#job-gen-env-config
     ```
 
 * Node `8.8.1-pre`
   * Environment configs can be found in `result/environments-pre/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.8.1-pre-config#job-gen-env-config
     ```
 
 * Node `8.8.0-pre`
   * Environment configs can be found in `result/environments-pre/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.8.0-pre-config#job-gen-env-config
     ```
 
 * Node `8.7.3`
   * Environment configs can be found in `result/environments/config/` after running:
-    ```
+    ```bash
     nix run github:input-output-hk/cardano-playground/node-8.7.3-config#job-gen-env-config
     ```
