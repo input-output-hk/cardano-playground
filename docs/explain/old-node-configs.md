@@ -11,9 +11,9 @@
   cardano-node repository and the desired version tag using nix with the
   following command where the configs will then be located in the result/
   directory:
-```
-nix build github:intersectmbo/cardano-node/$VERSION_TAG#hydraJobs.x86_64-linux.cardano-deployment
-```
+  ```
+  nix build github:IntersectMBO/cardano-node/$VERSION_TAG#hydraJobs.x86_64-linux.cardano-deployment
+  ```
 
 * As a second alternative, the configs can be found through hydra if nix isn't
   available, although it requires following the path from the hydra CI required
