@@ -427,6 +427,11 @@ in
       #     }
       #   ];
       # };
+      #
+      # hostsListByPrefix = prefix: {
+      #   cardano-parts.perNode.meta.hostsList =
+      #     filter (name: hasPrefix prefix name) (attrNames nixosConfigurations);
+      # };
     in {
       meta = {
         nixpkgs = import inputs.nixpkgs {
