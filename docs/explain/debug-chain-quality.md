@@ -60,7 +60,48 @@ execute show_pool_block_history_by_epoch_fn ('$POOL_ID');
 execute show_<tab><tab>
 ```
 
-Public cardano blockchain explorers offer quite a bit of info for pool
+Cardano-cli can also be queried for information about pools of interest:
+```bash
+POOLS=(
+$POOL_ID1
+$POOL_ID2
+$POOL_ID3
+...
+)
+
+# To dump each pools id, ~epoch stake in millions url and metadata on several lines
+for i in "${POOLS[@]}"; do
+  echo "Info for pool: $i"
+  STAKE_SET=$(cardano-cli query stake-snapshot --stake-pool-id $i | jq -r '.pools | to_entries[0].value.stakeSet')
+  STAKE_MLN=$(perl -E "say ($STAKE_SET / 1E12)")
+  STAKE_RND=$(printf "%.2f" $STAKE_MLN)
+  echo "Pool has epoch set stake of: $STAKE_RND million ADA"
+  URL=$(cardano-cli query pool-state --stake-pool-id $i | jq -r '. | to_entries.[0].value.poolParams.metadata.url')
+  echo "Metadata URL is: $URL"
+  echo "Metadata is:"
+  if RESP=$(curl -fkLs "$URL"); then
+    jq -r <<< "$RESP"
+  else
+    jq -r <<< '{"MetadataFetchStatus":"failed"}'
+  fi
+  echo
+done
+
+# To summarize on one line pool id, ~epoch stake in millions, ticker and name or url
+for i in "${POOLS[@]}"; do
+  STAKE_SET=$(cardano-cli query stake-snapshot --stake-pool-id $i | jq -r '.pools | to_entries[0].value.stakeSet')
+  STAKE_MLN=$(perl -E "say ($STAKE_SET / 1E12)")
+  STAKE_RND=$(printf "%.2f" $STAKE_MLN)
+  URL=$(cardano-cli query pool-state --stake-pool-id $i | jq -r '. | to_entries.[0].value.poolParams.metadata.url')
+  if RESP=$(curl -fkLs "$URL"); then
+    echo "Pool: $i    ~${STAKE_RND}M ADA stake    Ticker: $(printf "%-7s" "$(jq -r '.ticker' <<< "$RESP")")  Name: $(jq -r '.name' <<< "$RESP")"
+  else
+    echo "Pool: $i    ~${STAKE_RND}M ADA stake                     URL: $URL"
+  fi
+done
+```
+
+Finally, public cardano blockchain explorers offer quite a bit of info for pool
 analysis, typically support most Cardano networks and can be consulted for
 additional info.
 
