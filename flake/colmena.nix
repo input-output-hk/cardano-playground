@@ -286,9 +286,6 @@ in
             .x86_64-linux
           )
           inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-          (nixos: {
-            services.cardano-node.totalMaxHeapSizeMiB = nixos.nodeResources.memMiB * 0.70;
-          })
         ];
       };
       # p2p and legacy network debugging code
@@ -474,42 +471,42 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node bp (declMRel "preprod1-rel-a-1")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
-      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig];};
-      preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod1") node rel preprodRelMig];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node bp (declMRel "preprod1-rel-a-1")];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
+      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
+      preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod1") node faucet preprodFaucet];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod2") node bp (declMRel "preprod2-rel-b-1")];};
-      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod2") node rel preprodRelMig];};
-      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
-      preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod2") node rel preprodRelMig];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node bp (declMRel "preprod2-rel-b-1")];};
+      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig];};
+      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
+      preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1")];};
+      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview1") node bp (declMRel "preview1-rel-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig];};
+      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp (declMRel "preview1-rel-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview2") node bp pre (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview2") node rel pre previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview2") node rel pre previewRelMig];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre (declMRel "preview2-rel-b-1")];};
+      preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview3") node bp pre (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 70) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -519,9 +516,9 @@ in
       private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
       private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
       private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
-      # Until dbsync tag is ready for 8.11.0-pre
+      # Until govtool is ready for 8.11.0-pre and sancho-4-3-0
       # private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
-      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") node];};
+      private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node faucet privateFaucet];};
 
       private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node bp];};
@@ -537,44 +534,43 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet, pre-release
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "sanchonet1") node bp (declMRel "sanchonet1-rel-a-1")];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
-      sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
-      sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "sanchonet1") node rel sanchoRelMig];};
-      # Temporarily disable dbsync until dbsync has 8.10.0 availability
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node bp (declMRel "sanchonet1-rel-a-1")];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
+      sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
+      sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
-      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "sanchonet1") node faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "sanchonet1") node newMetrics];};
+      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics];};
 
-      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
-      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
-      sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
-      sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "sanchonet2") node rel sanchoRelMig];};
+      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
+      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
+      sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
+      sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
-      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
-      sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
+      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
+      sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig];};
+      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Shelley-qa, pre-release
-      shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node bp];};
-      shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node rel];};
-      shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node rel];};
-      shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node rel];};
+      shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node bp];};
+      shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
+      shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
+      shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
       shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "shelley-qa1") dbsync pre smash shelleySmash];};
-      shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (group "shelley-qa1") node faucet shelleyFaucet];};
+      shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node faucet shelleyFaucet];};
 
-      shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "shelley-qa2") node bp];};
-      shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "shelley-qa2") node rel];};
-      shelley-qa2-rel-b-2 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "shelley-qa2") node rel];};
-      shelley-qa2-rel-b-3 = {imports = [eu-west-1 t3a-micro (ebs 80) (group "shelley-qa2") node rel];};
+      shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node bp];};
+      shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
+      shelley-qa2-rel-b-2 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
+      shelley-qa2-rel-b-3 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
 
-      shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (group "shelley-qa3") node bp];};
-      shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (group "shelley-qa3") node rel];};
-      shelley-qa3-rel-c-2 = {imports = [us-east-2 t3a-micro (ebs 80) (group "shelley-qa3") node rel];};
-      shelley-qa3-rel-c-3 = {imports = [us-east-2 t3a-micro (ebs 80) (group "shelley-qa3") node rel];};
+      shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node bp];};
+      shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
+      shelley-qa3-rel-c-2 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
+      shelley-qa3-rel-c-3 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
