@@ -18,14 +18,15 @@ in
       us-east-2.aws.region = "us-east-2";
 
       # Instance defs:
-      t3a-micro.aws.instance.instance_type = "t3a.micro";
-      t3a-small.aws.instance.instance_type = "t3a.small";
-      t3a-medium.aws.instance.instance_type = "t3a.medium";
+      c5ad-large.aws.instance.instance_type = "c5ad.large";
       m5a-large.aws.instance.instance_type = "m5a.large";
       m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
       # r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
+      t3a-micro.aws.instance.instance_type = "t3a.micro";
+      t3a-small.aws.instance.instance_type = "t3a.small";
+      t3a-medium.aws.instance.instance_type = "t3a.medium";
 
       # Helper fns:
       ebs = size: {aws.instance.root_block_device.volume_size = mkDefault size;};
@@ -288,6 +289,17 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
         ];
       };
+
+      # Ephermeral instance disk storage config for upcoming UTxO-HD/LMDB
+      iDisk = {
+        fileSystems = {
+          "/ephemeral" = {
+            device = "/dev/nvme1n1";
+            fsType = "ext4";
+            autoFormat = true;
+          };
+        };
+      };
       # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -346,22 +358,28 @@ in
       #     extraNodeConfig.EnableP2P = false;
       #   };
       # };
-      # Allow legacy group incoming connections on bps if non-p2p testing is required
+      #
+      # Allow legacy group incoming connections on bps if non-p2p testing is required:
       # mkBpLegacyFwRules = nodeNameList: nixos: {
       #   networking.firewall = {
       #     extraCommands = concatMapStringsSep "\n" (n: "iptables -t filter -I nixos-fw -i ens5 -p tcp -m tcp -s ${nixos.nodes.${n}.config.ips.publicIpv4} --dport 3001 -j nixos-fw-accept") nodeNameList;
       #     extraStopCommands = concatMapStringsSep "\n" (n: "iptables -t filter -D nixos-fw -i ens5 -p tcp -m tcp -s ${nixos.nodes.${n}.config.ips.publicIpv4} --dport 3001 -j nixos-fw-accept || true") nodeNameList;
       #   };
       # };
-      # Example add fw rules for relay to block producer connections in non-p2p network setup
+      #
+      # Example add fw rules for relay to block producer connections in non-p2p network setup;
       # private1bpLegacy = mkBpLegacyFwRules ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3"];
       # private2bpLegacy = mkBpLegacyFwRules ["private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3"];
       # private3bpLegacy = mkBpLegacyFwRules ["private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];
       #
-      # Extra legacy producers for inter-region connectivity
-      # priv1extraProducers = {services.cardano-node-topology.extraNodeListProducers = ["private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3" "private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];};
-      # priv2extraProducers = {services.cardano-node-topology.extraNodeListProducers = ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3" "private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];};
-      # priv3extraProducers = {services.cardano-node-topology.extraNodeListProducers = ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3" "private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3"];};
+      # # A legacy machine will need to have at least partial peer mesh to other groups:
+      # extraProd = producerList: {services.cardano-node-topology.extraNodeListProducers = producerList;};
+      #
+      # Extra legacy producers for inter-region connectivity on a non-p2p deployment:
+      # priv1extraProducers = extraProd ["private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3" "private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];
+      # priv2extraProducers = extraProd ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3" "private3-rel-c-1" "private3-rel-c-2" "private3-rel-c-3"];
+      # priv3extraProducers = extraProd ["private1-rel-a-1" "private1-rel-a-2" "private1-rel-a-3" "private2-rel-b-1" "private2-rel-b-2" "private2-rel-b-3"];
+      #
       # privPubProducer = {
       #   services.cardano-node.producers = [
       #     {
@@ -376,15 +394,6 @@ in
       #     }
       #   ];
       # };
-      # Example add fw rules for relay to block producer connections in non-p2p network setup
-      # sancho1bpLegacy = mkBpLegacyFwRules ["sanchonet1-rel-a-1" "sanchonet1-rel-a-2" "sanchonet1-rel-a-3"];
-      # sancho2bpLegacy = mkBpLegacyFwRules ["sanchonet2-rel-b-1" "sanchonet2-rel-b-2" "sanchonet2-rel-b-3"];
-      # sancho3bpLegacy = mkBpLegacyFwRules ["sanchonet3-rel-c-1" "sanchonet3-rel-c-2" "sanchonet3-rel-c-3"];
-      #
-      # extraProd = producerList: {services.cardano-node-topology.extraNodeListProducers = producerList;};
-      #
-      # # A legacy machine will need to have at least partial peer mesh to other groups, example:
-      # sanchonet1-rel-a-1 = {imports = [ <...> disableP2p (extraProd ["sanchonet2-rel-a-1" "sanchonet3-rel-a-1"])];};
       #
       # rtsOptMods = {
       #   nodeResources,
@@ -540,7 +549,7 @@ in
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics iDisk];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
