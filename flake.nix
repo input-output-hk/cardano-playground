@@ -45,6 +45,7 @@
           inputs.cardano-parts.flakeModules.pkgs
           inputs.cardano-parts.flakeModules.process-compose
           inputs.cardano-parts.flakeModules.shell
+          ./docker.nix
           {options.flake.opentofu = mkOption {type = types.attrs;};}
         ];
       systems = ["x86_64-linux"];
