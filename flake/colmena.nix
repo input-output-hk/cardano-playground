@@ -564,22 +564,22 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Shelley-qa, pre-release
-      shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node bp];};
-      shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
-      shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
-      shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
+      shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node bp pre];};
+      shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel pre];};
+      shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel pre];};
+      shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel pre];};
       shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "shelley-qa1") dbsync pre smash shelleySmash];};
-      shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node faucet shelleyFaucet];};
+      shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node faucet shelleyFaucet pre];};
 
-      shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node bp];};
-      shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
-      shelley-qa2-rel-b-2 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
-      shelley-qa2-rel-b-3 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
+      shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node bp pre];};
+      shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel pre];};
+      shelley-qa2-rel-b-2 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel pre];};
+      shelley-qa2-rel-b-3 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel pre];};
 
-      shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node bp];};
-      shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
-      shelley-qa3-rel-c-2 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
-      shelley-qa3-rel-c-3 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
+      shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node bp pre];};
+      shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel pre];};
+      shelley-qa3-rel-c-2 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel pre];};
+      shelley-qa3-rel-c-3 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel pre];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
