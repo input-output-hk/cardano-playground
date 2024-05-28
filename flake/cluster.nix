@@ -38,12 +38,19 @@ with flake.lib; {
 
     groups = let
       dns = infra.aws.domain;
-      mkGroup = name: environmentName: bookRelayMultivalueDns: groupRelayMultivalueDns: isNg: {
+      mkGroup = name: environmentName: bookRelayMultivalueDns: groupRelayMultivalueDns: isNg: fullHostsList: {
         ${name} =
           {
             inherit bookRelayMultivalueDns groupRelayMultivalueDns;
             groupPrefix = "${name}-";
             meta = {inherit environmentName;};
+
+            # All the groups running cardano-node will require a full cluster hostsList
+            # since localRoots between groups are extensive for redundant meshing.
+            meta.hostsList =
+              if fullHostsList
+              then "all"
+              else "group";
           }
           // optionalAttrs isNg {
             # For the latest genesis only compatible with >= node 8.5.0
@@ -66,23 +73,23 @@ with flake.lib; {
           };
       };
     in
-      (mkGroup "preprod1" "preprod" "preprod-node.${dns}" "preprod1-node.${dns}" false)
-      // (mkGroup "preprod2" "preprod" "preprod-node.${dns}" "preprod2-node.${dns}" false)
-      // (mkGroup "preprod3" "preprod" "preprod-node.${dns}" "preprod3-node.${dns}" false)
-      // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false)
-      // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false)
-      // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false)
-      // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true)
-      // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true)
-      // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true)
+      (mkGroup "preprod1" "preprod" "preprod-node.${dns}" "preprod1-node.${dns}" false false)
+      // (mkGroup "preprod2" "preprod" "preprod-node.${dns}" "preprod2-node.${dns}" false false)
+      // (mkGroup "preprod3" "preprod" "preprod-node.${dns}" "preprod3-node.${dns}" false false)
+      // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false false)
+      // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false false)
+      // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false false)
+      // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true false)
+      // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true false)
+      // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true false)
       # Flip sanchonet and shelley-qa back to isNg true for sanchonet respin and shelley-qa 8.10 deployed
-      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true)
-      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true)
-      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true)
-      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa1-node.${dns}" false)
-      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa2-node.${dns}" false)
-      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa3-node.${dns}" false)
-      // (mkGroup "mainnet1" "mainnet" null null false)
-      // (mkGroup "misc1" "preprod" null null false);
+      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true false)
+      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true false)
+      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true false)
+      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa1-node.${dns}" false false)
+      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa2-node.${dns}" false false)
+      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa3-node.${dns}" false false)
+      // (mkGroup "mainnet1" "mainnet" null null false false)
+      // (mkGroup "misc1" "preprod" null null false false);
   };
 }

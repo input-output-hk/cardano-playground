@@ -113,7 +113,7 @@ creation_rules:
       - *sre
       - *private1-dbsync-a-1
 
-  - path_regex: secrets/groups/private/deploy/.*faucet.*$
+  - path_regex: secrets/groups/private1/deploy/.*faucet.*$
     key_groups:
     - age:
       - *sre

@@ -17,7 +17,7 @@
   below for what is appropriate in your environment.
 
 * Analyze what slot the current state is at:
-```
+```bash
 db-analyser \
   --db "$DATA_DIR/db" \
   cardano \
@@ -39,7 +39,7 @@ ChainDB tip: At (Block {blockPointSlot = SlotNo 20812218, blockPointHash = 549b4
 
 * The same procedure can instead use the `--truncate-after-block` option if
   preferred.
-```
+```bash
 # Need to reduce the truncation to truncate earlier due to the imperfect truncation.
 # Start with epoch 237 of this example and iterate backwards by some amount,
 # such as 1 epoch per iteration, until analysis shows the tip is prior to the
@@ -75,7 +75,7 @@ ChainDB tip: At (Block {blockPointSlot = SlotNo 20044770, blockPointHash = a20bf
 
 * The same procedure can instead use the `-e` option if preferred to synthesize
   for a number of epochs.
-```
+```bash
 # First preserve the protocolMagicId file
 cp "$DATA_DIR/db/protocolMagicId" "$DATA_DIR"
 
@@ -106,7 +106,7 @@ cp "$DATA_DIR/protocolMagicId" "$DATA_DIR/db/"
 * By calculating the date the chain tip exists at, a local system can be set to
   match this tip and cardano-node started to verify the chain still runs
   properly and forges blocks with the bulk credentials file.
-```
+```bash
 # Calculate genesis unix timestamp:
 # From shelley genesis in this example: "systemStart": "2023-06-15T00:30:00Z"
 date -u -d "2023-06-15T00:30:00Z" +%s
