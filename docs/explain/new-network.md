@@ -530,11 +530,24 @@ Place new secrets and encrypt them
 # is done properly and automatically with the commands below.
 # Then, move the secrets into their place and encrypt:
 cp -a workbench/custom/envs/$ENV secrets/envs/
-cp -a workbench/custom/groups/$ENV{1..3} secrets/groups/
+cp -a workbench/custom/groups/${ENV}1 secrets/groups/
+cp -a workbench/custom/groups/${ENV}2 secrets/groups/
+cp -a workbench/custom/groups/${ENV}3 secrets/groups/
 fd -t f . secrets/envs/$ENV -x just sops-encrypt-binary
 fd -t f . secrets/groups/${ENV}1 -x just sops-encrypt-binary
 fd -t f . secrets/groups/${ENV}2 -x just sops-encrypt-binary
 fd -t f . secrets/groups/${ENV}3 -x just sops-encrypt-binary
+
+# Note: if not all files are overwritten in the target secrets directory, they
+# will be double-encrypted. To avoid that, you can check for files which only
+# exist in the target and git restore the double-encryption.
+diff -qr workbench/custom/envs/$ENV/ secrets/envs/$ENV/ | grep Only
+diff -qr workbench/custom/groups/${ENV}1/ secrets/groups/${ENV}1/ | grep Only
+diff -qr workbench/custom/groups/${ENV}2/ secrets/groups/${ENV}2/ | grep Only
+diff -qr workbench/custom/groups/${ENV}3/ secrets/groups/${ENV}3/ | grep Only
+
+# Avoid the double-encryption
+git restore $FILE_ONLY_IN_TARGET_DIR
 ```
 
 Prepping remote machines
