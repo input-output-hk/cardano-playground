@@ -554,11 +554,11 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1717183889,
-        "narHash": "sha256-9Vv1UFi+Vn1vUE1JNEIwbsMb/N+zq1/RBRh64p76dm0=",
+        "lastModified": 1718658033,
+        "narHash": "sha256-DVQCkvxlRYnRr7WBOuqxdVQ5PvTWfqK3j/V58Yl5fw4=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "ec2ba4ec4572dc80ac91a160e6bc97a808225b20",
+        "rev": "8dc9c2c7bc784bd97ec027c26917ee3ae32c5e5e",
         "type": "github"
       },
       "original": {
@@ -671,16 +671,16 @@
     "cardano-db-sync-schema-ng": {
       "flake": false,
       "locked": {
-        "lastModified": 1715980294,
-        "narHash": "sha256-tJwjDRkOxUb8nHcXNYrRAAvDSu+8nSJgh/9UblrdLnM=",
+        "lastModified": 1717630063,
+        "narHash": "sha256-+FOnVcBO5f+zae2TJt+wM91UyVaPoMwSvikamMRQIvY=",
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "56c6b1592b7d0df75a47bdadb24c424d3ef453b5",
+        "rev": "cd10a2bf3849da5eb605ca0e92056990fb92b61d",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "sancho-4-3-0",
+        "ref": "sancho-5.0.0",
         "repo": "cardano-db-sync",
         "type": "github"
       }
@@ -986,11 +986,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1717536469,
-        "narHash": "sha256-BkxbkCPEF1sY/8pLMqhhLo/1aHEhKbDPKTxu/eMifeQ=",
+        "lastModified": 1718749038,
+        "narHash": "sha256-OIvgq3vj+p9phMbLvgY/4gR9nsqBqXIhX5cFs+EOK7g=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "da3d52b064ac249082e3f04314dca0c559623bba",
+        "rev": "9c00042a37b79418c1fb6845b596b1614082c4d0",
         "type": "github"
       },
       "original": {
@@ -3175,16 +3175,16 @@
         "sodium": "sodium_4"
       },
       "locked": {
-        "lastModified": 1714144038,
-        "narHash": "sha256-PehKNnOpZOVImTjYpx/4ruQD6VHTK2E3WabgSFRncdk=",
+        "lastModified": 1718748940,
+        "narHash": "sha256-1kUBjLfo0Vd3qbFd0K7GVIS0pWK20nn634clMxfJmfE=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "f6549c22ca4ab15fc7f9e8f15ce58b0f2100bc51",
+        "rev": "887eb250e13242d061fda262f965e1f9abe1790d",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "node-config-bp-legacy",
+        "ref": "jl/release-private-respin",
         "repo": "iohk-nix",
         "type": "github"
       }
