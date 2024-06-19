@@ -13,24 +13,21 @@ New wallet mnemonics can be made from the ops shell with:
 cardano-address recovery-phrase generate > faucet.mnemonic
 ```
 
-The wallet address can be generated from commands using cardano-address and
-cardano-cli, or, alternatively, by running the faucet daemon which will log the
-address.  To use cli, the commands are:
+The wallet address can be generated using cardano-address and or,
+alternatively, by running the faucet daemon which will log the address.  To use
+cli, the command is:
 ```bash
-# The final "0" in the key child string should be matched to the value of
-# `address_index` in the faucet config file, which defaults to 0
-PAYMENT_CHILD_KEY=$(cardano-address key from-recovery-phrase Shelley < faucet.mnemonic | cardano-address key child "1852H/1815H/0H/0/0")
-
-PAYMENT_SKEY=$(cardano-cli key convert-cardano-address-key --shelley-payment-key --signing-key-file <(echo "$PAYMENT_CHILD_KEY") --out-file /dev/stdout)
-PAYMENT_VKEYX=$(cardano-cli key verification-key --signing-key-file <(echo "$PAYMENT_SKEY") --verification-key-file /dev/stdout)
-PAYMENT_VKEY=$(cardano-cli key non-extended-key --extended-verification-key-file <(echo "$PAYMENT_VKEYX") --verification-key-file /dev/stdout)
-cardano-cli address build --payment-verification-key-file <(echo "$PAYMENT_VKEY") --out-file faucet.addr --testnet-magic "$TESTNET_MAGIC"
+# just gen-payment-address FILE OFFSET="0"
+#
+# The OFFSET should be matched to the value of `address_index` in the faucet
+# config file, which defaults to 0
+just gen-payment-address faucet.mnemonic
 ```
 
 New api keys can be generated with pwgen or from urandom:
 ```bash
 pwgen -s -n 32
-head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9'
+head -c 128 /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32
 ```
 
 The faucet config file is typically of the following form:
@@ -78,6 +75,23 @@ The faucet config file is typically of the following form:
         ],
         "address_index": 0
 }
+```
+
+As general guidance, faucet pool delegation sizes, UTxO sizes, UTxO quantity
+and `max_stake_key_index` values generally fall into one of the following
+categories:
+```
+# Preview, Preprod, Shelley-qa:
+Faucet UTxO:                 10000200000     # Funded via distribute.py, ~50,000 UTxO, below
+Faucet Pool Delegation:      1000000000000   # Funded via setup-delegation-accounts.py, below
+Faucet delegation_utxo_size: 10              # Via faucet config file
+max_stake_key_index:         500             # Via faucet config file
+
+# Sanchonet
+Faucet UTxO:                 100000200000    # Funded via distribute.py, ~10,000 UTxO, below
+Faucet Pool Delegation:      10000000000000  # Funded via setup-delegation-accounts.py, below
+Faucet delegation_utxo_size: 10              # Via faucet config file
+max_stake_key_index:         99              # Via faucet config file
 ```
 
 Files for faucet mnemonic, address and config file will need to be sops
@@ -162,8 +176,8 @@ rm *.tx*
 ```
 
 Additional UTxOs will need to be prepared to support the faucet delegating funds to
-pools.  A delegation.json file can be made for this, similar to the
-rewards.json file above, except the lovelace value should match the
+pools.  A `delegation.json` file can be made for this, similar to the
+`rewards.json` file above, except the lovelace value should match the
 `delegation_utxo_size` value which is provided in ADA and the number of json
 array items should match the `max_stake_key_index` value + 1 from the faucet config
 file.  A typical example would be when `delegation_utxo_size` is `10`:
