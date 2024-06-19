@@ -113,7 +113,14 @@ sudo systemctl stop systemd-timesyncd.service
 sudo date -u -s '2024-05-15 23:59:00Z'
 ```
 
-Start node, move funds from byon to shelley address and register pools
+Start node, move funds from byron to shelley address and register pools.
+
+Note: pools will be created with a default pledge of 10M ADA which also matches
+the default faucet pool delegation configured by setup-delegation-accounts.py
+during faucet setup.  To choose differently, set the POOL_PLEDGE env var in
+lovelace.  Additional configuration options for setting pool metadata url, port
+and more are available.  See the cardano-parts repo's `flakeModules/jobs.nix`
+file for details.
 ```bash
 # Start node for the first time
 cardano-node-ng run \
@@ -132,6 +139,7 @@ ERA_CMD="alonzo" \
 nix run .#job-move-genesis-utxo
 sleep 30
 
+# Note: This defaults to 10M ADA pool pledge; see note above
 echo "Registering stake pools..."
 POOL_NAMES="${ENV}1-bp-a-1" \
 STAKE_POOL_DIR=workbench/custom/groups/${ENV}1 \
@@ -420,7 +428,6 @@ sudo systemctl stop systemd-timesyncd.service
 sudo date -u -s '2024-05-16T07:59:00Z'
 ```
 
-
 Start node and verify conway hard fork
 ```bash
 # Restart node, watch the HF into protocol 9.0 as it goes to epoch 4
@@ -586,5 +593,5 @@ Deploying the rest of the cluster
 # group first, then the corresponding block producers for each group.
 #
 # Clean state can also be rsync'd from machine to machine to speed up
-# the process.
+# the process if the chain state is big.
 ```
