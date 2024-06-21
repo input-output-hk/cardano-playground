@@ -88,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="README-book.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-sanchonet.html"><strong aria-hidden="true">1.1.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.2.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.3.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.4.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-sanchonet.html"><strong aria-hidden="true">2.1.</strong> Sanchonet pre-release</a></li><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.2.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.3.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.1.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.2.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.3.</strong> 2022-07-01</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="README-book.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-private.html"><strong aria-hidden="true">1.1.</strong> Private</a></li><li class="chapter-item expanded "><a href="env-sanchonet.html"><strong aria-hidden="true">1.2.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.3.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.4.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.5.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-sanchonet.html"><strong aria-hidden="true">2.1.</strong> Sanchonet pre-release</a></li><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.2.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.3.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.1.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.2.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.3.</strong> 2022-07-01</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -192,10 +192,42 @@ It is the first blockchain platform to evolve out of a scientific philosophy and
 <p>The official Cardano Environment configuration files.</p>
 <p>Environment description and configuration files available are:</p>
 <ul>
+<li><a href="env-private.html">Private Testnet</a></li>
 <li><a href="env-sanchonet.html">Sanchonet Testnet</a></li>
 <li><a href="env-preview.html">Preview Testnet</a></li>
 <li><a href="env-preprod.html">Pre-production Testnet</a></li>
 <li><a href="env-mainnet.html">Production (Mainnet)</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="environment-private-testnet"><a class="header" href="#environment-private-testnet">Environment: Private Testnet</a></h2>
+<p>Usage: Testing Conway era functionality.</p>
+<p>The Private chain will be spun up or respun as needed for short term testing.</p>
+<p>Epoch length of 2 hours. Development flags allowed in configuration files.</p>
+<p>Upgrade Strategy: Deploy all nodes with every upgrade request</p>
+<p>Responsible: IOG SRE</p>
+<p>Accountable: SRE Director</p>
+<p>Consulted: Core Tech Head of Product</p>
+<p>Informed: Cardano Core Tribe</p>
+<h4 id="faucet"><a class="header" href="#faucet">Faucet</a></h4>
+<p>A faucet for the private testnet is available <a href="https://faucet.private.play.dev.cardano.org/basic-faucet">here</a></p>
+<h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
+<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.0-pre">8.12.0-pre</a></p>
+<pre><code>NOTE:
+The non-block-producer node config has `PeerSharing` enabled by
+default, so should not be used with block-producers.
+
+Additionally, avoid connecting a block-producer not using p2p to a p2p
+PeerSharing enabled relay as the block-producer's IP will be leaked.
+</code></pre>
+<ul>
+<li><a href="environments/private/config.json">Node Config (Non-block-producers -- see note above)</a></li>
+<li><a href="environments/private/config-bp.json">Node Config (Block-producers)</a></li>
+<li><a href="environments/private/db-sync-config.json">DB Sync Config</a></li>
+<li><a href="environments/private/submit-api-config.json">Submit API Config</a></li>
+<li><a href="environments/private/topology.json">Node Topology</a></li>
+<li><a href="environments/private/byron-genesis.json">Byron Genesis</a></li>
+<li><a href="environments/private/shelley-genesis.json">Shelley Genesis</a></li>
+<li><a href="environments/private/alonzo-genesis.json">Alonzo Genesis</a></li>
+<li><a href="environments/private/conway-genesis.json">Conway Genesis</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="environment-sanchonet-testnet"><a class="header" href="#environment-sanchonet-testnet">Environment: Sanchonet Testnet</a></h2>
 <p>Usage: Testing Conway era functionality.</p>
@@ -209,7 +241,7 @@ etc, will need to clear their chain state to re-sync from that point forward.</p
 <p>Accountable: SRE Director</p>
 <p>Consulted: Core Tech Head of Product</p>
 <p>Informed: Cardano Core Tribe</p>
-<h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
+<h4 id="configuration-files-1"><a class="header" href="#configuration-files-1">Configuration files</a></h4>
 <p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.11.0-pre">8.11.0-pre</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
@@ -246,7 +278,7 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <p>Accountable: Head of SRE/Release Squad Lead</p>
 <p>Consulted: SPOs</p>
 <p>Informed: Cardano Core Tribe, COO, Director of Engineering</p>
-<h4 id="configuration-files-1"><a class="header" href="#configuration-files-1">Configuration files</a></h4>
+<h4 id="configuration-files-2"><a class="header" href="#configuration-files-2">Configuration files</a></h4>
 <p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.3">8.9.3</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
@@ -282,7 +314,7 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <p>Accountable: Head of SRE/Release Squad Lead</p>
 <p>Consulted: SPOs, IOG Tribes</p>
 <p>Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community</p>
-<h4 id="configuration-files-2"><a class="header" href="#configuration-files-2">Configuration files</a></h4>
+<h4 id="configuration-files-3"><a class="header" href="#configuration-files-3">Configuration files</a></h4>
 <p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.3">8.9.3</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
@@ -315,7 +347,7 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 Accountable: Head of SRE/Release Squad Lead</p>
 <p>Consulted: SPOs, IOG Tribes, IOG Executive Team</p>
 <p>Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community</p>
-<h4 id="configuration-files-3"><a class="header" href="#configuration-files-3">Configuration files</a></h4>
+<h4 id="configuration-files-4"><a class="header" href="#configuration-files-4">Configuration files</a></h4>
 <p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.3">8.9.3</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
@@ -351,7 +383,7 @@ environment may obtain compatible configuration files below.</p>
 <p>NOTE: When respun on 2024-05-17 the chain will be restored from slot 26006400.
 Any Sanchonet chain participants, stakepools, integrators, etc, will need to
 clear their chain state to re-sync from that point forward.</p>
-<h4 id="configuration-files-4"><a class="header" href="#configuration-files-4">Configuration files</a></h4>
+<h4 id="configuration-files-5"><a class="header" href="#configuration-files-5">Configuration files</a></h4>
 <p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.11.0-pre">8.11.0-pre</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
@@ -374,8 +406,8 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <div style="break-before: page; page-break-before: always;"></div><h2 id="advanced-configuration-preview-testnet"><a class="header" href="#advanced-configuration-preview-testnet">Advanced Configuration: Preview Testnet</a></h2>
 <p>Users wanting to test a cardano-node pre-release version on the preview
 environment may obtain compatible configuration files below.</p>
-<h4 id="configuration-files-5"><a class="header" href="#configuration-files-5">Configuration files</a></h4>
-<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.11.0-pre">8.11.0-pre</a></p>
+<h4 id="configuration-files-6"><a class="header" href="#configuration-files-6">Configuration files</a></h4>
+<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.0-pre">8.12.0-pre</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
 default, so should not be used with block-producers.
@@ -392,13 +424,12 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments-pre/preview/byron-genesis.json">Byron Genesis</a></li>
 <li><a href="environments-pre/preview/shelley-genesis.json">Shelley Genesis</a></li>
 <li><a href="environments-pre/preview/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments-pre/preview/conway-genesis.json">Conway Genesis</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="advanced-configuration-pre-production-testnet"><a class="header" href="#advanced-configuration-pre-production-testnet">Advanced Configuration: Pre-Production Testnet</a></h2>
 <p>Users wanting to test a cardano-node pre-release version on the pre-production
 environment may obtain compatible configuration files below.</p>
-<h4 id="configuration-files-6"><a class="header" href="#configuration-files-6">Configuration files</a></h4>
-<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.11.0-pre">8.11.0-pre</a></p>
+<h4 id="configuration-files-7"><a class="header" href="#configuration-files-7">Configuration files</a></h4>
+<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.0-pre">8.12.0-pre</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
 default, so should not be used with block-producers.
@@ -415,7 +446,6 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments-pre/preprod/byron-genesis.json">Byron Genesis</a></li>
 <li><a href="environments-pre/preprod/shelley-genesis.json">Shelley Genesis</a></li>
 <li><a href="environments-pre/preprod/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments-pre/preprod/conway-genesis.json">Conway Genesis</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="plutus-cost-model"><a class="header" href="#plutus-cost-model">Plutus Cost Model</a></h1>
 <p>Plutus cost model updates available are:</p>
