@@ -53,7 +53,6 @@ with flake.lib; {
               else "group";
           }
           // optionalAttrs isNg {
-            # For the latest genesis only compatible with >= node 8.5.0
             lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
 
             # Until upstream parts ng has capkgs version, use local flake pins
@@ -79,10 +78,10 @@ with flake.lib; {
       // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false false)
       // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false false)
       // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false false)
-      // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" false false)
-      // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" false false)
-      // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" false false)
-      # Flip sanchonet and shelley-qa back to isNg true for sanchonet respin and shelley-qa 8.10 deployed
+      // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true false)
+      // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true false)
+      // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true false)
+      # Flip sanchonet and shelley-qa back to isNg true for sanchonet respin and shelley-qa 8.11 deployed
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true false)
       // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true false)
       // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true false)

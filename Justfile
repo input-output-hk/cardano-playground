@@ -371,9 +371,9 @@ query-tip ENV TESTNET_MAGIC=null:
     CARDANO_CLI="cardano-cli"
   elif [ "${UNSTABLE:-}" = "true" ]; then
     CARDANO_CLI="cardano-cli-ng"
-  elif [[ "$ENV" =~ mainnet$|preprod$|preview$|private$|shelley-qa$ ]]; then
+  elif [[ "$ENV" =~ mainnet$|preprod$|preview$|shelley-qa$ ]]; then
     CARDANO_CLI="cardano-cli"
-  elif [[ "$ENV" =~ sanchonet$|demo$ ]]; then
+  elif [[ "$ENV" =~ private$|sanchonet$|demo$ ]]; then
     CARDANO_CLI="cardano-cli-ng"
   fi
 
@@ -745,7 +745,7 @@ start-node ENV:
   echo "Starting cardano-node for envrionment {{ENV}}"
   mkdir -p "$STATEDIR"
 
-  if [[ "{{ENV}}" =~ mainnet$|preprod$|preview$|private$ ]]; then
+  if [[ "{{ENV}}" =~ mainnet$|preprod$|preview$ ]]; then
     UNSTABLE=false
     UNSTABLE_LIB=false
     UNSTABLE_MITHRIL=false
