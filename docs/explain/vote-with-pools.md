@@ -144,7 +144,7 @@ icdiff gov-state-before-vote.json gov-state-after-vote.json
 
 Clean unwanted files:
 ```bash
-rm "$ACTION_ID-${ENV}?.vote"
-rm "vote-tx.*"
-rm "gov-state-*.json"
+rm $ACTION_ID-${ENV}?.vote
+rm vote-tx.*
+rm gov-state-*.json
 ```
