@@ -74,11 +74,6 @@ in
                 cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
                 cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
                 cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
-
-                # Add these as perNode options and update the group nixosModule in cardano-parts
-                # db-analyser = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.db-analyser-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
-                # db-truncater = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.db-truncater-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
-                # db-synthesizer = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.db-synthesizer-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
               };
             };
           }
@@ -200,11 +195,6 @@ in
                 cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
                 cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
                 cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
-
-                # Add these as perNode options and update the group nixosModule in cardano-parts
-                # db-analyser = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.db-analyser-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
-                # db-truncater = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.db-truncater-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
-                # db-synthesizer = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.db-synthesizer-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
               };
             };
             services.cardano-node.shareNodeSocket = true;
@@ -345,19 +335,24 @@ in
             .x86_64-linux
           )
           inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+          {
+            services.cardano-node.extraNodeConfig.TraceOptions."ChainDB.CopyToImmutableDBEvent" = {
+              severity = "Debug";
+              detail = "DMaximum";
+            };
+          }
         ];
       };
-
       # Ephermeral instance disk storage config for upcoming UTxO-HD/LMDB
-      iDisk = {
-        fileSystems = {
-          "/ephemeral" = {
-            device = "/dev/nvme1n1";
-            fsType = "ext4";
-            autoFormat = true;
-          };
-        };
-      };
+      # iDisk = {
+      #   fileSystems = {
+      #     "/ephemeral" = {
+      #       device = "/dev/nvme1n1";
+      #       fsType = "ext4";
+      #       autoFormat = true;
+      #     };
+      #   };
+      # };
       # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -606,7 +601,7 @@ in
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync8-11-0 smash sanchoSmash];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 newMetrics iDisk];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 newMetrics];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node8-11-0 bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node8-11-0 rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
