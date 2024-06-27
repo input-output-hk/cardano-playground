@@ -15,7 +15,7 @@
   "ShelleyGenesisHash": "162d29c4e1cf6b8a84f2d692e67a3ac6bc7851bc3e6e4afe64d15778bed8bd86",
   "TargetNumberOfActivePeers": 20,
   "TargetNumberOfEstablishedPeers": 50,
-  "TargetNumberOfKnownPeers": 100,
+  "TargetNumberOfKnownPeers": 150,
   "TargetNumberOfRootPeers": 60,
   "TraceAcceptPolicy": true,
   "TraceBlockFetchClient": false,

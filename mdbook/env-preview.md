@@ -27,7 +27,7 @@ Informed: Cardano Core Tribe, COO, Director of Engineering
 
 #### Configuration files
 
-Compatible with cardano-node release [8.9.3](https://github.com/IntersectMBO/cardano-node/releases/tag/8.9.3)
+Compatible with cardano-node release [8.12.1](https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.1)
 
 ```
 NOTE:
@@ -46,4 +46,3 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Byron Genesis](environments/preview/byron-genesis.json)
 - [Shelley Genesis](environments/preview/shelley-genesis.json)
 - [Alonzo Genesis](environments/preview/alonzo-genesis.json)
-- [Conway Genesis](environments/preview/conway-genesis.json)

@@ -19,7 +19,7 @@
   "ShelleyGenesisHash": "ae9da178ddecfbde046d2c59d4afd087bafd6e2ff04532e6077eab7f8098fa03",
   "TargetNumberOfActivePeers": 20,
   "TargetNumberOfEstablishedPeers": 50,
-  "TargetNumberOfKnownPeers": 100,
+  "TargetNumberOfKnownPeers": 150,
   "TargetNumberOfRootPeers": 60,
   "TestAllegraHardForkAtEpoch": 0,
   "TestAlonzoHardForkAtEpoch": 0,

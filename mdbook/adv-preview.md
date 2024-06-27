@@ -5,7 +5,7 @@ environment may obtain compatible configuration files below.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.12.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.0-pre)
+Compatible with cardano-node pre-release [8.12.1](https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.1)
 
 ```
 NOTE:
