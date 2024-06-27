@@ -571,11 +571,11 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1718922963,
-        "narHash": "sha256-1mKE5q+P8KIT+05M/XQHFSBZaf/nxZf0zeIr7NzFfyg=",
+        "lastModified": 1719462167,
+        "narHash": "sha256-4uKT8uCMDmh54c8kKIAbYJY4rAzPWovywxW54ILzqy8=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "7b95db13565b7c56805dd688e8310e12aa8c01f5",
+        "rev": "e9a0fa33216280587b1d59df1164e2f6d92dc343",
         "type": "github"
       },
       "original": {
@@ -1002,11 +1002,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1719237227,
-        "narHash": "sha256-EKiIHW+XfUhqRttXh3lwAF2mAmI1kaQVTroTo8Hb0/Y=",
+        "lastModified": 1719464347,
+        "narHash": "sha256-Fph1aGlbUtxNe2FgMCCDFfxbnyNMLElOmrdKyESgGV0=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "2357b6015ab66faf761811eb7491fea7a4000fce",
+        "rev": "4ae3b3318bcf32d1e43b8a1084fa888ae460daa9",
         "type": "github"
       },
       "original": {
@@ -3191,16 +3191,15 @@
         "sodium": "sodium_4"
       },
       "locked": {
-        "lastModified": 1718748940,
-        "narHash": "sha256-1kUBjLfo0Vd3qbFd0K7GVIS0pWK20nn634clMxfJmfE=",
+        "lastModified": 1719443312,
+        "narHash": "sha256-JNDuUSmV/o5ck1CfnBtX8GJE/Pli4zYE73LZZ7u0E2Q=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "887eb250e13242d061fda262f965e1f9abe1790d",
+        "rev": "b4025c38b609c6fb99762e2a6201e4e3488a39d3",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/release-private-respin",
         "repo": "iohk-nix",
         "type": "github"
       }
@@ -3257,11 +3256,11 @@
         "sodium": "sodium_5"
       },
       "locked": {
-        "lastModified": 1719237167,
-        "narHash": "sha256-ifW5Jfwu/iwYs0r7f8AdiWDQK+Pr1gZLz+p5u8OtOgo=",
+        "lastModified": 1719443312,
+        "narHash": "sha256-JNDuUSmV/o5ck1CfnBtX8GJE/Pli4zYE73LZZ7u0E2Q=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "577f4d5072945a88dda6f5cfe205e6b4829a0423",
+        "rev": "b4025c38b609c6fb99762e2a6201e4e3488a39d3",
         "type": "github"
       },
       "original": {
