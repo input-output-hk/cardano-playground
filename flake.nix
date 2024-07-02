@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-05-28";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-05-28";
 
     # Local pins for additional customization:
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
@@ -20,6 +20,12 @@
     #   flake = false;
     # };
     # iohk-nix-873.url = "github:input-output-hk/iohk-nix/bootstrap-peers-legacy";
+
+    # For node 8.9.4 until dbsync 8.12.1 compatible release is available
+    iohk-nix-8-9-4.url = "github:input-output-hk/iohk-nix/jl/release-private-respin";
+
+    # For node 8.11.0-pre until sanchonet is respun
+    iohk-nix-8-11-0.url = "github:input-output-hk/iohk-nix/29f19cd41dc593cf17bbc24194e34e7c20889fc9";
 
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";

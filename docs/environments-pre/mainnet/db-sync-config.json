@@ -1,9 +1,10 @@
 {
   "EnableLogMetrics": false,
   "EnableLogging": true,
-  "GenesisHash": "d4b8de7a11d929a323373cbab6c1a9bdc931beffff11db111cf9d57356ee1937",
+  "NetworkName": "mainnet",
+  "NodeConfigFile": "config.json",
   "PrometheusPort": 8080,
-  "RequiresNetworkMagic": "RequiresMagic",
+  "RequiresNetworkMagic": "RequiresNoMagic",
   "defaultBackends": [
     "KatipBK"
   ],

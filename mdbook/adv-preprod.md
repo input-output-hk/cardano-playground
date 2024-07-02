@@ -5,7 +5,7 @@ environment may obtain compatible configuration files below.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.11.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/8.11.0-pre)
+Compatible with cardano-node pre-release [8.12.1](https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.1)
 
 ```
 NOTE:
@@ -24,4 +24,3 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Byron Genesis](environments-pre/preprod/byron-genesis.json)
 - [Shelley Genesis](environments-pre/preprod/shelley-genesis.json)
 - [Alonzo Genesis](environments-pre/preprod/alonzo-genesis.json)
-- [Conway Genesis](environments-pre/preprod/conway-genesis.json)

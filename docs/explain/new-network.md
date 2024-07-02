@@ -113,7 +113,14 @@ sudo systemctl stop systemd-timesyncd.service
 sudo date -u -s '2024-05-15 23:59:00Z'
 ```
 
-Start node, move funds from byon to shelley address and register pools
+Start node, move funds from byron to shelley address and register pools.
+
+Note: pools will be created with a default pledge of 10M ADA which also matches
+the default faucet pool delegation configured by setup-delegation-accounts.py
+during faucet setup.  To choose differently, set the POOL_PLEDGE env var in
+lovelace.  Additional configuration options for setting pool metadata url, port
+and more are available.  See the cardano-parts repo's `flakeModules/jobs.nix`
+file for details.
 ```bash
 # Start node for the first time
 cardano-node-ng run \
@@ -132,6 +139,7 @@ ERA_CMD="alonzo" \
 nix run .#job-move-genesis-utxo
 sleep 30
 
+# Note: This defaults to 10M ADA pool pledge; see note above
 echo "Registering stake pools..."
 POOL_NAMES="${ENV}1-bp-a-1" \
 STAKE_POOL_DIR=workbench/custom/groups/${ENV}1 \
@@ -420,7 +428,6 @@ sudo systemctl stop systemd-timesyncd.service
 sudo date -u -s '2024-05-16T07:59:00Z'
 ```
 
-
 Start node and verify conway hard fork
 ```bash
 # Restart node, watch the HF into protocol 9.0 as it goes to epoch 4
@@ -530,11 +537,24 @@ Place new secrets and encrypt them
 # is done properly and automatically with the commands below.
 # Then, move the secrets into their place and encrypt:
 cp -a workbench/custom/envs/$ENV secrets/envs/
-cp -a workbench/custom/groups/$ENV{1..3} secrets/groups/
+cp -a workbench/custom/groups/${ENV}1 secrets/groups/
+cp -a workbench/custom/groups/${ENV}2 secrets/groups/
+cp -a workbench/custom/groups/${ENV}3 secrets/groups/
 fd -t f . secrets/envs/$ENV -x just sops-encrypt-binary
 fd -t f . secrets/groups/${ENV}1 -x just sops-encrypt-binary
 fd -t f . secrets/groups/${ENV}2 -x just sops-encrypt-binary
 fd -t f . secrets/groups/${ENV}3 -x just sops-encrypt-binary
+
+# Note: if not all files are overwritten in the target secrets directory, they
+# will be double-encrypted. To avoid that, you can check for files which only
+# exist in the target and git restore the double-encryption.
+diff -qr workbench/custom/envs/$ENV/ secrets/envs/$ENV/ | grep Only
+diff -qr workbench/custom/groups/${ENV}1/ secrets/groups/${ENV}1/ | grep Only
+diff -qr workbench/custom/groups/${ENV}2/ secrets/groups/${ENV}2/ | grep Only
+diff -qr workbench/custom/groups/${ENV}3/ secrets/groups/${ENV}3/ | grep Only
+
+# Avoid the double-encryption
+git restore $FILE_ONLY_IN_TARGET_DIR
 ```
 
 Prepping remote machines
@@ -573,5 +593,5 @@ Deploying the rest of the cluster
 # group first, then the corresponding block producers for each group.
 #
 # Clean state can also be rsync'd from machine to machine to speed up
-# the process.
+# the process if the chain state is big.
 ```
