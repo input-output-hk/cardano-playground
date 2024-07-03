@@ -21,6 +21,12 @@
     # };
     # iohk-nix-873.url = "github:input-output-hk/iohk-nix/bootstrap-peers-legacy";
 
+    # For node 8.9.4 until dbsync 8.12.1 compatible release is available
+    iohk-nix-8-9-4.url = "github:input-output-hk/iohk-nix/jl/release-private-respin";
+
+    # For node 8.11.0-pre until sanchonet is respun
+    iohk-nix-8-11-0.url = "github:input-output-hk/iohk-nix/29f19cd41dc593cf17bbc24194e34e7c20889fc9";
+
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
 

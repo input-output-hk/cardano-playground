@@ -62,6 +62,24 @@ in
         ];
       };
 
+      node8-11-0 = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-11-0 "x86_64-linux";
+              pkgs = {
+                cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
+                cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
+                cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
+              };
+            };
+          }
+        ];
+      };
+
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
       declMRel = node: {services.mithril-signer.relayEndpoint = nixosConfigurations.${node}.config.ips.privateIpv4;};
@@ -159,6 +177,77 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
           {services.cardano-node.shareNodeSocket = true;}
           {services.cardano-postgres.enablePsqlrc = true;}
+        ];
+      };
+
+      # node8-9-4 = {
+      #   imports = [
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     {
+      #       cardano-parts.perNode = {
+      #         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-9-4 "x86_64-linux";
+      #         pkgs = {
+      #           cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-9-4-8ac5f75;
+      #           cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-9-4-8ac5f75;
+      #           cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-9-4-8ac5f75;
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
+
+      dbsync8-9-4 = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-9-4 "x86_64-linux";
+              pkgs = {
+                cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-9-4-8ac5f75;
+                cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-9-4-8ac5f75;
+                cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-9-4-8ac5f75;
+              };
+            };
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+          }
+        ];
+      };
+
+      dbsync8-11-0 = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-11-0 "x86_64-linux";
+              pkgs = {
+                cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
+                cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
+                cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-11-0-pre-38c7f1c;
+              };
+            };
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+          }
+        ];
+      };
+
+      ogmios = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-ogmios-service
+          nixosModules.ogmios
         ];
       };
 
@@ -287,19 +376,24 @@ in
             .x86_64-linux
           )
           inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+          {
+            services.cardano-node.extraNodeConfig.TraceOptions."ChainDB.CopyToImmutableDBEvent" = {
+              severity = "Debug";
+              detail = "DMaximum";
+            };
+          }
         ];
       };
-
       # Ephermeral instance disk storage config for upcoming UTxO-HD/LMDB
-      iDisk = {
-        fileSystems = {
-          "/ephemeral" = {
-            device = "/dev/nvme1n1";
-            fsType = "ext4";
-            autoFormat = true;
-          };
-        };
-      };
+      # iDisk = {
+      #   fileSystems = {
+      #     "/ephemeral" = {
+      #       device = "/dev/nvme1n1";
+      #       fsType = "ext4";
+      #       autoFormat = true;
+      #     };
+      #   };
+      # };
       # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -484,7 +578,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preprod1") dbsync8-9-4 smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node bp (declMRel "preprod2-rel-b-1")];};
@@ -504,15 +598,15 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync8-9-4 smash previewSmash ogmios];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre (declMRel "preview2-rel-b-1")];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
       preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre (declMRel "preview3-rel-c-1")];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
       preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
       preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
       preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
@@ -520,12 +614,11 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Private, pre-release--include-all-instances
-      # All private nodes stopped until chain truncation and respin in the near future
       private1-bp-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node bp];};
       private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
       private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
       private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
-      # Until govtool is ready for 8.11.0-pre and sancho-4-3-0
+      # Until govtool is ready for 8.12.0-pre and sancho-5.0.0
       # private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
       private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node faucet privateFaucet];};
@@ -543,23 +636,23 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet, pre-release
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node bp (declMRel "sanchonet1-rel-a-1")];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
-      sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
-      sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
-      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
-      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics iDisk];};
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 bp (declMRel "sanchonet1-rel-a-1")];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
+      sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 rel sanchoRelMig];};
+      sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 rel sanchoRelMig];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync8-11-0 smash sanchoSmash];};
+      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 faucet sanchoFaucet];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node8-11-0 newMetrics];};
 
-      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
-      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
-      sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
-      sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
+      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node8-11-0 bp (declMRel "sanchonet2-rel-b-1")];};
+      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node8-11-0 rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
+      sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node8-11-0 rel sanchoRelMig];};
+      sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node8-11-0 rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
-      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
-      sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node8-11-0 newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
+      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node8-11-0 rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
+      sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node8-11-0 rel sanchoRelMig];};
+      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node8-11-0 newMetrics rel sanchoRelMig];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -588,7 +681,7 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432)];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync8-9-4 dbsyncPub (openFwTcp 5432)];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging rtsOptMods];};
