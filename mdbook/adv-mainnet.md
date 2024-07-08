@@ -5,7 +5,7 @@ mainnet environment may obtain compatible configuration files below.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [8.12.1](https://github.com/IntersectMBO/cardano-node/releases/tag/8.12.1)
+Compatible with cardano-node pre-release [9.0.0](https://github.com/IntersectMBO/cardano-node/releases/tag/9.0.0)
 
 ```
 NOTE:
