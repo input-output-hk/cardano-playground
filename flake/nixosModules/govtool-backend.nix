@@ -16,7 +16,7 @@ in {
     groupCfg = config.cardano-parts.cluster.group;
     opsLib = flake.config.flake.cardano-parts.lib.opsLib pkgs;
   in {
-    environment.systemPackages = [inputs'.govtool.packages.govtool-backend];
+    environment.systemPackages = [inputs'.govtool.packages.backend];
 
     networking.firewall.allowedTCPPorts = [80 443];
 
@@ -34,7 +34,11 @@ in {
     # services.nginx-vhost-exporter.enable = true;
 
     services = {
-      nginx = {
+      nginx = let
+        staticSite = inputs'.govtool.packages.frontend.overrideAttrs (_: _: {
+          VITE_BASE_URL = "/api";
+        });
+      in {
         enable = true;
         eventsConfig = "worker_connections 4096;";
         appendConfig = "worker_rlimit_nofile 16384;";
@@ -62,7 +66,19 @@ in {
             forceSSL = true;
 
             locations = {
-              "/".proxyPass = "http://127.0.0.1:9999";
+              "/" = {
+                root = "${staticSite}/";
+                index = "index.html";
+                extraConfig = ''
+                  try_files $uri $uri /index.html;
+                '';
+              };
+              "/swagger-ui/" = {
+                proxyPass = "http://127.0.0.1:9999";
+              };
+              "/swagger.json" = {
+                proxyPass = "http://127.0.0.1:9999";
+              };
               "/api/".proxyPass = "http://127.0.0.1:9999/";
             };
           };
@@ -85,7 +101,7 @@ in {
         serviceConfig = {
           ExecStart = lib.getExe (pkgs.writeShellApplication {
             name = "govtool-backend";
-            runtimeInputs = [inputs'.govtool.packages.govtool-backend];
+            runtimeInputs = [inputs'.govtool.packages.backend];
             text = "vva-be -c /run/secrets/govtool-backend-cfg.json start-app";
           });
           Restart = "always";

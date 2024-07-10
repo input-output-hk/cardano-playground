@@ -31,7 +31,7 @@
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
 
     # Voltaire backend swagger ui for private chain deployment
-    govtool.url = "github:IntersectMBO/govtool/jl/flake";
+    govtool.url = "github:disassembler/govtool/sl/disable-metadata-validation";
   };
 
   outputs = inputs: let

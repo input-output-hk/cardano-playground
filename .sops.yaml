@@ -107,7 +107,7 @@ creation_rules:
       - *preview3-bp-c-1
 
   # Private specific
-  - path_regex: secrets/groups/private1/deploy/.*vva-be.*$
+  - path_regex: secrets/groups/private1/deploy/.*govtool-backend.*$
     key_groups:
     - age:
       - *sre
