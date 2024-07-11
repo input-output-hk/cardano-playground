@@ -1002,11 +1002,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1720664160,
-        "narHash": "sha256-y3GhDN3adUzzpckxp9e6UL6GiJ8PUPnBMbmRyTzh0PE=",
+        "lastModified": 1720736004,
+        "narHash": "sha256-gxXe6xN8ftrF7OKNgJpLOu10OrfWWF4qmzJRUqHhT0o=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "c2a2994a723596db857cd47d3bf6d99c76186e30",
+        "rev": "4cb247fc010df61f760b98114fea9482918154c9",
         "type": "github"
       },
       "original": {
@@ -3273,16 +3273,15 @@
         "sodium": "sodium_5"
       },
       "locked": {
-        "lastModified": 1720662170,
-        "narHash": "sha256-1rAXI83MKMmdkhB5k3HXeNtx79I3atvzO97GFDnzZns=",
+        "lastModified": 1720729907,
+        "narHash": "sha256-V4GLBT8JdRiucMHnsZM23H0vUOsc3FYe/4ozHcblGwY=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "a3066d29acb6313df9f3edb44754f813df268d02",
+        "rev": "7c47f37a9e6494dce0a81eb40badc7eaca2e4728",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/respin-sanchonet",
         "repo": "iohk-nix",
         "type": "github"
       }
