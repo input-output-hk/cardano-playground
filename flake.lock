@@ -351,23 +351,6 @@
     "blst_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1691598027,
-        "narHash": "sha256-oqljy+ZXJAXEB/fJtmB8rlAr4UXM+Z2OkDa20gpILNA=",
-        "owner": "supranational",
-        "repo": "blst",
-        "rev": "3dd0f804b1819e5d03fb22ca2e6fac105932043a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "supranational",
-        "ref": "v0.3.11",
-        "repo": "blst",
-        "type": "github"
-      }
-    },
-    "blst_8": {
-      "flake": false,
-      "locked": {
         "lastModified": 1656163412,
         "narHash": "sha256-xero1aTe2v4IhWIJaEDUsVDOfE77dOV5zKeHWntHogY=",
         "owner": "supranational",
@@ -1019,11 +1002,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1720052954,
-        "narHash": "sha256-JKVNLkB6d2+zeCj8lm6rTJgIKFFL9P/GbNAJ4oaffkw=",
+        "lastModified": 1720664160,
+        "narHash": "sha256-y3GhDN3adUzzpckxp9e6UL6GiJ8PUPnBMbmRyTzh0PE=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "144de528ecec2b4e58622b193d3a4a10aa588382",
+        "rev": "c2a2994a723596db857cd47d3bf6d99c76186e30",
         "type": "github"
       },
       "original": {
@@ -3225,47 +3208,25 @@
         "sodium": "sodium_4"
       },
       "locked": {
-        "lastModified": 1719443312,
-        "narHash": "sha256-JNDuUSmV/o5ck1CfnBtX8GJE/Pli4zYE73LZZ7u0E2Q=",
+        "lastModified": 1720562356,
+        "narHash": "sha256-zXkH6dbj4vMKB0Af8IRMMT6KuY7Kt4YMm43vsTgeWX8=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "b4025c38b609c6fb99762e2a6201e4e3488a39d3",
+        "rev": "df8c2d1b5e8e0ad1d44e7def596f930c39296baa",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "type": "github"
-      }
-    },
-    "iohk-nix-8-11-0": {
-      "inputs": {
-        "blst": "blst_6",
-        "nixpkgs": "nixpkgs_35",
-        "secp256k1": "secp256k1_6",
-        "sodium": "sodium_6"
-      },
-      "locked": {
-        "lastModified": 1715898223,
-        "narHash": "sha256-G1LFsvP53twrqaC1FVard/6rjJJ3oitnpJ1E+mTZDGM=",
-        "owner": "input-output-hk",
-        "repo": "iohk-nix",
-        "rev": "29f19cd41dc593cf17bbc24194e34e7c20889fc9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "input-output-hk",
-        "repo": "iohk-nix",
-        "rev": "29f19cd41dc593cf17bbc24194e34e7c20889fc9",
         "type": "github"
       }
     },
     "iohk-nix-8-9-4": {
       "inputs": {
-        "blst": "blst_7",
-        "nixpkgs": "nixpkgs_36",
-        "secp256k1": "secp256k1_7",
-        "sodium": "sodium_7"
+        "blst": "blst_6",
+        "nixpkgs": "nixpkgs_35",
+        "secp256k1": "secp256k1_6",
+        "sodium": "sodium_6"
       },
       "locked": {
         "lastModified": 1718748940,
@@ -3284,10 +3245,10 @@
     },
     "iohk-nix-legacy": {
       "inputs": {
-        "blst": "blst_8",
-        "nixpkgs": "nixpkgs_37",
-        "secp256k1": "secp256k1_8",
-        "sodium": "sodium_8"
+        "blst": "blst_7",
+        "nixpkgs": "nixpkgs_36",
+        "secp256k1": "secp256k1_7",
+        "sodium": "sodium_7"
       },
       "locked": {
         "lastModified": 1701181091,
@@ -3312,15 +3273,16 @@
         "sodium": "sodium_5"
       },
       "locked": {
-        "lastModified": 1719443312,
-        "narHash": "sha256-JNDuUSmV/o5ck1CfnBtX8GJE/Pli4zYE73LZZ7u0E2Q=",
+        "lastModified": 1720662170,
+        "narHash": "sha256-1rAXI83MKMmdkhB5k3HXeNtx79I3atvzO97GFDnzZns=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "b4025c38b609c6fb99762e2a6201e4e3488a39d3",
+        "rev": "a3066d29acb6313df9f3edb44754f813df268d02",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "jl/respin-sanchonet",
         "repo": "iohk-nix",
         "type": "github"
       }
@@ -5279,22 +5241,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_37": {
-      "locked": {
-        "lastModified": 1684171562,
-        "narHash": "sha256-BMUWjVWAUdyMWKk0ATMC9H0Bv4qAV/TXwwPUvTiC5IQ=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "55af203d468a6f5032a519cba4f41acf5a74b638",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "release-22.11",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs_4": {
       "locked": {
         "lastModified": 1653581809,
@@ -5978,7 +5924,6 @@
           "flake-parts"
         ],
         "govtool": "govtool",
-        "iohk-nix-8-11-0": "iohk-nix-8-11-0",
         "iohk-nix-8-9-4": "iohk-nix-8-9-4",
         "iohk-nix-legacy": "iohk-nix-legacy",
         "nixpkgs": [
@@ -6206,23 +6151,6 @@
         "type": "github"
       }
     },
-    "secp256k1_8": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1683999695,
-        "narHash": "sha256-9nJJVENMXjXEJZzw8DHzin1DkFkF8h9m/c6PuM7Uk4s=",
-        "owner": "bitcoin-core",
-        "repo": "secp256k1",
-        "rev": "acf5c55ae6a94e5ca847e07def40427547876101",
-        "type": "github"
-      },
-      "original": {
-        "owner": "bitcoin-core",
-        "ref": "v0.3.2",
-        "repo": "secp256k1",
-        "type": "github"
-      }
-    },
     "services-flake": {
       "locked": {
         "lastModified": 1705690208,
@@ -6341,23 +6269,6 @@
       }
     },
     "sodium_7": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1675156279,
-        "narHash": "sha256-0uRcN5gvMwO7MCXVYnoqG/OmeBFi8qRVnDWJLnBb9+Y=",
-        "owner": "input-output-hk",
-        "repo": "libsodium",
-        "rev": "dbb48cce5429cb6585c9034f002568964f1ce567",
-        "type": "github"
-      },
-      "original": {
-        "owner": "input-output-hk",
-        "repo": "libsodium",
-        "rev": "dbb48cce5429cb6585c9034f002568964f1ce567",
-        "type": "github"
-      }
-    },
-    "sodium_8": {
       "flake": false,
       "locked": {
         "lastModified": 1675156279,
