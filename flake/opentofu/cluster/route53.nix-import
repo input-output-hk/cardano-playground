@@ -51,4 +51,5 @@ in {
 
   # Govtool
   cname_govtool_private = mkResource {name = "private-govtool.${domain}"; records = ["private1-dbsync-a-1.${domain}"];};
+  cname_govtool_sanchonet = mkResource {name = "sanchonet-govtool.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
 }
