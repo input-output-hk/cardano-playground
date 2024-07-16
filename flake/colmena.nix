@@ -74,6 +74,10 @@ in
 
       nodeRamPct = ramPercent: nixos: {services.cardano-node.totalMaxHeapSizeMiB = nixos.nodeResources.memMiB * ramPercent / 100;};
 
+      # Historically, this parameter could result in up to 4 times the specified amount of ram being consumed.
+      # However, this doesn't seem to be the case anymore.
+      varnishRamPct = ramPercent: nixos: {services.cardano-webserver.varnishRamAvailableMiB = nixos.nodeResources.memMiB * ramPercent / 100;};
+
       ram8gib = nixos: {
         # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
         services.cardano-node.totalMaxHeapSizeMiB = 5734;
@@ -656,7 +660,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Misc
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") metadata];};
-      misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver];};
+      misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       # ---------------------------------------------------------------------------------------------------------
     };
   }
