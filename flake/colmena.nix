@@ -19,6 +19,7 @@ in
 
       # Instance defs:
       c5ad-large.aws.instance.instance_type = "c5ad.large";
+      # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
       m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
@@ -166,53 +167,12 @@ in
         ];
       };
 
-      # node8-9-4 = {
+      # ogmios = {
       #   imports = [
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     {
-      #       cardano-parts.perNode = {
-      #         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-9-4 "x86_64-linux";
-      #         pkgs = {
-      #           cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-9-4-8ac5f75;
-      #           cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-9-4-8ac5f75;
-      #           cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-9-4-8ac5f75;
-      #         };
-      #       };
-      #     }
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-ogmios-service
+      #     nixosModules.ogmios
       #   ];
       # };
-
-      dbsync8-9-4 = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          inputs.cardano-parts.nixosModules.profile-cardano-postgres
-          {
-            cardano-parts.perNode = {
-              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-8-9-4 "x86_64-linux";
-              pkgs = {
-                cardano-cli = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-cli-input-output-hk-cardano-node-8-9-4-8ac5f75;
-                cardano-node = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-node-input-output-hk-cardano-node-8-9-4-8ac5f75;
-                cardano-submit-api = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux.cardano-submit-api-input-output-hk-cardano-node-8-9-4-8ac5f75;
-              };
-            };
-            services.cardano-node.shareNodeSocket = true;
-            services.cardano-postgres.enablePsqlrc = true;
-          }
-        ];
-      };
-
-      ogmios = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-ogmios-service
-          nixosModules.ogmios
-        ];
-      };
 
       mithrilRelease = {imports = [nixosModules.mithril-release-pin];};
 
@@ -541,7 +501,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel pre preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel pre preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preprod1") dbsync8-9-4 smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet pre preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node bp pre mithrilRelease (declMRel "preprod2-rel-b-1")];};
@@ -561,7 +521,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync8-9-4 smash previewSmash ogmios];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet pre previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
@@ -581,9 +541,7 @@ in
       private1-rel-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
       private1-rel-a-2 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
       private1-rel-a-3 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node rel];};
-      # Until govtool is ready for 8.12.0-pre and sancho-5.0.0
       private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync nixosModules.govtool-backend];};
-      #private1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "private1") dbsync];};
       private1-faucet-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private1") node faucet privateFaucet];};
 
       private2-bp-b-1 = {imports = [eu-west-1 t3a-small (ebs 80) (nodeRamPct 70) (group "private2") node bp];};
@@ -620,22 +578,22 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Shelley-qa, pre-release
-      shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node bp pre];};
-      shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel pre];};
-      shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel pre];};
-      shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel pre];};
-      shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "shelley-qa1") dbsync pre smash shelleySmash];};
-      shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node faucet shelleyFaucet pre];};
+      shelley-qa1-bp-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node bp];};
+      shelley-qa1-rel-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
+      shelley-qa1-rel-a-2 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
+      shelley-qa1-rel-a-3 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node rel];};
+      shelley-qa1-dbsync-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "shelley-qa1") dbsync smash shelleySmash];};
+      shelley-qa1-faucet-a-1 = {imports = [eu-central-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa1") node faucet shelleyFaucet];};
 
-      shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node bp pre];};
-      shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel pre];};
-      shelley-qa2-rel-b-2 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel pre];};
-      shelley-qa2-rel-b-3 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel pre];};
+      shelley-qa2-bp-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node bp];};
+      shelley-qa2-rel-b-1 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
+      shelley-qa2-rel-b-2 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
+      shelley-qa2-rel-b-3 = {imports = [eu-west-1 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa2") node rel];};
 
-      shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node bp pre];};
-      shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel pre];};
-      shelley-qa3-rel-c-2 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel pre];};
-      shelley-qa3-rel-c-3 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel pre];};
+      shelley-qa3-bp-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node bp];};
+      shelley-qa3-rel-c-1 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
+      shelley-qa3-rel-c-2 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
+      shelley-qa3-rel-c-3 = {imports = [us-east-2 t3a-micro (ebs 80) (nodeRamPct 70) (group "shelley-qa3") node rel];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -644,12 +602,12 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync8-9-4 dbsyncPub (openFwTcp 5432)];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432)];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging rtsOptMods];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node pre (openFwTcp 3001)];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
@@ -659,7 +617,7 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Misc
-      misc1-metadata-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") metadata];};
+      misc1-metadata-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       # ---------------------------------------------------------------------------------------------------------
     };
