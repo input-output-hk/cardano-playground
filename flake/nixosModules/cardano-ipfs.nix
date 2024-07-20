@@ -103,7 +103,75 @@ in {
           })
           {
             virtualHosts = {
-              ipfs = {
+              ipfs = let
+                defaultCfg = ''
+                  proxy_pass_request_headers off;
+                  proxy_set_header Accept "*/*";
+                  proxy_set_header Authorization $http_authorization;
+                '';
+
+                mkApi = {
+                  api,
+                  extraCfg ? "",
+                }: {
+                  ${api} = {
+                    extraConfig = defaultCfg + extraCfg;
+                    proxyPass = "http://127.0.0.1:${toString cfg.kuboApiPort}";
+                  };
+                };
+
+                endpoints = [
+                  {
+                    name = "/api/v0/add";
+                    tryButton = false;
+                    extraHtml = ''
+                      ```bash
+                      # Push a file with a max size of ${toString cfg.maxUploadSizeMB}MB to ipfs,
+                      # use the latest CID version and set the file in the
+                      # mutable file system (MFS) for easy future tracking
+                      curl -u "$USER:$PASSWORD" -XPOST \
+                        -F "file=@$FILENAME" \
+                        "https://ipfs.play.dev.cardano.org/api/v0/add?progress=true&cid-version=1&to-files=/$FILENAME"
+                      ```
+                    '';
+                  }
+                  {
+                    name = "/api/v0/cat";
+                    tryButton = false;
+                  }
+                  {name = "/api/v0/config/show";}
+                  {name = "/api/v0/diag/sys";}
+                  {name = "/api/v0/files/ls";}
+                  {
+                    name = "/api/v0/files/stat";
+                    tryButton = false;
+                  }
+                  {name = "/api/v0/pin/ls";}
+                  {
+                    name = "/api/v0/pin/remote/add";
+                    tryButton = false;
+                  }
+                  {
+                    name = "/api/v0/pin/remote/ls";
+                    tryButton = false;
+                  }
+                  {name = "/api/v0/pin/remote/service/ls";}
+                  {name = "/api/v0/pin/verify";}
+                  {name = "/api/v0/repo/ls";}
+                  {name = "/api/v0/repo/verify";}
+                  {name = "/api/v0/repo/version";}
+                  {
+                    name = "/api/v0/routing/findprovs";
+                    tryButton = false;
+                  }
+                  {name = "/api/v0/stats/bw";}
+                  {name = "/api/v0/stats/dht";}
+                  {name = "/api/v0/stats/repo";}
+                  {name = "/api/v0/version";}
+                ];
+
+                proxyPassApis = lib.foldl' (acc: endpoint: lib.recursiveUpdate acc (mkApi {api = endpoint.name;})) {} endpoints;
+              in {
                 serverName = "ipfs.${domain}";
 
                 default = mkIf cfg.primaryNginx true;
@@ -112,44 +180,61 @@ in {
 
                 basicAuthFile = "/run/secrets/ipfs-auth";
 
-                locations = {
-                  "/".root = let
-                    markdown = builtins.toFile "index.md" ''
-                      APIs exposed through this interface:
+                locations = lib.mkMerge [
+                  {
+                    "/".root = let
+                      githubCss = pkgs.fetchurl {
+                        url = "https://gist.githubusercontent.com/forivall/7d5a304a8c3c809f0ba96884a7cf9d7e/raw/62b874d98f72005d18b9b2a05d3be6815959b51b/gh-pandoc.css";
 
-                      [`/api/v0/add`](https://docs.ipfs.tech/reference/kubo/rpc/#api-v0-add)
-                      ```bash
-                      # Push a file to ipfs, use the latest CID version and set
-                      # the file in the mutable file system (MFS) for easy
-                      # future tracking
-                      curl -u "$USER:$PASSWORD" -XPOST \
-                        -F "file=@$FILENAME" \
-                        "https://ipfs.play.dev.cardano.org/api/v0/add?progress=true&cid-version=1&to-files=/$FILENAME"
-                      ```
+                        hash = "sha256-iOIDiPC3pHCutBPVc6Zz5lQWoBPytj21AElJB7UysJA=";
+                      };
 
+                      mkPostButton = api: ''
+                        <form method="post" action="${api}" class="inline"><input type="hidden"><button type="submit">Try it</button></form>
+                      '';
 
-                      [`/api/v0/version`](https://docs.ipfs.tech/reference/kubo/rpc/#api-v0-version)
-                      ```bash
-                      # Get the kubo ipfs version:
-                      curl -u "$USER:$PASSWORD" -XPOST https://ipfs.play.dev.cardano.org/api/v0/version
-                      ```
-                    '';
-                  in
-                    pkgs.runCommand "nginx-root-dir" {buildInputs = [pkgs.pandoc];} ''
-                      mkdir $out
-                      pandoc \
-                        --standalone \
-                        --metadata title="IPFS API" \
-                        -f markdown \
-                        -t html5 \
-                        -c style.css \
-                        -o $out/index.html \
-                        ${markdown}
-                    '';
+                      mkAnchor = api: lib.substring 1 (lib.stringLength api) (lib.replaceStrings ["/"] ["-"] api);
 
-                  # TODO: refactor proxyPass as a map of allowed endpoints
-                  "/api/v0/add" = {
-                    extraConfig = ''
+                      mkApiLink = api: "[`${api}`](https://docs.ipfs.tech/reference/kubo/rpc/#${mkAnchor api})";
+
+                      mkBulkMd =
+                        lib.concatMapStringsSep "\n" (endpoint: ''
+                          ${mkApiLink endpoint.name}
+                          ${
+                            if endpoint ? tryButton && !endpoint.tryButton
+                            then ""
+                            else mkPostButton endpoint.name
+                          }
+                          ${endpoint.extraHtml or ""}
+
+                          ---
+
+                        '')
+                        endpoints;
+
+                      markdown = builtins.toFile "index.md" ''
+                        APIs exposed through this interface:
+
+                        ---
+
+                        ${mkBulkMd}
+                      '';
+                    in
+                      pkgs.runCommand "nginx-root-dir" {buildInputs = [pkgs.pandoc];} ''
+                        mkdir $out
+                        pandoc \
+                          --self-contained \
+                          --metadata title="IPFS APIs Available" \
+                          -f markdown \
+                          -t html5 \
+                          -c ${githubCss} \
+                          -o $out/index.html \
+                          ${markdown}
+                      '';
+                  }
+                  proxyPassApis
+                  {
+                    "/api/v0/add".extraConfig = ''
                       # Fixes interrupted uploads with progress=true
                       # Ref: https://github.com/ipfs/kubo/issues/6402#issuecomment-1085266811
                       client_max_body_size ${toString cfg.maxUploadSizeMB}M;
@@ -157,14 +242,8 @@ in {
                       proxy_http_version 1.1;
                       proxy_request_buffering off;
                     '';
-
-                    proxyPass = "http://127.0.0.1:${toString cfg.kuboApiPort}";
-                  };
-
-                  "/api/v0/version" = {
-                    proxyPass = "http://127.0.0.1:${toString cfg.kuboApiPort}";
-                  };
-                };
+                  }
+                ];
               };
             };
           }
