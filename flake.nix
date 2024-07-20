@@ -21,7 +21,7 @@
     # };
     # iohk-nix-873.url = "github:input-output-hk/iohk-nix/bootstrap-peers-legacy";
 
-    # For node 8.9.4 until dbsync 8.12.1 compatible release is available
+    # For node 8.9.4 until dbsync 9.0.0 compatible release is available
     iohk-nix-8-9-4.url = "github:input-output-hk/iohk-nix/jl/release-private-respin";
 
     # For HD testing
