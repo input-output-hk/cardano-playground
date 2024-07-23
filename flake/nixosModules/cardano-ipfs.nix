@@ -146,24 +146,22 @@ in {
                       #     uploading directories and stick with single files.
                       ```
                     '';
-                    tryButton = false;
-                    # This api requires non-standard POST calls and will incorrectly write several
-                    # post parameters as files with a standard form post.
-                    # buttonHtml = api: ''
-                    #   <form method="post" action="${api}" enctype="multipart/form-data">
-                    #     <label for="file">Filename:</label><br>
-                    #     <input type="file" name="file"><br>
-                    #     <label for="cid-version">CID version:</label><br>
-                    #     <input type="text" name="cid-version" value="1"><br>
-                    #     <label for="pin">Pin:</label><br>
-                    #     <input type="text" name="pin" value="true"><br>
-                    #     <label for="progress">Progress:</label><br>
-                    #     <input type="text" name="progress" value="true"><br>
-                    #     <label for="to-files">To-files:</label><br>
-                    #     <input type="text" name="to-files" value="/$FILENAME"><br>
-                    #     <input type="submit" value="Try it">
-                    #   </form>
-                    # '';
+                    # tryButton = false;
+                    buttonHtml = api: ''
+                      <form method="post" action="${api}" enctype="multipart/form-data" onsubmit="onSubmitAction(event)">
+                        <label for="file">Filename:</label><br>
+                        <input type="file" name="file"><br>
+                        <label for="cid-version">CID version:</label><br>
+                        <input type="text" name="cid-version" value="1"><br>
+                        <label for="pin">Pin:</label><br>
+                        <input type="text" name="pin" value="true"><br>
+                        <label for="progress">Progress:</label><br>
+                        <input type="text" name="progress" value="true"><br>
+                        <label for="to-files">To-files:</label><br>
+                        <input type="text" name="to-files" value="/$FILENAME"><br>
+                        <input type="submit" value="Try it">
+                      </form>
+                    '';
                   }
                   {
                     name = "/api/v0/cat";
@@ -172,9 +170,8 @@ in {
                         # The IPFS object should be passed as either `$CID` or `/ipfs/$CID`
                       ```
                     '';
-                    # Specifying enctype as `multipart/form-data` causes the API to recognize the post params
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" enctype="multipart/form-data">
+                      <form method="post" action="${api}" onsubmit="onSubmitAction(event)">
                         <label for="arg">IPFS object (arg):</label><br>
                         <input type="text" name="arg"><br>
                         <input type="submit" value="Try it">
@@ -185,15 +182,10 @@ in {
                   {name = "/api/v0/diag/sys";}
                   {
                     name = "/api/v0/files/ls";
-                    extraHtml = ''
-                      ```bash
-                        # TODO: Requires non-standard POST request for "Try it" button
-                      ```
-                    '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" class="inline">
+                      <form method="post" action="${api}" class="inline" onsubmit="onSubmitAction(event)">
                         <input type="hidden" name="long" value="true">
-                        <input type="submit" value="Try it (without hash output)">
+                        <input type="submit" value="Try it">
                       </form>
                     '';
                   }
@@ -202,84 +194,26 @@ in {
                     extraHtml = ''
                       ```bash
                         # The IPFS file should be passed as either `/ipfs/$CID` or `/$FILE_PATH_IN_IPFS_MUTABLE_FS`
-                        #
-                        # TODO: Requires non-standard POST request for "Try it" button
                       ```
                     '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}">
+                      <form method="post" action="${api}" onsubmit="onSubmitAction(event)">
                         <label for="arg">IPFS path (arg):</label><br>
                         <input type="text" name="arg"><br>
                         <input type="hidden" name="with-local" value="true">
-                        <input type="submit" value="Try it (TODO)">
+                        <input type="submit" value="Try it">
                       </form>
                     '';
                   }
                   {
                     name = "/api/v0/pin/ls";
-                    extraHtml = ''
-                      ```bash
-                        # TODO: Requires non-standard POST request for "Try it" button
-                      ```
-                    '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" class="inline">
+                      <form method="post" action="${api}" class="inline" onsubmit="onSubmitAction(event)">
                         <input type="hidden" name="names" value="true">
-                        <input type="submit" value="Try it (without names)">
+                        <input type="submit" value="Try it">
                       </form>
                     '';
                   }
-                  # Most remote pinning services are subscription only
-                  # {
-                  #   name = "/api/v0/pin/remote/add";
-                  #   extraHtml = ''
-                  #     ```bash
-                  #       # The IPFS file should be passed as either `/ipfs/$CID` or `/$FILE_PATH_IN_IPFS_MUTABLE_FS`
-                  #       #
-                  #       # TODO: Requires non-standard POST request for "Try it" button
-                  #     ```
-                  #   '';
-                  #   buttonHtml = api: ''
-                  #     <form method="post" action="${api}" class="inline">
-                  #       <label for="arg">IPFS path (arg):</label><br>
-                  #       <input type="text" name="arg"><br>
-                  #       <label for="service">Service:</label><br>
-                  #       <input type="text" name="service"><br>
-                  #       <input type="submit" value="Try it (TODO)">
-                  #     </form>
-                  #   '';
-                  # }
-                  # {
-                  #   name = "/api/v0/pin/remote/ls";
-                  #   extraHtml = ''
-                  #     ```bash
-                  #       # TODO: Requires non-standard POST request for "Try it" button
-                  #     ```
-                  #   '';
-                  #   buttonHtml = api: ''
-                  #     <form method="post" action="${api}" class="inline" enctype="multipart/form-data">
-                  #       <label for="service">Service:</label><br>
-                  #       <input type="text" name="service"><br>
-                  #       <label for="status">Status:</label><br>
-                  #       <input type="text" name="status" value="[queued,pinning,pinned,failed]"><br>
-                  #       <input type="submit" value="Try it (TODO)">
-                  #     </form>
-                  #   '';
-                  # }
-                  # {
-                  #   name = "/api/v0/pin/remote/service/ls";
-                  #   extraHtml = ''
-                  #     ```bash
-                  #       # TODO: Requires non-standard POST request for "Try it" button
-                  #     ```
-                  #   '';
-                  #   buttonHtml = api: ''
-                  #     <form method="post" action="${api}" class="inline" enctype="multipart/form-data">
-                  #       <input type="hidden" name="stat" value="true">
-                  #       <input type="submit" value="Try it (without stats)">
-                  #     </form>
-                  #   '';
-                  # }
                   {name = "/api/v0/pin/verify";}
                   {name = "/api/v0/repo/ls";}
                   {name = "/api/v0/repo/verify";}
@@ -289,19 +223,17 @@ in {
                     extraHtml = ''
                       ```bash
                         # The IPFS object should be passed as either `$CID` or `/ipfs/$CID`
-                        #
-                        # TODO: Requires non-standard POST request for "Try it" button
                       ```
                     '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" enctype="multipart/form-data">
+                      <form method="post" action="${api}" onsubmit="onSubmitAction(event)">
                         <label for="arg">IPFS object (arg):</label><br>
                         <input type="text" name="arg"><br>
                         <label for="verbose">Verbose:</label><br>
                         <input type="text" name="verbose" value="false"><br>
                         <label for="num-providers">Num-providers:</label><br>
                         <input type="text" name="num-providers" value="20"><br>
-                        <input type="submit" value="Try it (TODO)">
+                        <input type="submit" value="Try it">
                       </form>
                     '';
                   }
@@ -329,6 +261,16 @@ in {
                         hash = "sha256-iOIDiPC3pHCutBPVc6Zz5lQWoBPytj21AElJB7UysJA=";
                       };
 
+                      js = builtins.toFile "on-submit-action.js" ''
+                        function onSubmitAction(event) {
+                          const form = event.target;
+                          const formdata = new FormData(form);
+                          const params = new URLSearchParams(formdata);
+                          const old = form.getAttribute('action');
+                          form.setAttribute('action', old + '?' + params.toString());
+                        }
+                      '';
+
                       mkPostButton = api: ''
                         <form method="post" action="${api}" class="inline"><input type="hidden"><input type="submit" value="Try it"></form>
                       '';
@@ -355,6 +297,10 @@ in {
                         endpoints;
 
                       markdown = builtins.toFile "index.md" ''
+                        ---
+                        header-includes: <script src="${js}"></script>
+                        ---
+
                         APIs exposed through this interface:
 
                         ---
