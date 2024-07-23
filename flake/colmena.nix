@@ -561,7 +561,7 @@ in
       sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1")];};
       sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
       sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics];};
 
