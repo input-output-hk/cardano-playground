@@ -8,7 +8,7 @@ in {
     lib,
     ...
   }: let
-    inherit (lib) mkIf mkMerge mkOption;
+    inherit (lib) concatMapStringsSep foldl' mkForce mkIf mkMerge mkOption recursiveUpdate replaceStrings stringLength substring;
     inherit (lib.types) bool ints port;
     inherit (groupCfg) groupName groupFlake;
     inherit (opsLib) mkSopsSecret;
@@ -56,6 +56,8 @@ in {
     };
 
     config = {
+      environment.systemPackages = [flake.self.packages.x86_64-linux.pinata-go-cli];
+
       networking.firewall = {
         allowedTCPPorts = [80 443 cfg.kuboSwarmPort];
         allowedUDPPorts = [cfg.kuboSwarmPort];
@@ -85,13 +87,13 @@ in {
             enable = true;
           }
           (mkIf cfg.primaryNginx {
-            eventsConfig = lib.mkForce "worker_connections 8192;";
-            appendConfig = lib.mkForce "worker_rlimit_nofile 16384;";
+            eventsConfig = mkForce "worker_connections 8192;";
+            appendConfig = mkForce "worker_rlimit_nofile 16384;";
             recommendedGzipSettings = true;
             recommendedOptimisation = true;
             recommendedProxySettings = true;
 
-            commonHttpConfig = lib.mkForce ''
+            commonHttpConfig = mkForce ''
               log_format x-fwd '$remote_addr - $remote_user [$time_local] '
                                '"$scheme://$host" "$request" "$http_accept_language" $status $body_bytes_sent '
                                '"$http_referer" "$http_user_agent" "$http_x_forwarded_for"';
@@ -105,9 +107,16 @@ in {
             virtualHosts = {
               ipfs = let
                 defaultCfg = ''
+                  # Kubo IPFS RPC api will respond with `403 Forbidden` if any
+                  # number of headers are present which lead it to believing
+                  # access is external.  So remove all headers and then
+                  # selectively add back only what is needed to complete the
+                  # api call.
                   proxy_pass_request_headers off;
                   proxy_set_header Accept "*/*";
                   proxy_set_header Authorization $http_authorization;
+                  proxy_set_header Content-Type $http_content_type;
+                  proxy_set_header Content-Length $http_content_length;
                 '';
 
                 mkApi = {
@@ -123,46 +132,178 @@ in {
                 endpoints = [
                   {
                     name = "/api/v0/add";
-                    tryButton = false;
                     extraHtml = ''
                       ```bash
-                      # Push a file with a max size of ${toString cfg.maxUploadSizeMB}MB to ipfs,
+                      # Push a file with a max size of ${toString cfg.maxUploadSizeMB}MB to IPFS,
                       # use the latest CID version and set the file in the
                       # mutable file system (MFS) for easy future tracking
                       curl -u "$USER:$PASSWORD" -XPOST \
                         -F "file=@$FILENAME" \
                         "https://ipfs.play.dev.cardano.org/api/v0/add?progress=true&cid-version=1&to-files=/$FILENAME"
+
+                      # NOTES:
+                      #   * Unless you know what you are doing, avoid
+                      #     uploading directories and stick with single files.
                       ```
                     '';
+                    tryButton = false;
+                    # This api requires non-standard POST calls and will incorrectly write several
+                    # post parameters as files with a standard form post.
+                    # buttonHtml = api: ''
+                    #   <form method="post" action="${api}" enctype="multipart/form-data">
+                    #     <label for="file">Filename:</label><br>
+                    #     <input type="file" name="file"><br>
+                    #     <label for="cid-version">CID version:</label><br>
+                    #     <input type="text" name="cid-version" value="1"><br>
+                    #     <label for="pin">Pin:</label><br>
+                    #     <input type="text" name="pin" value="true"><br>
+                    #     <label for="progress">Progress:</label><br>
+                    #     <input type="text" name="progress" value="true"><br>
+                    #     <label for="to-files">To-files:</label><br>
+                    #     <input type="text" name="to-files" value="/$FILENAME"><br>
+                    #     <input type="submit" value="Try it">
+                    #   </form>
+                    # '';
                   }
                   {
                     name = "/api/v0/cat";
-                    tryButton = false;
+                    extraHtml = ''
+                      ```bash
+                        # The IPFS object should be passed as either `$CID` or `/ipfs/$CID`
+                      ```
+                    '';
+                    # Specifying enctype as `multipart/form-data` causes the API to recognize the post params
+                    buttonHtml = api: ''
+                      <form method="post" action="${api}" enctype="multipart/form-data">
+                        <label for="arg">IPFS object (arg):</label><br>
+                        <input type="text" name="arg"><br>
+                        <input type="submit" value="Try it">
+                      </form>
+                    '';
                   }
                   {name = "/api/v0/config/show";}
                   {name = "/api/v0/diag/sys";}
-                  {name = "/api/v0/files/ls";}
+                  {
+                    name = "/api/v0/files/ls";
+                    extraHtml = ''
+                      ```bash
+                        # TODO: Requires non-standard POST request for "Try it" button
+                      ```
+                    '';
+                    buttonHtml = api: ''
+                      <form method="post" action="${api}" class="inline">
+                        <input type="hidden" name="long" value="true">
+                        <input type="submit" value="Try it (without hash output)">
+                      </form>
+                    '';
+                  }
                   {
                     name = "/api/v0/files/stat";
-                    tryButton = false;
+                    extraHtml = ''
+                      ```bash
+                        # The IPFS file should be passed as either `/ipfs/$CID` or `/$FILE_PATH_IN_IPFS_MUTABLE_FS`
+                        #
+                        # TODO: Requires non-standard POST request for "Try it" button
+                      ```
+                    '';
+                    buttonHtml = api: ''
+                      <form method="post" action="${api}">
+                        <label for="arg">IPFS path (arg):</label><br>
+                        <input type="text" name="arg"><br>
+                        <input type="hidden" name="with-local" value="true">
+                        <input type="submit" value="Try it (TODO)">
+                      </form>
+                    '';
                   }
-                  {name = "/api/v0/pin/ls";}
                   {
-                    name = "/api/v0/pin/remote/add";
-                    tryButton = false;
+                    name = "/api/v0/pin/ls";
+                    extraHtml = ''
+                      ```bash
+                        # TODO: Requires non-standard POST request for "Try it" button
+                      ```
+                    '';
+                    buttonHtml = api: ''
+                      <form method="post" action="${api}" class="inline">
+                        <input type="hidden" name="names" value="true">
+                        <input type="submit" value="Try it (without names)">
+                      </form>
+                    '';
                   }
-                  {
-                    name = "/api/v0/pin/remote/ls";
-                    tryButton = false;
-                  }
-                  {name = "/api/v0/pin/remote/service/ls";}
+                  # Most remote pinning services are subscription only
+                  # {
+                  #   name = "/api/v0/pin/remote/add";
+                  #   extraHtml = ''
+                  #     ```bash
+                  #       # The IPFS file should be passed as either `/ipfs/$CID` or `/$FILE_PATH_IN_IPFS_MUTABLE_FS`
+                  #       #
+                  #       # TODO: Requires non-standard POST request for "Try it" button
+                  #     ```
+                  #   '';
+                  #   buttonHtml = api: ''
+                  #     <form method="post" action="${api}" class="inline">
+                  #       <label for="arg">IPFS path (arg):</label><br>
+                  #       <input type="text" name="arg"><br>
+                  #       <label for="service">Service:</label><br>
+                  #       <input type="text" name="service"><br>
+                  #       <input type="submit" value="Try it (TODO)">
+                  #     </form>
+                  #   '';
+                  # }
+                  # {
+                  #   name = "/api/v0/pin/remote/ls";
+                  #   extraHtml = ''
+                  #     ```bash
+                  #       # TODO: Requires non-standard POST request for "Try it" button
+                  #     ```
+                  #   '';
+                  #   buttonHtml = api: ''
+                  #     <form method="post" action="${api}" class="inline" enctype="multipart/form-data">
+                  #       <label for="service">Service:</label><br>
+                  #       <input type="text" name="service"><br>
+                  #       <label for="status">Status:</label><br>
+                  #       <input type="text" name="status" value="[queued,pinning,pinned,failed]"><br>
+                  #       <input type="submit" value="Try it (TODO)">
+                  #     </form>
+                  #   '';
+                  # }
+                  # {
+                  #   name = "/api/v0/pin/remote/service/ls";
+                  #   extraHtml = ''
+                  #     ```bash
+                  #       # TODO: Requires non-standard POST request for "Try it" button
+                  #     ```
+                  #   '';
+                  #   buttonHtml = api: ''
+                  #     <form method="post" action="${api}" class="inline" enctype="multipart/form-data">
+                  #       <input type="hidden" name="stat" value="true">
+                  #       <input type="submit" value="Try it (without stats)">
+                  #     </form>
+                  #   '';
+                  # }
                   {name = "/api/v0/pin/verify";}
                   {name = "/api/v0/repo/ls";}
                   {name = "/api/v0/repo/verify";}
                   {name = "/api/v0/repo/version";}
                   {
                     name = "/api/v0/routing/findprovs";
-                    tryButton = false;
+                    extraHtml = ''
+                      ```bash
+                        # The IPFS object should be passed as either `$CID` or `/ipfs/$CID`
+                        #
+                        # TODO: Requires non-standard POST request for "Try it" button
+                      ```
+                    '';
+                    buttonHtml = api: ''
+                      <form method="post" action="${api}" enctype="multipart/form-data">
+                        <label for="arg">IPFS object (arg):</label><br>
+                        <input type="text" name="arg"><br>
+                        <label for="verbose">Verbose:</label><br>
+                        <input type="text" name="verbose" value="false"><br>
+                        <label for="num-providers">Num-providers:</label><br>
+                        <input type="text" name="num-providers" value="20"><br>
+                        <input type="submit" value="Try it (TODO)">
+                      </form>
+                    '';
                   }
                   {name = "/api/v0/stats/bw";}
                   {name = "/api/v0/stats/dht";}
@@ -170,7 +311,7 @@ in {
                   {name = "/api/v0/version";}
                 ];
 
-                proxyPassApis = lib.foldl' (acc: endpoint: lib.recursiveUpdate acc (mkApi {api = endpoint.name;})) {} endpoints;
+                proxyPassApis = foldl' (acc: endpoint: recursiveUpdate acc (mkApi {api = endpoint.name;})) {} endpoints;
               in {
                 serverName = "ipfs.${domain}";
 
@@ -180,32 +321,33 @@ in {
 
                 basicAuthFile = "/run/secrets/ipfs-auth";
 
-                locations = lib.mkMerge [
+                locations = mkMerge [
                   {
                     "/".root = let
                       githubCss = pkgs.fetchurl {
                         url = "https://gist.githubusercontent.com/forivall/7d5a304a8c3c809f0ba96884a7cf9d7e/raw/62b874d98f72005d18b9b2a05d3be6815959b51b/gh-pandoc.css";
-
                         hash = "sha256-iOIDiPC3pHCutBPVc6Zz5lQWoBPytj21AElJB7UysJA=";
                       };
 
                       mkPostButton = api: ''
-                        <form method="post" action="${api}" class="inline"><input type="hidden"><button type="submit">Try it</button></form>
+                        <form method="post" action="${api}" class="inline"><input type="hidden"><input type="submit" value="Try it"></form>
                       '';
 
-                      mkAnchor = api: lib.substring 1 (lib.stringLength api) (lib.replaceStrings ["/"] ["-"] api);
+                      mkAnchor = api: substring 1 (stringLength api) (replaceStrings ["/"] ["-"] api);
 
                       mkApiLink = api: "[`${api}`](https://docs.ipfs.tech/reference/kubo/rpc/#${mkAnchor api})";
 
                       mkBulkMd =
-                        lib.concatMapStringsSep "\n" (endpoint: ''
+                        concatMapStringsSep "\n" (endpoint: ''
                           ${mkApiLink endpoint.name}
+                          ${endpoint.extraHtml or ""}
                           ${
                             if endpoint ? tryButton && !endpoint.tryButton
                             then ""
+                            else if endpoint ? buttonHtml
+                            then endpoint.buttonHtml endpoint.name
                             else mkPostButton endpoint.name
                           }
-                          ${endpoint.extraHtml or ""}
 
                           ---
 
@@ -223,7 +365,8 @@ in {
                       pkgs.runCommand "nginx-root-dir" {buildInputs = [pkgs.pandoc];} ''
                         mkdir $out
                         pandoc \
-                          --self-contained \
+                          --standalone \
+                          --embed-resources \
                           --metadata title="IPFS APIs Available" \
                           -f markdown \
                           -t html5 \
