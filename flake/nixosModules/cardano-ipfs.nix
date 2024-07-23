@@ -146,19 +146,18 @@ in {
                       #     uploading directories and stick with single files.
                       ```
                     '';
-                    # tryButton = false;
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" enctype="multipart/form-data" onsubmit="onSubmitAction(event)">
+                      <form method="post" action="${api}" enctype="multipart/form-data" onsubmit="parseParams(event)">
                         <label for="file">Filename:</label><br>
-                        <input type="file" name="file"><br>
+                        <input type="file" id="file" name="file" onchange="updateToFilesParam(event)"><br>
                         <label for="cid-version">CID version:</label><br>
-                        <input type="text" name="cid-version" value="1"><br>
+                        <input type="text" id="cid-version" name="cid-version" value="" placeholder="1"><br>
                         <label for="pin">Pin:</label><br>
-                        <input type="text" name="pin" value="true"><br>
+                        <input type="text" id="pin" name="pin" value="" placeholder="true"><br>
                         <label for="progress">Progress:</label><br>
-                        <input type="text" name="progress" value="true"><br>
+                        <input type="text" id="progress" name="progress" value="" placeholder="true"><br>
                         <label for="to-files">To-files:</label><br>
-                        <input type="text" name="to-files" value="/$FILENAME"><br>
+                        <input type="text" id="to-files" name="to-files" value="" placeholder="/$FILENAME"><br>
                         <input type="submit" value="Try it">
                       </form>
                     '';
@@ -171,9 +170,9 @@ in {
                       ```
                     '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" onsubmit="onSubmitAction(event)">
+                      <form method="post" action="${api}" onsubmit="parseParams(event)">
                         <label for="arg">IPFS object (arg):</label><br>
-                        <input type="text" name="arg"><br>
+                        <input type="text" id="arg" name="arg"><br>
                         <input type="submit" value="Try it">
                       </form>
                     '';
@@ -183,8 +182,8 @@ in {
                   {
                     name = "/api/v0/files/ls";
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" class="inline" onsubmit="onSubmitAction(event)">
-                        <input type="hidden" name="long" value="true">
+                      <form method="post" action="${api}" class="inline" onsubmit="parseParams(event)">
+                        <input type="hidden" id="long" name="long" value="true">
                         <input type="submit" value="Try it">
                       </form>
                     '';
@@ -197,10 +196,10 @@ in {
                       ```
                     '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" onsubmit="onSubmitAction(event)">
+                      <form method="post" action="${api}" onsubmit="parseParams(event)">
                         <label for="arg">IPFS path (arg):</label><br>
-                        <input type="text" name="arg"><br>
-                        <input type="hidden" name="with-local" value="true">
+                        <input type="text" id="arg" name="arg"><br>
+                        <input type="hidden" id="with-local" name="with-local" value="true">
                         <input type="submit" value="Try it">
                       </form>
                     '';
@@ -208,8 +207,8 @@ in {
                   {
                     name = "/api/v0/pin/ls";
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" class="inline" onsubmit="onSubmitAction(event)">
-                        <input type="hidden" name="names" value="true">
+                      <form method="post" action="${api}" class="inline" onsubmit="parseParams(event)">
+                        <input type="hidden" id="names" name="names" value="true">
                         <input type="submit" value="Try it">
                       </form>
                     '';
@@ -226,13 +225,13 @@ in {
                       ```
                     '';
                     buttonHtml = api: ''
-                      <form method="post" action="${api}" onsubmit="onSubmitAction(event)">
+                      <form method="post" action="${api}" onsubmit="parseParams(event)">
                         <label for="arg">IPFS object (arg):</label><br>
-                        <input type="text" name="arg"><br>
+                        <input type="text" id="arg" name="arg"><br>
                         <label for="verbose">Verbose:</label><br>
-                        <input type="text" name="verbose" value="false"><br>
+                        <input type="text" id="verbose" name="verbose" value="" placeholder="false"><br>
                         <label for="num-providers">Num-providers:</label><br>
-                        <input type="text" name="num-providers" value="20"><br>
+                        <input type="text" id="num-providers" name="num-providers" value="" placeholder="20"><br>
                         <input type="submit" value="Try it">
                       </form>
                     '';
@@ -262,12 +261,31 @@ in {
                       };
 
                       js = builtins.toFile "on-submit-action.js" ''
-                        function onSubmitAction(event) {
-                          const form = event.target;
+                        function parseParams(e) {
+                          const form = e.target;
+
+                          // Use placeholders as values when values aren't provided
+                          for (input of form.querySelectorAll('input[name]')) {
+                            if (input.value.length === 0) input.value = input.placeholder;
+                          }
+
+                          // Get post params and add them as get URL params
                           const formdata = new FormData(form);
                           const params = new URLSearchParams(formdata);
                           const old = form.getAttribute('action');
                           form.setAttribute('action', old + '?' + params.toString());
+
+                          // Clear post params with the exception of the file selector form input
+                          for (input of form.querySelectorAll('input[name]')) {
+                            if (input.name != 'file') input.name = ''';
+                          }
+                        }
+
+                        function updateToFilesParam(e) {
+                          // Set the to-files input automatically from the selected file
+                          const path = '/' + e.target.value.slice('C:\\fakepath\\'.length);
+                          console.log(path);
+                          document.getElementById('to-files').value = path;
                         }
                       '';
 
