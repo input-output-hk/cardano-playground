@@ -26,6 +26,7 @@ keys:
 
   # Sanchonet
   - &sanchonet1-bp-a-1 age1apa4g9hfjaq9kp95utg5jeqm9zmdhylcfsqmekrl0ptg4wjt53fsrfffy9
+  - &sanchonet1-dbsync-a-1 age1d5nc5w5th0qzagqa8xqltye2ttsuazury35pgwymyrnzrdk6zezqznv0ua
   - &sanchonet1-faucet-a-1 age15cj5hg52ep6ccc4t5xm9ncuf94m2ds4k02lzzvmeykx2z4gc83es5ze452
   - &sanchonet2-bp-b-1 age10ethn6sqe2fcx03pev0vddteg9jwe7azydq9glj9eyppdkqy855sxv40k9
   - &sanchonet3-bp-c-1 age1hpyzunphtls4tfk5j4dc4rxg55essxd3ht7fweapumfzqe8h5suq0xa699
@@ -107,7 +108,7 @@ creation_rules:
       - *preview3-bp-c-1
 
   # Private specific
-  - path_regex: secrets/groups/private1/deploy/.*vva-be.*$
+  - path_regex: secrets/groups/private1/deploy/.*govtool-backend.*$
     key_groups:
     - age:
       - *sre
@@ -138,6 +139,12 @@ creation_rules:
       - *private3-bp-c-1
 
   # Sanchonet specific
+  - path_regex: secrets/groups/sanchonet1/deploy/.*govtool-backend.*$
+    key_groups:
+    - age:
+      - *sre
+      - *sanchonet1-dbsync-a-1
+
   - path_regex: secrets/groups/sanchonet1/deploy/.*faucet.*$
     key_groups:
     - age:
