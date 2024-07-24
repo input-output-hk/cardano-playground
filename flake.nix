@@ -12,6 +12,7 @@
     cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
     cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
+    cardano-node-9-1-0.url = "github:IntersectMBO/cardano-node/jordan/revert-non-failure-if-conway-genesis-missing";
 
     # Example of custom node pinning; see dbsync783 in colmena.nix
     # cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
@@ -23,6 +24,7 @@
 
     # For node 8.9.4 until dbsync 9.0.0 compatible release is available
     iohk-nix-8-9-4.url = "github:input-output-hk/iohk-nix/jl/release-private-respin";
+    iohk-nix-9-1-0.url = "github:input-output-hk/iohk-nix/sl/node-9.1";
 
     # For HD testing
     iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
