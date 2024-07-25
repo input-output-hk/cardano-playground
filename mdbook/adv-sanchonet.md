@@ -1,15 +1,12 @@
 ## Advanced Configuration: Sanchonet Testnet
 
-Users wanting to test a cardano-node pre-release version on the sanchonet
-environment may obtain compatible configuration files below.
+There is currently no pre-release version available for the sanchonet environment.
 
-NOTE: When respun on 2024-07-10 the chain will be restored from slot 26006400.
-Any Sanchonet chain participants, stakepools, integrators, etc, will need to
-clear their chain state to re-sync from that point forward.
+The latest version available is cardano-node release 9.1.0.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [9.0.0](https://github.com/IntersectMBO/cardano-node/releases/tag/9.0.0)
+Compatible with cardano-node release [9.1.0](https://github.com/IntersectMBO/cardano-node/releases/tag/9.1.0)
 
 ```
 NOTE:
