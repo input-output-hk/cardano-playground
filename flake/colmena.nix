@@ -21,9 +21,9 @@ in
       c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
-      m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
+      # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
-      # r5-xlarge.aws.instance.instance_type = "r5.xlarge";
+      r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
       t3a-micro.aws.instance.instance_type = "t3a.micro";
       t3a-small.aws.instance.instance_type = "t3a.small";
@@ -87,24 +87,17 @@ in
 
       nodeHd = {
         imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+
           (nixos: let
             inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
           in {
-            cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-legacy;
+            cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-9-0-0;
             cardano-parts.perNode.pkgs = {
               inherit (inputs.cardano-node-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             };
-            services.cardano-node.publicProducers = [
-              {
-                accessPoints = [
-                  {
-                    address = "backbone.cardano.iog.io";
-                    port = 3001;
-                  }
-                ];
-                advertise = false;
-              }
-            ];
           })
         ];
       };
@@ -299,12 +292,6 @@ in
             .x86_64-linux
           )
           inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-          {
-            services.cardano-node.extraNodeConfig.TraceOptions."ChainDB.CopyToImmutableDBEvent" = {
-              severity = "Debug";
-              detail = "DMaximum";
-            };
-          }
         ];
       };
       # Ephermeral instance disk storage config for upcoming UTxO-HD/LMDB
@@ -607,12 +594,13 @@ in
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging rtsOptMods];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
+      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node newMetrics];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-large (ebs 300) (group "mainnet1") node disableAlertCount];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd newMetrics];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
