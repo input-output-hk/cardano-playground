@@ -90,7 +90,7 @@ with
       where epoch_no = (select * from current_epoch)
       and pool_hash.view in (select view from pools_over_2m) group by pool_hash.id),
 
-  -- Pools to check block production of considering contraints of: valid, mature, and have delegation
+  -- Pools to check block production of considering constraints of: valid, mature, and have delegation
   pools_to_eval AS (
     select pools_reg_with_deleg.view from pools_reg_with_deleg
       inner join pools_mature on pools_reg_with_deleg.view = pools_mature.view
@@ -183,12 +183,12 @@ with
         order by delegation.tx_id desc limit 1) as view
       from faucet_stake_addr),
 
-  -- Faucet active pool delegations without considering contraints
+  -- Faucet active pool delegations without considering constraints
   faucet_pool_total AS (
     select * from faucet_pool_last_active
       where view is not null),
 
-  -- Faucet active pool delegations considering contraints of: valid, mature, and have delegation
+  -- Faucet active pool delegations considering constraints of: valid, mature, and have delegation
   faucet_pool_active AS (
     select * from faucet_pool_last_active
       where view is not null
