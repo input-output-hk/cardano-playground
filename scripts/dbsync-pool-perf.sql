@@ -7,7 +7,8 @@ with
 
   -- Required as a reference table to avoid subquery namespacing errors
   pool_table AS (
-    select id, hash_raw, view as pool_view from pool_hash),
+    select pool_hash.id, hash_raw, view as pool_view, ticker_name from pool_hash
+    inner join off_chain_pool_data on pool_hash.id=off_chain_pool_data.pool_id),
 
   -- Total pools
   pools_total AS (
@@ -257,6 +258,13 @@ with
       inner join pools_over_2m on pools_not_perf.view = pools_over_2m.view
       order by view),
 
+  -- Pools not performing with over 2M stake delegated to them, with ticker name added for direct table query
+  pools_not_perf_over_2m_meta AS (
+    select pools_not_perf.view, ticker_name from pools_not_perf
+      inner join pools_over_2m on pools_not_perf.view = pools_over_2m.view
+      left join pool_table on pools_not_perf.view = pool_table.pool_view
+      order by view),
+
   -- Pools not performing with over 2M stake delegated to them lovelace, delegation
   pools_not_perf_over_2m_deleg AS (
     select pool_hash.view, sum (amount) as lovelace from epoch_stake
@@ -274,12 +282,15 @@ with
       pools_not_perf_over_2m.view,
       jsonb_build_object(
         coalesce(faucet_stake_addr.key, 'notDelegated'),
-        coalesce(faucet_stake_addr.value, 'notDelegated')
+        coalesce(faucet_stake_addr.value, 'notDelegated'),
+        'ticker_name',
+        pool_table.ticker_name
       )
     ) as pools_not_perf_over_2m_json
     from pools_not_perf_over_2m
       left join faucet_pool_total on pools_not_perf_over_2m.view = faucet_pool_total.view
-      left join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value),
+      left join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value
+      left join pool_table on pools_not_perf_over_2m.view = pool_table.pool_view),
 
   -- JSON for faucet delegated pools over 2M ADA delegated
   faucet_pool_over_2m_json AS (
@@ -287,12 +298,15 @@ with
       faucet_stake_addr.key,
       jsonb_build_object(
         faucet_stake_addr.value,
-        faucet_pool_over_2m.view
+        faucet_pool_over_2m.view,
+        'ticker_name',
+        pool_table.ticker_name
       )
     ) as faucet_pool_over_2m_json
     from faucet_pool_over_2m
       inner join faucet_pool_total on faucet_pool_over_2m.view = faucet_pool_total.view
-      inner join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value),
+      inner join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value
+      inner join pool_table on faucet_pool_over_2m.view = pool_table.pool_view),
 
   -- JSON for faucet delegated pools not performing
   faucet_pool_not_perf_json AS (
@@ -300,12 +314,15 @@ with
       faucet_stake_addr.key,
       jsonb_build_object(
         faucet_stake_addr.value,
-        faucet_pool_not_perf.view
+        faucet_pool_not_perf.view,
+        'ticker_name',
+        pool_table.ticker_name
       )
     ) as faucet_pool_not_perf_json
   from faucet_pool_not_perf
     inner join faucet_pool_total on faucet_pool_not_perf.view = faucet_pool_total.view
-    inner join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value),
+    inner join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value
+    inner join pool_table on faucet_pool_not_perf.view = pool_table.pool_view),
 
   -- JSON for faucet pools to dedelegate
   faucet_pool_to_dedelegate_json AS (
@@ -313,12 +330,15 @@ with
       faucet_stake_addr.key,
       jsonb_build_object(
         faucet_stake_addr.value,
-        faucet_pool_to_dedelegate.view
+        faucet_pool_to_dedelegate.view,
+        'ticker_name',
+        pool_table.ticker_name
       )
     ) as faucet_pool_to_dedelegate_json
   from faucet_pool_to_dedelegate
     inner join faucet_pool_total on faucet_pool_to_dedelegate.view = faucet_pool_total.view
-    inner join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value),
+    inner join faucet_stake_addr on faucet_pool_total.stake_addr = faucet_stake_addr.value
+    inner join pool_table on faucet_pool_to_dedelegate.view = pool_table.pool_view),
 
   -- JSON faucet pool summary useful for dedelegation scripts
   faucet_pool_summary_json AS (
@@ -432,3 +452,5 @@ with
     )
 
   select * from summary;
+  -- select * from pools_not_perf_over_2m_meta;
+  -- select * from pool_table;
