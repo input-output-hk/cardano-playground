@@ -605,7 +605,7 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Misc
-      misc1-metadata-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
+      misc1-metadata-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       # ---------------------------------------------------------------------------------------------------------
     };
