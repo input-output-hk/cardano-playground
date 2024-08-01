@@ -19,6 +19,7 @@ in
 
       # Instance defs:
       c5ad-large.aws.instance.instance_type = "c5ad.large";
+      c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
@@ -505,19 +506,19 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp pre mithrilRelease (declMRel "preview1-rel-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel pre previewRelMig];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet pre previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
+      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
       preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
 
       preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
       preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
       preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
