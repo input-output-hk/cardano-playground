@@ -260,10 +260,10 @@ with
 
   -- Pools not performing with over 2M stake delegated to them, with ticker name added for direct table query
   pools_not_perf_over_2m_meta AS (
-    select pools_not_perf.view, ticker_name from pools_not_perf
+    select pools_not_perf.view, ticker_name, lovelace from pools_not_perf
       inner join pools_over_2m on pools_not_perf.view = pools_over_2m.view
       left join pool_table on pools_not_perf.view = pool_table.pool_view
-      order by view),
+      order by lovelace desc),
 
   -- Pools not performing with over 2M stake delegated to them lovelace, delegation
   pools_not_perf_over_2m_deleg AS (
