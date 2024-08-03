@@ -17,3 +17,11 @@ It is the first blockchain platform to evolve out of a scientific philosophy and
 _Use the nagivation panel on the left to explore [The Cardano Book][book]._
 
 [book]: https://book.play.dev.cardano.org
+
+<br />
+
+---
+
+<br />
+
+<center><sub><sup><span style="color:lightgray; font-style:italic">STAGING:3663a9ae2912f0f3749956f172d74ef794ae1e7d-dirty</span></sup></sub></center>
