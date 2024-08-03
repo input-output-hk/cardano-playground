@@ -7,8 +7,8 @@ with
 
   -- Required as a reference table to avoid subquery namespacing errors
   pool_table AS (
-    select pool_hash.id, hash_raw, view as pool_view, ticker_name from pool_hash
-    inner join off_chain_pool_data on pool_hash.id=off_chain_pool_data.pool_id),
+    select distinct pool_hash.id, hash_raw, view as pool_view, ticker_name from pool_hash
+    left join off_chain_pool_data on pool_hash.id=off_chain_pool_data.pool_id),
 
   -- Total pools
   pools_total AS (
