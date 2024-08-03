@@ -129,14 +129,24 @@ build-book-prod:
   ln -rsf mdbook/book-prod.toml mdbook/book.toml
   if [[ "$COMMIT" =~ "dirty" ]]; then
     ANSI_BG "bg_light_red" "WARNING:" "The git state appears to be dirty: $COMMIT"
+    ANSI_BG "bg_light_red" "WARNING:" "Generating the book with a \"PRODUCTION\" commit marker in the meantime."
     ANSI_BG "bg_light_red" "WARNING:" "Please obtain clean git state, except for ips-DONT-COMMIT file if in use, and try again."
-    ANSI_BG "bg_light_red" "WARNING:" "Generating the book with a \"PRODUCTION\" commit marker in the meantime"
     sed -ri "s|italic\".*</span>|italic\">PRODUCTION</span>|g" mdbook/README-book.md
     echo
   else
     ANSI_BG "bg_green" "STATUS:" "The git state appears to be clean: $COMMIT"
-    ANSI_BG "bg_green" "STATUS:" "Generating the book with commit marker: $COMMIT..."
-    sed -ri "s|italic\".*</span>|italic\">$COMMIT</span>|g" mdbook/README-book.md
+    echo
+    read -p "Are all required book updates except for the commit stamp already generated and commited? [yY]? " -n 1 -r
+    echo
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      ANSI_BG "bg_green" "STATUS:" "Generating the book with commit marker: $COMMIT..."
+      sed -ri "s|italic\".*</span>|italic\">$COMMIT</span>|g" mdbook/README-book.md
+    else
+      ANSI_BG "bg_light_red" "WARNING:" "Generating the book with a \"PRODUCTION\" commit marker in the meantime."
+      ANSI_BG "bg_light_red" "WARNING:" "Please obtain clean git state, except for ips-DONT-COMMIT file if in use, and try again."
+      sed -ri "s|italic\".*</span>|italic\">PRODUCTION</span>|g" mdbook/README-book.md
+    fi
     echo
   fi
 
