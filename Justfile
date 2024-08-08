@@ -220,35 +220,42 @@ dbsync-psql HOSTNAME:
   just ssh {{HOSTNAME}} -t 'psql -U cexplorer cexplorer'
 
 # Analyze pool performance
-dbsync-pool-analyze HOSTNAME:
+dbsync-pool-analyze HOSTNAME TABLE="summary" PSQL_ARGS="-xX" LOVELACE="2E12":
   #!/usr/bin/env bash
   set -euo pipefail
   echo "Pushing pool analysis sql command on {{HOSTNAME}}..."
   just scp scripts/dbsync-pool-perf.sql {{HOSTNAME}}:/tmp/
 
   echo
-  echo "Executing pool analysis sql command on host {{HOSTNAME}}..."
-  QUERY=$(just ssh {{HOSTNAME}} -t 'psql -P pager=off -xXU cexplorer cexplorer < /tmp/dbsync-pool-perf.sql')
+  echo "Executing pool analysis sql command on host {{HOSTNAME}} with:"
+  echo "  Table: {{TABLE}}"
+  echo "  Psql args: \"{{PSQL_ARGS}}\""
+  echo "  Lovelace threshold (lt): {{LOVELACE}}"
 
-  echo
-  echo "Query output:"
-  echo "$QUERY" | tail -n +2
-  echo
+  QUERY=$(just ssh {{HOSTNAME}} -t "'psql -P pager=off -v table={{TABLE}} -v lovelace={{LOVELACE}} -U cexplorer cexplorer {{PSQL_ARGS}} < /tmp/dbsync-pool-perf.sql'")
+  if [ "{{TABLE}}" = "summary" ] && [ "{{PSQL_ARGS}}" = "-xX" ]; then
+    echo
+    echo "Query output:"
+    echo "$QUERY" | tail -n +2
+    echo
 
-  JSON=$(grep -oP '^faucet_pool_summary_json[[:space:]]+\| \K{.*$' <<< "$QUERY" | jq .)
-  echo "$JSON"
-  echo
+    JSON=$(grep -oP '^faucet_pool_summary_json[[:space:]]+\| \K{.*$' <<< "$QUERY" | jq .)
+    echo "$JSON"
+    echo
 
-  echo "Faucet pools to de-delegate are:"
-  jq '.faucet_to_dedelegate' <<< "$JSON"
-  echo
+    echo "Faucet pools to de-delegate are:"
+    jq '.faucet_to_dedelegate' <<< "$JSON"
+    echo
 
-  echo "The string of indexes of faucet pools to de-delegate from the JSON above are:"
-  jq -r '.faucet_to_dedelegate | to_entries | map(.key) | join(" ")' <<< "$JSON"
-  echo
+    echo "The string of indexes of faucet pools to de-delegate from the JSON above are:"
+    jq -r '.faucet_to_dedelegate | to_entries | map(.key) | join(" ")' <<< "$JSON"
+    echo
 
-  MAX_SHIFT=$(grep -oP '^faucet_pool_to_dedelegate_shift_pct[[:space:]]+\| \K.*$' <<< "$QUERY")
-  echo "The maximum percentage difference de-delegation of all these pools will make in chain density is: $MAX_SHIFT"
+    MAX_SHIFT=$(grep -oP '^faucet_pool_to_dedelegate_shift_pct[[:space:]]+\| \K.*$' <<< "$QUERY")
+    echo "The maximum percentage difference de-delegation of all these pools will make in chain density is: $MAX_SHIFT"
+  else
+    echo "$QUERY"
+  fi
 
 # De-delegation pools for given faucet stake indexes
 dedelegate-pools ENV *IDXS=null:
