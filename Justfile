@@ -240,19 +240,24 @@ dbsync-pool-analyze HOSTNAME TABLE="summary" PSQL_ARGS="-xX" LOVELACE="2E12":
     echo
 
     JSON=$(grep -oP '^faucet_pool_summary_json[[:space:]]+\| \K{.*$' <<< "$QUERY" | jq .)
+    DEDELEGATE_POOLS=$(jq '.faucet_to_dedelegate' <<< "$JSON")
     echo "$JSON"
     echo
 
     echo "Faucet pools to de-delegate are:"
-    jq '.faucet_to_dedelegate' <<< "$JSON"
+    echo "$DEDELEGATE_POOLS"
     echo
 
-    echo "The string of indexes of faucet pools to de-delegate from the JSON above are:"
-    jq -r '.faucet_to_dedelegate | to_entries | map(.key) | join(" ")' <<< "$JSON"
-    echo
+    if [ "$DEDELEGATE_POOLS" != "null" ]; then
+      echo "The string of indexes of faucet pools to de-delegate from the JSON above are:"
+      jq -r '.faucet_to_dedelegate | to_entries | map(.key) | join(" ")' <<< "$JSON"
+      echo
 
-    MAX_SHIFT=$(grep -oP '^faucet_pool_to_dedelegate_shift_pct[[:space:]]+\| \K.*$' <<< "$QUERY")
-    echo "The maximum percentage difference de-delegation of all these pools will make in chain density is: $MAX_SHIFT"
+      MAX_SHIFT=$(grep -oP '^faucet_pool_to_dedelegate_shift_pct[[:space:]]+\| \K.*$' <<< "$QUERY")
+      echo "The maximum percentage difference de-delegation of all these pools will make in chain density is: $MAX_SHIFT"
+    else
+      echo "There are no faucet delegated non-performing pools to de-delegate at this time."
+    fi
   else
     echo "$QUERY"
   fi
