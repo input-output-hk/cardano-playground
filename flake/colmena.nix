@@ -103,6 +103,19 @@ in
         ];
       };
 
+      # tracingUpdate = {
+      #   imports = [
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     {
+      #       cardano-parts.perNode.pkgs = {
+      #         inherit (inputs.tracingUpdate.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+      #       };
+      #     }
+      #   ];
+      # };
+
       lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
 
       smash = {
@@ -299,27 +312,51 @@ in
       logRejected = {
         services.cardano-node.extraNodeConfig.TraceOptions = {
           "Mempool" = {
-            severity = "Info";
+            severity = "Debug";
             detail = "DDetailed";
           };
           # "Mempool.MempoolAttemptAdd" = {
-          #   severity = "Silence";
+          #   severity = "Debug";
+          #   detail = "DDetailed";
           # };
           # "Mempool.MempoolAttemptingSync" = {
-          #   severity = "Silence";
+          #   severity = "Debug";
+          #   detail = "DDetailed";
           # };
           # "Mempool.MempoolLedgerFound" = {
-          #   severity = "Silence";
+          #   severity = "Debug";
+          #   detail = "DDetailed";
           # };
           # "Mempool.MempoolLedgerNotFound" = {
-          #   severity = "Silence";
+          #   severity = "Debug";
+          #   detail = "DDetailed";
           # };
           # "Mempool.MempoolSyncDone" = {
-          #   severity = "Silence";
+          #   severity = "Debug";
+          #   detail = "DDetailed";
           # };
           # "Mempool.MempoolSyncNotNeeded" = {
-          #   severity = "Silence";
+          #   severity = "Debug";
+          #   detail = "DDetailed";
           # };
+          "TxSubmission.TxInbound" = {
+            severity = "Debug";
+            detail = "DDetailed";
+          };
+          "TxSubmission.TxOutbound" = {
+            severity = "Debug";
+            detail = "DDetailed";
+          };
+        };
+      };
+
+      traceTxs = {
+        services.cardano-node.extraNodeConfig = {
+          TraceLocalTxSubmissionProtocol = true;
+          TraceLocalTxSubmissionServer = true;
+          TraceTxSubmissionProtocol = true;
+          TraceTxInbound = true;
+          TraceTxOutbound = true;
         };
       };
 
@@ -544,7 +581,7 @@ in
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
+      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node traceTxs rel pre previewRelMig];};
       preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre mempoolDisable previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig];};
 

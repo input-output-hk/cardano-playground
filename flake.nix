@@ -16,6 +16,9 @@
 
     # Voltaire backend swagger ui for private chain deployment
     govtool.url = "github:disassembler/govtool/sl/disable-metadata-validation";
+
+    # Test updated tracing systems branch with renamed metrics and updated KES values:
+    tracingUpdate.url = "github:IntersectMBO/cardano-node/jutaro/metrics_renaming";
   };
 
   outputs = inputs: let
