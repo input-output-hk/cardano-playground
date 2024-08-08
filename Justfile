@@ -869,11 +869,59 @@ stop-node ENV:
     rm -f "$STATEDIR/node-{{ENV}}.pid" "$STATEDIR/node-{{ENV}}.socket"
   fi
 
+# Clone a cardano-parts template
+template-clone FILE:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  # If a local copy already exists and there is a diff, force awareness
+  if [ -f "{{FILE}}" ]; then
+    if ! git diff-index --quiet HEAD -- "{{FILE}}"; then
+      echo "A local copy exists with uncommitted git modifications: {{FILE}}"
+      echo "Please commit or revert modifications and try again."
+      exit 1
+    fi
+  else
+    # Ensure the path to it exists
+    mkdir -p "$(dirname "{{FILE}}")"
+  fi
+
+  TMPFILE=$(mktemp -t template-clone-XXXXXX)
+  if [ "{{templatePath}}" = "no-path-given" ]; then
+    echo "Retreiving a template file copy from:"
+    echo "  {{templateUrl}}/{{FILE}}"
+    if ! curl -H 'Cache-Control: no-cache' -sL "{{templateUrl}}/{{FILE}}" > "$TMPFILE"; then
+      echo "Unable to curl the requested resource successfully with:"
+      echo "curl -H 'Cache-Control: no-cache' -sL \"{{templateUrl}}/{{FILE}}\" > \"$TMPFILE\""
+      rm -f "$TMPFILE"
+      exit 1
+    fi
+  else
+    echo "Retreiving a template file copy from:"
+    echo "  {{templatePath}}/{{FILE}}"
+    if [ -f "{{templatePath}}/{{FILE}}" ]; then
+      cp "{{templatePath}}/{{FILE}}" "$TMPFILE"
+    else
+      echo "Unable to find the requested template file at {{templatePath}}/{{FILE}}"
+      exit 1
+    fi
+  fi
+
+  echo
+  echo "Moving the template file copy into place and setting file permissions to 0644"
+  mv -f "$TMPFILE" "{{FILE}}"
+  chmod 0644 "{{FILE}}"
+
+  echo
+  echo "Git adding file:"
+  echo "  {{FILE}}"
+  git add {{FILE}}
+
 # Diff against cardano-parts template
 template-diff FILE *ARGS:
   #!/usr/bin/env bash
   set -euo pipefail
-  if ! [ -f {{FILE}} ]; then
+  if ! [ -f "{{FILE}}" ]; then
     FILE="<(echo '')"
   else
     FILE="{{FILE}}"
