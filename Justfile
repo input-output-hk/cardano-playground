@@ -263,6 +263,11 @@ dedelegate-pools ENV *IDXS=null:
   set -euo pipefail
   {{checkEnvWithoutOverride}}
 
+  if ! [[ "$ENV" =~ preprod$|preview$|private$|sanchonet$|shelley-qa$ ]]; then
+    echo "Error: only node environments for preprod, preview, private, sanchonet and shelley-qa are supported"
+    exit 1
+  fi
+
   if [ "{{ENV}}" = "mainnet" ]; then
     echo "Dedelegation cannot be performed on the mainnet environment"
     exit 1
@@ -272,6 +277,18 @@ dedelegate-pools ENV *IDXS=null:
   if [ "$(jq -re .syncProgress <<< "$(just query-tip {{ENV}})")" != "100.00" ]; then
     echo "Please wait until the local tip of environment {{ENV}} is 100.00 before dedelegation"
     exit 1
+  fi
+
+  if [ "${USE_SHELL_BINS:-}" = "true" ]; then
+    CARDANO_CLI="cardano-cli"
+  elif [ -n "${UNSTABLE:-}" ] && [ "${UNSTABLE:-}" != "true" ]; then
+    CARDANO_CLI="cardano-cli"
+  elif [ "${UNSTABLE:-}" = "true" ]; then
+    CARDANO_CLI="cardano-cli-ng"
+  elif [[ "$ENV" =~ preprod$|preview$|shelley-qa$ ]]; then
+    CARDANO_CLI="cardano-cli"
+  elif [[ "$ENV" =~ private$|sanchonet$ ]]; then
+    CARDANO_CLI="cardano-cli-ng"
   fi
 
   echo
@@ -285,8 +302,19 @@ dedelegate-pools ENV *IDXS=null:
       --signing-key-file <(just sops-decrypt-binary secrets/envs/{{ENV}}/utxo-keys/rich-utxo.skey) \
       --wallet-mnemonic <(just sops-decrypt-binary secrets/envs/{{ENV}}/utxo-keys/faucet.mnemonic) \
       --delegation-index "$i"
-    echo "Sleeping 2 minutes until $(date -d  @$(($(date +%s) + 120)))"
-    sleep 120
+
+    TXID=$(eval "$CARDANO_CLI" transaction txid --tx-file tx-deleg-account-$i-restore.txsigned)
+    EXISTS="true"
+
+    while [ "$EXISTS" = "true" ]; do
+      EXISTS=$(eval "$CARDANO_CLI" query tx-mempool tx-exists $TXID | jq -r .exists)
+      if [ "$EXISTS" = "true" ]; then
+        echo "Pool de-delegation index $i tx still exists in the mempool, sleeping 5s: $TXID"
+      else
+        echo "Pool de-delegation index $i tx has been removed from the mempool."
+      fi
+      sleep 5
+    done
     echo
     echo
   done
