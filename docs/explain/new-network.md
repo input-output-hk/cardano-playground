@@ -218,9 +218,16 @@ Synthesize blocks until the end of the epoch
 # replace it before and after each synthesis
 cp "$DATA_DIR"/db/protocolMagicId "$DATA_DIR"/
 
+# If it exists, delete the gsm directory which may contain a `CaughtUpMarker`
+# file.  If this directory is present, it will prevent db-synthesizer from
+# working.
+rm -rf "$DATA_DIR"/db/gsm
+
+# Prep for synthesis
+rm "$DATA_DIR"/db/{clean,lock,protocolMagicId}
+
 # Use the "slotsToEpochEnd" from the last tip query
 # to synthesize blocks to epoch boundary
-rm "$DATA_DIR"/db/{clean,lock,protocolMagicId}
 db-synthesizer-ng \
   --config "$DATA_DIR"/node-config.json \
   --db "$DATA_DIR"/db \

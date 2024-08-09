@@ -43,7 +43,7 @@ ChainDB tip: At (Block {blockPointSlot = SlotNo 20812218, blockPointHash = 549b4
 # Need to reduce the truncation to truncate earlier due to the imperfect truncation.
 # Start with epoch 237 of this example and iterate backwards by some amount,
 # such as 1 epoch per iteration, until analysis shows the tip is prior to the
-# intial goal at the first slot of epoch 237.
+# initial goal at the first slot of epoch 237.
 #
 # Iterations:
 #   epoch 237, slot 20476800, analysis shows tip slot @ 20812218
@@ -52,6 +52,10 @@ ChainDB tip: At (Block {blockPointSlot = SlotNo 20812218, blockPointHash = 549b4
 #   epoch 234, slot 20217600, analysis shows tip slot @ 20812218
 #   epoch 233, slot 20131200, analysis shows tip slot @ 20812218
 #   epoch 232, slot 20044800, analysis shows tip slot @ 20044770 <-- before target tip of 20476800
+#
+# Ref: https://github.com/IntersectMBO/ouroboros-consensus/issues/1202
+#   Alternatively, use block based truncation as a work around.
+
 db-truncater \
  --db "$DATA_DIR/db" \
  --truncate-after-slot 20044800 \
@@ -77,7 +81,12 @@ ChainDB tip: At (Block {blockPointSlot = SlotNo 20044770, blockPointHash = a20bf
   for a number of epochs.
 ```bash
 # First preserve the protocolMagicId file
-cp "$DATA_DIR/db/protocolMagicId" "$DATA_DIR"
+cp "$DATA_DIR"/db/protocolMagicId "$DATA_DIR/"
+
+# If it exists, delete the gsm directory which may contain a `CaughtUpMarker`
+# file.  If this directory is present, it will prevent db-synthesizer from
+# working.
+rm -rf "$DATA_DIR"/db/gsm
 
 # Prep for synthesis
 rm -rf "$DATA_DIR"/db/{clean,lock,protocolMagicId}

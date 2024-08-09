@@ -6,31 +6,19 @@
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-playground";
 
     # Local pins for additional customization:
-    cardano-node.url = "github:IntersectMBO/cardano-node/8.1.2";
-    cardano-node-821-pre.url = "github:IntersectMBO/cardano-node/8.2.1-pre";
-    cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-8.2.1";
-    cardano-node-9-1-0.url = "github:IntersectMBO/cardano-node/jordan/revert-non-failure-if-conway-genesis-missing";
-
-    # Example of custom node pinning; see dbsync783 in colmena.nix
-    # cardano-node-873.url = "github:IntersectMBO/cardano-node/8.7.3";
-    # cardano-node-873-service = {
-    #   url = "github:IntersectMBO/cardano-node/8.7.3";
-    #   flake = false;
-    # };
-    # iohk-nix-873.url = "github:input-output-hk/iohk-nix/bootstrap-peers-legacy";
+    cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
 
     # For node 8.9.4 until dbsync 9.0.0 compatible release is available
-    iohk-nix-8-9-4.url = "github:input-output-hk/iohk-nix/jl/release-private-respin";
-    iohk-nix-9-1-0.url = "github:input-output-hk/iohk-nix/sl/node-9.1";
-
-    # For HD testing
-    iohk-nix-legacy.url = "github:input-output-hk/iohk-nix/migrate-to-play-legacy";
+    iohk-nix-9-0-0.url = "github:input-output-hk/iohk-nix/577f4d5072945a88dda6f5cfe205e6b4829a0423";
 
     # Voltaire backend swagger ui for private chain deployment
     govtool.url = "github:disassembler/govtool/sl/disable-metadata-validation";
+
+    # Test updated tracing systems branch with renamed metrics and updated KES values:
+    tracingUpdate.url = "github:IntersectMBO/cardano-node/jutaro/metrics_renaming";
   };
 
   outputs = inputs: let

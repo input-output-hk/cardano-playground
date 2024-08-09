@@ -45,8 +45,11 @@ with flake.lib; {
             groupPrefix = "${name}-";
             meta = {inherit environmentName;};
 
-            # All the groups running cardano-node will require a full cluster hostsList
-            # since localRoots between groups are extensive for redundant meshing.
+            # Setting fullHostsList true will place all cluster machines in the
+            # /etc/hosts file instead of just each group member being placed.
+            #
+            # One use case for this might be if there is node localRoots
+            # meshing required between groups.
             meta.hostsList =
               if fullHostsList
               then "all"
@@ -81,7 +84,6 @@ with flake.lib; {
       // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true false)
       // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true false)
       // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true false)
-      # Flip sanchonet and shelley-qa back to isNg true for sanchonet respin and shelley-qa 8.11 deployed
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true false)
       // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true false)
       // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true false)
