@@ -10,6 +10,7 @@
 
     # Local pins for additional customization:
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
+    cardano-node-tx-delay.url = "github:IntersectMBO/cardano-node/jl/9.1.0-tx-delay";
 
     # For node 8.9.4 until dbsync 9.0.0 compatible release is available
     iohk-nix-9-0-0.url = "github:input-output-hk/iohk-nix/577f4d5072945a88dda6f5cfe205e6b4829a0423";
