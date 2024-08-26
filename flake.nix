@@ -6,10 +6,11 @@
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-playground";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
 
     # Local pins for additional customization:
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
+    cardano-node-tx-delay.url = "github:IntersectMBO/cardano-node/jl/9.1.0-tx-delay";
 
     # For node 8.9.4 until dbsync 9.0.0 compatible release is available
     iohk-nix-9-0-0.url = "github:input-output-hk/iohk-nix/577f4d5072945a88dda6f5cfe205e6b4829a0423";
