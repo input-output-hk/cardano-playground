@@ -42,3 +42,4 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Shelley Genesis](environments/mainnet/shelley-genesis.json)
 - [Alonzo Genesis](environments/mainnet/alonzo-genesis.json)
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
+- [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)

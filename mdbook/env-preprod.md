@@ -45,3 +45,12 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Shelley Genesis](environments/preprod/shelley-genesis.json)
 - [Alonzo Genesis](environments/preprod/alonzo-genesis.json)
 - [Conway Genesis](environments/preprod/conway-genesis.json)
+- [Compiled guardrails script](environments/preprod/guardrails-script.plutus)
+
+#### Guardrails reference script UTxO
+
+For convenience, the guardrails script has been put on a UTxO so that it can be used as reference script in
+Treasury Withdrawal and Update Protocol Parameter proposals.
+
+Guardrails script address: `addr_test1wrazf7es2yngqh8jzexpv8v99g88xvx0nz83le2cea755eqf68ll6`
+Guardrails script UTxO: `9aabbac24d1e39cb3e677981c84998a4210bae8d56b0f60908eedb9f59efffc8#0`
