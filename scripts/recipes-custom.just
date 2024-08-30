@@ -84,7 +84,8 @@ kes-rotate ENV CURRENT_KES_PERIOD:
   for bp in "${BPs[@]}"; do
     # In our current deployments there is only one pool per group, so the group
     # can be extracted from the block producer name
-    export POOL_GROUP="${bp%%-*}"
+    [[ "$bp" =~ ^([-_a-zA-Z]+[0-9]+).*$ ]]
+    export POOL_GROUP="${BASH_REMATCH[1]}"
     # The plural of the `POOL_NAMES` variable reflects the legacy deployment
     # style and rare use cases of placing multiple block producers per group.
     # We aren't doing that with the common networks, so only one block
