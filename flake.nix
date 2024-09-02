@@ -20,10 +20,6 @@
 
     # Test updated tracing systems branch with renamed metrics and updated KES values:
     tracingUpdate.url = "github:IntersectMBO/cardano-node/jutaro/metrics_renaming";
-
-    # HF ledger replay branch
-    cardano-node-9-1-0-replay-fix-backport.url = "github:IntersectMBO/cardano-node/sl/replay-fix-backport-9.x";
-    # cardano-node-9-1-0-replay-fix-backport.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/sl/replay-fix-backport-9.x";
   };
 
   outputs = inputs: let
