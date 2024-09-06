@@ -20,6 +20,9 @@
 
     # Test updated tracing systems branch with renamed metrics and updated KES values:
     tracingUpdate.url = "github:IntersectMBO/cardano-node/jutaro/metrics_renaming";
+
+    # UTxO-HD testing
+    cardano-node-utxo-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.1.1";
   };
 
   outputs = inputs: let
