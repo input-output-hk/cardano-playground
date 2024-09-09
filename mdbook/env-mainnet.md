@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [9.1.0](https://github.com/IntersectMBO/cardano-node/releases/tag/9.1.0)
+Compatible with cardano-node release [9.1.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.1.1)
 
 ```
 NOTE:
@@ -42,3 +42,4 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Shelley Genesis](environments/mainnet/shelley-genesis.json)
 - [Alonzo Genesis](environments/mainnet/alonzo-genesis.json)
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
+- [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)

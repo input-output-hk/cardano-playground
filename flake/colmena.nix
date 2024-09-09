@@ -91,15 +91,11 @@ in
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-
-          (nixos: let
-            inherit (nixos.config.cardano-parts.perNode.lib.opsLib) mkCardanoLib;
-          in {
-            cardano-parts.perNode.lib.cardanoLib = mkCardanoLib "x86_64-linux" inputs.nixpkgs inputs.iohk-nix-9-0-0;
+          {
             cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+              inherit (inputs.cardano-node-utxo-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             };
-          })
+          }
         ];
       };
 
@@ -116,18 +112,18 @@ in
         ];
       };
 
-      # tracingUpdate = {
-      #   imports = [
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     {
-      #       cardano-parts.perNode.pkgs = {
-      #         inherit (inputs.tracingUpdate.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-      #       };
-      #     }
-      #   ];
-      # };
+      tracingUpdate = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          {
+            cardano-parts.perNode.pkgs = {
+              inherit (inputs.tracingUpdate.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+            };
+          }
+        ];
+      };
 
       lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
 
@@ -215,8 +211,8 @@ in
 
           # Create a tmp user manually after the system has been nixos activated:
           # sudo -iu postgres -- psql
-          #   create user <USER> login password '<PASSWORD>'
-          #   grant pg_read_all_date to <USER>
+          #   create user <USER> login password '<PASSWORD>';
+          #   grant pg_read_all_data to <USER>;
           settings = {
             password_encryption = "scram-sha-256";
             ssl = "on";
@@ -322,46 +318,46 @@ in
         ];
       };
 
-      logRejected = {
-        services.cardano-node.extraNodeConfig.TraceOptions = {
-          "Mempool" = {
-            severity = "Debug";
-            detail = "DDetailed";
-          };
-          # "Mempool.MempoolAttemptAdd" = {
-          #   severity = "Debug";
-          #   detail = "DDetailed";
-          # };
-          # "Mempool.MempoolAttemptingSync" = {
-          #   severity = "Debug";
-          #   detail = "DDetailed";
-          # };
-          # "Mempool.MempoolLedgerFound" = {
-          #   severity = "Debug";
-          #   detail = "DDetailed";
-          # };
-          # "Mempool.MempoolLedgerNotFound" = {
-          #   severity = "Debug";
-          #   detail = "DDetailed";
-          # };
-          # "Mempool.MempoolSyncDone" = {
-          #   severity = "Debug";
-          #   detail = "DDetailed";
-          # };
-          # "Mempool.MempoolSyncNotNeeded" = {
-          #   severity = "Debug";
-          #   detail = "DDetailed";
-          # };
-          "TxSubmission.TxInbound" = {
-            severity = "Debug";
-            detail = "DDetailed";
-          };
-          "TxSubmission.TxOutbound" = {
-            severity = "Debug";
-            detail = "DDetailed";
-          };
-        };
-      };
+      # logRejected = {
+      #   services.cardano-node.extraNodeConfig.TraceOptions = {
+      #     "Mempool" = {
+      #       severity = "Debug";
+      #       detail = "DDetailed";
+      #     };
+      #     # "Mempool.MempoolAttemptAdd" = {
+      #     #   severity = "Debug";
+      #     #   detail = "DDetailed";
+      #     # };
+      #     # "Mempool.MempoolAttemptingSync" = {
+      #     #   severity = "Debug";
+      #     #   detail = "DDetailed";
+      #     # };
+      #     # "Mempool.MempoolLedgerFound" = {
+      #     #   severity = "Debug";
+      #     #   detail = "DDetailed";
+      #     # };
+      #     # "Mempool.MempoolLedgerNotFound" = {
+      #     #   severity = "Debug";
+      #     #   detail = "DDetailed";
+      #     # };
+      #     # "Mempool.MempoolSyncDone" = {
+      #     #   severity = "Debug";
+      #     #   detail = "DDetailed";
+      #     # };
+      #     # "Mempool.MempoolSyncNotNeeded" = {
+      #     #   severity = "Debug";
+      #     #   detail = "DDetailed";
+      #     # };
+      #     "TxSubmission.TxInbound" = {
+      #       severity = "Debug";
+      #       detail = "DDetailed";
+      #     };
+      #     "TxSubmission.TxOutbound" = {
+      #       severity = "Debug";
+      #       detail = "DDetailed";
+      #     };
+      #   };
+      # };
 
       traceTxs = {
         services.cardano-node.extraNodeConfig = {
@@ -372,6 +368,8 @@ in
           TraceTxOutbound = true;
         };
       };
+
+      maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
 
       # mempoolDisable = {
       #   services.cardano-node.extraNodeConfig.TraceMempool = false;
@@ -486,22 +484,35 @@ in
       #   ];
       # };
       #
-      # rtsOptMods = {
-      #   nodeResources,
-      #   lib,
-      #   ...
-      # }: let
-      #   inherit (nodeResources) cpuCount; # memMiB;
-      # in {
-      #   services.cardano-node.rtsArgs = lib.mkForce [
-      #     "-N${toString cpuCount}"
-      #     "-A16m"
-      #     "-I3"
-      #     # Temporarily match the m5a-xlarge spec
-      #     "-M12943.360000M"
-      #     # "-M${toString (memMiB * 0.79)}M"
-      #   ];
-      # };
+
+      # Performance leader so far, see ref:
+      # https://input-output-rnd.slack.com/archives/C050LAMLL9E/p1724370433330539?thread_ts=1724054126.182969&cid=C050LAMLL9E
+      rtsOptMods = nixos: let
+        inherit (nixos.nodeResources) cpuCount;
+
+        numCeil = num: ceiling:
+          if num < ceiling
+          then num
+          else ceiling;
+
+        numFloor = num: floor:
+          if num > floor
+          then num
+          else floor;
+
+        cfg = nixos.config.services.cardano-node;
+
+        # Ensure that cores per instance are between 2 and 4 inclusive,
+        # beyond which performance may degrade.
+        cores = numCeil (numFloor (cpuCount / cfg.instances) 2) 4;
+      in {
+        services.cardano-node.rtsArgs = lib.mkForce [
+          "-N${toString cores}"
+          "-A16m"
+          "-I3"
+          "-M${toString (cfg.totalMaxHeapSizeMiB / cfg.instances)}M"
+        ];
+      };
       #
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
       #
@@ -591,22 +602,22 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics logRejected previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") nodeTxDelay minLog rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") nodeTxDelay rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
+      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rtsOptMods bp mithrilRelease (declMRel "preview1-rel-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rtsOptMods rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") nodeTxDelay rtsOptMods minLog rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") nodeTxDelay rtsOptMods rel previewRelMig];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync rtsOptMods smash previewSmash];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rtsOptMods faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node traceTxs rel pre previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") nodeTxDelay rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") nodeTxDelay rel previewRelMig];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rtsOptMods bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
+      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node rtsOptMods traceTxs rel pre previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") nodeTxDelay rtsOptMods rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") nodeTxDelay rtsOptMods rel previewRelMig];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") nodeTxDelay rel previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") nodeTxDelay rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rtsOptMods bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview3") node rtsOptMods rel pre previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") nodeTxDelay rtsOptMods rel previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") nodeTxDelay rtsOptMods rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -637,6 +648,7 @@ in
       sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
+      # Smallest d variant for testing
       sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
@@ -644,7 +656,7 @@ in
       sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
       sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") tracingUpdate newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
       sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
       sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig];};
       sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
@@ -682,12 +694,12 @@ in
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging rtsOptMods];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node newMetrics];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node rtsOptMods];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd newMetrics];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd rtsOptMods];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------

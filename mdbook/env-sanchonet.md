@@ -21,7 +21,7 @@ Informed: Cardano Core Tribe
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [9.1.0](https://github.com/IntersectMBO/cardano-node/releases/tag/9.1.0)
+Compatible with cardano-node pre-release [9.1.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.1.1)
 
 ```
 NOTE:
