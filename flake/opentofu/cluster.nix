@@ -146,6 +146,22 @@ in {
         };
 
         resource = {
+          aws_default_vpc = mapRegions (
+            {
+              region,
+              count,
+            }:
+            # IPv6 will only be added to enabled regions.
+            # When a region is disabled, IPv6 cidr block assignment will be
+            # removed on the next tf apply.
+              optionalAttrs (count > 0) {
+                ${region} = {
+                  provider = awsProviderFor region;
+                  assign_generated_ipv6_cidr_block = true;
+                };
+              }
+          );
+
           aws_instance = mapNodes (
             name: node:
               {
