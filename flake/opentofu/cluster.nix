@@ -11,6 +11,20 @@ with lib; let
 
   system = "x86_64-linux";
 
+  # IPv6 Configuration:
+  #
+  #   Default aws provided ipv6 cidr block is /56
+  #   Default ipv6 subnet size is standard at /64
+  #   TF aws_subnet ipv6_cidr_block resource arg must use /64
+  #
+  # This leaves 8 bits for subnets equal to 2^8 = 256 subnets per vpc each with 2^64 hosts.
+  #
+  # Refs:
+  #   https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html#vpc-sizing-ipv6
+  #   https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet#ipv6_cidr_block
+  #
+  ipv6SubnetCidrBits = 64;
+
   cluster = infra.aws;
 
   awsProviderFor = region: "aws.${underscore region}";
@@ -143,17 +157,87 @@ in {
               ];
             };
           });
+
+          # TODO: This filter may need to be changed for opt-in azs.
+          # Ref: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
+          aws_availability_zones = mapRegions ({region, ...}: {
+            ${region} = {
+              provider = "aws.${region}";
+
+              filter = [
+                {
+                  name = "opt-in-status";
+                  values = ["opt-in-not-required"];
+                }
+              ];
+            };
+          });
+
+          aws_subnet = mapRegions ({region, ...}: {
+            ${region} = {
+              provider = "aws.${region}";
+
+              # The index of the map is used to assign an ipv6 subnet network
+              # id offset in the aws_default_subnet ipv6_cidr_block resource
+              # arg.
+              #
+              # While az ids are consistent across aws orgs, they are not
+              # implemented in all regions, therefore we'll use az names as
+              # indexed values.
+              #
+              # Ref:
+              #   https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet#availability_zone_id
+              #
+              for_each = "\${{for i, az in data.aws_availability_zones.${region}.names : i => az}}";
+              availability_zone = "\${element(data.aws_availability_zones.${region}.names, each.key)}";
+              default_for_az = true;
+            };
+          });
+
+          aws_vpc = mapRegions ({region, ...}: {
+            ${region} = {
+              provider = "aws.${region}";
+              default = true;
+            };
+          });
         };
 
+        # Debug output
+        output =
+          mapRegions ({region, ...}: {
+            "aws_availability_zones_${region}".value = "\${data.aws_availability_zones.${region}.names}";
+          })
+          // mapRegions ({region, ...}: {
+            "aws_vpc_${region}".value = "\${data.aws_vpc.${region}}";
+          })
+          // mapRegions ({region, ...}: {
+            "aws_subnet_${region}".value = "\${data.aws_subnet.${region}}";
+          });
+
         resource = {
+          aws_default_subnet = mapRegions ({
+            region,
+            count,
+          }:
+            optionalAttrs (count > 0) {
+              ${region} = {
+                provider = awsProviderFor region;
+                for_each = "\${data.aws_subnet.${region}}";
+
+                # Dynamically calculate the subnet bits in case the default CIDR block allocation changes from /56 in the future
+                ipv6_cidr_block = let
+                  ipv6CidrBlock = "data.aws_vpc.${region}.ipv6_cidr_block";
+                in "\${cidrsubnet(${ipv6CidrBlock}, ${toString ipv6SubnetCidrBits} - parseint(tolist(regex(\"/([0-9]+)$\", ${ipv6CidrBlock}))[0], 10), each.key)}";
+
+                availability_zone = "\${each.value.availability_zone}";
+              };
+            });
+
           aws_default_vpc = mapRegions (
             {
               region,
               count,
             }:
-            # IPv6 will only be added to enabled regions.
-            # When a region is disabled, IPv6 cidr block assignment will be
-            # removed on the next tf apply.
               optionalAttrs (count > 0) {
                 ${region} = {
                   provider = awsProviderFor region;
