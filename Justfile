@@ -1061,22 +1061,42 @@ update-ips:
   let nodeCount = nix eval .#nixosConfigurations --raw --apply 'let f = x: toString (builtins.length (builtins.attrNames x)); in f'
   print $"Processing ip information for ($nodeCount) nixos machine configurations..."
 
-  let eipRecords = (tofu show -json
-    | from json
+  let tofuJson = (tofu show -json | from json)
+
+  let eipRecords = ($tofuJson
     | get values.root_module.resources
     | where type == "aws_eip"
   )
 
-  ($eipRecords
+  let instanceRecords = ($tofuJson
+    | get values.root_module.resources
+    | where type == "aws_instance"
+  )
+
+  let eipTable = ($eipRecords
+    | select name values.private_ip values.public_ip
+    | rename name private_ipv4 public_ipv4
+  )
+
+  let instanceTable = ($instanceRecords
+    | select name values.ipv6_addresses
+    | rename name public_ipv6
+    | update public_ipv6 {|row| if ($row.public_ipv6 | is-not-empty) {$row.public_ipv6.0} else {null}}
+  )
+
+  let ipTable = ($eipTable | merge $instanceTable)
+
+  ($ipTable
   | reduce --fold ["
     let
       all = {
     "]
-    {|eip, all|
-      $all | append $"
-    ($eip.name) = {
-      privateIpv4 = "($eip.values.private_ip)";
-      publicIpv4 = "($eip.values.public_ip)";
+    {|machine, acc|
+      $acc | append $"
+    ($machine.name) = {
+      privateIpv4 = "($machine.private_ipv4)";
+      publicIpv4 = "($machine.public_ipv4)";
+      publicIpv6 = "($machine.public_ipv6)";
     };"
     }
   | append "
@@ -1096,6 +1116,10 @@ update-ips:
           publicIpv4 = lib.mkOption {
             type = lib.types.str;
             default = all.${name}.publicIpv4 or "";
+          };
+          publicIpv6 = lib.mkOption {
+            type = lib.types.str;
+            default = all.${name}.publicIpv6 or "";
           };
         };
       };
