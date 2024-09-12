@@ -320,68 +320,73 @@ in
 
       logRejected = {
         services = {
-          cardano-node.extraNodeConfig.TraceOptions = {
-            "Mempool" = {
-              severity = "Debug";
-              detail = "DDetailed";
-            };
-            # "Mempool.MempoolAttemptAdd" = {
-            #   severity = "Debug";
-            #   detail = "DDetailed";
-            # };
-            # "Mempool.MempoolAttemptingSync" = {
-            #   severity = "Debug";
-            #   detail = "DDetailed";
-            # };
-            # "Mempool.MempoolLedgerFound" = {
-            #   severity = "Debug";
-            #   detail = "DDetailed";
-            # };
-            # "Mempool.MempoolLedgerNotFound" = {
-            #   severity = "Debug";
-            #   detail = "DDetailed";
-            # };
-            # "Mempool.MempoolSyncDone" = {
-            #   severity = "Debug";
-            #   detail = "DDetailed";
-            # };
-            # "Mempool.MempoolSyncNotNeeded" = {
-            #   severity = "Debug";
-            #   detail = "DDetailed";
-            # };
-            "TxSubmission.TxInbound" = {
-              severity = "Debug";
-              detail = "DDetailed";
-            };
-            "TxSubmission.TxOutbound" = {
-              severity = "Debug";
-              detail = "DDetailed";
+          cardano-node.extraNodeConfig = {
+            TraceOptionResourceFrequency = 60000;
+            TraceOptions = {
+              "Mempool" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              # "Mempool.MempoolAttemptAdd" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolAttemptingSync" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolLedgerFound" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolLedgerNotFound" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolSyncDone" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolSyncNotNeeded" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              "TxSubmission.TxInbound" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              "TxSubmission.TxOutbound" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              Resources.severity = "Debug";
             };
           };
-          # cardano-tracer.nodeDefaultTraceOptions = {
-          #   severity = "Notice";
-          #   detail = "DNormal";
-          #   backends = [
-          #     # This results in journald output for the cardano-node service,
-          #     # like we would normally expect. This will, however, create
-          #     # duplicate logging if the tracer service resides on the same
-          #     # machine as the node service.
-          #     #
-          #     # In general, the "human" logging which appears in the
-          #     # cardano-node service is more human legible than the
-          #     # "ForHuman" node logging that appears in cardano-tracer for
-          #     # the same log events.
-          #     # "Stdout HumanFormatColoured"
-          #     # "Stdout HumanFormatUncoloured"
-          #     "Stdout MachineFormat"
 
-          #     # Leave EKG disabled in node as tracer now generates this as well.
-          #     # "EKGBackend"
+          cardano-tracer.nodeDefaultTraceOptions = {
+            severity = "Notice";
+            detail = "DNormal";
+            backends = [
+              # This results in journald output for the cardano-node service,
+              # like we would normally expect. This will, however, create
+              # duplicate logging if the tracer service resides on the same
+              # machine as the node service.
+              #
+              # In general, the "human" logging which appears in the
+              # cardano-node service is more human legible than the
+              # "ForHuman" node logging that appears in cardano-tracer for
+              # the same log events.
+              "Stdout HumanFormatColoured"
+              # "Stdout HumanFormatUncoloured"
+              # "Stdout MachineFormat"
 
-          #     # Forward to tracer.
-          #     # "Forwarder"
-          #   ];
-          # };
+              # Leave EKG disabled in node as tracer now generates this as well.
+              # "EKGBackend"
+
+              # Forward to tracer.
+              # "Forwarder"
+            ];
+          };
         };
       };
 
