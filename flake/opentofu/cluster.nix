@@ -342,7 +342,14 @@ in {
                   iops = node.aws.instance.root_block_device.iops or 3000;
                   throughput = node.aws.instance.root_block_device.throughput or 125;
                   delete_on_termination = true;
-                  tags = {Name = name;} // node.aws.instance.tags or {};
+                  tags =
+                    # Root block device tags aren't applied like the other
+                    # resources since terraform-aws-provider v5.39.0.
+                    #
+                    # We need to strip the following tag attrs or tofu
+                    # constantly tries to re-apply them.
+                    {Name = name;}
+                    // removeAttrs (node.aws.instance.tags or {}) ["organization" "tribe" "function" "repo"];
                 };
 
                 metadata_options = {
