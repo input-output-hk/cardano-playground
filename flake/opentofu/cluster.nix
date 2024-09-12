@@ -13,8 +13,8 @@ with lib; let
 
   # IPv6 Configuration:
   #
-  #   Default aws provided ipv6 cidr block is /56
-  #   Default ipv6 subnet size is standard at /64
+  #   Default aws vpc provided ipv6 cidr block is /56
+  #   Default aws vpc ipv6 subnet size is standard at /64
   #   TF aws_subnet ipv6_cidr_block resource arg must use /64
   #
   # This leaves 8 bits for subnets equal to 2^8 = 256 subnets per vpc each with 2^64 hosts.
@@ -173,6 +173,29 @@ in {
             };
           });
 
+          aws_internet_gateway = mapRegions ({region, ...}: {
+            ${region} = {
+              provider = "aws.${region}";
+
+              filter = [
+                {
+                  name = "attachment.vpc-id";
+                  values = ["\${data.aws_vpc.${region}.id}"];
+                }
+              ];
+
+              depends_on = ["data.aws_vpc.${region}"];
+            };
+          });
+
+          aws_route_table = mapRegions ({region, ...}: {
+            ${region} = {
+              provider = "aws.${region}";
+              route_table_id = "\${data.aws_vpc.${region}.main_route_table_id}";
+              depends_on = ["data.aws_vpc.${region}"];
+            };
+          });
+
           aws_subnet = mapRegions ({region, ...}: {
             ${region} = {
               provider = "aws.${region}";
@@ -208,13 +231,66 @@ in {
             "aws_availability_zones_${region}".value = "\${data.aws_availability_zones.${region}.names}";
           })
           // mapRegions ({region, ...}: {
-            "aws_vpc_${region}".value = "\${data.aws_vpc.${region}}";
+            "aws_internet_gateway_${region}".value = "\${data.aws_internet_gateway.${region}}";
+          })
+          // mapRegions ({region, ...}: {
+            "aws_route_table_${region}".value = "\${data.aws_route_table.${region}}";
           })
           // mapRegions ({region, ...}: {
             "aws_subnet_${region}".value = "\${data.aws_subnet.${region}}";
+          })
+          // mapRegions ({region, ...}: {
+            "aws_vpc_${region}".value = "\${data.aws_vpc.${region}}";
           });
 
         resource = {
+          aws_default_route_table = mapRegions (
+            {
+              region,
+              count,
+            }:
+              optionalAttrs (count > 0) {
+                ${region} = {
+                  provider = awsProviderFor region;
+                  default_route_table_id = "\${data.aws_vpc.${region}.main_route_table_id}";
+
+                  # The default route, mapping the VPC's CIDR block to "local", is created implicitly and cannot be specified.
+                  # Ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_route_table
+                  #
+                  # Json tf format instead of hcl requires all route args explicitly:
+                  # https://stackoverflow.com/questions/69760888/terraform-inappropriate-value-for-attribute-route
+                  route = let
+                    # Terranix strips nulls by default via opt `strip_nulls`.
+                    # Instead of disabling default stripping, pass null as a tf expression.
+                    args = foldl' (acc: arg: acc // {${arg} = "\${null}";}) {} [
+                      "cidr_block"
+                      "core_network_arn"
+                      "destination_prefix_list_id"
+                      "egress_only_gateway_id"
+                      "gateway_id"
+                      "instance_id"
+                      "ipv6_cidr_block"
+                      "nat_gateway_id"
+                      "network_interface_id"
+                      "transit_gateway_id"
+                      "vpc_endpoint_id"
+                      "vpc_peering_connection_id"
+                    ];
+                  in
+                    map (route: args // route) [
+                      {
+                        cidr_block = "0.0.0.0/0";
+                        gateway_id = "\${data.aws_internet_gateway.${region}.id}";
+                      }
+                      {
+                        ipv6_cidr_block = "::/0";
+                        gateway_id = "\${data.aws_internet_gateway.${region}.id}";
+                      }
+                    ];
+                };
+              }
+          );
+
           aws_default_subnet = mapRegions ({
             region,
             count,
