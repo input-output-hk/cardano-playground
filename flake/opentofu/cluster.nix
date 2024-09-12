@@ -329,6 +329,13 @@ in {
                 provider = awsProviderFor node.aws.region;
                 ami = "\${data.aws_ami.nixos_${system}_${underscore node.aws.region}.id}";
                 iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
+
+                # TODO: Remove the conditional once ipv6 modules are compatible
+                ipv6_address_count =
+                  if name == "sanchonet1-test-a-1"
+                  then 1
+                  else null;
+
                 monitoring = true;
                 key_name = "\${aws_key_pair.bootstrap_${underscore node.aws.region}[0].key_name}";
                 vpc_security_group_ids = [
