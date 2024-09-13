@@ -371,6 +371,7 @@ list-machines:
   let nixosNodesDfr = (
     let nodeList = ($nixosNodes.stdout | from json);
     let sanitizedList = (if ($nodeList | is-empty) {$nodeList | insert 0 ""} else {$nodeList});
+
     $sanitizedList
       | insert 0 "machine"
       | each {|i| [$i] | into record}
@@ -380,12 +381,27 @@ list-machines:
   )
 
   let sshNodesDfr = (
-    let sshTable = ($sshNodes.stdout | from json | where ('HostName' in $it));
+    let ssh4Table = ($sshNodes.stdout
+      | from json
+      | where ('HostName' in $it) and not ($it.Host | str ends-with ".ipv6")
+      | rename Host ipv4
+    );
+
+    let ssh6Table = ($sshNodes.stdout
+      | from json
+      | where ('HostName' in $it) and ($it.Host | str ends-with ".ipv6")
+      | rename Host ipv6
+      | update Host {$in | str replace '.ipv6' ''}
+      | update ipv6 {if ($in == "unavailable.ipv6") { null } else { $in }}
+    );
+
+    let sshTable = ($ssh4Table | merge $ssh6Table);
+
     if ($sshTable | is-empty) {
-      [[Host IP]; ["" ""]] | dfr into-df
+      [[Host ipv4 ipv6]; ["" "" ""]] | dfr into-df
     }
     else {
-      $sshTable | rename Host IP | dfr into-df
+      $sshTable | dfr into-df
     }
   )
 
@@ -394,7 +410,14 @@ list-machines:
       | dfr join -o $sshNodesDfr machine Host
       | dfr sort-by machine
       | dfr into-nu
-      | update cells {|v| if $v == null {"Missing"} else {$v}}
+      | update inNixosCfg {if $in == null {$"(ansi bg_red)Missing(ansi reset)"} else {$in}}
+      | update ipv4 {if $in == null {$"(ansi bg_red)Missing(ansi reset)"} else {$in}}
+      | update ipv6 {|row|
+        if (
+          (($row.inNixosCfg | str contains "Missing") or ($row.ipv4 | str contains "Missing"))
+            and
+          ($row.ipv6 == null)
+        ) {$"(ansi bg_red)Missing(ansi reset)"} else {$in} }
       | where machine != ""
   )
 
