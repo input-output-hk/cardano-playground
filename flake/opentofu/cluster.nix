@@ -254,7 +254,8 @@ in {
                   provider = awsProviderFor region;
                   default_route_table_id = "\${data.aws_vpc.${region}.main_route_table_id}";
 
-                  # The default route, mapping the VPC's CIDR block to "local", is created implicitly and cannot be specified.
+                  # The default route, mapping the VPC's CIDR block to "local",
+                  # is created implicitly and cannot be specified.
                   # Ref: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_route_table
                   #
                   # Json tf format instead of hcl requires all route args explicitly:
@@ -300,7 +301,8 @@ in {
                 provider = awsProviderFor region;
                 for_each = "\${data.aws_subnet.${region}}";
 
-                # Dynamically calculate the subnet bits in case the default CIDR block allocation changes from /56 in the future
+                # Dynamically calculate the subnet bits in case the default
+                # CIDR block allocation changes from /56 in the future.
                 ipv6_cidr_block = let
                   ipv6CidrBlock = "data.aws_vpc.${region}.ipv6_cidr_block";
                 in "\${cidrsubnet(${ipv6CidrBlock}, ${toString ipv6SubnetCidrBits} - parseint(tolist(regex(\"/([0-9]+)$\", ${ipv6CidrBlock}))[0], 10), each.key)}";
@@ -583,6 +585,9 @@ in {
                 concatStringsSep "\n" (map (name: ''
                     Host ${name}
                       HostName ''${aws_eip.${name}[0].public_ip}
+
+                    Host ${name}.ipv6
+                      HostName ''${length(aws_instance.${name}[0].ipv6_addresses) > 0 ? aws_instance.${name}[0].ipv6_addresses[0] : "unavailable.ipv6"}
                   '')
                   (attrNames nodes))
               }
