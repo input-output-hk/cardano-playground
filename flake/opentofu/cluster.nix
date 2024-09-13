@@ -80,19 +80,40 @@ with lib; let
 
   mkMultivalueDnsResources = multivalueDnsAttrs:
     foldl' (acc: dns:
-      recursiveUpdate acc (listToAttrs (map (nodeName: {
-          name = "${hyphen dns}-${nodeName}";
-          value = {
-            zone_id = "\${data.aws_route53_zone.selected.zone_id}";
-            name = dns;
-            type = "A";
-            ttl = "300";
-            records = ["\${aws_eip.${nodeName}[0].public_ip}"];
-            multivalue_answer_routing_policy = true;
-            set_identifier = "${hyphen dns}-${nodeName}";
-          };
-        })
-        multivalueDnsAttrs.${dns}))) {} (attrNames multivalueDnsAttrs);
+      recursiveUpdate acc (listToAttrs (flatten (map (
+          nodeName:
+            [
+              {
+                name = "${hyphen dns}-${nodeName}";
+                value = {
+                  zone_id = "\${data.aws_route53_zone.selected.zone_id}";
+                  name = dns;
+                  type = "A";
+                  ttl = "300";
+                  records = ["\${aws_eip.${nodeName}[0].public_ip}"];
+                  multivalue_answer_routing_policy = true;
+                  set_identifier = "${hyphen dns}-${nodeName}";
+                };
+              }
+            ]
+            ++ optionals (isList (match "sanchonet(3).*|sanchonet1-test-a-1" nodeName)) [
+              # TODO: remove conditional when testing is done
+              {
+                name = "${hyphen dns}-${nodeName}-AAAA";
+                value = {
+                  count = "\${length(aws_instance.${nodeName}[0].ipv6_addresses) > 0 ? 1 : 0}";
+                  zone_id = "\${data.aws_route53_zone.selected.zone_id}";
+                  name = dns;
+                  type = "AAAA";
+                  ttl = "300";
+                  records = ["\${aws_instance.${nodeName}[0].ipv6_addresses[0]}"];
+                  multivalue_answer_routing_policy = true;
+                  set_identifier = "${hyphen dns}-${nodeName}-AAAA";
+                };
+              }
+            ]
+        )
+        multivalueDnsAttrs.${dns})))) {} (attrNames multivalueDnsAttrs);
 
   bookMultivalueDnsList = mkMultivalueDnsList "bookRelayMultivalueDns";
   groupMultivalueDnsList = mkMultivalueDnsList "groupRelayMultivalueDns";
@@ -226,22 +247,22 @@ in {
         };
 
         # Debug output
-        output =
-          mapRegions ({region, ...}: {
-            "aws_availability_zones_${region}".value = "\${data.aws_availability_zones.${region}.names}";
-          })
-          // mapRegions ({region, ...}: {
-            "aws_internet_gateway_${region}".value = "\${data.aws_internet_gateway.${region}}";
-          })
-          // mapRegions ({region, ...}: {
-            "aws_route_table_${region}".value = "\${data.aws_route_table.${region}}";
-          })
-          // mapRegions ({region, ...}: {
-            "aws_subnet_${region}".value = "\${data.aws_subnet.${region}}";
-          })
-          // mapRegions ({region, ...}: {
-            "aws_vpc_${region}".value = "\${data.aws_vpc.${region}}";
-          });
+        # output =
+        #   mapRegions ({region, ...}: {
+        #     "aws_availability_zones_${region}".value = "\${data.aws_availability_zones.${region}.names}";
+        #   })
+        #   // mapRegions ({region, ...}: {
+        #     "aws_internet_gateway_${region}".value = "\${data.aws_internet_gateway.${region}}";
+        #   })
+        #   // mapRegions ({region, ...}: {
+        #     "aws_route_table_${region}".value = "\${data.aws_route_table.${region}}";
+        #   })
+        #   // mapRegions ({region, ...}: {
+        #     "aws_subnet_${region}".value = "\${data.aws_subnet.${region}}";
+        #   })
+        #   // mapRegions ({region, ...}: {
+        #     "aws_vpc_${region}".value = "\${data.aws_vpc.${region}}";
+        #   });
 
         resource = {
           aws_default_route_table = mapRegions (
@@ -334,7 +355,7 @@ in {
 
                 # TODO: Remove the conditional once ipv6 modules are compatible
                 ipv6_address_count =
-                  if name == "sanchonet1-test-a-1"
+                  if isList (match "sanchonet(3).*|sanchonet1-test-a-1" name)
                   then 1
                   else null;
 
@@ -566,6 +587,20 @@ in {
               }
             )
             dnsEnabledNodes
+            // mapAttrs' (
+              nodeName: _:
+                nameValuePair "${nodeName}-AAAA" {
+                  count = "\${length(aws_instance.${nodeName}[0].ipv6_addresses) > 0 ? 1 : 0}";
+                  zone_id = "\${data.aws_route53_zone.selected.zone_id}";
+                  name = "${nodeName}.\${data.aws_route53_zone.selected.name}";
+                  type = "AAAA";
+                  ttl = "300";
+                  records = ["\${aws_instance.${nodeName}[0].ipv6_addresses[0]}"];
+                }
+            )
+            # To do, remove the filter
+            # dnsEnabledNodes
+            (filterAttrs (n: _: isList (match "sanchonet(3).*|sanchonet1-test-a-1" n)) dnsEnabledNodes)
             // mkMultivalueDnsResources bookMultivalueDnsAttrs
             // mkMultivalueDnsResources groupMultivalueDnsAttrs
             // mkCustomRoute53Records;
