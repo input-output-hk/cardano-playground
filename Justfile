@@ -97,7 +97,7 @@ checkSshConfig := '''
     mut consistent = true
 
     let nixosCfg = (nix eval --json '.#nixosConfigurations' --apply 'builtins.attrNames') | from json
-    let sshCfg = (open .ssh_config | lines | parse --regex '^Host ([^*]+)$') | get capture0
+    let sshCfg = (open .ssh_config | lines | parse --regex '^Host ([^*]+)$') | get capture0 | where not ($it | str ends-with ".ipv6")
     let moduleIps = if ('flake/nixosModules/ips-DONT-COMMIT.nix' | path exists) {
       (open flake/nixosModules/ips-DONT-COMMIT.nix | parse --regex '    (.*) = {' | drop 1) | get capture0
     } else {
@@ -395,13 +395,16 @@ list-machines:
       | update ipv6 {if ($in == "unavailable.ipv6") { null } else { $in }}
     );
 
-    let sshTable = ($ssh4Table | merge $ssh6Table);
+    let sshTable = ($ssh4Table
+      | dfr into-df
+      | dfr join -o ($ssh6Table | dfr into-df) Host Host
+    );
 
     if ($sshTable | is-empty) {
       [[Host ipv4 ipv6]; ["" "" ""]] | dfr into-df
     }
     else {
-      $sshTable | dfr into-df
+      $sshTable
     }
   )
 
@@ -1181,6 +1184,7 @@ update-ips-example:
       machine-example-1 = {
         privateIpv4 = "172.16.0.1";
         publicIpv4 = "1.2.3.4";
+        publicIpv6 = "ff00::01";
       };
     };
   in {
@@ -1198,6 +1202,10 @@ update-ips-example:
         publicIpv4 = lib.mkOption {
           type = lib.types.str;
           default = all.${name}.publicIpv4 or "";
+        };
+        publicIpv6 = lib.mkOption {
+          type = lib.types.str;
+          default = all.${name}.publicIpv6 or "";
         };
       };
     };
