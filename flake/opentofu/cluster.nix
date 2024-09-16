@@ -605,6 +605,8 @@ in {
             // mkMultivalueDnsResources groupMultivalueDnsAttrs
             // mkCustomRoute53Records;
 
+          # This `.ssh_config` file output format is expected by just recipes
+          # such as `list-machines` in order to be parsable.
           local_file.ssh_config = {
             filename = "\${path.module}/.ssh_config";
             file_permission = "0600";
