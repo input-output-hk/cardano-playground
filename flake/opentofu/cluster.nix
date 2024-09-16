@@ -78,42 +78,53 @@ with lib; let
           (attrNames dnsEnabledNodes)) (attrNames groups))));
       }) {};
 
-  mkMultivalueDnsResources = multivalueDnsAttrs:
-    foldl' (acc: dns:
-      recursiveUpdate acc (listToAttrs (flatten (map (
-          nodeName:
-            [
-              {
-                name = "${hyphen dns}-${nodeName}";
-                value = {
-                  zone_id = "\${data.aws_route53_zone.selected.zone_id}";
-                  name = dns;
-                  type = "A";
-                  ttl = "300";
-                  records = ["\${aws_eip.${nodeName}[0].public_ip}"];
-                  multivalue_answer_routing_policy = true;
-                  set_identifier = "${hyphen dns}-${nodeName}";
-                };
-              }
-            ]
-            ++ optionals (isList (match "sanchonet(3).*|sanchonet1-test-a-1" nodeName)) [
-              # TODO: remove conditional when testing is done
-              {
-                name = "${hyphen dns}-${nodeName}-AAAA";
-                value = {
-                  count = "\${length(aws_instance.${nodeName}[0].ipv6_addresses) > 0 ? 1 : 0}";
-                  zone_id = "\${data.aws_route53_zone.selected.zone_id}";
-                  name = dns;
-                  type = "AAAA";
-                  ttl = "300";
-                  records = ["\${aws_instance.${nodeName}[0].ipv6_addresses[0]}"];
-                  multivalue_answer_routing_policy = true;
-                  set_identifier = "${hyphen dns}-${nodeName}-AAAA";
-                };
-              }
-            ]
-        )
-        multivalueDnsAttrs.${dns})))) {} (attrNames multivalueDnsAttrs);
+  mkMultivalueDnsResources = let
+    # A five char prefix from an md5 hash is unlikely to collide with only a
+    # few registered multivalue dns FQDNs expected per cluster distributed over
+    # a 16^5 = 1.6 million range space.
+    md5 = dns: substring 0 5 (hashString "md5" dns);
+  in
+    multivalueDnsAttrs:
+      foldl' (acc: dns:
+        recursiveUpdate acc (listToAttrs (flatten (map (
+            nodeName:
+            # Resource names are constrained to 64 chars, so use an md5 hash to
+            # shorten them. The full multivalue dns and machine association is
+            # still listed in the set_identifier which aws more generously
+            # limits to 128 chars.
+              [
+                {
+                  name = "${nodeName}-${md5 dns}";
+                  value = {
+                    zone_id = "\${data.aws_route53_zone.selected.zone_id}";
+                    name = dns;
+                    type = "A";
+                    ttl = "300";
+                    records = ["\${aws_eip.${nodeName}[0].public_ip}"];
+                    multivalue_answer_routing_policy = true;
+                    set_identifier = "${hyphen dns}-${nodeName}";
+                    allow_overwrite = true;
+                  };
+                }
+              ]
+              ++ [
+                {
+                  name = "${nodeName}-${md5 dns}-AAAA";
+                  value = {
+                    count = "\${length(aws_instance.${nodeName}[0].ipv6_addresses) > 0 ? 1 : 0}";
+                    zone_id = "\${data.aws_route53_zone.selected.zone_id}";
+                    name = dns;
+                    type = "AAAA";
+                    ttl = "300";
+                    records = ["\${aws_instance.${nodeName}[0].ipv6_addresses[0]}"];
+                    multivalue_answer_routing_policy = true;
+                    set_identifier = "${hyphen dns}-${nodeName}-AAAA";
+                    allow_overwrite = true;
+                  };
+                }
+              ]
+          )
+          multivalueDnsAttrs.${dns})))) {} (attrNames multivalueDnsAttrs);
 
   bookMultivalueDnsList = mkMultivalueDnsList "bookRelayMultivalueDns";
   groupMultivalueDnsList = mkMultivalueDnsList "groupRelayMultivalueDns";
@@ -354,10 +365,7 @@ in {
                 iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
 
                 # TODO: Remove the conditional once ipv6 modules are compatible
-                ipv6_address_count =
-                  if isList (match "sanchonet(3).*|sanchonet1-test-a-1" name)
-                  then 1
-                  else null;
+                ipv6_address_count = 1;
 
                 monitoring = true;
                 key_name = "\${aws_key_pair.bootstrap_${underscore node.aws.region}[0].key_name}";
@@ -584,6 +592,7 @@ in {
                 type = "A";
                 ttl = "300";
                 records = ["\${aws_eip.${nodeName}[0].public_ip}"];
+                allow_overwrite = true;
               }
             )
             dnsEnabledNodes
@@ -596,11 +605,11 @@ in {
                   type = "AAAA";
                   ttl = "300";
                   records = ["\${aws_instance.${nodeName}[0].ipv6_addresses[0]}"];
+                  allow_overwrite = true;
                 }
             )
             # To do, remove the filter
-            # dnsEnabledNodes
-            (filterAttrs (n: _: isList (match "sanchonet(3).*|sanchonet1-test-a-1" n)) dnsEnabledNodes)
+            dnsEnabledNodes
             // mkMultivalueDnsResources bookMultivalueDnsAttrs
             // mkMultivalueDnsResources groupMultivalueDnsAttrs
             // mkCustomRoute53Records;
