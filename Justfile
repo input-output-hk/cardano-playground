@@ -789,12 +789,26 @@ ssh-for-each HOSTNAMES *ARGS:
 # List machine ips based on regex pattern
 ssh-list-ips PATTERN:
   #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config | from json | default "" Host | default "" HostName | where Host =~ "{{PATTERN}}" | get HostName | str join " "
+  scj dump /dev/stdout -c .ssh_config
+    | from json
+    | default "" Host
+    | default "" HostName
+    | where not ($it.Host | str ends-with ".ipv6")
+    | where Host =~ "{{PATTERN}}"
+    | get HostName
+    | str join " "
 
 # List machine names based on regex pattern
 ssh-list-names PATTERN:
   #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config | from json | default "" Host | default "" HostName | where Host =~ "{{PATTERN}}" | get Host | str join " "
+  scj dump /dev/stdout -c .ssh_config
+    | from json
+    | default "" Host
+    | default "" HostName
+    | where not ($it.Host | str ends-with ".ipv6")
+    | where Host =~ "{{PATTERN}}"
+    | get Host
+    | str join " "
 
 # Start a fork to conway demo
 start-demo:
