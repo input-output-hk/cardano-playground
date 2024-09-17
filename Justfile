@@ -763,6 +763,35 @@ ssh HOSTNAME *ARGS:
   {{checkSshConfig}}
   ssh -o LogLevel=ERROR -F .ssh_config {{HOSTNAME}} {{ARGS}}
 
+# Generate example .ssh_config code
+ssh-config-example:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  echo "The following config example shows the expected struct of the \".ssh_config\" file."
+  echo "This may be used as a template if a custom .ssh_config file needs to be"
+  echo "created and managed manually, for example, in a non-aws environment."
+  echo
+  cat <<"EOF"
+  Host *
+    User root
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    ServerAliveCountMax 2
+    ServerAliveInterval 60
+
+  Host machine-example-1
+    HostName 1.2.3.4
+
+  Host machine-example-1.ipv6
+    HostName ff00::01
+
+  Host machine-example-2
+    HostName 1.2.3.5
+
+  Host machine-example-2.ipv6
+    HostName ff00::02
+  EOF
+
 # Ssh using cluster bootstrap key
 ssh-bootstrap HOSTNAME *ARGS:
   #!/usr/bin/env nu
