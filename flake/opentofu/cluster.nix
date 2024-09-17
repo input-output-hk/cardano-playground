@@ -1,4 +1,4 @@
-flake @ {
+{
   inputs,
   self,
   lib,

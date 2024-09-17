@@ -98,14 +98,11 @@ checkSshConfig := '''
 
     let nixosCfg = (nix eval --json '.#nixosConfigurations' --apply 'builtins.attrNames') | from json
 
-    # This ssh config parsing is sensitive to opentofu `local_file.ssh_config`
-    # resource declaration changes.  Manual ssh config changes are also likely
-    # to break this.
+    # Ssh config header manual changes can be made without breaking parsing as
+    # long as they come as the `Host *$` line. Host modifications can also be
+    # made as long as any host changes come after the `  HostName .*$` line for
+    # each respective host.
     let sshCfg = (open .ssh_config
-      | lines
-      | skip 7
-      | drop 1
-      | to text
       | parse --regex '(?m)Host (.*)\n\s+HostName (.*)'
       | rename machine ip)
 
@@ -119,14 +116,11 @@ checkSshConfig := '''
       | update machine {$in | str replace '.ipv6' ''}
       | update ipv6 {if ($in == "unavailable.ipv6") { null } else { $in }})
 
-    # Similarly, manual changes to the ips module are likely to break parsing.
     let moduleIps = if ('flake/nixosModules/ips-DONT-COMMIT.nix' | path exists) {
       (open flake/nixosModules/ips-DONT-COMMIT.nix
-        | lines
-        | skip 2
-        | drop 24
-        | to text
-        | parse --regex '(?m)\s+(.*) = {$\n\s+privateIpv4 = \"(.*)";\n\s+publicIpv4 = \"(.*)";\n\s+publicIpv6 = \"(.*)";\n\s+};'
+        | parse --regex '(?ms)(.*)^  };\nin {.*'
+        | get capture0
+        | parse --regex '(?m)    (.*) = {$\n\s+privateIpv4 = \"(.*)";\n\s+publicIpv4 = \"(.*)";\n\s+publicIpv6 = \"(.*)";\n\s+};'
         | rename machine privateIpv4 ipv4 ipv6)
         | update ipv6 {if ($in == "") { null } else { $in }}
     } else {
