@@ -190,7 +190,6 @@ in {
             };
           });
 
-          # TODO: This filter may need to be changed for opt-in azs.
           # Ref: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
           aws_availability_zones = mapRegions ({region, ...}: {
             ${region} = {
