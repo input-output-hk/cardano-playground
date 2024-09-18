@@ -363,7 +363,6 @@ in {
                 ami = "\${data.aws_ami.nixos_${system}_${underscore node.aws.region}.id}";
                 iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
 
-                # TODO: Remove the conditional once ipv6 modules are compatible
                 ipv6_address_count = 1;
 
                 monitoring = true;
@@ -607,7 +606,6 @@ in {
                   allow_overwrite = true;
                 }
             )
-            # To do, remove the filter
             dnsEnabledNodes
             // mkMultivalueDnsResources bookMultivalueDnsAttrs
             // mkMultivalueDnsResources groupMultivalueDnsAttrs
