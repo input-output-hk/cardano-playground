@@ -630,7 +630,8 @@ in {
                   allow_overwrite = true;
                 }
             )
-            dnsEnabledNodes
+            # Remove the filter once faucet is compatible with ipv6 AAAA record requests
+            (filterAttrs (n: _: (!(isList (match ".*faucet.*" n)))) dnsEnabledNodes)
             // mkMultivalueDnsResources bookMultivalueDnsAttrs
             // mkMultivalueDnsResources groupMultivalueDnsAttrs
             // mkCustomRoute53Records;
