@@ -52,6 +52,23 @@ in
         };
       };
 
+      # Declare a static ipv6. This should only be used for public machines
+      # where ip exposure in committed code is acceptable and a vanity address
+      # is needed. Ie: don't use this for bps.
+      #
+      # In the case that a staticIpv6 is not declared, aws will assign one
+      # automatically.
+      #
+      # NOTE: As of aws provider 5.66.0, switching from ipv6_address_count to
+      # ipv6_addresses will force an instance replacement. If a self-declared
+      # ipv6 is required but destroying and re-creating instances to change
+      # ipv6 is not acceptable, then until the bug is fixed, continue using
+      # auto-assignment only, manually change the ipv6 in the console ui, and
+      # run tf apply to update state.
+      #
+      # Ref: https://github.com/hashicorp/terraform-provider-aws/issues/39433
+      # staticIpv6 = ipv6: {aws.instance.ipv6 = ipv6;};
+
       # Cardano-node modules for group deployment
       node = {
         imports = [
@@ -94,32 +111,6 @@ in
           {
             cardano-parts.perNode.pkgs = {
               inherit (inputs.cardano-node-utxo-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-          }
-        ];
-      };
-
-      nodeTxDelay = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          {
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-tx-delay.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-          }
-        ];
-      };
-
-      tracingUpdate = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          {
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.tracingUpdate.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
             };
           }
         ];
@@ -178,8 +169,13 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
-          {services.cardano-node.shareNodeSocket = true;}
-          {services.cardano-postgres.enablePsqlrc = true;}
+          {
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+            cardano-parts.perNode.pkgs = {
+              inherit (inputs.cardano-node-9-1-1.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
+            };
+          }
         ];
       };
 
@@ -318,46 +314,77 @@ in
         ];
       };
 
-      # logRejected = {
-      #   services.cardano-node.extraNodeConfig.TraceOptions = {
-      #     "Mempool" = {
-      #       severity = "Debug";
-      #       detail = "DDetailed";
-      #     };
-      #     # "Mempool.MempoolAttemptAdd" = {
-      #     #   severity = "Debug";
-      #     #   detail = "DDetailed";
-      #     # };
-      #     # "Mempool.MempoolAttemptingSync" = {
-      #     #   severity = "Debug";
-      #     #   detail = "DDetailed";
-      #     # };
-      #     # "Mempool.MempoolLedgerFound" = {
-      #     #   severity = "Debug";
-      #     #   detail = "DDetailed";
-      #     # };
-      #     # "Mempool.MempoolLedgerNotFound" = {
-      #     #   severity = "Debug";
-      #     #   detail = "DDetailed";
-      #     # };
-      #     # "Mempool.MempoolSyncDone" = {
-      #     #   severity = "Debug";
-      #     #   detail = "DDetailed";
-      #     # };
-      #     # "Mempool.MempoolSyncNotNeeded" = {
-      #     #   severity = "Debug";
-      #     #   detail = "DDetailed";
-      #     # };
-      #     "TxSubmission.TxInbound" = {
-      #       severity = "Debug";
-      #       detail = "DDetailed";
-      #     };
-      #     "TxSubmission.TxOutbound" = {
-      #       severity = "Debug";
-      #       detail = "DDetailed";
-      #     };
-      #   };
-      # };
+      logRejected = {
+        services = {
+          cardano-node.extraNodeConfig = {
+            TraceOptionResourceFrequency = 60000;
+            TraceOptions = {
+              "Mempool" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              # "Mempool.MempoolAttemptAdd" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolAttemptingSync" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolLedgerFound" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolLedgerNotFound" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolSyncDone" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              # "Mempool.MempoolSyncNotNeeded" = {
+              #   severity = "Debug";
+              #   detail = "DDetailed";
+              # };
+              "TxSubmission.TxInbound" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              "TxSubmission.TxOutbound" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              Resources.severity = "Debug";
+            };
+          };
+
+          cardano-tracer.nodeDefaultTraceOptions = {
+            severity = "Notice";
+            detail = "DNormal";
+            backends = [
+              # This results in journald output for the cardano-node service,
+              # like we would normally expect. This will, however, create
+              # duplicate logging if the tracer service resides on the same
+              # machine as the node service.
+              #
+              # In general, the "human" logging which appears in the
+              # cardano-node service is more human legible than the
+              # "ForHuman" node logging that appears in cardano-tracer for
+              # the same log events.
+              "Stdout HumanFormatColoured"
+              # "Stdout HumanFormatUncoloured"
+              # "Stdout MachineFormat"
+
+              # Leave EKG disabled in node as tracer now generates this as well.
+              # "EKGBackend"
+
+              # Forward to tracer.
+              "Forwarder"
+            ];
+          };
+        };
+      };
 
       traceTxs = {
         services.cardano-node.extraNodeConfig = {
@@ -369,8 +396,8 @@ in
         };
       };
 
-      maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
-
+      # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
+      #
       # mempoolDisable = {
       #   services.cardano-node.extraNodeConfig.TraceMempool = false;
       # };
@@ -484,36 +511,6 @@ in
       #   ];
       # };
       #
-
-      # Performance leader so far, see ref:
-      # https://input-output-rnd.slack.com/archives/C050LAMLL9E/p1724370433330539?thread_ts=1724054126.182969&cid=C050LAMLL9E
-      rtsOptMods = nixos: let
-        inherit (nixos.nodeResources) cpuCount;
-
-        numCeil = num: ceiling:
-          if num < ceiling
-          then num
-          else ceiling;
-
-        numFloor = num: floor:
-          if num > floor
-          then num
-          else floor;
-
-        cfg = nixos.config.services.cardano-node;
-
-        # Ensure that cores per instance are between 2 and 4 inclusive,
-        # beyond which performance may degrade.
-        cores = numCeil (numFloor (cpuCount / cfg.instances) 2) 4;
-      in {
-        services.cardano-node.rtsArgs = lib.mkForce [
-          "-N${toString cores}"
-          "-A16m"
-          "-I3"
-          "-M${toString (cfg.totalMaxHeapSizeMiB / cfg.instances)}M"
-        ];
-      };
-      #
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
       #
       # Example of node pinning to a custom version; see also the relevant flake inputs.
@@ -602,22 +599,23 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rtsOptMods bp mithrilRelease (declMRel "preview1-rel-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rtsOptMods rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") nodeTxDelay rtsOptMods minLog rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") nodeTxDelay rtsOptMods rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync rtsOptMods smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rtsOptMods faucet previewFaucet];};
+      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
+      # preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics logRejected previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node minLog rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rtsOptMods bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node rtsOptMods traceTxs rel pre previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") nodeTxDelay rtsOptMods rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") nodeTxDelay rtsOptMods rel previewRelMig];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
+      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node traceTxs rel pre previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel previewRelMig];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rtsOptMods bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview3") node rtsOptMods rel pre previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") nodeTxDelay rtsOptMods rel previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") nodeTxDelay rtsOptMods rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1")];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -656,7 +654,7 @@ in
       sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
       sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") tracingUpdate newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
       sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
       sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig];};
       sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
@@ -691,15 +689,15 @@ in
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432)];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
-      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging rtsOptMods];};
+      # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node rtsOptMods];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd rtsOptMods];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------

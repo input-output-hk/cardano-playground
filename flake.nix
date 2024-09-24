@@ -10,16 +10,10 @@
 
     # Local pins for additional customization:
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
-    cardano-node-tx-delay.url = "github:IntersectMBO/cardano-node/jl/9.1.0-tx-delay";
-
-    # For node 8.9.4 until dbsync 9.0.0 compatible release is available
-    iohk-nix-9-0-0.url = "github:input-output-hk/iohk-nix/577f4d5072945a88dda6f5cfe205e6b4829a0423";
+    cardano-node-9-1-1.url = "github:IntersectMBO/cardano-node/9.1.1";
 
     # Voltaire backend swagger ui for private chain deployment
     govtool.url = "github:disassembler/govtool/sl/disable-metadata-validation";
-
-    # Test updated tracing systems branch with renamed metrics and updated KES values:
-    tracingUpdate.url = "github:IntersectMBO/cardano-node/jutaro/metrics_renaming";
 
     # UTxO-HD testing
     cardano-node-utxo-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.1.1";
