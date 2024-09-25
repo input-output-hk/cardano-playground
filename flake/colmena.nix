@@ -172,9 +172,6 @@ in
           {
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-9-1-1.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
           }
         ];
       };
