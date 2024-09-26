@@ -81,6 +81,16 @@ in
         ];
       };
 
+      mkCustomNode = flakeInput:
+        node
+        // {
+          cardano-parts.perNode = {
+            pkgs = {inherit (inputs.${flakeInput}.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+          };
+        };
+
+      nodeHd = mkCustomNode "cardano-node-utxo-hd";
+
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
       declMRel = node: {services.mithril-signer.relayEndpoint = nixosConfigurations.${node}.config.ips.privateIpv4;};
@@ -101,19 +111,6 @@ in
         # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
         services.cardano-node.totalMaxHeapSizeMiB = 5734;
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
-      };
-
-      nodeHd = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          {
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-utxo-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-          }
-        ];
       };
 
       lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
