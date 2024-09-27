@@ -249,15 +249,30 @@ default:
 
 # Deploy select machines
 apply *ARGS:
-  colmena apply --verbose --on {{ARGS}}
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  CLICOLOR_FORCE=1 colmena apply --impure --verbose --color always --on {{ARGS}} \
+    1> >(sed --regex '/.*colmena-assets-.*/ d; /.*• Added input .*/ {N;d}' >&1) \
+    2> >(sed --regex '/.*colmena-assets-.*/ d; /• Added input .*/ {N;d}' >&2)
 
 # Deploy all machines
 apply-all *ARGS:
-  colmena apply --verbose {{ARGS}}
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  CLICOLOR_FORCE=1 colmena apply --impure --verbose --color always {{ARGS}} \
+    1> >(sed --regex '/.*colmena-assets-.*/ d; /.*• Added input .*/ {N;d}' >&1) \
+    2> >(sed --regex '/.*colmena-assets-.*/ d; /• Added input .*/ {N;d}' >&2)
 
 # Deploy select machines with the bootstrap key
 apply-bootstrap *ARGS:
-  SSH_CONFIG_FILE=<(sed '6i IdentityFile .ssh_key' .ssh_config) colmena apply --verbose --on {{ARGS}}
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  sed '2i \ \ IdentityFile .ssh_key' .ssh_config > .ssh_config_bootstrap
+  SSH_CONFIG_FILE=".ssh_config_bootstrap" just apply {{ARGS}}
+  rm .ssh_config_bootstrap
 
 # Build a nixos configuration
 build-machine MACHINE *ARGS:
@@ -807,7 +822,12 @@ ssh-for-all *ARGS:
 
 # Ssh for select
 ssh-for-each HOSTNAMES *ARGS:
-  colmena exec --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}}
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  CLICOLOR_FORCE=1 colmena exec --impure --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}} \
+    1> >(sed --regex '/.*colmena-assets-.*/ d; /.*• Added input .*/ {N;d}' >&1) \
+    2> >(sed --regex '/.*colmena-assets-.*/ d; /• Added input .*/ {N;d}' >&2)
 
 # List machine ips based on regex pattern
 ssh-list-ips PATTERN:
