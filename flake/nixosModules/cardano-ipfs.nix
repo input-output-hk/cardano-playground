@@ -56,7 +56,10 @@ in {
     };
 
     config = {
-      environment.systemPackages = [flake.self.packages.x86_64-linux.pinata-go-cli];
+      environment = {
+        shellAliases.pinata = ''echo "pinata is now an alias for pinata-web3"; pinata-web3'';
+        systemPackages = [flake.self.packages.x86_64-linux.pinata-go-cli];
+      };
 
       networking.firewall = {
         allowedTCPPorts = [80 443 cfg.kuboSwarmPort];
@@ -144,6 +147,10 @@ in {
                       # NOTES:
                       #   * Unless you know what you are doing, avoid
                       #     uploading directories and stick with single files.
+                      #   * Deprecated CID version 0 may still be desired
+                      #     when the era is pre-conway due to metadata field
+                      #     length limits.  In this case, update the form
+                      #     "CID version:" field or curl cid-version arg to `0`.
                       ```
                     '';
                     buttonHtml = api: ''
