@@ -17,6 +17,9 @@
 
     # UTxO-HD testing
     cardano-node-utxo-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.1.1";
+
+    # PParams api testing
+    cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
   };
 
   outputs = inputs: let
