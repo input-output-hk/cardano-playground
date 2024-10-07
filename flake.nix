@@ -5,8 +5,8 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/cardano-parts";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/v2024-10-07";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/v2024-10-07";
 
     # Local pins for additional customization:
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
@@ -17,6 +17,9 @@
 
     # UTxO-HD testing
     cardano-node-utxo-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.1.1";
+
+    # PParams api testing
+    cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
   };
 
   outputs = inputs: let

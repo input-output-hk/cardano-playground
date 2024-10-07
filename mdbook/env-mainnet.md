@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [9.1.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.1.1)
+Compatible with cardano-node release [9.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.2.1)
 
 ```
 NOTE:

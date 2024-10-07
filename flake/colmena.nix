@@ -81,6 +81,16 @@ in
         ];
       };
 
+      mkCustomNode = flakeInput:
+        node
+        // {
+          cardano-parts.perNode = {
+            pkgs = {inherit (inputs.${flakeInput}.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+          };
+        };
+
+      nodeHd = mkCustomNode "cardano-node-utxo-hd";
+
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
       declMRel = node: {services.mithril-signer.relayEndpoint = nixosConfigurations.${node}.config.ips.privateIpv4;};
@@ -101,19 +111,6 @@ in
         # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
         services.cardano-node.totalMaxHeapSizeMiB = 5734;
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
-      };
-
-      nodeHd = {
-        imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          {
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-utxo-hd.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
-          }
-        ];
       };
 
       lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
@@ -172,9 +169,6 @@ in
           {
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
-            cardano-parts.perNode.pkgs = {
-              inherit (inputs.cardano-node-9-1-1.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;
-            };
           }
         ];
       };
@@ -185,6 +179,20 @@ in
       #     nixosModules.ogmios
       #   ];
       # };
+
+      pparamsApi = {
+        imports = [
+          nixosModules.profile-cardano-node-pparams-api
+          {
+            services = {
+              cardano-node.shareNodeSocket = true;
+              cardano-node-pparams-api = {
+                acmeEmail = "devops@iohk.io";
+              };
+            };
+          }
+        ];
+      };
 
       mithrilRelease = {imports = [nixosModules.mithril-release-pin];};
 
@@ -647,7 +655,7 @@ in
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
       # Smallest d variant for testing
-      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics pparamsApi];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
