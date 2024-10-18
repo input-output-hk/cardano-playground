@@ -32,7 +32,7 @@ in {
       };
     };
     config = {
-      environment.systemPackages = [inputs'.govtool.packages.backend];
+      environment.systemPackages = [(inputs'.govtool.packages.backend.override {returnShellEnv = false;})];
 
       networking.firewall.allowedTCPPorts = [80 443];
 
@@ -80,6 +80,9 @@ in {
                       index = "index.html";
                       extraConfig = ''
                         try_files $uri $uri /index.html;
+
+                        # Nginx doesn't allow static content to handle POST by default
+                        error_page 405 =200 $uri;
                       '';
                     };
                     "/swagger-ui/" = {
@@ -111,7 +114,7 @@ in {
           serviceConfig = {
             ExecStart = lib.getExe (pkgs.writeShellApplication {
               name = "govtool-backend";
-              runtimeInputs = [inputs'.govtool.packages.backend];
+              runtimeInputs = [(inputs'.govtool.packages.backend.override {returnShellEnv = false;})];
               text = "vva-be -c /run/secrets/govtool-backend-cfg.json start-app";
             });
             Restart = "always";
