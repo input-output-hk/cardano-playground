@@ -13,7 +13,7 @@
     cardano-node-9-1-1.url = "github:IntersectMBO/cardano-node/9.1.1";
 
     # Voltaire backend swagger ui for private chain deployment
-    govtool.url = "github:disassembler/govtool/sl/disable-metadata-validation";
+    govtool.url = "github:johnalotoski/govtool/jl/2024-10-nix-fixups";
 
     # UTxO-HD testing
     cardano-node-utxo-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.1.1";
