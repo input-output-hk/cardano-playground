@@ -3,8 +3,8 @@
 Usage: Testing Conway era functionality.
 
 The Sanchonet chain will be rolled back with each new node release for testing
-new features and fixes. When respun on 2024-07-10 the chain will be restored
-from slot 26006400.  Any Sanchonet chain participants, stakepools, integrators,
+new features and fixes. When respun on 2024-10-21 the chain will be restored
+from slot 33782400.  Any Sanchonet chain participants, stakepools, integrators,
 etc, will need to clear their chain state to re-sync from that point forward.
 
 Epoch length of 1 day. Development flags allowed in configuration files.
@@ -21,7 +21,7 @@ Informed: Cardano Core Tribe
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [9.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.2.1)
+Compatible with cardano-node pre-release [10.0.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/10.0.0-pre)
 
 ```
 NOTE:
@@ -41,3 +41,4 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Shelley Genesis](environments/sanchonet/shelley-genesis.json)
 - [Alonzo Genesis](environments/sanchonet/alonzo-genesis.json)
 - [Conway Genesis](environments/sanchonet/conway-genesis.json)
+- [Compiled guardrails script](environments/sanchonet/guardrails-script.plutus)
