@@ -5,15 +5,15 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/v2024-10-07";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/v2024-10-07";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2024-10-08";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2024-10-08";
 
     # Local pins for additional customization:
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
     cardano-node-9-1-1.url = "github:IntersectMBO/cardano-node/9.1.1";
 
     # Voltaire backend swagger ui for private chain deployment
-    govtool.url = "github:disassembler/govtool/sl/disable-metadata-validation";
+    govtool.url = "github:johnalotoski/govtool/jl/2024-10-nix-fixups";
 
     # UTxO-HD testing
     cardano-node-utxo-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.1.1";
