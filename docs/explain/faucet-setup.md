@@ -155,7 +155,7 @@ This script will create a number of transaction files in the current directory.
 Before submitting them to the network, they can be examined if desired,
 example:
 ```bash
-cardano-cli transaction view --tx-file tx-payments-0-99.txsigned
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned
 ```
 
 Once satisfied the transactions look good and can be submitted, these can all
@@ -164,7 +164,7 @@ few minutes, depending on the volume of transactions being submitted:
 ```bash
 for i in $(ls -tr1 tx-payments*.txsigned); do
   echo "Submitting: $i"
-  cardano-cli transaction submit --tx-file $i
+  cardano-cli latest transaction submit --tx-file $i
   echo
 done
 ```
