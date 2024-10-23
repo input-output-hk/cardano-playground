@@ -37,7 +37,6 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Submit API Config](environments/mainnet/submit-api-config.json)
 - [Node Topology](environments/mainnet/topology.json)
 - [Node Topology (Non-bootstrap-peers)](environments/mainnet/topology-non-bootstrap-peers.json)
-- [Node Topology (Legacy non-p2p)](environments/mainnet/topology-legacy.json)
 - [Byron Genesis](environments/mainnet/byron-genesis.json)
 - [Shelley Genesis](environments/mainnet/shelley-genesis.json)
 - [Alonzo Genesis](environments/mainnet/alonzo-genesis.json)

@@ -191,8 +191,8 @@ drwxr-xr-x 5 jlotoski users    7 May 15 18:59 ..
 -rw-r--r-- 1 jlotoski users  112 May 15 19:12 00000.secondary
 
 # Look at the tip and protocol params right before stopping node
-cardano-cli-ng query tip
-cardano-cli-ng query protocol-parameters | jq .protocolVersion
+cardano-cli-ng latest query tip
+cardano-cli-ng latest query protocol-parameters | jq .protocolVersion
 {
     "block": 40,
     "epoch": 0,
@@ -257,12 +257,12 @@ cardano-node-ng run \
   | tee -a "$DATA_DIR"/node.log
 
 # In the new epoch, confirm pools and distribution display
-cardano-cli-ng query stake-pools
+cardano-cli-ng latest query stake-pools
 pool185cesaua779sprx3f4np4dkalkvqqf6nuaklzt69keruvs6p2mw
 pool132gzvkkh67u2aux5p6a2axrdp9hqt2wnrhc2rvdp6mq9qp22kf7
 pool1uwh7vt04tx0gt9hh9qexdjgyncsnd3vr4nc524lxtj8qwrfuslt
 
-cardano-cli-ng query stake-distribution
+cardano-cli-ng latest query stake-distribution
                            PoolId                                 Stake frac
 ------------------------------------------------------------------------------
 pool185cesaua779sprx3f4np4dkalkvqqf6nuaklzt69keruvs6p2mw   3.332e-5
