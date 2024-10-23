@@ -75,12 +75,12 @@ with flake.lib; {
           };
       };
     in
-      (mkGroup "preprod1" "preprod" "preprod-node.${dns}" "preprod1-node.${dns}" true false)
-      // (mkGroup "preprod2" "preprod" "preprod-node.${dns}" "preprod2-node.${dns}" true false)
-      // (mkGroup "preprod3" "preprod" "preprod-node.${dns}" "preprod3-node.${dns}" true false)
-      // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" true false)
-      // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" true false)
-      // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" true false)
+      (mkGroup "preprod1" "preprod" "preprod-node.${dns}" "preprod1-node.${dns}" false false)
+      // (mkGroup "preprod2" "preprod" "preprod-node.${dns}" "preprod2-node.${dns}" false false)
+      // (mkGroup "preprod3" "preprod" "preprod-node.${dns}" "preprod3-node.${dns}" false false)
+      // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false false)
+      // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false false)
+      // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false false)
       // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true false)
       // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true false)
       // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true false)

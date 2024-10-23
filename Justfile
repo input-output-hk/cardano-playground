@@ -1002,6 +1002,7 @@ start-demo:
   echo
 
   just query-tip demo
+  echo
   echo "Finished sequence..."
   echo
 
