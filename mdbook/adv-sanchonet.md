@@ -9,7 +9,7 @@ clear their chain state to re-sync from that point forward.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [10.0.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/10.0.0-pre)
+Compatible with cardano-node pre-release [10.1.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.0-pre)
 
 ```
 NOTE:
