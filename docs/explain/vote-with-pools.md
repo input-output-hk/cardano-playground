@@ -114,7 +114,7 @@ cardano-cli-ng conway transaction sign \
 
 View the transaction details before submitting:
 ```bash
-cardano-cli-ng conway transaction view \
+cardano-cli-ng debug transaction view \
   --tx-file vote-tx.signed
 ```
 

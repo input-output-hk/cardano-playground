@@ -23,7 +23,7 @@ A faucet for the private testnet is available [here](https://faucet.private.play
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [10.1.0-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.0-pre)
+Compatible with cardano-node pre-release [10.1.1-pre](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.1-pre)
 
 ```
 NOTE:
