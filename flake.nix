@@ -10,7 +10,7 @@
 
     # Local pins for additional customization:
     cardano-node-hd.url = "github:IntersectMBO/cardano-node/utxo-hd-9.0";
-    cardano-node-9-1-1.url = "github:IntersectMBO/cardano-node/9.1.1";
+    cardano-node-9-2-1.url = "github:IntersectMBO/cardano-node/9.2.1";
 
     # Voltaire backend swagger ui for private chain deployment
     govtool.url = "github:johnalotoski/govtool/jl/2024-10-nix-fixups";
