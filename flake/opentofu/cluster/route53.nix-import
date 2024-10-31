@@ -28,19 +28,14 @@ in {
   # Explorers
   cname_explorer_preprod = mkResource {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_explorer_preview = mkResource {name = "preview-explorer.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
-  cname_explorer_private = mkResource {name = "private-explorer.${domain}"; records = ["private1-dbsync-a-1.${domain}"];};
   cname_explorer_sanchonet = mkResource {name = "sanchonet-explorer.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
-  cname_explorer_shelley_qa = mkResource {name = "shelley-qa-explorer.${domain}"; records = ["shelley-qa1-dbsync-a-1.${domain}"];};
 
   # Faucets
   cname_faucet_preprod = mkResource {name = "faucet.preprod.${domain}"; records = ["preprod1-faucet-a-1.${domain}"];};
   cname_faucet_preview = mkResource {name = "faucet.preview.${domain}"; records = ["preview1-faucet-a-1.${domain}"];};
-  cname_faucet_private = mkResource {name = "faucet.private.${domain}"; records = ["private1-faucet-a-1.${domain}"];};
   cname_faucet_sanchonet = mkResource {name = "faucet.sanchonet.${domain}"; records = ["sanchonet1-faucet-a-1.${domain}"];};
-  cname_faucet_shelley_qa = mkResource {name = "faucet.shelley-qa.${domain}"; records = ["shelley-qa1-faucet-a-1.${domain}"];};
 
   # Govtool
-  cname_govtool_private = mkResource {name = "private-govtool.${domain}"; records = ["private1-dbsync-a-1.${domain}"];};
   cname_govtool_sanchonet = mkResource {name = "sanchonet-govtool.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
 
   # Ipfs for all testnets
@@ -52,7 +47,5 @@ in {
   # Smash
   cname_smash_preprod = mkResource {name = "preprod-smash.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_smash_preview = mkResource {name = "preview-smash.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
-  cname_smash_private = mkResource {name = "private-smash.${domain}"; records = ["private1-dbsync-a-1.${domain}"];};
   cname_smash_sanchonet = mkResource {name = "sanchonet-smash.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
-  cname_smash_shelley_qa = mkResource {name = "shelley-qa-smash.${domain}"; records = ["shelley-qa1-dbsync-a-1.${domain}"];};
 }

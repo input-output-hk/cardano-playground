@@ -81,15 +81,9 @@ with flake.lib; {
       // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false false)
       // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false false)
       // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false false)
-      // (mkGroup "private1" "private" "private-node.${dns}" "private1-node.${dns}" true false)
-      // (mkGroup "private2" "private" "private-node.${dns}" "private2-node.${dns}" true false)
-      // (mkGroup "private3" "private" "private-node.${dns}" "private3-node.${dns}" true false)
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true false)
       // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true false)
       // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true false)
-      // (mkGroup "shelley-qa1" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa1-node.${dns}" false false)
-      // (mkGroup "shelley-qa2" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa2-node.${dns}" false false)
-      // (mkGroup "shelley-qa3" "shelley_qa" "shelley-qa-node.${dns}" "shelley-qa3-node.${dns}" false false)
       // (mkGroup "mainnet1" "mainnet" null null false false)
       // (mkGroup "misc1" "preprod" null null false false);
   };
