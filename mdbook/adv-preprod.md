@@ -1,13 +1,12 @@
 ## Advanced Configuration: Pre-Production Testnet
 
-There is currently no pre-release version available for the pre-production
-environment.
+There is currently no pre-release version available for the pre-production environment.
 
-The latest version available is cardano-node release 9.2.1.
+The latest version available is cardano-node release `10.1.2`.
 
 #### Configuration files
 
-Compatible with cardano-node release [9.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.2.1)
+Compatible with cardano-node release [10.1.2](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.2)
 
 ```
 NOTE:
@@ -27,3 +26,4 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Shelley Genesis](environments-pre/preprod/shelley-genesis.json)
 - [Alonzo Genesis](environments-pre/preprod/alonzo-genesis.json)
 - [Conway Genesis](environments-pre/preprod/conway-genesis.json)
+- [Compiled guardrails script](environments-pre/preprod/guardrails-script.plutus)

@@ -32,33 +32,12 @@ ChainDB tip: At (Block {blockPointSlot = SlotNo 20812218, blockPointHash = 549b4
   truncate-after-slot which will be the start of epoch 237 * 86400 slots/epoch
   which equates to 20476800.
 
-* Since db-truncater is not exact, iteration of truncation and analysis may be
-  required to truncate to the desired goal.  In this example, the
-  `truncate-after-slot` required being reduced 5 epochs before our initial
-  truncation point was met.
-
 * The same procedure can instead use the `--truncate-after-block` option if
   preferred.
 ```bash
-# Need to reduce the truncation to truncate earlier due to the imperfect truncation.
-# Start with epoch 237 of this example and iterate backwards by some amount,
-# such as 1 epoch per iteration, until analysis shows the tip is prior to the
-# initial goal at the first slot of epoch 237.
-#
-# Iterations:
-#   epoch 237, slot 20476800, analysis shows tip slot @ 20812218
-#   epoch 236, slot 20390400, analysis shows tip slot @ 20812218
-#   epoch 235, slot 20304000, analysis shows tip slot @ 20812218
-#   epoch 234, slot 20217600, analysis shows tip slot @ 20812218
-#   epoch 233, slot 20131200, analysis shows tip slot @ 20812218
-#   epoch 232, slot 20044800, analysis shows tip slot @ 20044770 <-- before target tip of 20476800
-#
-# Ref: https://github.com/IntersectMBO/ouroboros-consensus/issues/1202
-#   Alternatively, use block based truncation as a work around.
-
 db-truncater \
  --db "$DATA_DIR/db" \
- --truncate-after-slot 20044800 \
+ --truncate-after-slot 20476800 \
  cardano \
  --config "$DATA_DIR/config.json"
 
@@ -69,13 +48,14 @@ db-analyser \
   --config "$DATA_DIR/config.json"
 [29.119164783s] Started OnlyValidation
 [29.119413325s] Done
-ChainDB tip: At (Block {blockPointSlot = SlotNo 20044770, blockPointHash = a20bfd2002f521cfd5d101996e72fb835ec3b10eda738c517060aa78e2591f89})
+ChainDB tip: At (Block {blockPointSlot = SlotNo 20476800, blockPointHash = a20bfd2002f521cfd5d101996e72fb835ec3b10eda738c517060aa78e2591f89})
 ```
 
 ## To synthesize a chain
 * With a bulk credentials file, synthesis of blocks is straightforward.
+* TIP: bulk credentials file can be created with the `just save-bulk-creds` recipe.
 
-* The following example shows synthesis of a particiular number of slots.
+* The following example shows synthesis of a particular number of slots.
 
 * The same procedure can instead use the `-e` option if preferred to synthesize
   for a number of epochs.

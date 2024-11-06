@@ -2,11 +2,13 @@
 
 There is currently no pre-release version available for the sanchonet environment.
 
-The latest version available is cardano-node release 9.2.1.
+NOTE: When respun on 2024-10-21 the chain will be restored from slot 33782400.
+Any Sanchonet chain participants, stakepools, integrators, etc, will need to
+clear their chain state to re-sync from that point forward.
 
 #### Configuration files
 
-Compatible with cardano-node release [9.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/9.2.1)
+Compatible with cardano-node release [10.1.2](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.2)
 
 ```
 NOTE:
@@ -26,3 +28,4 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Shelley Genesis](environments-pre/sanchonet/shelley-genesis.json)
 - [Alonzo Genesis](environments-pre/sanchonet/alonzo-genesis.json)
 - [Conway Genesis](environments-pre/sanchonet/conway-genesis.json)
+- [Compiled guardrails script](environments-pre/sanchonet/guardrails-script.plutus)
