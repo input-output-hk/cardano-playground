@@ -1,7 +1,12 @@
 # Vote With Pools
 
-To use the playground pools to vote on governance actions, the following
-procedure may be used.
+To use the playground pools to vote on governance actions, the simplest way to
+do so is to use the just recipe `vote-with-pool` which will automate governance
+action review, vote generation, transaction build, transaction review and
+finally transaction submission.
+
+For a detailed look a manually voting with a pool, the following procedure may
+be used.
 
 Set env vars for voting.  In this example, we'll use sanchonet and a given
 action id and index.  Adjust accordingly for your use case.
