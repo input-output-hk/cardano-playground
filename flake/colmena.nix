@@ -302,93 +302,93 @@ in
       previewRelMig = mkWorldRelayMig 30002;
       sanchoRelMig = mkWorldRelayMig 30004;
 
-      newMetrics = {
-        imports = [
-          (
-            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-            # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
-            import
-            config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-            (import
-              "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
-            .legacyPackages
-            .x86_64-linux
-          )
-          inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-        ];
-      };
+      # newMetrics = {
+      #   imports = [
+      #     (
+      #       # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
+      #       # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
+      #       import
+      #       config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+      #       (import
+      #         "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
+      #       .legacyPackages
+      #       .x86_64-linux
+      #     )
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+      #   ];
+      # };
 
-      logRejected = {
-        services = {
-          cardano-node.extraNodeConfig = {
-            TraceOptionResourceFrequency = 60000;
-            TraceOptions = {
-              "Mempool" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              # "Mempool.MempoolAttemptAdd" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolAttemptingSync" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolLedgerFound" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolLedgerNotFound" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolSyncDone" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolSyncNotNeeded" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              "TxSubmission.TxInbound" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              "TxSubmission.TxOutbound" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              Resources.severity = "Debug";
-            };
-          };
+      # logRejected = {
+      #   services = {
+      #     cardano-node.extraNodeConfig = {
+      #       TraceOptionResourceFrequency = 60000;
+      #       TraceOptions = {
+      #         "Mempool" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         # "Mempool.MempoolAttemptAdd" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolAttemptingSync" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolLedgerFound" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolLedgerNotFound" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolSyncDone" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolSyncNotNeeded" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         "TxSubmission.TxInbound" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         "TxSubmission.TxOutbound" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         Resources.severity = "Debug";
+      #       };
+      #     };
 
-          cardano-tracer.nodeDefaultTraceOptions = {
-            severity = "Notice";
-            detail = "DNormal";
-            backends = [
-              # This results in journald output for the cardano-node service,
-              # like we would normally expect. This will, however, create
-              # duplicate logging if the tracer service resides on the same
-              # machine as the node service.
-              #
-              # In general, the "human" logging which appears in the
-              # cardano-node service is more human legible than the
-              # "ForHuman" node logging that appears in cardano-tracer for
-              # the same log events.
-              "Stdout HumanFormatColoured"
-              # "Stdout HumanFormatUncoloured"
-              # "Stdout MachineFormat"
+      #     cardano-tracer.nodeDefaultTraceOptions = {
+      #       severity = "Notice";
+      #       detail = "DNormal";
+      #       backends = [
+      #         # This results in journald output for the cardano-node service,
+      #         # like we would normally expect. This will, however, create
+      #         # duplicate logging if the tracer service resides on the same
+      #         # machine as the node service.
+      #         #
+      #         # In general, the "human" logging which appears in the
+      #         # cardano-node service is more human legible than the
+      #         # "ForHuman" node logging that appears in cardano-tracer for
+      #         # the same log events.
+      #         "Stdout HumanFormatColoured"
+      #         # "Stdout HumanFormatUncoloured"
+      #         # "Stdout MachineFormat"
 
-              # Leave EKG disabled in node as tracer now generates this as well.
-              # "EKGBackend"
+      #         # Leave EKG disabled in node as tracer now generates this as well.
+      #         # "EKGBackend"
 
-              # Forward to tracer.
-              "Forwarder"
-            ];
-          };
-        };
-      };
+      #         # Forward to tracer.
+      #         "Forwarder"
+      #       ];
+      #     };
+      #   };
+      # };
 
       traceTxs = {
         services.cardano-node.extraNodeConfig = {
@@ -605,10 +605,12 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics logRejected previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      # TODO: New metrics appears broken now in nixos service
+      # preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics logRejected previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash pre previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
@@ -631,17 +633,21 @@ in
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
       # Smallest d variant for testing
-      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics pparamsApi];};
+      # TODO: New metrics appears broken now in nixos service
+      # sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics pparamsApi];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node pparamsApi];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
       sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
       sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig];};
 
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
+      # sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1")];};
+      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node bp (declMRel "sanchonet3-rel-c-1")];};
       sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1")];};
       sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig];};
-      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
+      # sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig];};
+      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
