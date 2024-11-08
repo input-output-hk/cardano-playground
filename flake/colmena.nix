@@ -662,12 +662,25 @@ in
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
+      mainnet1-rel-a-1 = {
+        imports = [
+          eu-central-1
+          r5-xlarge
+          (ebs 300)
+          (group "mainnet1")
+          node
+          bp
+          {
+            services.mithril-signer.enable = false;
+            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+          }
+        ];
+      };
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
