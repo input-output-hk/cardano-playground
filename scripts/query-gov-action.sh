@@ -606,8 +606,7 @@ else
   COMMITTEE_SUMMARY="Committee,-,-,-,-,-,"
 fi
 
-# shellcheck disable=SC2016
-echo -e "$OUTPUT\n$DREP_SUMMARY\n$POOL_SUMMARY\n$COMMITTEE_SUMMARY" | nu --stdin -c '$in | from csv --separator ","'
+echo -e "$OUTPUT\n$DREP_SUMMARY\n$POOL_SUMMARY\n$COMMITTEE_SUMMARY" | nu --stdin -c "\$in | from csv --separator ','"
 
 case "$TOTAL_ACCEPT" in
   *"N/A"*) TOTAL_ACCEPT_ICON="$GREEN_NA";;
