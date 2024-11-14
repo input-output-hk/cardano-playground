@@ -13,20 +13,27 @@ set -euo pipefail
 # Assume we are in the conway era or later
 # Assume we are querying a gov action
 # Assume the gov action id and index are valid
-
+#
+# TODO: Add epoch inform
+# TODO: Note that expired actions won't be found in the live ledger state
+# TODO: Fail with a not-found status if not found, adding the action may be expired to explain why it is not found
+#
 # Assume arg params to the command will be:
 #
 # $0 $ACTION_UTXO $ACTION_IDX
 
 [ -n "${DEBUG:-}" ] && set -x
 
-# ANSI color setup
-BLUE="\e[94m"
-CYAN="\e[36m"
-GREEN="\e[92m"
-OFF="\e[0m"
-RED="\e[91m"
+# ANSI color setup; use Unicode for jq color compatibility
+BLUE="\u001b[94m"
+CYAN="\u001b[36m"
+GREEN="\u001b[92m"
+OFF="\u001b[0m"
+RED="\u001b[91m"
+
+# Colored status
 GREEN_CHECK="$GREEN✅"
+GREEN_NA="${GREEN}n/a"
 RED_X="$RED❌"
 
 # Arg setup
@@ -140,15 +147,6 @@ echo "  PROT_MAJOR_VER: $PROT_MAJOR_VER"
   echo "  ACTION_DEPOSIT_RETURN_KEY_TYPE: $ACTION_DEPOSIT_RETURN_KEY_TYPE"
   echo "  ACTION_DEPOSIT_RETURN_HASH: $ACTION_DEPOSIT_RETURN_HASH"
   echo "  ACTION_DEPOSIT_RETURN_NETWORK: $ACTION_DEPOSIT_RETURN_NETWORK"
-  echo "  ACTION_DREP_VOTE_YES_COUNT: $ACTION_DREP_VOTE_YES_COUNT"
-  echo "  ACTION_DREP_VOTE_NO_COUNT: $ACTION_DREP_VOTE_NO_COUNT"
-  echo "  ACTION_DREP_ABSTAIN_COUNT: $ACTION_DREP_ABSTAIN_COUNT"
-  echo "  ACTION_POOL_VOTE_YES_COUNT: $ACTION_POOL_VOTE_YES_COUNT"
-  echo "  ACTION_POOL_VOTE_NO_COUNT: $ACTION_POOL_VOTE_NO_COUNT"
-  echo "  ACTION_POOL_ABSTAIN_COUNT: $ACTION_POOL_ABSTAIN_COUNT"
-  echo "  ACTION_COMMITTEE_VOTE_YES_COUNT: $ACTION_COMMITTEE_VOTE_YES_COUNT"
-  echo "  ACTION_COMMITTEE_VOTE_NO_COUNT: $ACTION_COMMITTEE_VOTE_NO_COUNT"
-  echo "  ACTION_COMMITTEE_ABSTAIN_COUNT: $ACTION_COMMITTEE_ABSTAIN_COUNT"
 
   # Generate lists with the DRep hashes that are voted yes, no or abstain.
   # Add a 'drep-' in front of each entry to mach up the syntax in the `drep-stake-distribution` json.
@@ -225,7 +223,6 @@ echo "  PROT_MAJOR_VER: $PROT_MAJOR_VER"
     COMMITTEE_PCT=$(bc <<< "scale=2; (100.00 * $COMMITTEE_YES) / ($COMMITTEE_TOTAL - $COMMITTEE_ABSTAIN)")
   fi
 echo
-echo
 
 COMMITTEE_ACCEPT_ICON=""
 DREP_ACCEPT_ICON=""
@@ -235,29 +232,65 @@ POOL_STAKE_THRESHOLD="N/A"
 TOTAL_ACCEPT=""
 TOTAL_ACCEPT_ICON=""
 
+PREV_ACTION() {
+  PREV_ACTION_UTXO="$1"
+  PREV_ACTION_IDX="$2"
+
+  if [ "${#PREV_ACTION_UTXO}" -gt 1 ]; then
+    echo -e "Reference-Action-ID: $GREEN${PREV_ACTION_UTXO}#${PREV_ACTION_IDX}$OFF\n"
+  fi
+}
+
+ACTION_CONTENT() {
+  COLOR="$1"
+  DESCRIPTION="$2"
+  echo -e "Action-Content: $COLOR$DESCRIPTION$OFF\n"
+}
+
+THRESHOLD_CHECK() {
+  TYPE="$1"
+  PCT="$2"
+  THRESHOLD="$3"
+  if [ "$(bc <<< "$PCT >= $THRESHOLD")" -eq 1 ]; then
+    case "$TYPE" in
+      DREP) DREP_ACCEPT_ICON="$GREEN_CHECK" ;;
+      POOL) POOL_ACCEPT_ICON="$GREEN_CHECK" ;;
+      COMMITTEE) COMMITTEE_ACCEPT_ICON="$GREEN_CHECK" ;;
+    esac
+  else
+    case "$TYPE" in
+      DREP) DREP_ACCEPT_ICON="$RED_X" ;;
+      POOL) POOL_ACCEPT_ICON="$RED_X" ;;
+      COMMITTEE) COMMITTEE_ACCEPT_ICON="$RED_X" ;;
+    esac
+    TOTAL_ACCEPT+="NO"
+  fi
+}
+
+# Participation per action type obtained from:
+#   https://developers.cardano.org/docs/governance/cardano-governance/governance-actions/#voting-thresholds-and-participants
 case "$ACTION_TAG" in
   "InfoAction")
     {
       read -r PREV_ACTION_UTXO
       read -r PREV_ACTION_IDX
-    } <<< "$(jq -r '.txId // "-", .govActionIx // "-"' 2> /dev/null <<< "$ACTION_CONTENTS")"
+    } <<< "$(jq -r '
+      .txId // "-",
+      .govActionIx // "-"
+    ' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-    if [ "${#PREV_ACTION_UTXO}" -gt 1 ]; then
-      echo -e "Reference-Action-ID: $GREEN${PREV_ACTION_UTXO}#${PREV_ACTION_IDX}$OFF\n"
-    fi
-
+    PREV_ACTION "$PREV_ACTION_UTXO" "$PREV_ACTION_IDX"
     echo -e "Action-Content:$CYAN Information$OFF"
+    echo
 
-    DREP_ACCEPT_ICON="N/A"
-    POOL_ACCEPT_ICON="N/A"
+    DREP_STAKE_THRESHOLD="n/a"
+    POOL_STAKE_THRESHOLD="n/a"
+    COMMITTEE_THRESHOLD="n/a"
+
+    DREP_ACCEPT_ICON="$GREEN_NA"
+    POOL_ACCEPT_ICON="$GREEN_NA"
+    COMMITTEE_ACCEPT_ICON="$GREEN_NA"
     TOTAL_ACCEPT="N/A"
-
-    if [ "$(bc <<< "$COMMITTEE_PCT >= $COMMITTEE_THRESHOLD")" -eq 1 ]; then
-      COMMITTEE_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      COMMITTEE_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
-    fi
   ;;
 
   "HardForkInitiation")
@@ -273,11 +306,8 @@ case "$ACTION_TAG" in
       .[1].minor // "-"
     ' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-    if [ ${#PREV_ACTION_UTXO} -gt 1 ]; then
-      echo -e "Reference-Action-ID: $GREEN${PREV_ACTION_UTXO}#${PREV_ACTION_IDX}$OFF\n"
-    fi
-
-    echo -e "Action-Content: ${CYAN}Do a Hardfork$OFF\n"
+    PREV_ACTION "$PREV_ACTION_UTXO" "$PREV_ACTION_IDX"
+    ACTION_CONTENT "$GREEN" "Do a Hardfork"
     echo -e "Fork to ${GREEN}Protocol-Version$OFF ► $BLUE${FORK_MAJOR_VER}.${FORK_MINOR_VER}$OFF"
     echo
 
@@ -290,117 +320,82 @@ case "$ACTION_TAG" in
     ' <<< "$PPARAMS" 2> /dev/null)"
 
     DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
-
     if [ "$PROT_MAJOR_VER" -ge 10 ]; then
-      if [ "$(bc <<< "$DREP_PCT >= DREP_STAKE_THRESHOLD")" -eq 1 ]; then
-        DREP_ACCEPT_ICON="$GREEN_CHECK"
-      else
-        DREP_ACCEPT_ICON="$RED_X"
-        TOTAL_ACCEPT+="NO"
-      fi
+      THRESHOLD_CHECK "DREP" "$DREP_PCT" "$DREP_STAKE_THRESHOLD"
     fi
 
     POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
+    THRESHOLD_CHECK "POOL" "$POOL_PCT" "$POOL_STAKE_THRESHOLD"
 
-    if [ "$(bc <<< "$POOL_PCT >= $POOL_STAKE_THRESHOLD")" -eq 1 ]; then
-      POOL_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      POOL_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
-    fi
-
-    if [ "$(bc <<< "$COMMITTEE_PCT >= $COMMITTEE_THRESHOLD")" -eq 1 ]; then
-      COMMITTEE_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      COMMITTEE_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
-    fi
+    THRESHOLD_CHECK "COMMITTEE" "$COMMITTEE_PCT" "$COMMITTEE_THRESHOLD"
   ;;
 
   "ParameterChange")
-     {
-       read -r PREV_ACTION_UTXO
-       read -r PREV_ACTION_IDX
-       read -r CHANGE_PARAMETERS
-     } <<< "$(jq -r '
-       .[0].txId // "-",
-       .[0].govActionIx // "-",
-       "\(.[1])" // "-"
-     ' 2> /dev/null <<< "$ACTION_CONTENTS")"
+    {
+      read -r PREV_ACTION_UTXO
+      read -r PREV_ACTION_IDX
+      read -r CHANGE_PARAMETERS
+    } <<< "$(jq -r '
+      .[0].txId // "-",
+      .[0].govActionIx // "-",
+      "\(.[1])" // "-"
+    ' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-     if [ ${#PREV_ACTION_UTXO} -gt 1 ]; then
-       echo -e "Reference-Action-ID: $GREEN${PREV_ACTION_UTXO}#${PREV_ACTION_IDX}$OFF\n"
-     fi
+    PREV_ACTION "$PREV_ACTION_UTXO" "$PREV_ACTION_IDX"
+    ACTION_CONTENT "$GREEN" "Change protocol parameters"
+    CHANGE_PARAMETERS_RENDER=$(jq -r "to_entries[] | \"Change parameter $GREEN\(.key)$OFF ► $BLUE\(.value)$OFF\"" <<< "$CHANGE_PARAMETERS" 2> /dev/null)
+    echo -e "$CHANGE_PARAMETERS_RENDER"
+    echo
 
-     echo -e "Action-Content: ${CYAN}Change protocol parameters$OFF"
-     CHANGE_PARAMETERS_RENDER=$(jq -r "to_entries[] | \"Change parameter \(.key) ► \(.value)\"" <<< "$CHANGE_PARAMETERS" 2> /dev/null)
-     echo -e "$CHANGE_PARAMETERS_RENDER"
-     echo
+    DREP_STAKE_THRESHOLD="0"
+    case "${CHANGE_PARAMETERS}" in
+      # Security group - SPOs must vote, see:
+      #   https://github.com/cardano-foundation/CIPs/tree/master/CIP-1694#protocol-parameter-groups
+      *"maxBlockBodySize"*|*"maxTxSize"*|*"maxBlockHeaderSize"*|*"maxValueSize"*|*"maxBlockExecutionUnits"*|*"txFeePerByte"*|*"txFeeFixed"*|*"utxoCostPerByte"*|*"govActionDeposit"*|*"minFeeRefScriptCostPerByte"*)
+        POOL_STAKE_THRESHOLD=$(jq -r '.poolVotingThresholds.ppSecurityGroup // 0' <<< "${PPARAMS}" 2> /dev/null)
+        POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
+        THRESHOLD_CHECK "POOL" "$POOL_PCT" "$POOL_STAKE_THRESHOLD"
+        echo -e "A parameter from the ${GREEN}SECURITY$OFF group is present ► ${BLUE}StakePools must vote$OFF"
+        ;;&
 
-     DREP_STAKE_THRESHOLD="0"
+      # Network group
+      *"maxBlockBodySize"*|*"maxTxSize"*|*"maxBlockHeaderSize"*|*"maxValueSize"*|*"maxTxExecutionUnits"*|*"maxBlockExecutionUnits"*|*"maxCollateralInputs"*)
+        DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppNetworkGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
+        echo -e "Parameter changes are included from the ${GREEN}NETWORK$OFF group"
+        ;;&
 
-     case "${CHANGE_PARAMETERS}" in
-       # Security group - pools must vote on it
-       *"maxBlockBodySize"*|*"maxTxSize"*|*"maxBlockHeaderSize"*|*"maxValueSize"*|*"maxBlockExecutionUnits"*|*"txFeePerByte"*|*"txFeeFixed"*|*"utxoCostPerByte"*|*"govActionDeposit"*|*"minFeeRefScriptCostPerByte"*)
-         POOL_STAKE_THRESHOLD=$(jq -r '.poolVotingThresholds.ppSecurityGroup // 0' <<< "${PPARAMS}" 2> /dev/null)
-         POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
-         if [ "$(bc <<< "$POOL_PCT >= $POOL_STAKE_THRESHOLD")" -eq 1 ]; then
-           POOL_ACCEPT_ICON="$GREEN_CHECK";
-         else
-           POOL_ACCEPT_ICON="$RED_X"
-           TOTAL_ACCEPT+="NO"
-         fi
-         echo -e "A parameter from the ${GREEN}SECURITY$OFF group is present ► ${BLUE}StakePools must vote$OFF"
-         ;;&
+      # Economic group
+      *"txFeePerByte"*|*"txFeeFixed"*|*"stakeAddressDeposit"*|*"stakePoolDeposit"*|*"monetaryExpansion"*|*"treasuryCut"*|*"minPoolCost"*|*"utxoCostPerByte"*|*"executionUnitPrices"*)
+        DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppEconomicGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
+        echo -e "Parameter changes are included from the ${GREEN}ECONOMIC$OFF group"
+        ;;&
 
-       # Network group
-       *"maxBlockBodySize"*|*"maxTxSize"*|*"maxBlockHeaderSize"*|*"maxValueSize"*|*"maxTxExecutionUnits"*|*"maxBlockExecutionUnits"*|*"maxCollateralInputs"*)
-         DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppNetworkGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
-         echo -e "A parameter from the ${GREEN}NETWORK$OFF group is present"
-         ;;&
+      # Technical group
+      *"poolPledgeInfluence"*|*"poolRetireMaxEpoch"*|*"stakePoolTargetNum"*|*"costModels"*|*"collateralPercentage"*)
+        DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppTechnicalGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
+        echo -e "Parameter changes are included from the ${GREEN}TECHNICAL$OFF group"
+        ;;&
 
-       # Economic group
-       *"txFeePerByte"*|*"txFeeFixed"*|*"stakeAddressDeposit"*|*"stakePoolDeposit"*|*"monetaryExpansion"*|*"treasuryCut"*|*"minPoolCost"*|*"utxoCostPerByte"*|*"executionUnitPrices"*)
-         DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppEconomicGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
-         echo -e "A parameter from the ${GREEN}ECONOMIC$OFF group is present"
-         ;;&
+      # Governance group
+      *"govActionLifetime"*|*"govActionDeposit"*|*"dRepDeposit"*|*"dRepActivity"*|*"committeeMinSize"*|*"committeeMaxTermLength"*|*"VotingThresholds"*)
+        DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppGovGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
+        echo -e "Parameter changes are included from the ${GREEN}GOVERNANCE$OFF group"
+        ;;
+    esac
+    echo
 
-       # Technical group
-       *"poolPledgeInfluence"*|*"poolRetireMaxEpoch"*|*"stakePoolTargetNum"*|*"costModels"*|*"collateralPercentage"*)
-         DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppTechnicalGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
-         echo -e "A parameter from the ${GREEN}TECHNICAL$OFF group is present"
-         ;;&
+    if [ "$DREP_STAKE_THRESHOLD" == "0" ] || [ "$DREP_STAKE_THRESHOLD" == "" ]; then
+      echo -e "${RED}ERROR - Something went wrong finding the drep stake threshold.$OFF"
+      exit 1
+    fi
 
-       # Governance group
-       *"govActionLifetime"*|*"govActionDeposit"*|*"dRepDeposit"*|*"dRepActivity"*|*"committeeMinSize"*|*"committeeMaxTermLength"*|*"VotingThresholds"*)
-         DREP_STAKE_THRESHOLD=$(jq -r "[ $DREP_STAKE_THRESHOLD, .dRepVotingThresholds.ppGovGroup // 0 ] | max" <<< "$PPARAMS" 2> /dev/null)
-         echo -e "A parameter from the ${GREEN}GOVERNANCE$OFF group is present"
-         ;;
-     esac
+    DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
+    if [ "$PROT_MAJOR_VER" -ge 10 ]; then
+      THRESHOLD_CHECK "DREP" "$DREP_PCT" "$DREP_STAKE_THRESHOLD"
+    fi
 
-     if [ "$DREP_STAKE_THRESHOLD" == "0" ] || [ "$DREP_STAKE_THRESHOLD" == "" ]; then
-       echo -e "${RED}ERROR - Something went wrong finding the dRepPowerThreshold.$OFF"
-       exit 1
-     fi
-
-     DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
-
-     if [ "$PROT_MAJOR_VER" -ge 10 ]; then
-       if [ "$(bc <<< "$DREP_PCT >= $DREP_STAKE_THRESHOLD")" -eq 1 ]; then
-         DREP_ACCEPT_ICON="$GREEN_CHECK"
-       else
-         DREP_ACCEPT_ICON="$RED_X"
-         TOTAL_ACCEPT+="NO"
-       fi
-     fi
-
-     if [ "$(bc <<< "$COMMITTEE_PCT >= $COMMITTEE_THRESHOLD")" -eq 1 ]; then
-       COMMITTEE_ACCEPT_ICON="$GREEN_CHECK"
-     else
-       COMMITTEE_ACCEPT_ICON="$RED_X"
-       TOTAL_ACCEPT+="NO"
-     fi
-     ;;
+    THRESHOLD_CHECK "COMMITTEE" "$COMMITTEE_PCT" "$COMMITTEE_THRESHOLD"
+    ;;
 
   "NewConstitution")
     {
@@ -417,155 +412,114 @@ case "$ACTION_TAG" in
       .[1].script // "-"
     ' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-    if [ ${#PREV_ACTION_UTXO} -gt 1 ]; then
-      echo -e "Reference-Action-ID: $GREEN${PREV_ACTION_UTXO}#$PREV_ACTION_IDX$OFF\n"
-    fi
+    PREV_ACTION "$PREV_ACTION_UTXO" "$PREV_ACTION_IDX"
+    ACTION_CONTENT "$GREEN" "Change to a new constitution"
 
-    echo -e "Action-Content: ${CYAN}Change to a new Constitution$OFF\n"
     echo -e "Set new ${GREEN}Constitution-URL$OFF ► $BLUE$ANCHOR_URL$OFF"
     echo -e "Set new ${GREEN}Constitution-Hash$OFF ► $BLUE$ANCHOR_HASH$OFF"
     echo -e "Set new ${GREEN}Guardrails-Script-Hash$OFF ► $BLUE$SCRIPT_HASH$OFF"
     echo
 
-    # Calculate acceptance: Get the right threshold, make it a nice percentage number, check if threshold is reached
     DREP_STAKE_THRESHOLD=$(jq -r '.dRepVotingThresholds.updateToConstitution // 0' <<< "$PPARAMS" 2> /dev/null)
     DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
-
-    if [ "$(bc <<< "$DREP_PCT >= $DREP_STAKE_THRESHOLD")" -eq 1 ]; then
-      DREP_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      DREP_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
-    fi
+    THRESHOLD_CHECK "DREP" "$DREP_PCT" "$DREP_STAKE_THRESHOLD"
 
     POOL_ACCEPT_ICON=""
 
-    if [ "$(bc <<< "$COMMITTEE_PCT >= $COMMITTEE_THRESHOLD")" -eq 1 ]; then
-      COMMITTEE_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      COMMITTEE_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
-    fi
+    THRESHOLD_CHECK "COMMITTEE" "$COMMITTEE_PCT" "$COMMITTEE_THRESHOLD"
     ;;
 
   "UpdateCommittee")
-     {
-       read -r PREV_ACTION_UTXO
-       read -r PREV_ACTION_IDX
-       read -r COMMITTEE_KEY_HASHES_REMOVE
-       read -r COMMITTEE_KEY_HASHES_ADD
-       read -r COMMITTEE_THRESHOLD
-     } <<< "$(jq -r '
-       .[0].txId // "-",
-       .[0].govActionIx // "-",
-       "\(.[1])" // "[]",
-       "\(.[2])" // "[]",
-       "\(.[3])" // "-"
-     ' 2> /dev/null <<< "$ACTION_CONTENTS")"
+    {
+      read -r PREV_ACTION_UTXO
+      read -r PREV_ACTION_IDX
+      read -r COMMITTEE_KEY_HASHES_REMOVE
+      read -r COMMITTEE_KEY_HASHES_ADD
+      read -r COMMITTEE_THRESHOLD
+    } <<< "$(jq -r '
+      .[0].txId // "-",
+      .[0].govActionIx // "-",
+      "\(.[1])" // "[]",
+      "\(.[2])" // "[]",
+      "\(.[3])" // "-"
+    ' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-     if [ ${#PREV_ACTION_UTXO} -gt 1 ]; then
-       echo -e "Reference-Action-ID: $GREEN${PREV_ACTION_UTXO}#${PREV_ACTION_IDX}$OFF\n"
-     fi
+    PREV_ACTION "$PREV_ACTION_UTXO" "$PREV_ACTION_IDX"
+    ACTION_CONTENT "$GREEN" "Threshold ->"
 
-     COMMITTEE_KEY_HASHES_ADD=$(jq -r "keys" <<< "$COMMITTEE_KEY_HASHES_ADD" 2> /dev/null)
-     COMMITTEE_KEY_HASHES_REMOVE=$(jq -r "[.[].keyHash]" <<< "$COMMITTEE_KEY_HASHES_REMOVE" 2> /dev/null)
-     COMMITTEE_THRESHOLD_TYPE=$(jq -r "type" <<< "$COMMITTEE_THRESHOLD" 2> /dev/null)
+    COMMITTEE_KEY_HASHES_ADD=$(jq -r "keys" <<< "$COMMITTEE_KEY_HASHES_ADD" 2> /dev/null)
+    COMMITTEE_KEY_HASHES_REMOVE=$(jq -r "[.[].keyHash]" <<< "$COMMITTEE_KEY_HASHES_REMOVE" 2> /dev/null)
+    COMMITTEE_THRESHOLD_TYPE=$(jq -r "type" <<< "$COMMITTEE_THRESHOLD" 2> /dev/null)
 
-     echo -ne "Action-Content: ${CYAN}Threshold -> "
+    case "$COMMITTEE_THRESHOLD_TYPE" in
+      "object")
+        {
+          read -r NUMERATOR
+          read -r DENOMINATOR
+        } <<< "$(jq -r '.numerator // "-", .denominator // "-"' <<< "$COMMITTEE_THRESHOLD")"
+        echo -e "Approval of a governance measure requires $NUMERATOR out of $DENOMINATOR ($(bc <<< "scale=0; ($NUMERATOR * 100 / $DENOMINATOR) / 1")%) of the votes of committee members.$OFF\n"
+        ;;
 
-     case "$COMMITTEE_THRESHOLD_TYPE" in
-       "object")
-         {
-           read -r NUMERATOR
-           read -r DENOMINATOR
-         } <<< "$(jq -r '.numerator // "-", .denominator // "-"' <<< "$COMMITTEE_THRESHOLD")"
-         echo -e "Approval of a governance measure requires $NUMERATOR out of $DENOMINATOR ($(bc <<< "scale=0; ($NUMERATOR * 100 / $DENOMINATOR) / 1")%) of the votes of committee members.$OFF\n"
-         ;;
+      "number")
+        echo -e "Approval of a governance measure requires $(bc <<< "scale=0; ($COMMITTEE_THRESHOLD * 100) / 1")% of the votes of committee members.$OFF\n"
+        ;;
+    esac
 
-       "number")
-         echo -e "Approval of a governance measure requires $(bc <<< "scale=0; ($COMMITTEE_THRESHOLD * 100) / 1")% of the votes of committee members.$OFF\n"
-         ;;
-     esac
+    ADD_HASHES_RENDER=$(jq -r "
+      .[2] // {}
+        | to_entries[]
+        | \"Adding $GREEN\(.key)-\(.value)\"
+        | split(\"-\") | \"\(.[0])$OFF ► $BLUE\(.[1])$OFF (max term epoch \(.[2]))\"
+    " <<< "$ACTION_CONTENTS" 2> /dev/null)
 
-     ADD_HASHES_RENDER=$(jq -r "
-       .[2] // {}
-         | to_entries[]
-         | \"Adding \(.key)-\(.value)\"
-         | split(\"-\") | \"\(.[0]) ► \(.[1]) (max term epoch \(.[2]))\"
-     " <<< "$ACTION_CONTENTS" 2> /dev/null)
+    REM_HASHES_RENDER=$(jq -r "
+      .[1][] // []
+        | to_entries[]
+        | \"Remove $GREEN\(.key)$OFF ◄ $RED\(.value)$OFF\"
+    " <<< "$ACTION_CONTENTS" 2> /dev/null)
 
-     REM_HASHES_RENDER=$(jq -r "
-       .[1][] // []
-         | to_entries[]
-         | \"Remove \(.key) ◄ \(.value)\"
-     " <<< "$ACTION_CONTENTS" 2> /dev/null)
+    echo -e "$ADD_HASHES_RENDER"
+    echo -e "$REM_HASHES_RENDER"
 
-     echo -e "$ADD_HASHES_RENDER"
-     echo -e "$REM_HASHES_RENDER"
+    {
+      read -r DREP_STAKE_THRESHOLD
+      read -r POOL_STAKE_THRESHOLD
+    } <<< "$(jq -r '.dRepVotingThresholds.committeeNormal // 0, .poolVotingThresholds.committeeNormal // 0' <<< "$PPARAMS" 2> /dev/null)"
 
-     {
-       read -r DREP_STAKE_THRESHOLD
-       read -r POOL_STAKE_THRESHOLD
-     } <<< "$(jq -r '.dRepVotingThresholds.committeeNormal // 0, .poolVotingThresholds.committeeNormal // 0' <<< "$PPARAMS" 2> /dev/null)"
+    DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
+    THRESHOLD_CHECK "DREP" "$DREP_PCT" "$DREP_STAKE_THRESHOLD"
 
-     DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
+    POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
+    THRESHOLD_CHECK "POOL" "$POOL_PCT" "$POOL_STAKE_THRESHOLD"
 
-     if [ "$(bc <<< "$DREP_PCT >= $DREP_STAKE_THRESHOLD")" -eq 1 ]; then
-       DREP_ACCEPT_ICON="$GREEN_CHECK"
-     else
-       DREP_ACCEPT_ICON="$RED_X"
-       TOTAL_ACCEPT+="NO"
-     fi
-
-     POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
-
-     if [ "$(bc <<< "$POOL_PCT >= $POOL_STAKE_THRESHOLD")" -eq 1 ]; then
-       POOL_ACCEPT_ICON="$GREEN_CHECK"
-     else
-       POOL_ACCEPT_ICON="$RED_X"
-       TOTAL_ACCEPT+="NO"
-     fi
-
-     COMMITTEE_ACCEPT_ICON="";
-     ;;
+    COMMITTEE_ACCEPT_ICON="";
+    ;;
 
   "NoConfidence")
-     {
-       read -r PREV_ACTION_UTXO
-       read -r PREV_ACTION_IDX
-     } <<< "$(jq -r '.txId // "-", .govActionIx // "-"' 2> /dev/null <<< "$ACTION_CONTENTS")"
+    {
+      read -r PREV_ACTION_UTXO
+      read -r PREV_ACTION_IDX
+    } <<< "$(jq -r '.txId // "-", .govActionIx // "-"' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-     if [ ${#PREV_ACTION_UTXO} -gt 1 ]; then
-       echo -e "Reference-Action-ID: ${CYAN}${PREV_ACTION_UTXO}#${PREV_ACTION_IDX}$OFF\n"
-     fi
+    PREV_ACTION "$PREV_ACTION_UTXO" "$PREV_ACTION_IDX"
+    ACTION_CONTENT "$RED" "No confidence in the committee"
 
-     echo -e "Action-Content: ${RED}No Confidence in the Committee$OFF"
+    {
+      read -r DREP_STAKE_THRESHOLD
+      read -r POOL_STAKE_THRESHOLD
+    } <<< "$(jq -r '
+      .dRepVotingThresholds.committeeNoConfidence // 0,
+      .poolVotingThresholds.committeeNoConfidence // 0
+    ' <<< "$PPARAMS" 2> /dev/null)"
 
-     {
-       read -r DREP_STAKE_THRESHOLD
-       read -r POOL_STAKE_THRESHOLD
-     } <<< "$(jq -r '.dRepVotingThresholds.committeeNoConfidence // 0, .poolVotingThresholds.committeeNoConfidence // 0' <<< "$PPARAMS" 2> /dev/null)"
+    DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
+    THRESHOLD_CHECK "DREP" "$DREP_PCT" "$DREP_STAKE_THRESHOLD"
 
-     DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
+    POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
+    THRESHOLD_CHECK "POOL" "$POOL_PCT" "$POOL_STAKE_THRESHOLD"
 
-     if [ "$(bc <<< "$DREP_PCT >= $DREP_STAKE_THRESHOLD")" -eq 1 ]; then
-       DREP_ACCEPT_ICON="$GREEN_CHECK"
-     else
-       DREP_ACCEPT_ICON="$RED_X"
-       TOTAL_ACCEPT+="NO"
-     fi
-
-     POOL_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $POOL_STAKE_THRESHOLD")
-
-     if [ "$(bc <<< "$POOL_PCT >= $POOL_STAKE_THRESHOLD")" -eq 1 ]; then
-       POOL_ACCEPT_ICON="$GREEN_CHECK"
-     else
-       POOL_ACCEPT_ICON="$RED_X"
-       TOTAL_ACCEPT+="NO"
-     fi
-
-     COMMITTEE_ACCEPT_ICON=""
-     ;;
+    COMMITTEE_ACCEPT_ICON=""
+    ;;
 
   "TreasuryWithdrawals")
     {
@@ -573,67 +527,61 @@ case "$ACTION_TAG" in
       read -r WITHDRAWALS_KEY_TYPE
       read -r WITHDRAWALS_HASH
       read -r WITHDRAWALS_NETWORK
-    } <<< "$(jq -r '.[0][0][1] // "0", (.[0][0][0].credential|keys[0]) // "-", (.[0][0][0].credential|flatten[0]) // "-", .[0][0][0].network // "-"' 2> /dev/null <<< "$ACTION_CONTENTS")"
+    } <<< "$(jq -r '
+      .[0][0][1] // "0",
+      (.[0][0][0].credential|keys[0]) // "-",
+      (.[0][0][0].credential|flatten[0]) // "-",
+      .[0][0][0].network // "-"
+    ' 2> /dev/null <<< "$ACTION_CONTENTS")"
 
-    echo -e "\e[0mAction-Content:\e[36m Withdrawal funds from the treasury\n\e[0m"
+    ACTION_CONTENT "$GREEN" "Withdrawal of funds from the treasury"
 
+    # Lowercase the case comparison variables with bash parameter expansion
     case "${WITHDRAWALS_NETWORK,,}${WITHDRAWALS_KEY_TYPE,,}" in
       *"scripthash")
-        echo -e "Withdrawal to ${GREEN}ScriptHash$OFF ► $GREEN$WITHDRAWALS_HASH$OFF"
+        echo -e "Withdrawal to ${GREEN}ScriptHash$OFF ► $BLUE$WITHDRAWALS_HASH$OFF"
         ;;
 
       "mainnet"*)
-        WITHDRAWALS_ADDR=$(bech32 "stake" <<< "e1$WITHDRAWALS_HASH" 2> /dev/null)
-        # shellcheck disable=SC2181
-        if [ "$?" -ne 0 ]; then
-          echo -e "\n\e${RED}ERROR - Could not get Withdrawals Stake-Address from KeyHash '$WITHDRAWALS_HASH' !$OFF\n"
+        if WITHDRAWALS_ADDR=$(bech32 "stake" <<< "e1$WITHDRAWALS_HASH" 2> /dev/null); then
+          echo -e "Withdrawal to ${GREEN}stake addr$OFF ► $BLUE$WITHDRAWALS_ADDR$OFF"
+        else
+          echo -e "${RED}ERROR:$OFF Could not get withdrawal stake address from key hash $WITHDRAWALS_HASH"
           exit 1
         fi
-        echo -e "Withdrawal to ${GREEN}StakeAddr$OFF ► $BLUE$WITHDRAWALS_ADDR$OFF"
         ;;
 
       "testnet"*)
-        WITHDRAWALS_ADDR=$(bech32 "stake_test" <<< "e0$WITHDRAWALS_HASH" 2> /dev/null)
-        # shellcheck disable=SC2181
-        if [ "$?" -ne 0 ]; then
-          echo -e "\n\e${RED}ERROR - Could not get Withdrawals Stake-Address from KeyHash '$WITHDRAWALS_HASH' !$OFF\n"
+        if WITHDRAWALS_ADDR=$(bech32 "stake_test" <<< "e0$WITHDRAWALS_HASH" 2> /dev/null); then
+          echo -e "Withdrawal to ${GREEN}stake addr$OFF ► $BLUE$WITHDRAWALS_ADDR$OFF"
+        else
+          echo -e "${RED}ERROR:$OFF Could not get withdrawal stake address from key hash $WITHDRAWALS_HASH"
           exit 1
         fi
-        echo -e "Withdrawal to ${GREEN}StakeAddr$OFF ► $BLUE$WITHDRAWALS_ADDR$OFF"
         ;;
 
       "")
-        echo -e "Withdrawal ${GREEN}directly$OFF to the ${BLUE}Deposit-Return-Address$OFF\n"
+        echo -e "Withdrawal ${GREEN}directly$OFF to the ${BLUE}deposit return address$OFF"
         ;;
 
       *)
-        echo -e "\n${RED}ERROR - Unknown network type $WITHDRAWALS_NETWORK for the Withdrawal KeyHash !$OFF"
+        echo -e "${RED}ERROR:$OFF Unknown network type $WITHDRAWALS_NETWORK for the withdrawal key hash"
         exit 1;
         ;;
     esac
 
-    echo -e "Withdrawal the ${GREEN}Amount$OFF ► $BLUE$WITHDRAWALS_AMOUNT lovelaces$OFF"
+    echo -e "Withdrawal the ${GREEN}amount$OFF ► $BLUE$WITHDRAWALS_AMOUNT lovelaces$OFF"
     echo
 
     DREP_STAKE_THRESHOLD=$(jq -r '.dRepVotingThresholds.treasuryWithdrawal // 0' <<< "$PPARAMS" 2> /dev/null)
-
     DREP_STAKE_THRESHOLD=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_THRESHOLD")
-
-    if [ "$(bc <<< "$DREP_PCT >= $DREP_STAKE_THRESHOLD")" -eq 1 ]; then
-      DREP_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      DREP_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
+    if [ "$PROT_MAJOR_VER" -ge 10 ]; then
+      THRESHOLD_CHECK "DREP" "$DREP_PCT" "$DREP_STAKE_THRESHOLD"
     fi
 
     POOL_ACCEPT_ICON=""
 
-    if [ "$(bc <<< "$COMMITTEE_PCT >= $COMMITTEE_THRESHOLD")" -eq 1 ]; then
-      COMMITTEE_ACCEPT_ICON="$GREEN_CHECK"
-    else
-      COMMITTEE_ACCEPT_ICON="$RED_X"
-      TOTAL_ACCEPT+="NO"
-    fi
+    THRESHOLD_CHECK "COMMITTEE" "$COMMITTEE_PCT" "$COMMITTEE_THRESHOLD"
     ;;
 esac
 
@@ -662,7 +610,7 @@ fi
 echo -e "$OUTPUT\n$DREP_SUMMARY\n$POOL_SUMMARY\n$COMMITTEE_SUMMARY" | nu --stdin -c '$in | from csv --separator ","'
 
 case "$TOTAL_ACCEPT" in
-  *"N/A"*) TOTAL_ACCEPT_ICON="N/A";;
+  *"N/A"*) TOTAL_ACCEPT_ICON="$GREEN_NA";;
   *"NO"*) TOTAL_ACCEPT_ICON="$RED_X";;
   *) TOTAL_ACCEPT_ICON="$GREEN_CHECK";;
 esac
