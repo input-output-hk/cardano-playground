@@ -90,6 +90,7 @@ in
         };
 
       nodeHd = mkCustomNode "cardano-node-utxo-hd";
+      nodeNewTracing = mkCustomNode "cardano-new-tracing";
 
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
@@ -318,77 +319,77 @@ in
         ];
       };
 
-      logRejected = {
-        services = {
-          cardano-node.extraNodeConfig = {
-            TraceOptionResourceFrequency = 60000;
-            TraceOptions = {
-              "Mempool" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              # "Mempool.MempoolAttemptAdd" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolAttemptingSync" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolLedgerFound" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolLedgerNotFound" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolSyncDone" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              # "Mempool.MempoolSyncNotNeeded" = {
-              #   severity = "Debug";
-              #   detail = "DDetailed";
-              # };
-              "TxSubmission.TxInbound" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              "TxSubmission.TxOutbound" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              Resources.severity = "Debug";
-            };
-          };
+      # logRejected = {
+      #   services = {
+      #     cardano-node.extraNodeConfig = {
+      #       TraceOptionResourceFrequency = 60000;
+      #       TraceOptions = {
+      #         "Mempool" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         # "Mempool.MempoolAttemptAdd" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolAttemptingSync" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolLedgerFound" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolLedgerNotFound" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolSyncDone" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         # "Mempool.MempoolSyncNotNeeded" = {
+      #         #   severity = "Debug";
+      #         #   detail = "DDetailed";
+      #         # };
+      #         "TxSubmission.TxInbound" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         "TxSubmission.TxOutbound" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         Resources.severity = "Debug";
+      #       };
+      #     };
 
-          cardano-tracer.nodeDefaultTraceOptions = {
-            severity = "Notice";
-            detail = "DNormal";
-            backends = [
-              # This results in journald output for the cardano-node service,
-              # like we would normally expect. This will, however, create
-              # duplicate logging if the tracer service resides on the same
-              # machine as the node service.
-              #
-              # In general, the "human" logging which appears in the
-              # cardano-node service is more human legible than the
-              # "ForHuman" node logging that appears in cardano-tracer for
-              # the same log events.
-              "Stdout HumanFormatColoured"
-              # "Stdout HumanFormatUncoloured"
-              # "Stdout MachineFormat"
+      #     cardano-tracer.nodeDefaultTraceOptions = {
+      #       severity = "Notice";
+      #       detail = "DNormal";
+      #       backends = [
+      #         # This results in journald output for the cardano-node service,
+      #         # like we would normally expect. This will, however, create
+      #         # duplicate logging if the tracer service resides on the same
+      #         # machine as the node service.
+      #         #
+      #         # In general, the "human" logging which appears in the
+      #         # cardano-node service is more human legible than the
+      #         # "ForHuman" node logging that appears in cardano-tracer for
+      #         # the same log events.
+      #         "Stdout HumanFormatColoured"
+      #         # "Stdout HumanFormatUncoloured"
+      #         # "Stdout MachineFormat"
 
-              # Leave EKG disabled in node as tracer now generates this as well.
-              # "EKGBackend"
+      #         # Leave EKG disabled in node as tracer now generates this as well.
+      #         # "EKGBackend"
 
-              # Forward to tracer.
-              "Forwarder"
-            ];
-          };
-        };
-      };
+      #         # Forward to tracer.
+      #         "Forwarder"
+      #       ];
+      #     };
+      #   };
+      # };
 
       traceTxs = {
         services.cardano-node.extraNodeConfig = {
@@ -518,24 +519,24 @@ in
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
       #
       # Example of node pinning to a custom version; see also the relevant flake inputs.
-      dbsync921 = {
-        imports = [
-          "${inputs.cardano-parts.inputs.cardano-node-service}/nix/nixos/cardano-node-service.nix"
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          inputs.cardano-parts.nixosModules.profile-cardano-postgres
-          {
-            cardano-parts.perNode = {
-              # lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-9-2-1 "x86_64-linux";
-              pkgs = {inherit (inputs.cardano-node-9-2-1.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
-            };
-            services.cardano-node.shareNodeSocket = true;
-            services.cardano-postgres.enablePsqlrc = true;
-          }
-        ];
-      };
+      # dbsync921 = {
+      #   imports = [
+      #     "${inputs.cardano-parts.inputs.cardano-node-service}/nix/nixos/cardano-node-service.nix"
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
+      #     {
+      #       cardano-parts.perNode = {
+      #         # lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-9-2-1 "x86_64-linux";
+      #         pkgs = {inherit (inputs.cardano-node-9-2-1.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+      #       };
+      #       services.cardano-node.shareNodeSocket = true;
+      #       services.cardano-postgres.enablePsqlrc = true;
+      #     }
+      #   ];
+      # };
       #
       # hostsListByPrefix = prefix: {
       #   cardano-parts.perNode.meta.hostsList =
@@ -587,7 +588,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preprod1") dbsync921 smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
@@ -605,10 +606,10 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics logRejected previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash pre previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
@@ -631,7 +632,7 @@ in
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
       # Smallest d variant for testing
-      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics pparamsApi];};
+      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") nodeNewTracing newMetrics pparamsApi];};
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
@@ -650,18 +651,31 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync921 dbsyncPub (openFwTcp 5432)];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync921 disableAlertCount];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432)];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node];};
+      mainnet1-rel-a-1 = {
+        imports = [
+          eu-central-1
+          r5-xlarge
+          (ebs 300)
+          (group "mainnet1")
+          node
+          bp
+          {
+            services.mithril-signer.enable = false;
+            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+          }
+        ];
+      };
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
