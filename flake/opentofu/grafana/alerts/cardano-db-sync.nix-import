@@ -16,11 +16,11 @@
     {
       alert = "dbsync_db_block_height_stall";
       expr = "increase(cardano_db_sync_db_block_height[2m]) == 0";
-      for = "60m";
+      for = "30m";
       labels.severity = "page";
       annotations = {
         summary = "Dbsync on {{$labels.instance}} is experiencing block height stall.";
-        description = "Dbsync on {{$labels.instance}} has not increased in DB block height for the past 60 minutes";
+        description = "Dbsync on {{$labels.instance}} has not increased in DB block height for the past 30 minutes";
       };
     }
     {
@@ -36,24 +36,24 @@
     {
       alert = "dbsync_node_block_height_divergence";
       expr = "abs(cardano_db_sync_node_block_height - cardano_db_sync_db_block_height) > 10";
-      for = "60m";
+      for = "30m";
       labels.severity = "warning";
       annotations = {
         summary = "Dbsync on {{$labels.instance}} is experiencing block height divergence from cardano node.";
         description = ''
-          Dbsync on {{$labels.instance}} has averaged more than 10 blocks divergence with node for more than 60 minutes.
+          Dbsync on {{$labels.instance}} has averaged more than 10 blocks divergence with node for more than 10 minutes.
           During extended resynchronization events this may be expected and should resolve once synchronization is complete.'';
       };
     }
     {
       alert = "dbsync_queue_length";
       expr = "cardano_db_sync_db_queue_length > 10";
-      for = "60m";
+      for = "30m";
       labels.severity = "warning";
       annotations = {
         summary = "Dbsync job {{$labels.instance}} is experiencing queue backlog.";
         description = ''
-          Dbsync on {{$labels.instance}} has a queue length of > 10 for more than 60 minutes.
+          Dbsync on {{$labels.instance}} has a queue length of > 10 for more than 30 minutes.
           During extended resynchronization events this may be expected and should resolve once synchronization is complete.'';
       };
     }
