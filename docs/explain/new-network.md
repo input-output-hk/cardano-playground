@@ -32,9 +32,10 @@ export USE_NODE_CONFIG_BP=false
 
 Create the basic genesis and node configurations
 ```bash
-# The time given can be in the past, so a convienent 00:00Z time can be used.
+# The time given can be in the past, so a convenient 00:00Z time can be used.
 SECURITY_PARAM=36 \
 START_TIME="2024-05-16T00:00:00Z" \
+ERA_CMD="alonzo" \
 nix run .#job-gen-custom-node-config
 ```
 
@@ -47,14 +48,17 @@ Create stake pools with each belonging to a seperate pool group
 # pool per group.  This also makes secrets handling easier.
 POOL_NAMES="${ENV}1-bp-a-1" \
 STAKE_POOL_DIR=workbench/custom/groups/${ENV}1 \
+ERA_CMD="alonzo" \
 nix run .#job-create-stake-pool-keys
 
 POOL_NAMES="${ENV}2-bp-b-1" \
 STAKE_POOL_DIR=workbench/custom/groups/${ENV}2 \
+ERA_CMD="alonzo" \
 nix run .#job-create-stake-pool-keys
 
 POOL_NAMES="${ENV}3-bp-c-1" \
 STAKE_POOL_DIR=workbench/custom/groups/${ENV}3 \
+ERA_CMD="alonzo" \
 nix run .#job-create-stake-pool-keys
 ```
 
@@ -93,7 +97,7 @@ and place it in the data dir
 # Depending what environment you are configuring you may want
 # to choose from environment or environments-pre in the result dir
 # and environment or environment-pre in the docs dir
-cp result/environments[-pre]/config/$ENV/* docs/environments[-pre]/$ENV/
+cp -a result/environments[-pre]/config/$ENV docs/environments[-pre]/
 chmod +w -R docs/environments[-pre]/$ENV/
 
 # As a sanity check, compare the sanitized config against the
