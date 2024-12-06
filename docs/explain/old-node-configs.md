@@ -48,6 +48,11 @@
 
 ## Version Reference:
 
+* Node `10.1.3`
+  * Environment configs can be found in `result/environments/config/` after running:
+    ```bash
+    nix run github:input-output-hk/cardano-playground/node-10.1.3-config#job-gen-env-config
+
 * Node `10.1.2`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash

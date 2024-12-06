@@ -1388,7 +1388,7 @@
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2024-12-02",
+        "ref": "next-2024-12-03",
         "repo": "cardano-parts",
         "type": "github"
       }

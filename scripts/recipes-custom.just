@@ -64,6 +64,156 @@ build-book-staging:
   echo
   ANSI_BG "bg_light_purple" "REMINDER:" "Ensure node version statement and link for each environment are up to date."
 
+# Transfer funds from an environment rich key to another address
+fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  {{checkEnvWithoutOverride}}
+
+  if ! [[ "$ENV" =~ ^preprod$|^preview$|^private$|^sanchonet$|^shelley-qa$|^demo$ ]]; then
+    echo "Error: only node environments for preprod, preview, private, sanchonet, shelley-qa and demo are supported"
+    exit 1
+  fi
+
+  just set-default-cardano-env "$ENV" "$MAGIC" "$PPID"
+  export CARDANO_NODE_NETWORK_ID="$MAGIC"
+  export TESTNET_MAGIC="$MAGIC"
+  echo
+
+  [ -n "${DEBUG:-}" ] && set -x
+
+  TS=$(date -u +%y-%m-%d_%H-%M-%S)
+  BASENAME="tx-fund-transfer-$ENV-$TS"
+  SEND_ADDR="{{SEND_ADDR}}"
+  LOVELACE="{{LOVELACE}}"
+  UTXO="{{UTXO}}"
+
+  TIP=$(just query-tip "$ENV")
+  if [ "$(jq -re .syncProgress <<< "$TIP")" != "100.00" ]; then
+    echo "Please wait until the local tip of environment $ENV is 100.00 before transferring funds"
+    exit 1
+  fi
+
+  if ! [[ "$LOVELACE" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: LOVELACE given does not appear to be a number"
+    exit 1
+  fi
+
+  if [ "${USE_SHELL_BINS:-}" = "true" ]; then
+    CARDANO_CLI="cardano-cli"
+  elif [ -n "${UNSTABLE:-}" ] && [ "${UNSTABLE:-}" != "true" ]; then
+    CARDANO_CLI="cardano-cli"
+  elif [ "${UNSTABLE:-}" = "true" ]; then
+    CARDANO_CLI="cardano-cli-ng"
+  elif [[ "$ENV" =~ ^preprod$|^preview$|^shelley-qa$ ]]; then
+    CARDANO_CLI="cardano-cli"
+  elif [[ "$ENV" =~ ^private$|^sanchonet$ ]]; then
+    CARDANO_CLI="cardano-cli-ng"
+  fi
+
+  PROMPT() {
+    echo
+    read -p "Does this look correct [yY]? " -n 1 -r
+    echo
+    if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo "Aborting the fund transfer."
+      exit 1
+    fi
+    echo
+  }
+
+  echo "For environment $ENV, the SEND_TO address of $SEND_ADDR contains the following UTxOs:"
+  eval "$CARDANO_CLI" latest query utxo --address "$SEND_ADDR"
+  PROMPT
+
+  CHANGE_ADDR=$(just sops-decrypt-binary secrets/envs/$ENV/utxo-keys/rich-utxo.addr)
+  echo "For environment $ENV, the rich key address of $CHANGE_ADDR contains the following UTxOs:"
+  eval "$CARDANO_CLI" latest query utxo --address "$CHANGE_ADDR"
+  PROMPT
+
+  if [ "$UTXO" = "auto" ]; then
+    MIN_UTXO_VALUE=$((LOVELACE + 5000000))
+    echo "The auto-selected UTXO with a min value of the requested transfer, $LOVELACE lovelace, plus 5 ADA and no native tokens is:"
+    SELECTED_UTXO=$(
+      eval "$CARDANO_CLI" query utxo \
+        --address "$CHANGE_ADDR" \
+        --testnet-magic "$TESTNET_MAGIC" \
+        --output-json \
+      | jq -e -r --arg minUtxoValue "$MIN_UTXO_VALUE" 'to_entries
+        |
+          [
+            sort_by(.value.value.lovelace)[]
+              | select(.value.value.lovelace >= ($minUtxoValue | tonumber) and (.value.value | length) == 1)
+              | {"txin": .key, "address": .value.address, "amount": .value.value.lovelace}
+          ]
+        [0]'
+    )
+  else
+    echo "The provided UTXO has an ID and value of:"
+    SELECTED_UTXO=$(
+      eval "$CARDANO_CLI" query utxo \
+        --address "$CHANGE_ADDR" \
+        --testnet-magic "$TESTNET_MAGIC" \
+        --output-json \
+      | jq -e -r --arg selectedUtxo "$UTXO" 'to_entries[]
+        |
+          select(.key == $selectedUtxo)
+            | {"txin": .key, "address": .value.address, "amount": .value.value.lovelace}'
+    )
+  fi
+
+  TXIN=$(jq -r .txin <<< "$SELECTED_UTXO")
+  TXIN_VALUE=$(jq -r .amount <<< "$SELECTED_UTXO")
+  echo "  UTXO: $TXIN"
+  echo "  Value: $TXIN_VALUE"
+  echo
+  echo "Assembling transaction with details of:"
+  echo "  Send to address: $SEND_ADDR"
+  echo "  From address: $CHANGE_ADDR"
+  echo "  Send amount: $LOVELACE lovelace"
+  echo "  Funding UTxO: $TXIN"
+  echo "  Funding UTxO value: $TXIN_VALUE lovelace"
+  PROMPT
+
+  eval "$CARDANO_CLI" latest transaction build \
+    --tx-in "$TXIN" \
+    --tx-out "$SEND_ADDR+$LOVELACE" \
+    --change-address "$CHANGE_ADDR" \
+    --testnet-magic "$TESTNET_MAGIC" \
+    --out-file "$BASENAME.raw"
+
+  eval "$CARDANO_CLI" latest transaction sign \
+    --tx-body-file "$BASENAME.raw" \
+    --signing-key-file <(just sops-decrypt-binary secrets/envs/${ENV}/utxo-keys/rich-utxo.skey) \
+    --testnet-magic "$TESTNET_MAGIC" \
+    --out-file "$BASENAME.signed"
+
+  echo
+  echo "The transaction has been prepared and signed:"
+  eval "$CARDANO_CLI" debug transaction view --tx-file "$BASENAME.signed"
+  echo
+  echo "If you answer affirmative to the next prompt this transaction will be submitted to the network!"
+  PROMPT
+
+  echo "Submitting the transaction to the network:"
+  eval "$CARDANO_CLI" latest transaction submit --tx-file "$BASENAME.signed"
+  echo
+
+  TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file "$BASENAME.signed")
+  EXISTS="true"
+
+  while [ "$EXISTS" = "true" ]; do
+    EXISTS=$(eval "$CARDANO_CLI" latest query tx-mempool tx-exists $TXID | jq -r .exists)
+    if [ "$EXISTS" = "true" ]; then
+      echo "The transaction still exists in the mempool, sleeping 5s: $TXID"
+    else
+      echo "The transaction has been removed from the mempool."
+    fi
+    sleep 5
+  done
+  echo
+  echo "Fund transfer completed."
+
 # Assist with KES rotation per environment
 kes-rotate ENV CURRENT_KES_PERIOD:
   #!/usr/bin/env bash
