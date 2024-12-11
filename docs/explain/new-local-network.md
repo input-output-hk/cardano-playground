@@ -114,3 +114,66 @@ An example of the associated process state of this testnet would be:
   --port 33303 \
   --host-addr 127.0.0.1
 ```
+
+For those wanting to run a custom network in a local docker container, the
+`cardano-testnet` configuration state can also be used as a quick starting
+point for a docker compose file like the following:
+```yaml
+services:
+  cardano-node:
+    image: ghcr.io/intersectmbo/cardano-node:${CARDANO_NODE_VERSION:-10.1.3}
+    environment:
+      - CARDANO_CONFIG=/opt/cardano/workbench/config.json
+      - CARDANO_TOPOLOGY=/opt/cardano/workbench/topology.json
+      - CARDANO_DATABASE_PATH=/opt/cardano/workbench/data
+      - CARDANO_SOCKET_PATH=/opt/cardano/workbench/ipc/socket
+      - CARDANO_LOG_DIR=/opt/cardano/workbench/logs
+      - CARDANO_BIND_ADDRESS=0.0.0.0
+      - CARDANO_PORT=3001
+      - CARDANO_BLOCK_PRODUCER=true
+      - CARDANO_SHELLEY_KES_KEY=/opt/cardano/workbench/kes.skey
+      - CARDANO_SHELLEY_VRF_KEY=/opt/cardano/workbench/vrf.skey
+      - CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE=/opt/cardano/workbench/opcert.cert
+    command:
+      - run
+    volumes:
+      - ./new-testnet:/opt/cardano/workbench
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+```
+
+From the same directory that the above docker compose file is created in, the
+following sequence of commands is an example of moving new testnet configuration
+state into a docker container:
+```bash
+# Start a local testnet so that all configuration state is created:
+❯ just cardano-testnet false cardano --conway-era --testnet-magic 42 --slot-length 1
+
+# Once running, stop the testnet with <CTRL-C> and assign the `Workspace` to a variable:
+WORKSPACE=/tmp/...
+
+# Make a docker state mounting dir and copy relevant `cardano-testnet` config state into it
+mkdir -p new-testnet/byron
+cp $WORKSPACE/{alonzo,shelley,conway}-genesis.json new-testnet/
+cp $WORKSPACE/byron/genesis.json new-testnet/byron/
+cp $WORKSPACE/configuration.yaml new-testnet/config.json
+cp $WORKSPACE/node-data/node1/topology.json new-testnet/
+cp $WORKSPACE/pools-keys/pool1/kes.skey new-testnet/
+cp $WORKSPACE/pools-keys/pool1/vrf.skey new-testnet/
+cp $WORKSPACE/pools-keys/pool1/opcert.cert new-testnet/
+
+# Start docker:
+docker compose up
+```
+
+If the `--slot-length 1` arg is not included as shown above, `cardano-testnet`
+will default to slots of 100 milliseconds making it difficult to manually move
+the `cardano-testnet` generated config data into docker and get docker started
+before the node can no longer forge because it missed too much time.
+
+To remedy this, the start times in the byron and shelley genesis files can be
+edited to a more suitable start time, followed by rehashing them and updating
+the hashes in the node configuration file.
