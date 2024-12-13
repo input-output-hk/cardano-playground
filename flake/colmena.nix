@@ -488,21 +488,37 @@ in
           script = ''
             set -euo pipefail
 
-            echo "Evalulating default route options..."
+            APPEND_OPTS="initcwnd 42 initrwnd 42"
+
+            echo "Evalulating -4 default route options..."
             DEFAULT_ROUTE=""
             while [ "$DEFAULT_ROUTE" = "" ]; do
-              echo "Waiting for default route to populate..."
+              echo "Waiting for the -4 default route to populate..."
               sleep 2
               DEFAULT_ROUTE=$(ip route list default)
             done
 
-            echo "Current default route is: $DEFAULT_ROUTE"
+            CHANGE_ROUTE() {
+              PROT="$1"
+              DEFAULT_ROUTE="$2"
 
-            if ! grep -q initcwnd <<< "$DEFAULT_ROUTE"; then
-              echo "Adding tcp window size options to the default route..."
-              eval ip route change "$DEFAULT_ROUTE" initcwnd 42 initrwnd 42
+              echo "Current default $PROT route is: $DEFAULT_ROUTE"
+
+              if ! grep -q initcwnd <<< "$DEFAULT_ROUTE"; then
+                echo "Adding tcp window size options to the $PROT default route..."
+                eval ip "$PROT" route change "$DEFAULT_ROUTE" "$APPEND_OPTS"
+              else
+                echo "The $PROT default route already contains an initcwnd customization, skipping."
+              fi
+            }
+
+            CHANGE_ROUTE "-4" "$DEFAULT_ROUTE"
+
+            DEFAULT_ROUTE=$(ip -6 route list default)
+            if [ "$DEFAULT_ROUTE" = "" ]; then
+              echo "The -6 default route is not set, skipping."
             else
-              echo "The default route already contains an initcwnd customization, exiting."
+              CHANGE_ROUTE "-6" "$DEFAULT_ROUTE"
             fi
           '';
 
