@@ -29,6 +29,7 @@ in
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       t3a-small.aws.instance.instance_type = "t3a.small";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
+      t3a-large.aws.instance.instance_type = "t3a.large";
 
       # Helper fns:
       ebs = size: {aws.instance.root_block_device.volume_size = mkDefault size;};
@@ -744,7 +745,7 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Misc
-      misc1-metadata-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
+      misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       # ---------------------------------------------------------------------------------------------------------
     };
