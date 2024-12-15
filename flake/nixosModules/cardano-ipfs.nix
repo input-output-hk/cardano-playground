@@ -1,7 +1,11 @@
-flake: let
+flake @ {
+  inputs,
+  moduleWithSystem,
+  ...
+}: let
   inherit (flake.config.flake.cardano-parts.cluster.infra.aws) domain;
 in {
-  flake.nixosModules.cardano-ipfs = {
+  flake.nixosModules.cardano-ipfs = moduleWithSystem ({system}: {
     config,
     pkgs,
     name,
@@ -69,6 +73,8 @@ in {
       services = {
         kubo = {
           enable = true;
+          package = inputs.nixpkgs-unstable.legacyPackages.${system}.kubo;
+
           enableGC = true;
           autoMount = true;
 
@@ -375,6 +381,9 @@ in {
         };
       };
 
+      # Needed for kubo to `sh` to run the repo db migration process for upgrades
+      systemd.services.ipfs.path = with pkgs; [bashInteractive];
+
       sops.secrets = mkSopsSecret {
         secretName = "ipfs-auth";
         keyName = "${name}-ipfs-auth";
@@ -383,5 +392,5 @@ in {
         fileGroup = "nginx";
       };
     };
-  };
+  });
 }
