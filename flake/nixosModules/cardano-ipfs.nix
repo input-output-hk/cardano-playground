@@ -382,7 +382,7 @@ in {
       };
 
       # Needed for kubo to `sh` to run the repo db migration process for upgrades
-      systemd.services.ipfs.path = with pkgs; [bashInteractive];
+      systemd.services.ipfs.path = with pkgs; [bash];
 
       sops.secrets = mkSopsSecret {
         secretName = "ipfs-auth";
