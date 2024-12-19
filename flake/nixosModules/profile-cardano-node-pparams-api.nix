@@ -227,7 +227,7 @@ flake: {
             serviceConfig = {
               ExecStart = "${flake.inputs.cardano-node-pparams-api.packages.x86_64-linux.cardano-node-pparams-api}/bin/cardano-node-pparams-api";
               User = "cardano-node-pparams-api";
-              SupplementaryGroups = "cardano-node";
+              SupplementaryGroups = ["cardano-node"];
               StateDirectory = "cardano-node-pparams-api";
               Restart = "always";
               RestartSec = "30s";
