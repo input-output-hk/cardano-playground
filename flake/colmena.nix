@@ -728,13 +728,13 @@ in
             services.mithril-signer.enable = false;
 
             # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occassionally on 10.1.3 to 20 days runtime
-            # services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
 
             # Old RTS Params w/ non-moving gc -- no missedSlots per hour on 10.1.3 at 8 days runtime
             # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M" "--nonmoving-gc"];
 
-            # Old RTS Params w/ moving gc
-            services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M"];
+            # Old RTS Params w/ moving gc -- ~25 - 35 missed slots per hour with moving gc
+            # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M"];
           }
         ];
       };
