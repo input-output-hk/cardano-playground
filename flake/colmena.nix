@@ -2,6 +2,7 @@
   inputs,
   config,
   lib,
+  self,
   ...
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
@@ -750,4 +751,6 @@ in
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       # ---------------------------------------------------------------------------------------------------------
     };
+
+    flake.colmenaHive = inputs.cardano-parts.inputs.colmena.lib.makeHive self.outputs.colmena;
   }
