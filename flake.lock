@@ -1229,6 +1229,23 @@
         "type": "github"
       }
     },
+    "cardano-node-peerSnapshotFile": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1736825520,
+        "narHash": "sha256-lH1sVCpbvbNd5ss68MAWDEQPJ/ROpXXVMo47B858I0Q=",
+        "owner": "IntersectMBO",
+        "repo": "cardano-node",
+        "rev": "0d51eb257aa6452dea3d5ab071b45efe03985856",
+        "type": "github"
+      },
+      "original": {
+        "owner": "IntersectMBO",
+        "ref": "jl/nixos-svc-peerSnapshotFile",
+        "repo": "cardano-node",
+        "type": "github"
+      }
+    },
     "cardano-node-pparams-api": {
       "inputs": {
         "CHaP": "CHaP_4",
@@ -8204,6 +8221,7 @@
         "cardano-new-tracing": "cardano-new-tracing",
         "cardano-node-9-2-1": "cardano-node-9-2-1",
         "cardano-node-hd": "cardano-node-hd",
+        "cardano-node-peerSnapshotFile": "cardano-node-peerSnapshotFile",
         "cardano-node-pparams-api": "cardano-node-pparams-api",
         "cardano-node-utxo-hd": "cardano-node-utxo-hd",
         "cardano-parts": "cardano-parts",

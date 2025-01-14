@@ -76,7 +76,11 @@ in
       node = {
         imports = [
           # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          # Temporary switch of nixos node service until the next parts release supports peerSnapshotFile:
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          # Ensure the flake.nix diff has been updated and `nix flake update cardano-node-peerSnapshotFile`
+          # has been run from the devShell, then add:
+          "${inputs.cardano-node-peerSnapshotFile}/nix/nixos"
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -728,7 +732,12 @@ in
             services.mithril-signer.enable = false;
 
             # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occassionally on 10.1.3 to 20 days runtime
-            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+            services.cardano-node = {
+              rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+
+              # Declare the service option for relevant machines at the appropriate path, example:
+              peerSnapshotFile = "/var/lib/cardano-node/peerSnapshotFile.json";
+            };
 
             # Old RTS Params w/ non-moving gc -- no missedSlots per hour on 10.1.3 at 8 days runtime
             # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M" "--nonmoving-gc"];
