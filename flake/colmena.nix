@@ -14,8 +14,11 @@ in
   with lib; {
     flake.colmena = let
       # Region defs:
+      af-south-1.aws.region = "af-south-1";
+      ap-southeast-2.aws.region = "ap-southeast-2";
       eu-central-1.aws.region = "eu-central-1";
       eu-west-1.aws.region = "eu-west-1";
+      sa-east-1.aws.region = "sa-east-1";
       us-east-2.aws.region = "us-east-2";
 
       # Instance defs:
@@ -535,6 +538,54 @@ in
           };
         };
       };
+
+      buildkite = {imports = [nixosModules.buildkite-agent-containers];};
+
+      bkCfg = queue: {
+        lib,
+        config,
+        ...
+      }: let
+        cfg = config.services.buildkite-containers;
+        hostIdSuffix = "1";
+        count = 1;
+        bkTags =
+          {
+            system = "x86_64-linux";
+          }
+          // {inherit queue;};
+      in {
+        # We don't need to purge 10 MB daily from the nix store by default.
+        nix.gc.automatic = lib.mkForce false;
+
+        services.auto-gc = {
+          # Apply some auto and hourly gc thresholds
+          nixAutoMaxFreedGB = 150;
+          nixAutoMinFreeGB = 90;
+          nixHourlyMaxFreedGB = 600;
+          nixHourlyMinFreeGB = 150;
+
+          # The auto and hourly gc should negate the need for a weekly full gc.
+          nixWeeklyGcFull = false;
+        };
+
+        services.buildkite-containers = {
+          inherit hostIdSuffix;
+
+          # There should be enough space on these machines to cache dir purges.
+          weeklyCachePurge = false;
+
+          containerList = let
+            mkContainer = n: prio: {
+              containerName = "ci${cfg.hostIdSuffix}-${toString n}";
+              guestIp = "10.254.1.1${toString n}";
+              inherit prio;
+              tags = bkTags;
+            };
+          in
+            map (n: mkContainer n (toString (10 - n))) (lib.range 1 count);
+        };
+      };
       #
       # disableP2p = {
       #   services.cardano-node = {
@@ -758,6 +809,14 @@ in
       # Misc
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
+      # ---------------------------------------------------------------------------------------------------------
+
+      # ---------------------------------------------------------------------------------------------------------
+      # Buildkite Temporary machines
+      buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-af")];};
+      buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-ap")];};
+      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-eu")];};
+      buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-sa")];};
       # ---------------------------------------------------------------------------------------------------------
     };
 

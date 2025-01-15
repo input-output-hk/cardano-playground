@@ -40,6 +40,12 @@ keys:
   # Mainnet, non-prod testing machines
   - &mainnet1-rel-a-1 age16m0sd0pyme79ds8jd380ctuc23p570djl0rnrp6xt28tce5ltvyql4hdgn
 
+  # Buildkite
+  - &buildkite1-ap-southeast-2-1 age1q4nfkghxujn8xfxrwaazvjjunfjnrnt4wfzx57zas6cvkde3m4tscfutt9
+  - &buildkite1-eu-central-1-1 age1lsn2rs6gd0yeyq7dr25xmmxa3mh5fefgy5rttlfqzd66n37qgfmsyx3lsu
+  - &buildkite1-sa-east-1-1 age1f8ljwl7pauzfqpqjnxvz9cp0ln4ptldvjlyp3p6882klcrtswp5s30qkz7
+  - &buildkite-af-south-1-1 age1mznysjmhug030jh7sgvp4tueurzwzvvl07cpnx9lp5n25xvmdfgspyjzpv
+
 creation_rules:
   # -------------------------------------------------------
   # General environment secrets are admin only
@@ -207,6 +213,16 @@ creation_rules:
     - age:
       - *sre
       - *misc1-metadata-a-1
+
+  # Temporary buildkite testing
+  - path_regex: secrets/buildkite/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *buildkite1-ap-southeast-2-1
+      - *buildkite1-eu-central-1-1
+      - *buildkite1-sa-east-1-1
+      - *buildkite-af-south-1-1
 
   # -------------------------------------------------------
   # Workbench pool onboarding -- modify during creation
