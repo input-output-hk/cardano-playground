@@ -2,7 +2,7 @@
 
 There is currently no pre-release version available for the sanchonet environment.
 
-NOTE: When respun on 2024-10-21 the chain will be restored from slot 33782400.
+NOTE: When respun on 2025-01-15 the chain will be restored from slot 42598717.
 Any Sanchonet chain participants, stakepools, integrators, etc, will need to
 clear their chain state to re-sync from that point forward.
 
