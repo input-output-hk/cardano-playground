@@ -782,12 +782,13 @@ in
           {
             services.mithril-signer.enable = false;
 
-            # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occassionally on 10.1.3 to 20 days runtime
+            # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occasionally on 10.1.3 to 20 days runtime
             services.cardano-node = {
               rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
 
               # Declare the service option for relevant machines at the appropriate path, example:
-              peerSnapshotFile = "/var/lib/cardano-node/peerSnapshotFile.json";
+              # Retest with 10.2
+              # peerSnapshotFile = "/var/lib/cardano-node/peerSnapshotFile.json";
             };
 
             # Old RTS Params w/ non-moving gc -- no missedSlots per hour on 10.1.3 at 8 days runtime
