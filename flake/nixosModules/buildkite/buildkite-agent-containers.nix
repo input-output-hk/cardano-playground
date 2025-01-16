@@ -316,7 +316,7 @@ flake @ {
 
                     # Provide NIX_PATH, unless it's already set by the pipeline
                     if [ -z "''${NIX_PATH:-}" ]; then
-                        # See ci-ops/modules/common.nix (system.extraSystemBuilderCmds)
+                        # See system.extraSystemBuilderCmds
                         export NIX_PATH="nixpkgs=/run/current-system/nixpkgs"
                     fi
 
@@ -399,14 +399,8 @@ flake @ {
           };
         };
       in {
-        # TODO: FIXME
-        # users.users.root.openssh.authorizedKeys.keys = lib.mkForce ssh-keys.ciInfra;
-
-        # Secrets install attr naming is to be consistent within the ci-world repo.
         # Secrets target file naming is to be backwards compatible with the legacy deployment
         # and other scripts which may rely on the legacy naming.
-
-        # TODO:
         sops.secrets =
           mkSopsSecret (mkSopsSecretParams "aws-creds" "buildkite-hook" "0550" "/var/lib/buildkite-agent/hooks")
           // mkSopsSecret (mkSopsSecretParams "buildkite-extra-creds" "buildkite-hook-extra-creds.sh" "0550" "/var/lib/buildkite-agent/hooks")
