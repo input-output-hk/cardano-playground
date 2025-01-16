@@ -606,3 +606,12 @@ Deploying the rest of the cluster
 # Clean state can also be rsync'd from machine to machine to speed up
 # the process if the chain state is big.
 ```
+
+## Direct To Conway New Network Spin Up
+
+A new cardano-parts nix job is available to spin up a network directly into
+Conway era using a genesis bootstrap pool.  Standard network pools can then be
+registered and the genesis bootstrap pool retired.
+
+An example of this procedure is provided in the `Justfile` recipes with
+`just start-demo-ng`.
