@@ -3,8 +3,8 @@
 Usage: Testing Conway era functionality.
 
 The Sanchonet chain will be rolled back with each new node release for testing
-new features and fixes. When respun on 2024-10-21 the chain will be restored
-from slot 33782400.  Any Sanchonet chain participants, stakepools, integrators,
+new features and fixes. When respun on 2025-01-15 the chain will be restored
+from slot 42598717.  Any Sanchonet chain participants, stakepools, integrators,
 etc, will need to clear their chain state to re-sync from that point forward.
 
 Epoch length of 1 day. Development flags allowed in configuration files.
@@ -21,7 +21,7 @@ Informed: Cardano Core Tribe
 
 #### Configuration files
 
-Compatible with cardano-node release [10.1.3](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.3)
+Compatible with cardano-node release [10.1.4](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.4)
 
 ```
 NOTE:

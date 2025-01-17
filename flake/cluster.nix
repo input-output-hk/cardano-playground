@@ -14,6 +14,11 @@ with flake.lib; {
         eu-central-1 = true;
         eu-west-1 = true;
         us-east-2 = true;
+
+        # Temporary machine usage in these regions for buildkite one-off tests
+        af-south-1 = true;
+        ap-southeast-2 = true;
+        sa-east-1 = true;
       };
 
       domain = "play.dev.cardano.org";
@@ -85,6 +90,7 @@ with flake.lib; {
       // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true false)
       // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true false)
       // (mkGroup "mainnet1" "mainnet" null null false false)
-      // (mkGroup "misc1" "preprod" null null false false);
+      // (mkGroup "misc1" "preprod" null null false false)
+      // (mkGroup "buildkite1" "buildkite" null null false false);
   };
 }

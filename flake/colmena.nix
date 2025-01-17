@@ -2,6 +2,7 @@
   inputs,
   config,
   lib,
+  self,
   ...
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
@@ -13,13 +14,16 @@ in
   with lib; {
     flake.colmena = let
       # Region defs:
+      af-south-1.aws.region = "af-south-1";
+      ap-southeast-2.aws.region = "ap-southeast-2";
       eu-central-1.aws.region = "eu-central-1";
       eu-west-1.aws.region = "eu-west-1";
+      sa-east-1.aws.region = "sa-east-1";
       us-east-2.aws.region = "us-east-2";
 
       # Instance defs:
       c5ad-large.aws.instance.instance_type = "c5ad.large";
-      c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
+      # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
@@ -30,6 +34,7 @@ in
       t3a-small.aws.instance.instance_type = "t3a.small";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
       t3a-large.aws.instance.instance_type = "t3a.large";
+      # t3a-xlarge.aws.instance.instance_type = "t3a.xlarge";
 
       # Helper fns:
       ebs = size: {aws.instance.root_block_device.volume_size = mkDefault size;};
@@ -74,7 +79,11 @@ in
       node = {
         imports = [
           # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          # Temporary switch of nixos node service until the next parts release supports peerSnapshotFile:
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          # Ensure the flake.nix diff has been updated and `nix flake update cardano-node-peerSnapshotFile`
+          # has been run from the devShell, then add:
+          "${inputs.cardano-node-peerSnapshotFile}/nix/nixos"
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -529,6 +538,54 @@ in
           };
         };
       };
+
+      buildkite = {imports = [nixosModules.buildkite-agent-containers];};
+
+      bkCfg = queue: {
+        lib,
+        config,
+        ...
+      }: let
+        cfg = config.services.buildkite-containers;
+        hostIdSuffix = "1";
+        count = 1;
+        bkTags =
+          {
+            system = "x86_64-linux";
+          }
+          // {inherit queue;};
+      in {
+        # We don't need to purge 10 MB daily from the nix store by default.
+        nix.gc.automatic = lib.mkForce false;
+
+        services.auto-gc = {
+          # Apply some auto and hourly gc thresholds
+          nixAutoMaxFreedGB = 150;
+          nixAutoMinFreeGB = 90;
+          nixHourlyMaxFreedGB = 600;
+          nixHourlyMinFreeGB = 150;
+
+          # The auto and hourly gc should negate the need for a weekly full gc.
+          nixWeeklyGcFull = false;
+        };
+
+        services.buildkite-containers = {
+          inherit hostIdSuffix;
+
+          # There should be enough space on these machines to cache dir purges.
+          weeklyCachePurge = false;
+
+          containerList = let
+            mkContainer = n: prio: {
+              containerName = "ci${cfg.hostIdSuffix}-${toString n}";
+              guestIp = "10.254.1.1${toString n}";
+              inherit prio;
+              tags = bkTags;
+            };
+          in
+            map (n: mkContainer n (toString (10 - n))) (lib.range 1 count);
+        };
+      };
       #
       # disableP2p = {
       #   services.cardano-node = {
@@ -641,43 +698,43 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
-      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
-      preprod1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preprod1") dbsync smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet preprodFaucet];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
+      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
+      preprod1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
-      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig];};
-      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
-      preprod2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
+      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig];};
+      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
+      preprod2-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
+      preprod3-bp-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
+      preview1-bp-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node minLog rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig tcpTxOpt];};
+      preview1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node minLog rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash pre previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview2") node traceTxs rel pre previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig tcpTxOpt];};
+      preview2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
+      preview2-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview2") node traceTxs rel pre previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preview2") node rel pre previewRelMig tcpTxOpt];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      preview3-bp-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preview3") node bp pre mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preview3") node rel pre previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -725,14 +782,20 @@ in
           {
             services.mithril-signer.enable = false;
 
-            # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occassionally on 10.1.3 to 20 days runtime
-            # services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+            # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occasionally on 10.1.3 to 20 days runtime
+            services.cardano-node = {
+              rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+
+              # Declare the service option for relevant machines at the appropriate path, example:
+              # Retest with 10.2
+              # peerSnapshotFile = "/var/lib/cardano-node/peerSnapshotFile.json";
+            };
 
             # Old RTS Params w/ non-moving gc -- no missedSlots per hour on 10.1.3 at 8 days runtime
             # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M" "--nonmoving-gc"];
 
-            # Old RTS Params w/ moving gc
-            services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M"];
+            # Old RTS Params w/ moving gc -- ~25 - 35 missed slots per hour with moving gc
+            # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M"];
           }
         ];
       };
@@ -748,5 +811,15 @@ in
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-small (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       # ---------------------------------------------------------------------------------------------------------
+
+      # ---------------------------------------------------------------------------------------------------------
+      # Buildkite Temporary machines
+      buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-af")];};
+      buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-ap")];};
+      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-eu")];};
+      buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-sa")];};
+      # ---------------------------------------------------------------------------------------------------------
     };
+
+    flake.colmenaHive = inputs.cardano-parts.inputs.colmena.lib.makeHive self.outputs.colmena;
   }
