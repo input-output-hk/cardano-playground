@@ -192,11 +192,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1720648950,
-        "narHash": "sha256-KyWe8TtaS3luk/5kh0ZkQPIqVw0ubCHPaGg8VJ84HDU=",
+        "lastModified": 1737472684,
+        "narHash": "sha256-QeD6fGsOwSsvNKQlcNXYjqcZB4bF0Gg1rCUrG+kehmM=",
         "owner": "input-output-hk",
         "repo": "auth-keys-hub",
-        "rev": "fa14ce66c812509830e5703cfe00e03d06da57f0",
+        "rev": "0afffb648c0bdc6286f932728e9badea191c1deb",
         "type": "github"
       },
       "original": {
@@ -1394,16 +1394,16 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1737152477,
-        "narHash": "sha256-7JmGWw3rxkB/tYJS5SkujLFB+qmgtA0ZmkCFznj9E4c=",
+        "lastModified": 1737477456,
+        "narHash": "sha256-xoHZDsSX2EstuNGP7e6tWBBqtb6XjDn1KZb49Fjbi8A=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "cc0e0d3541a8950bb267391a5fcdbb2ad17d5363",
+        "rev": "c0f805e28f7dde5e3bd6293bf8bb4559e2df3a1e",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2025-01-17",
+        "ref": "next-2025-01-21",
         "repo": "cardano-parts",
         "type": "github"
       }
