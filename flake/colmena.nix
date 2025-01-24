@@ -702,7 +702,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
