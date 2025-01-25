@@ -22,11 +22,6 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     cardano-new-tracing.url = "github:IntersectMBO/cardano-node/jutaro/new_tracing10_1_2";
-
-    cardano-node-peerSnapshotFile = {
-      url = "github:IntersectMBO/cardano-node/jl/nixos-svc-peerSnapshotFile";
-      flake = false;
-    };
   };
 
   outputs = inputs: let

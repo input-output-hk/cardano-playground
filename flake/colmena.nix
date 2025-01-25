@@ -79,11 +79,7 @@ in
       node = {
         imports = [
           # Base cardano-node service
-          # Temporary switch of nixos node service until the next parts release supports peerSnapshotFile:
-          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          # Ensure the flake.nix diff has been updated and `nix flake update cardano-node-peerSnapshotFile`
-          # has been run from the devShell, then add:
-          "${inputs.cardano-node-peerSnapshotFile}/nix/nixos"
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -418,15 +414,69 @@ in
       # };
       #
       # Ephermeral instance disk storage config for upcoming UTxO-HD/LMDB
-      # iDisk = {
-      #   fileSystems = {
-      #     "/ephemeral" = {
-      #       device = "/dev/nvme1n1";
-      #       fsType = "ext4";
-      #       autoFormat = true;
-      #     };
-      #   };
-      # };
+      iDisk = {
+        imports = [
+          ({pkgs, ...}: {
+            fileSystems = {
+              "/ephemeral" = {
+                # The root_block_device will be /dev/nvme0n1 on NVMe AWS systems
+                # with standard tofu cluster config, so the first ephemeral block
+                # device will typically be auto-assigned to /dev/nvme1n1.  However,
+                # this assignment can be inconsistent depending upon block device
+                # discovery order by the kernel. Instead, a udev rule will be used
+                # to assign predictable instance store symlinks based on serial
+                # number ordering as /dev/ephemeral${n}.
+                device = "/dev/ephemeral0";
+
+                # Use XFS for highest performance of the common FS choices.  If the
+                # FS is to be changed, the instance will need to be deployed for the
+                # new FS declaration and then stopped and restarted to re-instantiate
+                # the ephemeral storage block device(s) at which point the auto-format
+                # and relabelling should occur.
+                fsType = "xfs";
+
+                options = [
+                  # Performance options can be tuned as needed.
+                  "logbsize=256k"
+
+                  # Wait until systemd ephemeral symlinking is complete so the device will exist
+                  "x-systemd.requires=ephemeral-symlink.service"
+                ];
+              };
+            };
+
+            systemd.services.ephemeral-symlink = {
+              wantedBy = ["ephemeral.mount"];
+
+              # Ensure all devices can be seen by the kernel before trying to order them
+              # after = ["systemd-udev-settle.service"];
+              # requires = ["systemd-udev-settle.service"];
+
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = getExe (pkgs.writeShellApplication {
+                  name = "ephemeral-symlink";
+
+                  runtimeInputs = with pkgs; [fd];
+                  text = ''
+                    set -euo pipefail
+
+                    i=0
+                    INSTANCE_VOLS=$(fd 'nvme-Amazon_EC2_NVMe_Instance_Storage_AWS[0-9A-F]{17}$' /dev/disk/by-id/ | sort)
+                    echo "Number of instance volumes detected are: $(wc -l <<< "$INSTANCE_VOLS"), comprised of:"
+                    echo "$INSTANCE_VOLS"
+                    echo "Linking:"
+                    for v in $INSTANCE_VOLS; do
+                      ln -svf "$v" "/dev/ephemeral''${i}"
+                      i=$((i + 1))
+                    done
+                  '';
+                });
+              };
+            };
+          })
+        ];
+      };
       # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -746,7 +796,29 @@ in
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend];};
       sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet];};
       # Smallest d variant for testing
-      sanchonet1-test-a-1 = {imports = [eu-central-1 c5ad-large (ebs 80) (nodeRamPct 60) (group "sanchonet1") node newMetrics pparamsApi tcpTxOpt];};
+      sanchonet1-test-a-1 = {
+        imports = [
+          eu-central-1
+          c5ad-large
+          iDisk
+          (ebs 80)
+          (nodeRamPct 60)
+          (group "sanchonet1")
+          node
+          newMetrics
+          pparamsApi
+          tcpTxOpt
+          (nixos: {
+            # environment.etc."cardano-node/peer-snapshot-0.json".source = builtins.toFile "peer-snapshot.json" "{}";
+            # environment.etc."cardano-node/peer-snapshot-0.json".source = builtins.toFile "peer-snapshot.json" (builtins.toJSON nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet.peerSnapshot);
+            # services.cardano-node.peerSnapshotFile = i: "/etc/cardano-node/peer-snapshot-${toString i}.json";
+
+            # environment.etc."cardano-node/peer-snapshot-0.json".source = builtins.toFile "peer-snapshot.json" "{}";
+            environment.etc."cardano-node/peer-snapshot.json".source = builtins.toFile "peer-snapshot.json" (builtins.toJSON nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet.peerSnapshot);
+            services.cardano-node.peerSnapshotFile = "/etc/cardano-node/peer-snapshot.json";
+          })
+        ];
+      };
 
       sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1")];};
       sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1")];};
