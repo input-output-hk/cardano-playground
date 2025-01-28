@@ -22,10 +22,10 @@ in
       us-east-2.aws.region = "us-east-2";
 
       # Instance defs:
-      # c5ad-large.aws.instance.instance_type = "c5ad.large";
+      c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
-      i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
+      # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
@@ -737,8 +737,8 @@ in
       sanchonet1-test-a-1 = {
         imports = [
           eu-central-1
-          # c5ad-large
-          i7ie-2xlarge
+          c5ad-large
+          # i7ie-2xlarge
           (ebs 80)
           (nodeRamPct 60)
           (group "sanchonet1")
