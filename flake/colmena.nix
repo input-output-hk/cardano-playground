@@ -414,159 +414,6 @@ in
       #   services.cardano-node.extraNodeConfig.TraceMempool = false;
       # };
       #
-      # Ephemeral instance disk storage config for upcoming UTxO-HD/LMDB
-      #
-      # A number of approaches for mounting ephemeral aws ec2 instance
-      # storage run into complications, such as:
-      #
-      # * The simplest approach would be to use a small nixos `fileSystems`
-      # declaration with a kernel discovered device name and auto-formatting.
-      # However, device name assignments are non-deterministic and often change
-      # during subsequent reboots causing mount failures.
-      #
-      # * If RAID is not needed, another approach might be to create sorted and
-      # predictable symlink names to ephemeral block devices with udev rules and
-      # a helper script using a sort index such as serial number. However,
-      # predictable ordering becomes problematic as udev rules are called with
-      # each discovery and after settlement.
-      #
-      # * If an approach of fstab entry with systemd service hook is used, ie,
-      # via nixos `fileSystems` with appropriate options set where systemd is
-      # leveraged to create ordered symlinks for fstab to mount, systemd fails to
-      # recognize the symlinked devices and mount them properly.
-      #
-      # Writing a systemd unit to handle all the logic of formatting, mounting
-      # and unmounting ephemeral devices including implementing any RAID
-      # requirements would succeed but duplicates nixos `fileSystems` effects
-      # and remains less transparent while not in fstab.
-      #
-      # An acceptable compromise appears to be a systemd service that handles
-      # ephemeral block device formatting with label assignment and then
-      # leverages nixos `fileSystems` to handle discovery (ie: fstab), mounting
-      # and unmounting tasks.
-      iDisk = {
-        imports = [
-          ({pkgs, ...}: {
-            fileSystems = {
-              ephemeral = {
-                mountPoint = "/ephemeral";
-
-                # Mounting by label allows the underlying device to be either a
-                # direct NVMe or RAID array.
-                label = "ephemeral";
-
-                # The block devices will be formatted with XFS either directly
-                # or on RAID0 for highest performance. If setup is to be changed,
-                # the instance will need to be re-deployed and then stopped and
-                # restarted to re-instantiate the ephemeral block device(s) at
-                # which point auto-format and relabelling should occur.
-                fsType = "auto";
-
-                # The systemd service will handle the formatting logic
-                autoFormat = false;
-
-                options = [
-                  # Performance options can be tuned as needed.
-                  # "logbsize=256k"
-
-                  # Wait until systemd ephemeral setup is complete so the file system will exist
-                  "x-systemd.requires=ephemeral-setup.service"
-                  "x-systemd.after=ephemeral-setup.service"
-                ];
-              };
-            };
-
-            systemd.services.ephemeral-setup = {
-              serviceConfig = {
-                Type = "oneshot";
-                ExecStart = getExe (pkgs.writeShellApplication {
-                  name = "ephemeral-setup";
-
-                  runtimeInputs = with pkgs; [fd jq mdadm util-linux xfsprogs];
-                  text = ''
-                    set -euo pipefail
-
-                    LABEL="ephemeral"
-                    RAID_CFG="/etc/mdadm-ephemeral.conf"
-                    RAID_DEV="/dev/md0"
-                    SYM_TGT="/dev/ephemeral"
-
-                    IS_EMPTY() {
-                      DEV="$1"
-                      RESULT=$(lsblk --fs --json "$DEV" \
-                        | jq -r 'any(.blockdevices[]; (has("children") | not) and (.fstype == null))')
-
-                      if [ "$RESULT" = "true" ]; then
-                        return 0
-                      else
-                        return 1
-                      fi
-                    }
-
-                    INSTANCE_BD=$(fd 'nvme-Amazon_EC2_NVMe_Instance_Storage_AWS[0-9A-F]{17}$' /dev/disk/by-id/ | sort)
-                    NUM_BD=$(wc -l <<< "$INSTANCE_BD")
-
-                    echo "Number of ephemeral block devices detected are: $NUM_BD, comprised of:"
-                    echo "$INSTANCE_BD"
-
-                    # Check ephemeral storage is available
-                    if [ "$NUM_BD" -eq "0" ]; then
-                      echo "No ephemeral block devices found, aborting."
-                      exit 1
-                    fi
-
-                    # Check if all ephemeral storage is empty
-                    EMPTY="true"
-                    for DEV in $INSTANCE_BD; do
-                      if ! IS_EMPTY "$DEV"; then
-                        echo "Device $DEV has a file system or holds partitions."
-                        EMPTY="false"
-                      fi
-                    done
-
-                    if [ "$EMPTY" = "false" ]; then
-                      echo "One or more ephemeral block devices are not empty; symlinking only..."
-                    else
-                      echo "Ephemeral block device(s) appear to be empty, formatting and symlinking..."
-                    fi
-
-                    # Create the filesystem and symlink as applicable
-                    if [ "$NUM_BD" -eq "1" ]; then
-                      if [ "$EMPTY" = "true" ]; then
-                        mkfs -t xfs -L "$LABEL" "$INSTANCE_BD"
-                      fi
-                      ln -svf "$INSTANCE_BD" "$SYM_TGT"
-                    elif [ "$NUM_BD" -gt "1" ]; then
-                      set -x
-                      echo "Multiple ephemeral block devices are available..."
-                      if [ "$EMPTY" = "true" ]; then
-                        # TODO: Change to array
-                        # shellcheck disable=SC2086
-                        mdadm --create "$RAID_DEV" --raid-devices="$NUM_BD" --level=0 $INSTANCE_BD
-                        mdadm --detail --scan | tee "$RAID_CFG"
-
-                        mkfs -t xfs -L "$LABEL" "$INSTANCE_BD"
-                      else
-                        # Try to re-use preserved raid device assignment and set the convenience symlink up
-                        if [ -s "$RAID_CFG" ]; then
-                          mdadm --assemble --scan --config="$RAID_CFG"
-                        fi
-                        if [ -b "$RAID_DEV" ]; then
-                          ln -svf "$RAID_DEV" "$SYM_TGT"
-                        fi
-                      fi
-                      exit 0
-                    else
-                      echo "The number of ephemeral block devices was not properly recognized: $NUM_BD"
-                      exit 1
-                    fi
-                  '';
-                });
-              };
-            };
-          })
-        ];
-      };
       # p2p and legacy network debugging code
       # netDebug = {
       #   services.cardano-node = {
@@ -827,6 +674,7 @@ in
 
       defaults.imports = [
         inputs.cardano-parts.nixosModules.module-aws-ec2
+        inputs.cardano-parts.nixosModules.profile-aws-ec2-ephemeral
         inputs.cardano-parts.nixosModules.profile-cardano-parts
         inputs.cardano-parts.nixosModules.profile-basic
         inputs.cardano-parts.nixosModules.profile-common
@@ -891,7 +739,6 @@ in
           eu-central-1
           # c5ad-large
           i7ie-2xlarge
-          iDisk
           (ebs 80)
           (nodeRamPct 60)
           (group "sanchonet1")
