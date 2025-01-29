@@ -814,7 +814,7 @@ in
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") nodeHd (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
