@@ -712,7 +712,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 100) (group "preview1") dbsync smash pre previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync smash pre previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview1") node faucet previewFaucet];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 60) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
