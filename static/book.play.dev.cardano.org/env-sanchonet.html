@@ -87,7 +87,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="README-book.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-sanchonet.html" class="active"><strong aria-hidden="true">1.1.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.2.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.3.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.4.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-sanchonet.html"><strong aria-hidden="true">2.1.</strong> Sanchonet pre-release</a></li><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.2.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.3.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2024-07-30.html"><strong aria-hidden="true">3.1.</strong> 2024-07-30</a></li><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.2.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.3.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.4.</strong> 2022-07-01</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="README-book.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-sanchonet.html" class="active"><strong aria-hidden="true">1.1.</strong> Sanchonet</a></li><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.2.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.3.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.4.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.1.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.2.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2024-07-30.html"><strong aria-hidden="true">3.1.</strong> 2024-07-30</a></li><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.2.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.3.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.4.</strong> 2022-07-01</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -179,38 +179,8 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="environment-sanchonet-testnet"><a class="header" href="#environment-sanchonet-testnet">Environment: Sanchonet Testnet</a></h2>
-<p>Usage: Testing Conway era functionality.</p>
-<p>The Sanchonet chain will be rolled back with each new node release for testing
-new features and fixes. When respun on 2025-01-15 the chain will be restored
-from slot 42598717.  Any Sanchonet chain participants, stakepools, integrators,
-etc, will need to clear their chain state to re-sync from that point forward.</p>
-<p>Epoch length of 1 day. Development flags allowed in configuration files.</p>
-<p>Upgrade Strategy: Deploy all nodes with every upgrade request</p>
-<p>Responsible: IOG SRE</p>
-<p>Accountable: SRE Director</p>
-<p>Consulted: Core Tech Head of Product</p>
-<p>Informed: Cardano Core Tribe</p>
-<h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.4">10.1.4</a></p>
-<pre><code>NOTE:
-The non-block-producer node config has `PeerSharing` enabled by
-default, so should not be used with block-producers.
-
-Additionally, avoid connecting a block-producer not using p2p to a p2p
-PeerSharing enabled relay as the block-producer's IP will be leaked.
-</code></pre>
-<ul>
-<li><a href="environments/sanchonet/config.json">Node Config (Non-block-producers -- see note above)</a></li>
-<li><a href="environments/sanchonet/config-bp.json">Node Config (Block-producers)</a></li>
-<li><a href="environments/sanchonet/db-sync-config.json">DB Sync Config</a></li>
-<li><a href="environments/sanchonet/submit-api-config.json">Submit API Config</a></li>
-<li><a href="environments/sanchonet/topology.json">Node Topology</a></li>
-<li><a href="environments/sanchonet/byron-genesis.json">Byron Genesis</a></li>
-<li><a href="environments/sanchonet/shelley-genesis.json">Shelley Genesis</a></li>
-<li><a href="environments/sanchonet/alonzo-genesis.json">Alonzo Genesis</a></li>
-<li><a href="environments/sanchonet/conway-genesis.json">Conway Genesis</a></li>
-<li><a href="environments/sanchonet/guardrails-script.plutus">Compiled guardrails script</a></li>
-</ul>
+<p>IoE Sanchonet pools and bootstrap relays have been stopped as Sanchonet has
+fulfilled its purpose.</p>
 
                     </main>
 
