@@ -10,7 +10,6 @@
   - [Pre-production](env-preprod.md)
   - [Mainnet](env-mainnet.md)
 - [Advanced](advanced.md)
-  - [Sanchonet pre-release](adv-sanchonet.md)
   - [Preview pre-release](adv-preview.md)
   - [Pre-production pre-release](adv-preprod.md)
 - [Cost Model](cost-model.md)
