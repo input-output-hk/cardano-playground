@@ -5,7 +5,6 @@
 # Reference
 
 - [Environments](environments.md)
-  - [Sanchonet](env-sanchonet.md)
   - [Preview](env-preview.md)
   - [Pre-production](env-preprod.md)
   - [Mainnet](env-mainnet.md)
