@@ -11,6 +11,9 @@ First, set parameters for nix helper jobs:
 # USE_ENCRYPTION and USE_DECRYPTION are false as we'll apply encryption
 # as a secondary step before committing to the repo so that we don't
 # make the initial spin up more complicated than necessary.
+#
+# This example uses the historical "private" network which is occasionally
+# spun up for short term testing.
 export ENV=private
 export DEBUG=true
 export UNSTABLE=true

@@ -23,7 +23,7 @@ in
 
       # Instance defs:
       # c5a-large.aws.instance.instance_type = "c5a.large";
-      c5ad-large.aws.instance.instance_type = "c5ad.large";
+      # c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
@@ -89,16 +89,13 @@ in
         ];
       };
 
-      mkCustomNode = flakeInput:
-        node
-        // {
-          cardano-parts.perNode = {
-            pkgs = {inherit (inputs.${flakeInput}.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
-          };
-        };
-
-      nodeHd = mkCustomNode "cardano-node-utxo-hd";
-      # nodeNewTracing = mkCustomNode "cardano-new-tracing";
+      # mkCustomNode = flakeInput:
+      #   node
+      #   // {
+      #     cardano-parts.perNode = {
+      #       pkgs = {inherit (inputs.${flakeInput}.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
+      #     };
+      #   };
 
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
@@ -189,19 +186,19 @@ in
       #   ];
       # };
 
-      pparamsApi = {
-        imports = [
-          nixosModules.profile-cardano-node-pparams-api
-          {
-            services = {
-              cardano-node.shareNodeSocket = true;
-              cardano-node-pparams-api = {
-                acmeEmail = "devops@iohk.io";
-              };
-            };
-          }
-        ];
-      };
+      # pparamsApi = {
+      #   imports = [
+      #     nixosModules.profile-cardano-node-pparams-api
+      #     {
+      #       services = {
+      #         cardano-node.shareNodeSocket = true;
+      #         cardano-node-pparams-api = {
+      #           acmeEmail = "devops@iohk.io";
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
 
       mithrilRelease = {imports = [nixosModules.mithril-release-pin];};
 
@@ -268,7 +265,6 @@ in
 
       preprodSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preprod-smash" "preprod-explorer"]);};
       previewSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["preview-smash" "preview-explorer"]);};
-      sanchoSmash = {services.cardano-smash.serverAliases = flatten (map (e: ["${e}.${domain}" "${e}.world.dev.cardano.org"]) ["sanchonet-smash" "sanchonet-explorer"]);};
 
       faucet = {
         imports = [
@@ -284,7 +280,6 @@ in
 
       preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
-      sanchoFaucet = {services.cardano-faucet.serverAliases = ["faucet.sanchonet.${domain}" "faucet.sanchonet.world.dev.cardano.org"];};
 
       metadata = {
         imports = [
@@ -309,7 +304,6 @@ in
       # Preprod to be applied once preprod pools finish their retirement forging epoch and a CNAME redirect is applied
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
-      sanchoRelMig = mkWorldRelayMig 30004;
 
       newMetrics = {
         imports = [
@@ -727,52 +721,6 @@ in
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
-      # Sanchonet, pre-release
-      # State: STOPPED
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node bp (declMRel "sanchonet1-rel-a-1") disableAlertCount];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet1-bp-a-1") disableAlertCount];};
-      sanchonet1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig disableAlertCount];};
-      sanchonet1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node rel sanchoRelMig tcpTxOpt disableAlertCount];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 m5a-large (ebs 80) (group "sanchonet1") dbsync smash sanchoSmash nixosModules.govtool-backend disableAlertCount];};
-      sanchonet1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet1") node faucet sanchoFaucet disableAlertCount];};
-      # Smallest d variant for testing
-      sanchonet1-test-a-1 = {
-        imports = [
-          eu-central-1
-          c5ad-large
-          # i7ie-2xlarge
-          (ebs 80)
-          (nodeRamPct 60)
-          (group "sanchonet1")
-          node
-          newMetrics
-          pparamsApi
-          tcpTxOpt
-          disableAlertCount
-          (nixos: {
-            # environment.etc."cardano-node/peer-snapshot-0.json".source = builtins.toFile "peer-snapshot.json" "{}";
-            # environment.etc."cardano-node/peer-snapshot-0.json".source = builtins.toFile "peer-snapshot.json" (builtins.toJSON nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet.peerSnapshot);
-            # services.cardano-node.peerSnapshotFile = i: "/etc/cardano-node/peer-snapshot-${toString i}.json";
-
-            # environment.etc."cardano-node/peer-snapshot-0.json".source = builtins.toFile "peer-snapshot.json" "{}";
-            environment.etc."cardano-node/peer-snapshot.json".source = builtins.toFile "peer-snapshot.json" (builtins.toJSON nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet.peerSnapshot);
-            services.cardano-node.peerSnapshotFile = "/etc/cardano-node/peer-snapshot.json";
-          })
-        ];
-      };
-
-      sanchonet2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node bp (declMRel "sanchonet2-rel-b-1") disableAlertCount];};
-      sanchonet2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet2-bp-b-1") disableAlertCount];};
-      sanchonet2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig disableAlertCount];};
-      sanchonet2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet2") node rel sanchoRelMig tcpTxOpt disableAlertCount];};
-
-      sanchonet3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics bp (declMRel "sanchonet3-rel-c-1") disableAlertCount];};
-      sanchonet3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig mithrilRelay (declMSigner "sanchonet3-bp-c-1") disableAlertCount];};
-      sanchonet3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node rel sanchoRelMig disableAlertCount];};
-      sanchonet3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (nodeRamPct 60) (group "sanchonet3") node newMetrics rel sanchoRelMig tcpTxOpt disableAlertCount];};
-      # ---------------------------------------------------------------------------------------------------------
-
-      # ---------------------------------------------------------------------------------------------------------
       # Mainnet
       # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
       # Rel-a-{2,3} lmdb and mdb fault tests
@@ -814,8 +762,8 @@ in
       };
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) nodeHd lmdb ram8gib disableAlertCount];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) lmdb ram8gib disableAlertCount];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) lmdb ram8gib disableAlertCount];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 

@@ -28,15 +28,12 @@ in {
   # Explorers
   cname_explorer_preprod = mkResource {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_explorer_preview = mkResource {name = "preview-explorer.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
-  cname_explorer_sanchonet = mkResource {name = "sanchonet-explorer.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
 
   # Faucets
   cname_faucet_preprod = mkResource {name = "faucet.preprod.${domain}"; records = ["preprod1-faucet-a-1.${domain}"];};
   cname_faucet_preview = mkResource {name = "faucet.preview.${domain}"; records = ["preview1-faucet-a-1.${domain}"];};
-  cname_faucet_sanchonet = mkResource {name = "faucet.sanchonet.${domain}"; records = ["sanchonet1-faucet-a-1.${domain}"];};
 
   # Govtool
-  cname_govtool_sanchonet = mkResource {name = "sanchonet-govtool.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
 
   # Ipfs for all testnets
   cname_metadata_ipfs = mkResource {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
@@ -47,5 +44,4 @@ in {
   # Smash
   cname_smash_preprod = mkResource {name = "preprod-smash.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_smash_preview = mkResource {name = "preview-smash.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
-  cname_smash_sanchonet = mkResource {name = "sanchonet-smash.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
 }

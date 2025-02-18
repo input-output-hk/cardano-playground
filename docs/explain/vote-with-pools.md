@@ -8,12 +8,12 @@ finally transaction submission.
 For a detailed look a manually voting with a pool, the following procedure may
 be used.
 
-Set env vars for voting.  In this example, we'll use sanchonet and a given
+Set env vars for voting.  In this example, we'll use preview and a given
 action id and index.  Adjust accordingly for your use case.
 ```bash
-export ENV=sanchonet
-export CARDANO_NODE_NETWORK_ID=4
-export TESTNET_MAGIC=4
+export ENV=preview
+export CARDANO_NODE_NETWORK_ID=2
+export TESTNET_MAGIC=2
 export ACTION_ID=9ac7d4f3bb9367a35c3b204e96bbee979f7e7a5aeb004429bccb1ba911805a2c
 export ACTION_IDX=0
 ```
