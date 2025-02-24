@@ -450,11 +450,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1740022533,
-        "narHash": "sha256-06BgZFA+nHMYu4GMfdVt1DqeDUygPtzLwAJta6AVjsE=",
+        "lastModified": 1740153320,
+        "narHash": "sha256-CRclojfRieN0ihgow6G0N7Ki7P/nZxuui+qjXiAMhk8=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "73e9e7dea2a381c02cf7a75d914928c507b7b928",
+        "rev": "532272868b7ba3a329958ce9cb2819816e46e1d2",
         "type": "github"
       },
       "original": {
@@ -1327,15 +1327,16 @@
         "sodium": "sodium_2"
       },
       "locked": {
-        "lastModified": 1738874249,
-        "narHash": "sha256-oyPD/zIhs5AUEdYXZHluMAOmT5ynJSgjV2bNIXt5aKE=",
+        "lastModified": 1740088827,
+        "narHash": "sha256-0sF0RUsnFVdRMoS9amtRQs6TnCFynDFdbzn8zBLD5Bg=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "e26038d47df5d17187288fd7c8f5b915c9447b2e",
+        "rev": "6fa379b38ed2c6899f93fc0b97084c73e74eecf4",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "jl/env-reduce",
         "repo": "iohk-nix",
         "type": "github"
       }
@@ -1348,15 +1349,16 @@
         "sodium": "sodium_3"
       },
       "locked": {
-        "lastModified": 1738874249,
-        "narHash": "sha256-oyPD/zIhs5AUEdYXZHluMAOmT5ynJSgjV2bNIXt5aKE=",
+        "lastModified": 1740088827,
+        "narHash": "sha256-0sF0RUsnFVdRMoS9amtRQs6TnCFynDFdbzn8zBLD5Bg=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "e26038d47df5d17187288fd7c8f5b915c9447b2e",
+        "rev": "6fa379b38ed2c6899f93fc0b97084c73e74eecf4",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "jl/env-reduce",
         "repo": "iohk-nix",
         "type": "github"
       }
