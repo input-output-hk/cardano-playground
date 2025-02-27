@@ -86,9 +86,6 @@ with flake.lib; {
       // (mkGroup "preview1" "preview" "preview-node.${dns}" "preview1-node.${dns}" false false)
       // (mkGroup "preview2" "preview" "preview-node.${dns}" "preview2-node.${dns}" false false)
       // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false false)
-      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" true false)
-      // (mkGroup "sanchonet2" "sanchonet" "sanchonet-node.${dns}" "sanchonet2-node.${dns}" true false)
-      // (mkGroup "sanchonet3" "sanchonet" "sanchonet-node.${dns}" "sanchonet3-node.${dns}" true false)
       // (mkGroup "mainnet1" "mainnet" null null false false)
       // (mkGroup "misc1" "preprod" null null false false)
       // (mkGroup "buildkite1" "buildkite" null null false false);

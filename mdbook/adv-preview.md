@@ -1,12 +1,13 @@
 ## Advanced Configuration: Preview Testnet
 
-There is currently no pre-release version available for the preview environment.
+Users wanting to test a cardano-node pre-release version on the preview
+environment may obtain compatible configuration files below.
 
-The latest version available is cardano-node release `10.1.4`.
+The latest version available is cardano-node pre-release `10.2.1`.
 
 #### Configuration files
 
-Compatible with cardano-node release [10.1.4](https://github.com/IntersectMBO/cardano-node/releases/tag/10.1.4)
+Compatible with cardano-node pre-release [10.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.2.1)
 
 ```
 NOTE:

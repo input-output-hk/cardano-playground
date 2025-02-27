@@ -81,13 +81,13 @@ As general guidance, faucet pool delegation sizes, UTxO sizes, UTxO quantity
 and `max_stake_key_index` values generally fall into one of the following
 categories:
 ```
-# Preview, Preprod, Shelley-qa:
+# Preview, Preprod:
 Faucet UTxO:                 10000200000     # Funded via distribute.py, ~50,000 UTxO, below
 Faucet Pool Delegation:      1000000000000   # Funded via setup-delegation-accounts.py, below
 Faucet delegation_utxo_size: 10              # Via faucet config file
 max_stake_key_index:         500             # Via faucet config file
 
-# Sanchonet
+# Historical Sanchonet
 Faucet UTxO:                 100000200000    # Funded via distribute.py, ~10,000 UTxO, below
 Faucet Pool Delegation:      10000000000000  # Funded via setup-delegation-accounts.py, below
 Faucet delegation_utxo_size: 10              # Via faucet config file

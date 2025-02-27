@@ -1,20 +1,22 @@
 let
   domain = "\${data.aws_route53_zone.selected.name}";
+  zoneId = "\${data.aws_route53_zone.selected.zone_id}";
 
-  mkResource = {
+  mkCname = {
     name,
     records ? [],
     ttl ? "300",
     type ? "CNAME",
-    zone_id ? "\${data.aws_route53_zone.selected.zone_id}"
-  }: {
-    inherit
-      name
-      records
-      ttl
-      type
-      zone_id;
-  };
+    zone_id ? zoneId
+  }:  {inherit name records ttl type zone_id;};
+
+  mkSrv = {
+    name,
+    records ? [],
+    ttl ? "300",
+    type ? "SRV",
+    zone_id ? zoneId
+  }:  {inherit name records ttl type zone_id;};
 in {
   # Resource attribute names must be unique for route53 resources in the cluster and therefore
   # should not be named after machines or book or group multivalue DNS names.
@@ -22,30 +24,29 @@ in {
   # Prefixing the resource attribute with the record type will avoid any namespace issues.
 
   # Book
-  cname_book = mkResource {name = "book.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
-  cname_book_staging = mkResource {name = "book-staging.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
+  cname_book = mkCname {name = "book.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
+  cname_book_staging = mkCname {name = "book-staging.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
 
   # Explorers
-  cname_explorer_preprod = mkResource {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
-  cname_explorer_preview = mkResource {name = "preview-explorer.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
-  cname_explorer_sanchonet = mkResource {name = "sanchonet-explorer.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
+  cname_explorer_preprod = mkCname {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
+  cname_explorer_preview = mkCname {name = "preview-explorer.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
 
   # Faucets
-  cname_faucet_preprod = mkResource {name = "faucet.preprod.${domain}"; records = ["preprod1-faucet-a-1.${domain}"];};
-  cname_faucet_preview = mkResource {name = "faucet.preview.${domain}"; records = ["preview1-faucet-a-1.${domain}"];};
-  cname_faucet_sanchonet = mkResource {name = "faucet.sanchonet.${domain}"; records = ["sanchonet1-faucet-a-1.${domain}"];};
+  cname_faucet_preprod = mkCname {name = "faucet.preprod.${domain}"; records = ["preprod1-faucet-a-1.${domain}"];};
+  cname_faucet_preview = mkCname {name = "faucet.preview.${domain}"; records = ["preview1-faucet-a-1.${domain}"];};
 
   # Govtool
-  cname_govtool_sanchonet = mkResource {name = "sanchonet-govtool.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
 
   # Ipfs for all testnets
-  cname_metadata_ipfs = mkResource {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
+  cname_metadata_ipfs = mkCname {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
 
   # Metadata for all testnets
-  cname_metadata_testnets = mkResource {name = "metadata.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
+  cname_metadata_testnets = mkCname {name = "metadata.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
 
   # Smash
-  cname_smash_preprod = mkResource {name = "preprod-smash.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
-  cname_smash_preview = mkResource {name = "preview-smash.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
-  cname_smash_sanchonet = mkResource {name = "sanchonet-smash.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
+  cname_smash_preprod = mkCname {name = "preprod-smash.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
+  cname_smash_preview = mkCname {name = "preview-smash.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
+
+  # Example SRV record resource, where network could be substituted with any of preview, preprod or mainnet.
+  # srv_network = mkSrv {name = "_cardano-network._tcp.${domain}"; records = ["0 10 3001 network1-rel-a-1.${domain}"];};
 }
