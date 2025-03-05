@@ -85,6 +85,9 @@ in
           # Base cardano-node service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
 
+          # For earlier versions of the tracing service, use `newMetrics` below
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
@@ -219,6 +222,7 @@ in
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -359,18 +363,17 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
 
+      # For the early versions of the new tracing system with the workbench modified nixos service
       # newMetrics = {
       #   imports = [
       #     (
-      #       # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-      #       # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
       #       import
-      #       config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-      #       (import
-      #         "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
+      #       "${self.inputs.cardano-parts.inputs.cardano-tracer-service.outPath}/nix/nixos/cardano-tracer-service.nix"
+      #       (import "${self.inputs.cardano-parts.inputs.cardano-tracer-service.outPath}/default.nix" {system = "x86_64-linux";})
       #       .legacyPackages
       #       .x86_64-linux
       #     )
+      #     {disabledModules = [config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng];}
       #     inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
       #   ];
       # };
@@ -776,7 +779,27 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {
+        imports = [
+          eu-central-1
+          r6a-large
+          (ebs 80)
+          (nodeRamPct 70)
+          (group "preview1")
+          node
+          rel
+          pre
+          previewRelMig
+          mithrilRelay
+          (declMSigner "preview1-bp-a-1")
+          {
+            services.cardano-node = {
+              useLegacyTracing = false;
+              ngTracer = true;
+            };
+          }
+        ];
+      };
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
@@ -817,7 +840,13 @@ in
           node
           bp
           {
-            services.mithril-signer.enable = false;
+            services = {
+              mithril-signer.enable = false;
+              cardano-node = {
+                useLegacyTracing = true;
+                # ngTracer = true;
+              };
+            };
           }
         ];
       };
