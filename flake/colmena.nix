@@ -28,6 +28,7 @@ in
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
+      m5ad-large.aws.instance.instance_type = "m5ad.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
@@ -81,7 +82,9 @@ in
       node = {
         imports = [
           # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          # For earlier versions of the tracing service, use `newMetrics` below
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -167,6 +170,7 @@ in
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -305,21 +309,20 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
 
-      newMetrics = {
-        imports = [
-          (
-            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-            # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
-            import
-            config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-            (import
-              "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
-            .legacyPackages
-            .x86_64-linux
-          )
-          inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-        ];
-      };
+      # For the early versions of the new tracing system with the workbench modified nixos service
+      # newMetrics = {
+      #   imports = [
+      #     (
+      #       import
+      #       "${self.inputs.cardano-parts.inputs.cardano-tracer-service.outPath}/nix/nixos/cardano-tracer-service.nix"
+      #       (import "${self.inputs.cardano-parts.inputs.cardano-tracer-service.outPath}/default.nix" {system = "x86_64-linux";})
+      #       .legacyPackages
+      #       .x86_64-linux
+      #     )
+      #     {disabledModules = [config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng];}
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+      #   ];
+      # };
 
       # logRejected = {
       #   services = {
@@ -703,13 +706,84 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 c6i-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {
+        imports = [
+          eu-central-1
+          t3a-large
+          (ebs 80)
+          (nodeRamPct 70)
+          (group "preview1")
+          node
+          rel
+          pre
+          previewRelMig
+          mithrilRelay
+          (declMSigner "preview1-bp-a-1")
+          {
+            services.cardano-node = {
+              useLegacyTracing = false;
+              ngTracer = true;
+            };
+          }
+        ];
+      };
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync smash pre previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
+      # Smallest d variant for testing
+      preview1-test-a-1 = {
+        imports = [
+          eu-central-1
+          m5ad-large
+          # i7ie-2xlarge
+          (ebs 80)
+          (nodeRamPct 70)
+          (group "preview1")
+          node
+          # pparamsApi
+          # tcpTxOpt
+          pre
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          {
+            services.cardano-node = {
+              useLegacyTracing = false;
+              ngTracer = true;
+              # profiling = "space-cost";
+            };
+            services.cardano-tracer = {
+              # profiling = "space-cost";
+            };
+          }
+        ];
+      };
+
+      preview2-bp-b-1 = {
+        imports = [
+          eu-west-1
+          t3a-large
+          (ebs 80)
+          (nodeRamPct 70)
+          (group "preview2")
+          node
+          bp
+          pre
+          mithrilRelease
+          (declMRel "preview2-rel-b-1")
+          {
+            services = {
+              cardano-node = {
+                useLegacyTracing = false;
+                ngTracer = true;
+                # profiling = "space-cost";
+                # rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+              };
+              # cardano-tracer.metricsNoSuffix = true;
+            };
+          }
+        ];
+      };
       preview2-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview2") node traceTxs rel pre previewRelMig];};
       preview2-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview2") node rel pre previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preview2") node rel pre previewRelMig tcpTxOpt];};
