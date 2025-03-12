@@ -745,7 +745,6 @@ in
           # pparamsApi
           # tcpTxOpt
           pre
-          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
           {
             services.cardano-node = {
               useLegacyTracing = false;
@@ -753,7 +752,20 @@ in
               # profiling = "space-cost";
             };
             services.cardano-tracer = {
+              # rotation = {
+              #   rpFrequencySecs = 1;
+              #   rpKeepFilesNum = 1;
+              #   rpLogLimitBytes = 1;
+              #   rpMaxAgeHours = 1;
+              #   rpMaxAgeMinutes = 1;
+              # };
               # profiling = "space-cost";
+              # minLogSeverity = "Debug";
+              # minLogSeverity = "Emergency";
+              # metricsComp = {
+              #   "Mempool.TxsInMempool" = "Mempool.TxsInMempool.Mapped";
+              #   "ChainDB.SlotNum" = "ChainDB.SlotNum.Mapped";
+              # };
             };
           }
         ];
