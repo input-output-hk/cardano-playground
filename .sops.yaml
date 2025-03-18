@@ -14,6 +14,7 @@ keys:
   # Preview
   - &preview1-bp-a-1 age10mgec0e4xp87x79fsd5r9pdggt8gr4mjpnj98zhlpvzx6almhd5sxrakyh
   - &preview1-faucet-a-1 age1mcyrt3d2d092gall6s8rm5drcffaawh29ssuqszzzeempsezxs3qh2n2uk
+  - &preview1-test-a-1 age1fsgltv09d4mdvzdkhsqufj8f4h7k8k7jfmps4n9stwalpdzf6fss6spdv0
   - &preview2-bp-b-1 age1jcfeznfkxx2rmeej9f4frvnjqkxdpd9kg56l57nmtamq53802fjq7x2y69
   - &preview3-bp-c-1 age13tc9mjgu7hwfxsa84hq0tcz7eeg9m6f0fmg8gzxwme30pfxf7g4sfk2y0k
 
@@ -89,17 +90,23 @@ creation_rules:
       - *preprod3-bp-c-1
 
   # Preview specific
+  - path_regex: secrets/groups/preview1/deploy/preview1-bp-a-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *preview1-bp-a-1
+
   - path_regex: secrets/groups/preview1/deploy/.*faucet.*$
     key_groups:
     - age:
       - *sre
       - *preview1-faucet-a-1
 
-  - path_regex: secrets/groups/preview1/deploy/.*$
+  - path_regex: secrets/groups/preview1/deploy/preview1-test-a-1.*$
     key_groups:
     - age:
       - *sre
-      - *preview1-bp-a-1
+      - *preview1-test-a-1
 
   - path_regex: secrets/groups/preview2/deploy/.*$
     key_groups:
