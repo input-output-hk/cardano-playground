@@ -603,7 +603,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(cardano_node_metrics_Mem_resident_intt{environment=\"$environment\",instance=~\".*-bp-.*\"})",
+          "expr": "max(cardano_node_metrics_Mem_resident_int{environment=\"$environment\",instance=~\".*-bp-.*\"})",
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
