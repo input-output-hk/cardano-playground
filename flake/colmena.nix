@@ -183,6 +183,22 @@ in
         ];
       };
 
+      # While new tracing PRs are WIP, the new node service is required
+      dbsync-pre = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+          }
+        ];
+      };
       # ogmios = {
       #   imports = [
       #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-ogmios-service
@@ -729,7 +745,7 @@ in
       };
       preview1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync smash pre previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync-pre smash pre previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing
@@ -815,16 +831,20 @@ in
           (group "mainnet1")
           node
           bp
-          pre
+
+          # Test with 10.2.1 on the moving collector
+          # pre
+
           {
             services.mithril-signer.enable = false;
 
             # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occasionally on 10.1.3 to 20 days runtime
+            # Moving gc -- ??? missedSlots per hour occasionally on 10.2.1 to x days runtime
             services.cardano-node = {
-              rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
+              # rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
 
-              useLegacyTracing = false;
-              ngTracer = true;
+              useLegacyTracing = true;
+              # ngTracer = true;
 
               # Declare the service option for relevant machines at the appropriate path, example:
               # Retest with 10.2
