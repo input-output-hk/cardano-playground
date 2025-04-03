@@ -1,12 +1,13 @@
 ## Advanced Configuration: Pre-Production Testnet
 
-There is currently no pre-release version available for the pre-production environment.
+Users wanting to test a cardano-node pre-release version on the preprod
+environment may obtain compatible configuration files below.
 
-The latest version available is cardano-node release `10.2.1`.
+The latest version available is cardano-node pre-release `10.3.0`.
 
 #### Configuration files
 
-Compatible with cardano-node release [10.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.2.1)
+Compatible with cardano-node pre-release [10.3.0](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.0)
 
 ```
 NOTE:
@@ -22,7 +23,7 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [DB Sync Config](environments-pre/preprod/db-sync-config.json)
 - [Submit API Config](environments-pre/preprod/submit-api-config.json)
 - [Node Topology](environments-pre/preprod/topology.json)
-- [Node Topology (Genesis mode)](environments/preprod/topology-genesis-mode.json)
+- [Node Topology (Genesis mode)](environments-pre/preprod/topology-genesis-mode.json)
 - [Peer Snapshot](environments-pre/preprod/peer-snapshot.json)
 - [Byron Genesis](environments-pre/preprod/byron-genesis.json)
 - [Shelley Genesis](environments-pre/preprod/shelley-genesis.json)
