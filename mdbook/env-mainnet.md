@@ -37,11 +37,30 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Submit API Config](environments/mainnet/submit-api-config.json)
 - [Node Topology](environments/mainnet/topology.json)
 - [Node Topology (Non-bootstrap-peers)](environments/mainnet/topology-non-bootstrap-peers.json)
+- [Node Topology (Genesis mode)](environments/mainnet/topology-genesis-mode.json)
+- [Peer Snapshot](environments/mainnet/peer-snapshot.json)
+- [Checkpoints](environments/mainnet/checkpoints.json)
 - [Byron Genesis](environments/mainnet/byron-genesis.json)
 - [Shelley Genesis](environments/mainnet/shelley-genesis.json)
 - [Alonzo Genesis](environments/mainnet/alonzo-genesis.json)
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
 - [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)
+
+#### Ouroboros Genesis Mode
+
+For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
+topology file given above can be used in place of the default topology file.
+The following requirements will also need to be met:
+
+* The node config will need to have `ConsensusMode` set to `GenesisMode`
+
+* The checkpoints file, provided above, will need to exist at the path declared
+at `CheckspointsFile` in the node config: an absolute path, or relative path
+with respect to the config file
+
+* The peer snapshot file, provided above, will need to exist at the path
+declared at `peerSnapshotFile` in the genesis mode topology file: an absolute
+path, or a relative path with respect to the node server invocation directory
 
 #### Guardrails reference script UTxO
 

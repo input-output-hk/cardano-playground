@@ -1343,15 +1343,16 @@
         "sodium": "sodium_2"
       },
       "locked": {
-        "lastModified": 1740527380,
-        "narHash": "sha256-0sF0RUsnFVdRMoS9amtRQs6TnCFynDFdbzn8zBLD5Bg=",
+        "lastModified": 1743646975,
+        "narHash": "sha256-Lql0s3Occ6gKLvjcqTPK6vW4l1jwNn/UV7uaVpB/jTg=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "ea26f2ca1686656d89bb5760f717f713168cd5a5",
+        "rev": "61772698cb6e08956637b06dc66679cb95d39e3e",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "jl/genesis-cfg",
         "repo": "iohk-nix",
         "type": "github"
       }
