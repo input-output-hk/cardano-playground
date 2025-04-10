@@ -29,7 +29,7 @@ with flake.lib; {
     };
 
     infra.generic = {
-      organization = "iog";
+      organization = "ioe";
       tribe = "coretech";
       function = "cardano-parts";
       repo = "https://github.com/input-output-hk/cardano-playground";
