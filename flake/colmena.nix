@@ -740,6 +740,10 @@ in
           (group "mainnet1")
           node
           bp
+
+          # Test with 10.3.1 pre-release on the moving collector
+          pre
+
           {
             services.mithril-signer.enable = false;
 
