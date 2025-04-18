@@ -832,8 +832,8 @@ in
           node
           bp
 
-          # Test with 10.2.1 on the moving collector
-          # pre
+          # Test with 10.3.1 pre-release on the moving collector
+          pre
 
           {
             services.mithril-signer.enable = false;
