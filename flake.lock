@@ -105,6 +105,22 @@
         "type": "github"
       }
     },
+    "blockfrost-platform-service": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744287517,
+        "narHash": "sha256-0PSDq5rT0SvvSQ3TMnc1vjhrefMlIwt1d2eO06OUrVM=",
+        "owner": "blockfrost",
+        "repo": "blockfrost-platform",
+        "rev": "9480822973bc156cda3b1bca9e92d70fa9a1a3dc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "blockfrost",
+        "repo": "blockfrost-platform",
+        "type": "github"
+      }
+    },
     "blst": {
       "flake": false,
       "locked": {
@@ -142,16 +158,16 @@
     "blst_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1691598027,
-        "narHash": "sha256-oqljy+ZXJAXEB/fJtmB8rlAr4UXM+Z2OkDa20gpILNA=",
+        "lastModified": 1739372843,
+        "narHash": "sha256-IlbNMLBjs/dvGogcdbWQIL+3qwy7EXJbIDpo4xBd4bY=",
         "owner": "supranational",
         "repo": "blst",
-        "rev": "3dd0f804b1819e5d03fb22ca2e6fac105932043a",
+        "rev": "8c7db7fe8d2ce6e76dc398ebd4d475c0ec564355",
         "type": "github"
       },
       "original": {
         "owner": "supranational",
-        "ref": "v0.3.11",
+        "ref": "v0.3.14",
         "repo": "blst",
         "type": "github"
       }
@@ -260,16 +276,15 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1739470817,
-        "narHash": "sha256-r8pWgqTuKvXkMD/l96nMkA9epnau/Ad2TDd0p2o/v4o=",
+        "lastModified": 1744812235,
+        "narHash": "sha256-nSkYnKE96haOnsGWLogO21zI8VfCkp3pNBtds39H8pA=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "a523b3c810d05520b6d4866a5b7914173098adf4",
+        "rev": "6ae543a69dfa33389ddee43564ee412b0cceaf4b",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "input-addressed",
         "repo": "capkgs",
         "type": "github"
       }
@@ -422,6 +437,7 @@
     "cardano-parts": {
       "inputs": {
         "auth-keys-hub": "auth-keys-hub",
+        "blockfrost-platform-service": "blockfrost-platform-service",
         "capkgs": "capkgs",
         "cardano-db-sync-schema": "cardano-db-sync-schema",
         "cardano-db-sync-schema-ng": "cardano-db-sync-schema-ng",
@@ -450,16 +466,16 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1740612888,
-        "narHash": "sha256-940LU5w7u3oDZmUAkDSkIcjuJc6XEgNlH0Qn+UbpPoQ=",
+        "lastModified": 1744937775,
+        "narHash": "sha256-YhtFu5v77dazUzLw3KKvQNHSclmIag9k9l+SFKfuVBQ=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "997b33329d75b38138a6d4614985bca4270aee53",
+        "rev": "8f244082316e3e09d711b399cb156279e1c26f10",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2025-02-26",
+        "ref": "v2025-04-17",
         "repo": "cardano-parts",
         "type": "github"
       }
@@ -516,16 +532,16 @@
     "cardano-wallet-service": {
       "flake": false,
       "locked": {
-        "lastModified": 1709323258,
-        "narHash": "sha256-O5u0V7XHY/9umFV6/R4JBk8Zu3sBnmuMCK++XGVwQ2Q=",
+        "lastModified": 1743395731,
+        "narHash": "sha256-SdSIgci9IP2tmxiIs9YC/JtF4ih/Vyd7mU4G7/DesHo=",
         "owner": "cardano-foundation",
         "repo": "cardano-wallet",
-        "rev": "e69616ba776f4a52173ead423141d234e03d468f",
+        "rev": "1649791d8e9f14c8c97bd15a5687319672025652",
         "type": "github"
       },
       "original": {
         "owner": "cardano-foundation",
-        "ref": "v2024-03-01",
+        "ref": "v2025-03-31",
         "repo": "cardano-wallet",
         "type": "github"
       }
@@ -1327,15 +1343,16 @@
         "sodium": "sodium_2"
       },
       "locked": {
-        "lastModified": 1740527380,
-        "narHash": "sha256-0sF0RUsnFVdRMoS9amtRQs6TnCFynDFdbzn8zBLD5Bg=",
+        "lastModified": 1743646975,
+        "narHash": "sha256-Lql0s3Occ6gKLvjcqTPK6vW4l1jwNn/UV7uaVpB/jTg=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "ea26f2ca1686656d89bb5760f717f713168cd5a5",
+        "rev": "61772698cb6e08956637b06dc66679cb95d39e3e",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "jl/genesis-cfg",
         "repo": "iohk-nix",
         "type": "github"
       }
@@ -1348,11 +1365,11 @@
         "sodium": "sodium_3"
       },
       "locked": {
-        "lastModified": 1740527380,
-        "narHash": "sha256-0sF0RUsnFVdRMoS9amtRQs6TnCFynDFdbzn8zBLD5Bg=",
+        "lastModified": 1744130217,
+        "narHash": "sha256-Lql0s3Occ6gKLvjcqTPK6vW4l1jwNn/UV7uaVpB/jTg=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "ea26f2ca1686656d89bb5760f717f713168cd5a5",
+        "rev": "dd47887a0482bfb1399c9da77175933876d0f4ab",
         "type": "github"
       },
       "original": {
