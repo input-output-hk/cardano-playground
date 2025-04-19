@@ -381,8 +381,26 @@ in {
         };
       };
 
-      # Needed for kubo to `sh` to run the repo db migration process for upgrades
-      systemd.services.ipfs.path = with pkgs; [bash];
+      systemd.services.ipfs = {
+        # Needed for kubo to `sh` to run the repo db migration process for upgrades
+        path = with pkgs; [bash];
+
+        # Limit runtime to 1 week until a memory leak is addressed in future
+        # ipfs updates.
+        startLimitIntervalSec = 15 * 60;
+        startLimitBurst = 3;
+
+        serviceConfig = {
+          Restart = "always";
+          RestartSec = 30;
+
+          RuntimeMaxSec = 7 * 24 * 3600;
+
+          # Without this, the service won't restart on successful exist despite
+          # the restart always.
+          SuccessExitStatus = "";
+        };
+      };
 
       sops.secrets = mkSopsSecret {
         secretName = "ipfs-auth";
