@@ -141,16 +141,16 @@
     "blst_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1691598027,
-        "narHash": "sha256-oqljy+ZXJAXEB/fJtmB8rlAr4UXM+Z2OkDa20gpILNA=",
+        "lastModified": 1739372843,
+        "narHash": "sha256-IlbNMLBjs/dvGogcdbWQIL+3qwy7EXJbIDpo4xBd4bY=",
         "owner": "supranational",
         "repo": "blst",
-        "rev": "3dd0f804b1819e5d03fb22ca2e6fac105932043a",
+        "rev": "8c7db7fe8d2ce6e76dc398ebd4d475c0ec564355",
         "type": "github"
       },
       "original": {
         "owner": "supranational",
-        "ref": "v0.3.11",
+        "ref": "v0.3.14",
         "repo": "blst",
         "type": "github"
       }
@@ -466,16 +466,16 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1744937775,
-        "narHash": "sha256-YhtFu5v77dazUzLw3KKvQNHSclmIag9k9l+SFKfuVBQ=",
+        "lastModified": 1745880343,
+        "narHash": "sha256-u4UzcOy1AlcKVX470hY2XxMazq9uSo/+kD2RJVgEWFM=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "8f244082316e3e09d711b399cb156279e1c26f10",
+        "rev": "edfdaaeae634e471fbc0c4bcf9891c5d2044d43c",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2025-04-17",
+        "ref": "v2025-04-28",
         "repo": "cardano-parts",
         "type": "github"
       }
@@ -497,6 +497,22 @@
       }
     },
     "cardano-shell_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1608537748,
+        "narHash": "sha256-PulY1GfiMgKVnBci3ex4ptk2UNYMXqGjJOxcPy2KYT4=",
+        "owner": "input-output-hk",
+        "repo": "cardano-shell",
+        "rev": "9392c75087cb9a3d453998f4230930dea3a95725",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "repo": "cardano-shell",
+        "type": "github"
+      }
+    },
+    "cardano-shell_3": {
       "flake": false,
       "locked": {
         "lastModified": 1608537748,
@@ -1343,16 +1359,15 @@
         "sodium": "sodium_2"
       },
       "locked": {
-        "lastModified": 1743646975,
+        "lastModified": 1744130217,
         "narHash": "sha256-Lql0s3Occ6gKLvjcqTPK6vW4l1jwNn/UV7uaVpB/jTg=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "61772698cb6e08956637b06dc66679cb95d39e3e",
+        "rev": "dd47887a0482bfb1399c9da77175933876d0f4ab",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/genesis-cfg",
         "repo": "iohk-nix",
         "type": "github"
       }
