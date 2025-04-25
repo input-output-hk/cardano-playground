@@ -25,7 +25,7 @@ Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [10.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.2.1)
+Compatible with cardano-node release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
 
 ```
 NOTE:
@@ -41,11 +41,25 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [DB Sync Config](environments/preprod/db-sync-config.json)
 - [Submit API Config](environments/preprod/submit-api-config.json)
 - [Node Topology](environments/preprod/topology.json)
+- [Node Topology (Genesis mode)](environments/preprod/topology-genesis-mode.json)
+- [Peer Snapshot](environments/preprod/peer-snapshot.json)
 - [Byron Genesis](environments/preprod/byron-genesis.json)
 - [Shelley Genesis](environments/preprod/shelley-genesis.json)
 - [Alonzo Genesis](environments/preprod/alonzo-genesis.json)
 - [Conway Genesis](environments/preprod/conway-genesis.json)
 - [Compiled guardrails script](environments/preprod/guardrails-script.plutus)
+
+#### Ouroboros Genesis Mode
+
+For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
+topology file given above can be used in place of the default topology file.
+The following requirements will also need to be met:
+
+* The node config file will need to have `ConsensusMode` set to `GenesisMode`
+
+* The peer snapshot file, provided above, will need to exist at the path
+declared at `peerSnapshotFile` in the genesis mode topology file: an absolute
+path, or a relative path with respect to the node binary directory
 
 #### Guardrails reference script UTxO
 

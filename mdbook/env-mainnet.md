@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [10.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.2.1)
+Compatible with cardano-node release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
 
 ```
 NOTE:
@@ -36,12 +36,31 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
 - [Submit API Config](environments/mainnet/submit-api-config.json)
 - [Node Topology](environments/mainnet/topology.json)
+- [Node Topology (Genesis mode)](environments/mainnet/topology-genesis-mode.json)
 - [Node Topology (Non-bootstrap-peers)](environments/mainnet/topology-non-bootstrap-peers.json)
+- [Peer Snapshot](environments/mainnet/peer-snapshot.json)
+- [Checkpoints](environments/mainnet/checkpoints.json)
 - [Byron Genesis](environments/mainnet/byron-genesis.json)
 - [Shelley Genesis](environments/mainnet/shelley-genesis.json)
 - [Alonzo Genesis](environments/mainnet/alonzo-genesis.json)
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
 - [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)
+
+#### Ouroboros Genesis Mode
+
+For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
+topology file given above can be used in place of the default topology file.
+The following requirements will also need to be met:
+
+* The node config file will need to have `ConsensusMode` set to `GenesisMode`
+
+* The peer snapshot file, provided above, will need to exist at the path
+declared at `peerSnapshotFile` in the genesis mode topology file: an absolute
+path, or a relative path with respect to the node binary directory
+
+* The checkpoints file, provided above, will need to exist at the path
+declared at `CheckpointsFile` in the node config file: an absolute
+path, or a relative path with respect to the config file directory
 
 #### Guardrails reference script UTxO
 
