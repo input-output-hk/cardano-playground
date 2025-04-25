@@ -9,6 +9,7 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/v2025-04-28";
 
     # Local pins for additional customization:
+    cardanoFix.url = "github:IntersectMBO/cardano-node/new-tracing/fix-metrics";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
