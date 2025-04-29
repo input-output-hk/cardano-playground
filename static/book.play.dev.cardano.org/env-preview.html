@@ -196,7 +196,7 @@
 <p>Consulted: SPOs</p>
 <p>Informed: Cardano Core Tribe, COO, Director of Engineering</p>
 <h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.2.1">10.2.1</a></p>
+<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1">10.3.1</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
 default, so should not be used with block-producers.
@@ -210,11 +210,27 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments/preview/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments/preview/submit-api-config.json">Submit API Config</a></li>
 <li><a href="environments/preview/topology.json">Node Topology</a></li>
+<li><a href="environments/preview/topology-genesis-mode.json">Node Topology (Genesis mode)</a></li>
+<li><a href="environments/preview/peer-snapshot.json">Peer Snapshot</a></li>
 <li><a href="environments/preview/byron-genesis.json">Byron Genesis</a></li>
 <li><a href="environments/preview/shelley-genesis.json">Shelley Genesis</a></li>
 <li><a href="environments/preview/alonzo-genesis.json">Alonzo Genesis</a></li>
 <li><a href="environments/preview/conway-genesis.json">Conway Genesis</a></li>
 <li><a href="environments/preview/guardrails-script.plutus">Compiled guardrails script</a></li>
+</ul>
+<h4 id="ouroboros-genesis-mode"><a class="header" href="#ouroboros-genesis-mode">Ouroboros Genesis Mode</a></h4>
+<p>For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
+topology file given above can be used in place of the default topology file.
+The following requirements will also need to be met:</p>
+<ul>
+<li>
+<p>The node config file will need to have <code>ConsensusMode</code> set to <code>GenesisMode</code></p>
+</li>
+<li>
+<p>The peer snapshot file, provided above, will need to exist at the path
+declared at <code>peerSnapshotFile</code> in the genesis mode topology file: an absolute
+path, or a relative path with respect to the node binary directory</p>
+</li>
 </ul>
 <h4 id="guardrails-reference-script-utxo"><a class="header" href="#guardrails-reference-script-utxo">Guardrails reference script UTxO</a></h4>
 <p>For convenience, the guardrails script has been put on a UTxO so that it can be used as reference script in
