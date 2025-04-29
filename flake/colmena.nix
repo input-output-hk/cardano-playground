@@ -90,19 +90,19 @@ in
         ];
       };
 
-      nodeFix = mkCustomNode "cardanoFix";
+      # nodeFix = mkCustomNode "cardanoFix";
 
-      mkCustomNode = flakeInput:
-        node
-        // {
-          cardano-parts.perNode = {
-            pkgs = {
-              cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
-              cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
-              cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
-            };
-          };
-        };
+      # mkCustomNode = flakeInput:
+      #   node
+      #   // {
+      #     cardano-parts.perNode = {
+      #       pkgs = {
+      #         cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
+      #         cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
+      #         cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
+      #       };
+      #     };
+      #   };
 
       # Mithril signing config
       mithrilRelay = {imports = [inputs.cardano-parts.nixosModules.profile-mithril-relay];};
