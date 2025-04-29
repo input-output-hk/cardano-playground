@@ -1,13 +1,12 @@
 ## Advanced Configuration: Pre-Production Testnet
 
-Users wanting to test a cardano-node pre-release version on the preprod
-environment may obtain compatible configuration files below.
+There is currently no pre-release version available for the preprod environment.
 
-The latest version available is cardano-node pre-release `10.3.1`.
+The latest version available is cardano-node release `10.3.1`.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
+Compatible with cardano-node release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
 
 ```
 NOTE:
@@ -37,11 +36,11 @@ For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
 topology file given above can be used in place of the default topology file.
 The following requirements will also need to be met:
 
-* The node config will need to have `ConsensusMode` set to `GenesisMode`
+* The node config file will need to have `ConsensusMode` set to `GenesisMode`
 
 * The peer snapshot file, provided above, will need to exist at the path
 declared at `peerSnapshotFile` in the genesis mode topology file: an absolute
-path, or a relative path with respect to the node server invocation directory
+path, or a relative path with respect to the node binary directory
 
 #### Guardrails reference script UTxO
 
