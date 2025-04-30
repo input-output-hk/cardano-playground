@@ -1,12 +1,13 @@
 ## Advanced Configuration: Pre-Production Testnet
 
-There is currently no pre-release version available for the preprod environment.
+Users wanting to test a cardano-node pre-release version on the preprod
+environment may obtain compatible configuration files below.
 
-The latest version available is cardano-node release `10.3.1`.
+The latest version available is cardano-node pre-release `10.4.1`.
 
 #### Configuration files
 
-Compatible with cardano-node release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
+Compatible with cardano-node pre-release [10.4.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1)
 
 ```
 NOTE:
@@ -29,6 +30,14 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Alonzo Genesis](environments-pre/preprod/alonzo-genesis.json)
 - [Conway Genesis](environments-pre/preprod/conway-genesis.json)
 - [Compiled guardrails script](environments-pre/preprod/guardrails-script.plutus)
+
+#### UTXO-HD
+
+Users migrating from a previous version of the node should read the [release
+notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1) and
+the consensus [migration guide](https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating)
+to properly configure the node and convert the database such that a replay from
+genesis can be avoided.
 
 #### Ouroboros Genesis Mode
 
