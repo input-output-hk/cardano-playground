@@ -28,6 +28,7 @@ in
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       m5a-large.aws.instance.instance_type = "m5a.large";
+      m5ad-large.aws.instance.instance_type = "m5ad.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
@@ -715,6 +716,35 @@ in
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
+
+      # Smallest d variant for testing
+      preview1-test-a-1 = {
+        imports = [
+          eu-central-1
+          m5ad-large
+          # i7ie-2xlarge
+          (ebs 80)
+          (nodeRamPct 70)
+          (group "preview1")
+          node
+          # pparamsApi
+          # tcpTxOpt
+          bp
+          pre
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          {
+            services.mithril-signer.enable = false;
+            # services.cardano-node = {
+            #   useLegacyTracing = false;
+            #   ngTracer = true;
+            #   # profiling = "space-cost";
+            # };
+            # services.cardano-tracer = {
+            #   # profiling = "space-cost";
+            # };
+          }
+        ];
+      };
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node traceTxs rel pre previewRelMig];};
