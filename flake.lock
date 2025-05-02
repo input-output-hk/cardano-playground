@@ -602,7 +602,7 @@
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2025-05-01",
+        "ref": "next-2025-05-01",
         "repo": "cardano-parts",
         "type": "github"
       }
