@@ -27,7 +27,7 @@ in
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
-      m5a-large.aws.instance.instance_type = "m5a.large";
+      # m5a-large.aws.instance.instance_type = "m5a.large";
       m5ad-large.aws.instance.instance_type = "m5ad.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-large.aws.instance.instance_type = "r5.large";
@@ -83,7 +83,7 @@ in
       node = {
         imports = [
           # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -122,12 +122,23 @@ in
       varnishRamPct = ramPercent: nixos: {services.cardano-webserver.varnishRamAvailableMiB = nixos.nodeResources.memMiB * ramPercent / 100;};
 
       ram8gib = nixos: {
-        # On an 8 GiB machine, 7.5 GiB is reported as available in free -h
+        # On an 8 GiB machine, 7.5 GiB is reported as available in free -h; 74%
         services.cardano-node.totalMaxHeapSizeMiB = 5734;
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
       };
 
-      lmdb = {services.cardano-node.extraArgs = ["--lmdb-ledger-db-backend"];};
+      ram4gib = nixos: {
+        # On an 4 GiB machine, 3.5 GiB is reported as available in free -h; 74%
+        services.cardano-node.totalMaxHeapSizeMiB = 2652;
+        systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
+      };
+
+      lmdb = {
+        services.cardano-node = {
+          lmdbDatabasePath = "/ephemeral/cardano-node/";
+          withUtxoHdLmdb = true;
+        };
+      };
 
       smash = {
         imports = [
@@ -763,7 +774,7 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync pre dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
@@ -803,9 +814,9 @@ in
       };
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5a-large (ebs 300) (group "mainnet1") node (openFwTcp 3001) lmdb ram8gib disableAlertCount];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node pre lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node pre lmdb ram4gib (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
