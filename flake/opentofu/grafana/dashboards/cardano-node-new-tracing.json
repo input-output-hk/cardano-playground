@@ -540,7 +540,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(cardano_node_metrics_nodeIsNotLeader_int{environment=\"$environment\"}[1h])/rate(cardano_node_metrics_slotNum_int{environment=\"$environment\"}[1h])) / 0.05",
+          "expr": "sum(rate(cardano_node_metrics_nodeIsLeader_int{environment=\"$environment\"}[1h])/rate(cardano_node_metrics_slotNum_int{environment=\"$environment\"}[1h])) / 0.05",
           "interval": "",
           "legendFormat": "Total led slots",
           "range": true,
