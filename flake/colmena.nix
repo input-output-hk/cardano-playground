@@ -23,7 +23,7 @@ in
 
       # Instance defs:
       # c5a-large.aws.instance.instance_type = "c5a.large";
-      # c5ad-large.aws.instance.instance_type = "c5ad.large";
+      c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
@@ -824,7 +824,7 @@ in
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node pre lmdb ram4gib (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 c5ad-large (ebs 300) (group "mainnet1") node pre lmdb ram4gib (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
