@@ -88,8 +88,13 @@ in
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+        ];
+      };
 
-          # Include blockPerf by default with no upstream push to CF -- only push prom metrics
+      # Include blockPerf by default with no upstream push to CF -- only push prom metrics
+      bperfNoPublish = {
+        imports = [
           inputs.cardano-parts.nixosModules.profile-blockperf
           {
             services.blockperf = {
@@ -186,8 +191,13 @@ in
         imports = [
           inputs.cardano-parts.nixosModules.role-block-producer
           topoBp
-          # Disable machine DNS creation for block producers to avoid ip discovery
-          {cardano-parts.perNode.meta.enableDns = false;}
+          {
+            # Disable machine DNS creation for block producers to avoid ip discovery
+            cardano-parts.perNode.meta.enableDns = false;
+
+            # Reduce slots missed on cloud machines with relatively low IOPS by taking only 1 snapshot per day
+            services.cardano-node.extraNodeConfig.LedgerDB.SnapshotInterval = 86400;
+          }
         ];
       };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
@@ -204,6 +214,7 @@ in
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
           }
+          bperfNoPublish
         ];
       };
 
@@ -709,17 +720,17 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
-      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig];};
-      preprod1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp pre mithrilRelease (declMRel "preprod1-rel-a-1")];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
+      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel pre preprodRelMig];};
+      preprod1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel pre preprodRelMig tcpTxOpt];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node pre faucet preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
-      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig];};
-      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
-      preprod2-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp pre mithrilRelease (declMRel "preprod2-rel-b-1")];};
+      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel pre preprodRelMig];};
+      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
+      preprod2-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel pre preprodRelMig tcpTxOpt];};
 
       preprod3-bp-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
       preprod3-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig];};
@@ -729,13 +740,13 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
+      preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node pre bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node pre rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node pre minLog rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node pre rel previewRelMig tcpTxOpt];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node pre faucet previewFaucet];};
 
       # Smallest d variant for testing
       preview1-test-a-1 = {
@@ -803,21 +814,7 @@ in
 
           {
             services.mithril-signer.enable = false;
-
-            # New RTS Params w/ non-moving gc -- ~2 - 10 missedSlots per hour occasionally on 10.1.3 to 20 days runtime
-            services.cardano-node = {
-              rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
-
-              # Declare the service option for relevant machines at the appropriate path, example:
-              # Retest with 10.2
-              # peerSnapshotFile = "/var/lib/cardano-node/peerSnapshotFile.json";
-            };
-
-            # Old RTS Params w/ non-moving gc -- no missedSlots per hour on 10.1.3 at 8 days runtime
-            # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M" "--nonmoving-gc"];
-
-            # Old RTS Params w/ moving gc -- ~25 - 35 missed slots per hour with moving gc
-            # services.cardano-node.rtsArgs = mkForce ["-N2" "-I0" "-A16m" "-qg" "-qb" "-M25886.72M"];
+            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
           }
         ];
       };
