@@ -23,7 +23,7 @@ in
 
       # Instance defs:
       # c5a-large.aws.instance.instance_type = "c5a.large";
-      c5ad-large.aws.instance.instance_type = "c5ad.large";
+      # c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
