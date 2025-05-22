@@ -141,11 +141,11 @@ in
         systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "7G";
       };
 
-      ram4gib = nixos: {
-        # On an 4 GiB machine, 3.5 GiB is reported as available in free -h; 74%
-        services.cardano-node.totalMaxHeapSizeMiB = 2652;
-        systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
-      };
+      # ram4gib = nixos: {
+      #   # On an 4 GiB machine, 3.5 GiB is reported as available in free -h; 74%
+      #   services.cardano-node.totalMaxHeapSizeMiB = 2652;
+      #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
+      # };
 
       lmdb = {
         services.cardano-node = {
@@ -817,7 +817,7 @@ in
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 c5ad-large (ebs 300) (group "mainnet1") node lmdb ram4gib (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
