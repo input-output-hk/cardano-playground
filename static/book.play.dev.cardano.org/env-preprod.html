@@ -195,7 +195,7 @@
 <p>Consulted: SPOs, IOG Tribes</p>
 <p>Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community</p>
 <h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1">10.3.1</a></p>
+<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
 default, so should not be used with block-producers.
@@ -217,6 +217,12 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments/preprod/conway-genesis.json">Conway Genesis</a></li>
 <li><a href="environments/preprod/guardrails-script.plutus">Compiled guardrails script</a></li>
 </ul>
+<h4 id="utxo-hd"><a class="header" href="#utxo-hd">UTXO-HD</a></h4>
+<p>Users migrating from a previous version of the node should read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">release
+notes</a> and
+the consensus <a href="https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating">migration guide</a>
+to properly configure the node and convert the database such that a replay from
+genesis can be avoided.</p>
 <h4 id="ouroboros-genesis-mode"><a class="header" href="#ouroboros-genesis-mode">Ouroboros Genesis Mode</a></h4>
 <p>For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
 topology file given above can be used in place of the default topology file.
