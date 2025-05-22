@@ -5,11 +5,11 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    # cardano-parts.url = "github:input-output-hk/cardano-parts/next-2025-05-01";
-    cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2025-05-01";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2025-05-01";
+    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2025-05-01";
 
     # Local pins for additional customization:
-    cardanoFix.url = "github:IntersectMBO/cardano-node/10.4.1";
+    # cardanoTest.url = "github:IntersectMBO/cardano-node/mgalazyn/feature/make-peer-snapshot-file-path-relative-to-topology-file";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
