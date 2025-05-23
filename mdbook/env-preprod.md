@@ -25,7 +25,7 @@ Informed: Cardano Core Tribe, COO, Director of Engineering, VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
+Compatible with cardano-node release [10.4.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1)
 
 ```
 NOTE:
@@ -48,6 +48,14 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Alonzo Genesis](environments/preprod/alonzo-genesis.json)
 - [Conway Genesis](environments/preprod/conway-genesis.json)
 - [Compiled guardrails script](environments/preprod/guardrails-script.plutus)
+
+#### UTXO-HD
+
+Users migrating from a previous version of the node should read the [release
+notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1) and
+the consensus [migration guide](https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating)
+to properly configure the node and convert the database such that a replay from
+genesis can be avoided.
 
 #### Ouroboros Genesis Mode
 

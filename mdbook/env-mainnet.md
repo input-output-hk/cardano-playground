@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [10.3.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.3.1)
+Compatible with cardano-node release [10.4.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1)
 
 ```
 NOTE:
@@ -36,7 +36,6 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
 - [Submit API Config](environments/mainnet/submit-api-config.json)
 - [Node Topology](environments/mainnet/topology.json)
-- [Node Topology (Genesis mode)](environments/mainnet/topology-genesis-mode.json)
 - [Node Topology (Non-bootstrap-peers)](environments/mainnet/topology-non-bootstrap-peers.json)
 - [Peer Snapshot](environments/mainnet/peer-snapshot.json)
 - [Checkpoints](environments/mainnet/checkpoints.json)
@@ -46,21 +45,22 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
 - [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)
 
+#### UTXO-HD
+
+Users migrating from a previous version of the node should read the [release
+notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1) and
+the consensus [migration guide](https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating)
+to properly configure the node and convert the database such that a replay from
+genesis can be avoided.
+
 #### Ouroboros Genesis Mode
 
-For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
-topology file given above can be used in place of the default topology file.
-The following requirements will also need to be met:
-
-* The node config file will need to have `ConsensusMode` set to `GenesisMode`
-
-* The peer snapshot file, provided above, will need to exist at the path
-declared at `peerSnapshotFile` in the genesis mode topology file: an absolute
-path, or a relative path with respect to the node binary directory
-
-* The checkpoints file, provided above, will need to exist at the path
-declared at `CheckpointsFile` in the node config file: an absolute
-path, or a relative path with respect to the config file directory
+There is a known bug with the experimental Ouroboros Genesis feature that is
+not yet recommended for mainnet use: ChainSync Jumping (CSJ) is not disabled
+once a node is caught up. This should not affect normal operation of the
+syncing node, but does risk a DoS attack for the caught-up node. It will be
+corrected in a future release (Issue
+[IntersectMBO/ouroboros-consensus#1490](https://github.com/IntersectMBO/ouroboros-consensus/issues/1490)).
 
 #### Guardrails reference script UTxO
 
