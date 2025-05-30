@@ -810,7 +810,6 @@ in
           bp
           {
             services.mithril-signer.enable = false;
-            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
           }
         ];
       };
