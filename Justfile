@@ -914,27 +914,25 @@ start-demo:
   export GENESIS_DIR=state-demo
   export KEY_DIR=state-demo/envs/custom
   export DATA_DIR=state-demo/rundir
-
-  export CARDANO_NODE_SOCKET_PATH="$STATEDIR/node-demo.socket"
-  export TESTNET_MAGIC=42
-
-  export NUM_GENESIS_KEYS=3
-  export POOL_NAMES="sp-1 sp-2 sp-3"
   export STAKE_POOL_DIR=state-demo/groups/stake-pools
-
   export BULK_CREDS=state-demo/bulk.creds.all.json
   export PAYMENT_KEY=state-demo/envs/custom/utxo-keys/rich-utxo
-
-  export UNSTABLE=true
-  export UNSTABLE_LIB=true
-  export USE_ENCRYPTION=true
-  export USE_DECRYPTION=true
-  export USE_NODE_CONFIG_BP=false
-  export DEBUG=true
-
-  export SECURITY_PARAM=8
-  export SLOT_LENGTH=100
+  export CARDANO_NODE_SOCKET_PATH="$STATEDIR/node-demo.socket"
   export START_TIME=$(date --utc +"%Y-%m-%dT%H:%M:%SZ" --date " now + 30 seconds")
+
+  [ -z "${NUM_GENESIS_KEYS:-}" ] && export NUM_GENESIS_KEYS=3
+  [ -z "${TESTNET_MAGIC:-}" ] && export TESTNET_MAGIC=42
+  [ -z "${POOL_MARGIN:-}" ] && export POOL_MARGIN="0.5"
+  [ -z "${POOL_NAMES:-}" ] && export POOL_NAMES="sp-1 sp-2 sp-3"
+  [ -z "${UNSTABLE:-}" ] && export UNSTABLE=true
+  [ -z "${UNSTABLE_LIB:-}" ] && export UNSTABLE_LIB=true
+  [ -z "${USE_ENCRYPTION:-}" ] && export USE_ENCRYPTION=true
+  [ -z "${USE_DECRYPTION:-}" ] && export USE_DECRYPTION=true
+  [ -z "${USE_NODE_CONFIG_BP:-}" ] && export USE_NODE_CONFIG_BP=false
+  [ -z "${DEBUG:-}" ] && export DEBUG=true
+  [ -z "${SECURITY_PARAM:-}" ] && export SECURITY_PARAM=8
+  [ -z "${SLOT_LENGTH:-}" ] && export SLOT_LENGTH=1000
+  [ -z "${FIXED_DELAY_SECS:-}" ] && export FIXED_DELAY_SECS=10
 
   if [ "${USE_CREATE_TESTNET_DATA:-false}" = true ]; then
     ERA_CMD="conway" \
@@ -964,7 +962,7 @@ start-demo:
     NODE_TOPOLOGY="$DATA_DIR/topology.json" \
     SOCKET_PATH="$STATEDIR/node-demo.socket" \
     nohup setsid nix run .#run-cardano-node &> "$STATEDIR/node-demo.log" & echo $! > "$STATEDIR/node-demo.pid" &
-  just set-default-cardano-env demo "" "$PPID"
+  just set-default-cardano-env demo "$TESTNET_MAGIC" "$PPID"
   echo "Sleeping 30 seconds until $(date -d  @$(($(date +%s) + 30)))"
   sleep 30
   echo
@@ -984,8 +982,8 @@ start-demo:
     POOL_RELAY_PORT=3001 \
     ERA_CMD="alonzo" \
     nix run .#job-register-stake-pools
-  echo "Sleeping 10 seconds until $(date -d  @$(($(date +%s) + 10)))"
-  sleep 10
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
   echo
 
   WAIT_FOR_TIP() {
@@ -994,7 +992,7 @@ start-demo:
     EPOCH="$1"
 
     while true; do
-        [ "$(jq -re ".$TYPE" <<< "$(just query-tip demo)")" = "$TARGET" ] && break;
+        [ "$(jq -re ".$TYPE" <<< "$(just query-tip demo "$TESTNET_MAGIC")")" = "$TARGET" ] && break;
       sleep 2
     done
   }
@@ -1007,7 +1005,7 @@ start-demo:
   echo
 
   echo "Forking to babbage in epoch 1..."
-  just query-tip demo
+  just query-tip demo "$TESTNET_MAGIC"
   MAJOR_VERSION=7 \
     ERA_CMD="alonzo" \
     nix run .#job-update-proposal-hard-fork
@@ -1016,7 +1014,7 @@ start-demo:
   echo
 
   echo "Forking to babbage (intra-era) in epoch 2..."
-  just query-tip demo
+  just query-tip demo "$TESTNET_MAGIC"
   MAJOR_VERSION=8 \
     ERA_CMD="babbage" \
     nix run .#job-update-proposal-hard-fork
@@ -1025,7 +1023,7 @@ start-demo:
   echo
 
   echo "Forking to conway in epoch 3..."
-  just query-tip demo
+  just query-tip demo "$TESTNET_MAGIC"
   MAJOR_VERSION=9 \
     ERA_CMD="babbage" \
     nix run .#job-update-proposal-hard-fork
@@ -1033,7 +1031,7 @@ start-demo:
   WAIT_FOR_TIP "era" "Conway"
   echo
 
-  just query-tip demo
+  just query-tip demo "$TESTNET_MAGIC"
   echo
   echo "Finished sequence..."
   echo
@@ -1104,7 +1102,7 @@ start-demo-ng:
     NODE_TOPOLOGY="$DATA_DIR/topology.json" \
     SOCKET_PATH="$STATEDIR/node-demo.socket" \
     nohup setsid nix run .#run-cardano-node &> "$STATEDIR/node-demo.log" & echo $! > "$STATEDIR/node-demo.pid" &
-  just set-default-cardano-env demo "" "$PPID"
+  just set-default-cardano-env demo "$TESTNET_MAGIC" "$PPID"
   echo "Sleeping 30 seconds until $(date -d  @$(($(date +%s) + 30)))"
   sleep 30
   echo
