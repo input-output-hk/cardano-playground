@@ -912,32 +912,40 @@ start-demo:
 
   export ENV=custom
   export GENESIS_DIR=state-demo
-  export KEY_DIR=state-demo/envs/custom
-  export DATA_DIR=state-demo/rundir
-  export STAKE_POOL_DIR=state-demo/groups/stake-pools
   export BULK_CREDS=state-demo/bulk.creds.all.json
+  export CC_DIR=state-demo/envs/custom/cc-keys
+  export DATA_DIR=state-demo/rundir
+  export KEY_DIR=state-demo/envs/custom
   export PAYMENT_KEY=state-demo/envs/custom/utxo-keys/rich-utxo
+  export STAKE_POOL_DIR=state-demo/groups/stake-pools
   export CARDANO_NODE_SOCKET_PATH="$STATEDIR/node-demo.socket"
   export START_TIME=$(date --utc +"%Y-%m-%dT%H:%M:%SZ" --date " now + 30 seconds")
 
-  [ -z "${NUM_GENESIS_KEYS:-}" ] && export NUM_GENESIS_KEYS=3
-  [ -z "${TESTNET_MAGIC:-}" ] && export TESTNET_MAGIC=42
-  [ -z "${POOL_MARGIN:-}" ] && export POOL_MARGIN="0.5"
-  [ -z "${POOL_NAMES:-}" ] && export POOL_NAMES="sp-1 sp-2 sp-3"
-  [ -z "${UNSTABLE:-}" ] && export UNSTABLE=true
-  [ -z "${UNSTABLE_LIB:-}" ] && export UNSTABLE_LIB=true
-  [ -z "${USE_ENCRYPTION:-}" ] && export USE_ENCRYPTION=true
-  [ -z "${USE_DECRYPTION:-}" ] && export USE_DECRYPTION=true
-  [ -z "${USE_NODE_CONFIG_BP:-}" ] && export USE_NODE_CONFIG_BP=false
-  [ -z "${DEBUG:-}" ] && export DEBUG=true
-  [ -z "${SECURITY_PARAM:-}" ] && export SECURITY_PARAM=8
-  [ -z "${SLOT_LENGTH:-}" ] && export SLOT_LENGTH=1000
-  [ -z "${FIXED_DELAY_SECS:-}" ] && export FIXED_DELAY_SECS=10
+  export NUM_CC_KEYS="${NUM_CC_KEYS:-1}"
+  export NUM_GENESIS_KEYS="${NUM_GENESIS_KEYS:-3}"
+  export TESTNET_MAGIC="${TESTNET_MAGIC:-42}"
+  export POOL_MARGIN="${POOL_MARGIN:-"0.5"}"
+  export POOL_NAMES="${POOL_NAMES:-"sp-1 sp-2 sp-3"}"
+  export UNSTABLE="${UNSTABLE:-true}"
+  export UNSTABLE_LIB="${UNSTABLE_LIB:-true}"
+  export USE_CREATE_TESTNET_DATA="${USE_CREATE_TESTNET_DATA:-true}"
+  export USE_ENCRYPTION="${USE_ENCRYPTION:-true}"
+  export USE_DECRYPTION="${USE_DECRYPTION:-true}"
+  export USE_NODE_CONFIG_BP="${USE_NODE_CONFIG_BP:-false}"
+  export DEBUG="${DEBUG:-true}"
+  export SECURITY_PARAM="${SECURITY_PARAM:-8}"
+  export SLOT_LENGTH="${SLOT_LENGTH:-100}"
+  export FIXED_DELAY_SECS="${FIXED_DELAY_SECS:-10}"
 
-  if [ "${USE_CREATE_TESTNET_DATA:-false}" = true ]; then
+  if [ "$USE_CREATE_TESTNET_DATA" = true ]; then
     ERA_CMD="conway" \
       nix run .#job-gen-custom-node-config-data
   else
+    for i in "$(seq 1 "$NUM_CC_KEYS")"; do
+      INDEX="$i" \
+        nix run .#job-gen-keys-cc
+    done
+
     ERA_CMD="alonzo" \
       nix run .#job-gen-custom-node-config
   fi
@@ -967,7 +975,7 @@ start-demo:
   sleep 30
   echo
 
-  if [ "${USE_CREATE_TESTNET_DATA:-false}" = false ]; then
+  if [ "$USE_CREATE_TESTNET_DATA" = false ]; then
     echo "Moving genesis utxo in epoch 0..."
     BYRON_SIGNING_KEY="$KEY_DIR"/utxo-keys/shelley.000.skey \
       ERA_CMD="alonzo" \
@@ -1009,7 +1017,7 @@ start-demo:
   MAJOR_VERSION=7 \
     ERA_CMD="alonzo" \
     nix run .#job-update-proposal-hard-fork
-  echo "Sleeping until babbage"
+  echo "Sleeping until babbage, epoch 2"
   WAIT_FOR_TIP "era" "Babbage"
   echo
 
@@ -1018,7 +1026,7 @@ start-demo:
   MAJOR_VERSION=8 \
     ERA_CMD="babbage" \
     nix run .#job-update-proposal-hard-fork
-  echo "Sleeping until epoch 3"
+  echo "Sleeping until epoch babbage (intra-era), epoch 3"
   WAIT_FOR_TIP "epoch" "3"
   echo
 
@@ -1027,13 +1035,87 @@ start-demo:
   MAJOR_VERSION=9 \
     ERA_CMD="babbage" \
     nix run .#job-update-proposal-hard-fork
-  echo "Sleeping until epoch conway"
+  echo "Sleeping until conway, epoch 4"
   WAIT_FOR_TIP "era" "Conway"
+  echo
+
+  echo "Authorizing the CC member's hot credentials..."
+  INDEX=1 \
+    nix run .#job-register-cc
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
+  echo
+
+  # If both cost model and plomin HF are submitted in the same epoch and
+  # ratified in the same epoch, cost model may fail to enact.
+  echo "Submitting a Plomin prep cost model action..."
+  PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/mainnet-plutusv3-pv10-prep.json")
+  ACTION="create-protocol-parameters-update" \
+    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/sp-1-owner-stake" \
+    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  echo "Sleeping until cost model can be voted on, epoch 5"
+  WAIT_FOR_TIP "epoch" "5"
+  echo
+
+  echo "Submitting a Plomin hard fork action..."
+  PROPOSAL_ARGS=("--protocol-major-version" "10" "--protocol-minor-version" "0")
+  ACTION="create-hardfork" \
+    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/sp-1-owner-stake" \
+    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
+  echo
+
+  # Only the CC member needs to approve the cost model, but CC and SPOs need to approve the HF
+  echo "Submitting the CC vote for cost model..."
+  ACTION_TX_ID=$(
+    cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
+      | jq -r 'map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
+  ) \
+    DECISION=yes \
+    ROLE=cc \
+    VOTE_KEY="$CC_DIR/cc-1-hot" \
+    nix run .#job-submit-vote
+  echo "Sleeping until plomin HF can be voted on, epoch 6"
+  WAIT_FOR_TIP "epoch" "6"
+  echo
+
+  echo "Submitting the CC vote for the Plomin hard fork..."
+  export ACTION_TX_ID=$(
+    cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
+      | jq -r 'map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
+  )
+  DECISION=yes \
+    ROLE=cc \
+    VOTE_KEY="$CC_DIR/cc-1-hot \
+    nix run .#job-submit-vote
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
+  echo
+
+  POOL_NAME_ARR=($POOL_NAMES)
+  for i in $(seq 1 "${#POOL_NAME_ARR[@]}"); do
+    echo "Submitting the pool $i vote for the Plomin hard fork..."
+    DECISION=yes \
+      ROLE=spo \
+      VOTE_KEY="$STAKE_POOL_DIR/no-deploy/sp-${i}-cold" \
+      nix run .#job-submit-vote
+    echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+    sleep "$FIXED_DELAY_SECS"
+  done
+  echo "Sleeping until epoch 7 for the plomin HF votes to register..."
+  WAIT_FOR_TIP "epoch" "7"
+  echo
+
+  echo "Sleeping until epoch 8 for the Plomin HF action to ratify..."
+  WAIT_FOR_TIP "epoch" "8"
   echo
 
   just query-tip demo "$TESTNET_MAGIC"
   echo
   echo "Finished sequence..."
+  echo "Note that any further gov actions will require a constitution to be adopted."
   echo
 
 # Start a fork to conway demo using create-testnet-data-ng job
