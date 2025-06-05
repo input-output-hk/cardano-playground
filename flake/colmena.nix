@@ -720,22 +720,22 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
-      preprod1-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig];};
-      preprod1-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
+      preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig];};
+      preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
-      preprod2-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig];};
-      preprod2-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
-      preprod2-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
+      preprod2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig];};
+      preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
+      preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 t3a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp pre mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node rel pre preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -810,7 +810,6 @@ in
           bp
           {
             services.mithril-signer.enable = false;
-            services.cardano-node.rtsArgs = mkForce ["-N4" "-A16m" "-I3" "-M25886.72M" "--nonmoving-gc"];
           }
         ];
       };
