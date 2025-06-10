@@ -676,6 +676,10 @@ in {
               ${
                 concatStringsSep "\n" (map (name: ''
                     Host ${name}
+                      HostName ''${aws_instance.${name}[0].id}
+                      ProxyCommand sh -c "aws --region ${nodes.${name}.aws.region} ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+
+                    Host ${name}.ipv4
                       HostName ''${aws_eip.${name}[0].public_ip}
 
                     Host ${name}.ipv6
