@@ -451,17 +451,32 @@ in {
 
           aws_iam_role_policy_attachment = let
             mkRoleAttachments = roleResourceName: policyList:
-              listToAttrs (map (policy: {
+              listToAttrs (map (policy:
+                if isString policy
+                then {
                   name = "${roleResourceName}_policy_attachment_${policy}";
                   value = {
                     role = "\${aws_iam_role.${roleResourceName}.name}";
                     policy_arn = "\${aws_iam_policy.${policy}.arn}";
                   };
+                }
+                else {
+                  name = "${roleResourceName}_policy_attachment_${policy.name}";
+                  value = {
+                    role = "\${aws_iam_role.${roleResourceName}.name}";
+                    policy_arn = policy.arn;
+                  };
                 })
-                policyList);
+              policyList);
           in
             foldl' recursiveUpdate {} [
-              (mkRoleAttachments "ec2_role" ["kms_user"])
+              (mkRoleAttachments "ec2_role" [
+                "kms_user"
+                {
+                  name = "ssm";
+                  arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore";
+                }
+              ])
             ];
 
           aws_iam_policy.kms_user = {
