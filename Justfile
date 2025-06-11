@@ -452,99 +452,67 @@ lint:
 
 # List machines
 list-machines:
-  #!/usr/bin/env bash
+  #!/usr/bin/env nu
 
-  # Enable polars (dataframe) usage by calling nushell indirectly with a plugins option.
-  # Otherwise, the plugin registry can't seem to be initialized successfully from within the script.
-  # Ref: https://github.com/nushell/nushell/issues/14466
-  #
-  # Polars outer join equivalent to pandas dfr can likey be simplified in a future nushell release.
-  # Ref: https://github.com/nushell/nushell/issues/14572
-  nu --plugins [$NUSHELL_PLUGINS_POLARS] -c '
-  let nixosNodes = (do -i {^nix eval --json ".#nixosConfigurations" --apply "builtins.attrNames"} | complete)
-  if $nixosNodes.exit_code != 0 {
-     print "Nixos failed to evaluate the .#nixosConfigurations attribute."
-     print "The output was:"
-     print
-     print $nixosNodes
-     exit 1
+  def safe-run [block msg] {
+    let res = (do -i $block | complete)
+    if $res.exit_code != 0 {
+      print $msg
+      print "The output was:"
+      print
+      print $res
+      exit 1
+    }
+    $res.stdout
   }
 
-  {{checkSshConfig}}
-
-  let sshNodes = (do -i {^scj dump /dev/stdout -c .ssh_config} | complete)
-  if $sshNodes.exit_code != 0 {
-     print "Ssh-config-json failed to evaluate the .ssh_config file."
-     print "The output was:"
-     print
-     print $sshNodes
-     exit 1
+  def default-row [machine] {
+    {
+      machine: $machine,
+      inNixosCfg: "yes",
+      id: $"(ansi bg_red)Missing(ansi reset)",
+      pubIpv4: $"(ansi bg_red)Missing(ansi reset)",
+      pubIpv6: $"(ansi bg_red)Missing(ansi reset)"
+    }
   }
 
-  let nixosNodesDfr = (
-    let nodeList = ($nixosNodes.stdout | from json);
-    let sanitizedList = (if ($nodeList | is-empty) {$nodeList | insert 0 ""} else {$nodeList});
+  def main [] {
+    let nixosJson = (safe-run { ^nix eval --json ".#nixosConfigurations" --apply "builtins.attrNames" } "Nix eval failed.")
+    let sshJson = (safe-run { ^scj dump /dev/stdout -c .ssh_config } "scj failed.")
 
-    $sanitizedList
-      | wrap "machine"
-      | each {|i| insert inNixosCfg {"yes"}}
-      | polars into-df
-  )
+    let baseTable = ($nixosJson | from json | each { |it| default-row $it })
+    let sshTable = ($sshJson | from json | where {|e| $e | get -i HostName | is-not-empty } | reject -i ProxyCommand)
 
-  let sshNodesDfr = (
-    let ssh4Table = ($sshNodes.stdout
-      | from json
-      | where ("HostName" in $it) and not ($it.Host | str ends-with ".ipv6")
-      | select Host HostName
-      | rename Host pubIpv4
-    );
+    let mergeTable = (
+      $sshTable | reduce --fold $baseTable { |it, acc|
+        let host = $it.Host
+        let hostData = $it.HostName
+        let machine = ($host | str replace -r '\.ipv(4|6)$' '')
 
-    let ssh6Table = ($sshNodes.stdout
-      | from json
-      | where ("HostName" in $it) and ($it.Host | str ends-with ".ipv6")
-      | select Host HostName
-      | rename Host pubIpv6
-      | update Host {$in | str replace ".ipv6" ""}
-      | update pubIpv6 {if ($in == "unavailable.ipv6") {null} else {$in}}
-      | select Host pubIpv6
-    );
+        let update = if ($host | str ends-with ".ipv4") {
+          { pubIpv4: $hostData }
+        } else if ($host | str ends-with ".ipv6") {
+          { pubIpv6: $hostData }
+        } else {
+          { id: $hostData }
+        }
 
-    let sshTable = ($ssh4Table
-      | polars into-df
-      | polars join -f ($ssh6Table | polars into-df) Host Host
-      | polars into-nu
-      | update Host {|i| default $i.Host_x}
-      | reject Host_x
-      | polars into-df
-    );
+        if ($acc | any {|row| $row.machine == $machine }) {
+          $acc | each {|row|
+            if $row.machine == $machine {
+              $row | merge $update
+            } else {
+              $row
+            }
+          }
+        } else {
+          $acc ++ [ (default-row $machine | merge $update) ]
+        }
+      }
+    )
 
-    if ($sshTable | is-empty) {
-      [[Host pubIpv4 pubIpv6]; ["" "" ""]] | polars into-df
-    }
-    else {
-      $sshTable
-    }
-  )
-
-  (
-    $nixosNodesDfr
-      | polars join -f $sshNodesDfr machine Host
-      | polars into-nu
-      | update machine {|i| default $i.Host}
-      | reject Host
-      | polars into-df
-      | polars sort-by machine
-      | polars into-nu
-      | update inNixosCfg {if $in == null {$"(ansi bg_red)Missing(ansi reset)"} else {$in}}
-      | update pubIpv4 {if $in == null {$"(ansi bg_red)Missing(ansi reset)"} else {$in}}
-      | update pubIpv6 {|row|
-        if (
-          (($row.inNixosCfg | str contains "Missing") or ($row.pubIpv4 | str contains "Missing"))
-            and
-          ($row.pubIpv6 == null)
-        ) {$"(ansi bg_red)Missing(ansi reset)"} else {$in}}
-      | where machine != ""
-  )'
+    $mergeTable
+  }
 
 # Check mimir required config
 mimir-alertmanager-bootstrap:
