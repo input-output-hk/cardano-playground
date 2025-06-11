@@ -58,156 +58,131 @@ checkSshConfig := '''
     exit 1
   }
 
-  let checkFile = ".consistency-check-ts"
-
-  # Checking modified timestamps to decide whether to eval nixosCfgs which costs ~0.5s per ssh command
-  let runCheck = if ($checkFile | path exists) {
-    let checkTs = (stat -c %Y $checkFile) | into int
-    let colmenaTs = (stat -c %Y flake/colmena.nix) | into int
-    let sshHostsTs = (stat -c %Y .ssh_config) | into int
-    let moduleIpsTs = if ("flake/nixosModules/ips-DONT-COMMIT.nix" | path exists) {
-      (stat -c %Y flake/nixosModules/ips-DONT-COMMIT.nix) | into int
+  def file-ts [path] {
+    if ($path | path exists) {
+      (stat -c %Y $path) | into int
     } else {
       0
     }
+  }
 
+  def list-diff [left right lName rName] {
+    {
+      $lName: ($left | where $it not-in $right)
+      $rName: ($right | where $it not-in $left)
+      eq: ($left | where $it in $right)
+    }
+      | transpose where item
+      | flatten
+      | select item where
+      | where where != "eq"
+      | sort-by item
+  }
+
+  const checkFile = ".consistency-check-ts"
+  const hasIpModule = ("flake/nixosModules/ips-DONT-COMMIT.nix" | path exists)
+
+  let runCheck = if ($checkFile | path exists) {
+    let checkTs = (file-ts $checkFile)
+    let colmenaTs = (file-ts "flake/colmena.nix")
+    let sshHostsTs = (file-ts ".ssh_config")
+    let moduleIpsTs = (file-ts "flake/nixosModules/ips-DONT-COMMIT.nix")
     ($checkTs < $colmenaTs) or ($checkTs < $sshHostsTs) or ($checkTs < $moduleIpsTs)
   } else {
     true
   }
 
-  # Sanity check nixosConfigurations, ssh hosts and module ips agree
-  if ($runCheck == true) {
-    print "Checking nixosCfg, sshCfg and ipModuleCfg for consistency"
+  if $runCheck {
+    print "Checking nixosCfg, sshCfg, and ipModuleCfg for consistency..."
 
-    def list-diff [left: list<any>, right: list<any>, lName: string, rName: string]: nothing -> table<item: any, where: string> {
-      let comparison = {
-        $lName: ($left | where $it not-in $right)
-        $rName: ($right | where $it not-in $left)
-        eq: ($left | where $it in $right)
-      }
+    let nixosCfg = (nix eval --json ".#nixosConfigurations" --apply "builtins.attrNames" | from json)
 
-      $comparison | transpose where item | flatten | select item where | sort-by item
-    }
-
-    mut consistent = true
-
-    let nixosCfg = (nix eval --json ".#nixosConfigurations" --apply "builtins.attrNames") | from json
-
-    # Ssh config header manual changes can be made without breaking parsing as
-    # long as they come after the `Host .*$` line. Host modifications can also be
-    # made as long as any host changes come after the `  HostName .*$` line for
-    # each respective host.
-    let sshCfg = (open .ssh_config
+    let sshCfg = (
+      open .ssh_config
       | collect
       | parse --regex `(?m)Host (.*)\n\s+HostName (.*)`
       | rename machine ip
-      | sort-by machine)
+      | sort-by machine
+    )
 
-    let ssh4Cfg = ($sshCfg
+    let ssh4Cfg = (
+      $sshCfg
       | where ($it.machine | str ends-with ".ipv4")
       | rename machine pubIpv4
-      | update machine {$in | str replace ".ipv4" ""}
-      | sort-by machine)
+      | update machine { $in | str replace ".ipv4" "" }
+      | sort-by machine
+    )
 
-    let ssh6Cfg = ($sshCfg
+    let ssh6Cfg = (
+      $sshCfg
       | where ($it.machine | str ends-with ".ipv6")
       | rename machine pubIpv6
-      | update machine {$in | str replace ".ipv6" ""}
-      | update pubIpv6 {if ($in == "unavailable.ipv6") {null} else {$in}}
-      | sort-by machine)
+      | update machine { $in | str replace ".ipv6" "" }
+      | update pubIpv6 { $in | if $in == "unavailable.ipv6" { null } else { $in } }
+      | sort-by machine
+    )
 
-    let moduleIps = if ("flake/nixosModules/ips-DONT-COMMIT.nix" | path exists) {
-      (open flake/nixosModules/ips-DONT-COMMIT.nix
-        | collect
-        | parse --regex `(?ms)(.*)^  };\nin {.*`
-        | get capture0
-        | parse --regex `(?m)    (.*) = {$\n\s+privateIpv4 = \"(.*)";\n\s+publicIpv4 = \"(.*)";\n\s+publicIpv6 = \"(.*)";\n\s+};`
-        | rename machine privIpv4 pubIpv4 pubIpv6
-        | update pubIpv6 {if ($in == "") {null} else {$in}}
-        | sort-by machine)
+    let moduleIps = if $hasIpModule {
+      open flake/nixosModules/ips-DONT-COMMIT.nix
+      | collect
+      | parse --regex `(?ms)(.*)^  };\nin {.*`
+      | get capture0
+      | parse --regex `(?m)    (.*) = {$\n\s+privateIpv4 = \"(.*)";\n\s+publicIpv4 = \"(.*)";\n\s+publicIpv6 = \"(.*)";\n\s+};`
+      | rename machine privIpv4 pubIpv4 pubIpv6
+      | update pubIpv6 { $in | if $in == "" { null } else { $in } }
+      | sort-by machine
     } else {
       []
     }
 
-    # Set up comparison between list of nixos config machine names and ssh ipv4 machine names
-    let nixCompareSsh4 = list-diff $nixosCfg ($ssh4Cfg | get machine) onlyInNixosCfg onlyInSshCfg | where where != "eq"
+    let comparisons = [
+      {
+        label: "NixosConfigurations vs SSH hosts",
+        result: (list-diff $nixosCfg ($ssh4Cfg | get machine) onlyInNixosCfg onlyInSshCfg),
+        hint: "just save-ssh-config or just tf apply"
+      }
+      {
+        label: "SSH IPv4 vs SSH IPv6 machines",
+        result: (list-diff ($ssh4Cfg | get machine) ($ssh6Cfg | get machine) onlyInSsh4Cfg onlyInSsh6Cfg),
+        hint: "just save-ssh-config or just tf apply"
+      }
+      {
+        label: "NixosConfigurations vs IP module machines",
+        result: (if $hasIpModule {
+          list-diff $nixosCfg ($moduleIps | get machine) onlyInNixosCfg onlyInIpsModuleCfg
+        } else {[]}),
+        hint: "just update-ips"
+      }
+      {
+        label: "SSH public IPv4 vs IP module IPv4 values",
+        result: (if $hasIpModule {
+          list-diff ($ssh4Cfg | get pubIpv4) ($moduleIps | get pubIpv4) onlyInSshCfg onlyInIpsModuleCfg
+        } else {[]}),
+        hint: "just update-ips"
+      }
+      {
+        label: "SSH public IPv6 vs IP module IPv6 values",
+        result: (if $hasIpModule {
+          list-diff ($ssh6Cfg | get pubIpv6) ($moduleIps | get pubIpv6) onlyInSshCfg onlyInIpsModuleCfg
+        } else {[]}),
+        hint: "just update-ips"
+      }
+    ]
 
-    # Set up comparison between list of ssh public ipv4 and ssh public ipv6 machine names
-    let ssh4CompareSsh6 = list-diff ($ssh4Cfg | get machine) ($ssh6Cfg | get machine) onlyInSsh4Cfg onlyInSsh6Cfg | where where != "eq"
+    let inconsistent = (
+      $comparisons
+      | filter {|comp| $comp.result | is-not-empty }
+    )
 
-    # Set up comparison between list of nixos config machine names and ip module machine names
-    let nixCompareIps = if ("flake/nixosModules/ips-DONT-COMMIT.nix" | path exists) {
-      list-diff $nixosCfg ($moduleIps | get machine) onlyInNixosCfg onlyInIpsModuleCfg | where where != "eq"
-    } else {
-      []
-    }
-
-    # Set up comparison between list of ssh public ipv4 and ip module public ipv4 values
-    let ssh4CompareIps4 = if ("flake/nixosModules/ips-DONT-COMMIT.nix" | path exists) {
-      list-diff ($ssh4Cfg | get pubIpv4) ($moduleIps | get pubIpv4) onlyInSshCfg onlyInIpsModuleCfg | where where != "eq"
-    } else {
-      []
-    }
-
-    # Set up comparison between list of ssh public ipv6 and ip module public ipv6 values
-    let ssh6CompareIps6 = if ("flake/nixosModules/ips-DONT-COMMIT.nix" | path exists) {
-      list-diff ($ssh6Cfg | get pubIpv6) ($moduleIps | get pubIpv6) onlyInSshCfg onlyInIpsModuleCfg | where where != "eq"
-    } else {
-      []
-    }
-
-    # Validation output of any nixos config vs ssh ipv4 machine name differences
-    if ($nixCompareSsh4 | is-not-empty) {
-      print $"(ansi "bg_light_red")WARNING:(ansi reset) NixosConfigurations \(($nixosCfg | length)\) differ from ssh hosts \(($ssh4Cfg | length)\)"
-      print "         You may need to run `just save-ssh-config` or `just tf apply` to update the .ssh_config file."
+    $inconsistent | each {|comp|
+      print $"(ansi "bg_light_red")WARNING:(ansi reset) ($comp.label)"
+      print $"         You may need to run `($comp.hint)`"
       print "         Differences found are:"
-      print $nixCompareSsh4
+      print $comp.result
       print ""
-      $consistent = false
     }
 
-    # Validation output of any nixos config vs ip module machine name differences
-    if ($nixCompareIps | is-not-empty) {
-      print $"(ansi "bg_light_red")WARNING:(ansi reset) NixosConfigurations \(($nixosCfg | length)\) differ from ip module machines \(($moduleIps | length)\)"
-      print "         You may need to run `just update-ips` to update the flake/nixosModules/ips-DONT-COMMIT.nix file."
-      print "         Differences found are:"
-      print $nixCompareIps
-      print ""
-      $consistent = false
-    }
-
-    # Validation output of any ssh ipv4 vs ssh ipv6 machine name differences
-    if ($ssh4CompareSsh6 | is-not-empty) {
-      print $"(ansi "bg_light_red")WARNING:(ansi reset) Ssh config for public ipv4 \(($ssh4Cfg | length)\) differs from ssh config for public ipv6 hosts \(($ssh6Cfg | length)\)"
-      print "         You may need to run `just save-ssh-config` or `just tf apply` to update the .ssh_config file."
-      print "         Differences found are:"
-      print $ssh4CompareSsh6
-      print ""
-      $consistent = false
-    }
-
-    # Validation output of any ssh public ipv4 vs ip module public ipv4 value differences
-    if ($ssh4CompareIps4 | is-not-empty) {
-      print $"(ansi "bg_light_red")WARNING:(ansi reset) Ssh config for public ipv4 differs from ip module public ipv4 config:"
-      print "         You may need to run `just update-ips` to update the flake/nixosModules/ips-DONT-COMMIT.nix file."
-      print "         Differences found are:"
-      print $ssh4CompareIps4
-      print ""
-      $consistent = false
-    }
-
-    # Validation output of any ssh public ipv6 vs ip module public ipv6 value differences
-    if ($ssh6CompareIps6 | is-not-empty) {
-      print $"(ansi "bg_light_red")WARNING:(ansi reset) Ssh config for public ipv6 differs from ip module public ipv6 config:"
-      print "         You may need to run `just update-ips` to update the flake/nixosModules/ips-DONT-COMMIT.nix file."
-      print "         Differences found are:"
-      print $ssh6CompareIps6
-      print ""
-      $consistent = false
-    }
-
-    if ($consistent == true) {
+    if ($inconsistent | is-empty) {
       touch $checkFile
     }
   }
@@ -815,18 +790,16 @@ ssh-config-example:
     ServerAliveInterval 60
 
   Host machine-example-1
-    HostName 1.2.3.4
+    HostName i-EXAMPLE_AWS_EC2ID
     # Per host customization should come after the HostName line to preserve pattern parsing
-    ProxyJump machine-example-2
+    ProxyCommand sh -c "aws --region eu-central-1 ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+    Tag t3a.medium
+
+  Host machine-example-1.ipv4
+    HostName 1.2.3.5
 
   Host machine-example-1.ipv6
     HostName ff00::01
-
-  Host machine-example-2
-    HostName 1.2.3.5
-
-  Host machine-example-2.ipv6
-    HostName unavailable.ipv6
   EOF
 
 # Ssh using cluster bootstrap key
