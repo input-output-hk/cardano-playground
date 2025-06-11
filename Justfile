@@ -95,7 +95,7 @@ checkSshConfig := '''
     let nixosCfg = (nix eval --json ".#nixosConfigurations" --apply "builtins.attrNames") | from json
 
     # Ssh config header manual changes can be made without breaking parsing as
-    # long as they come after the `Host *$` line. Host modifications can also be
+    # long as they come after the `Host .*$` line. Host modifications can also be
     # made as long as any host changes come after the `  HostName .*$` line for
     # each respective host.
     let sshCfg = (open .ssh_config
@@ -105,8 +105,9 @@ checkSshConfig := '''
       | sort-by machine)
 
     let ssh4Cfg = ($sshCfg
-      | where not ($it.machine | str ends-with ".ipv6")
+      | where ($it.machine | str ends-with ".ipv4")
       | rename machine pubIpv4
+      | update machine {$in | str replace ".ipv4" ""}
       | sort-by machine)
 
     let ssh6Cfg = ($sshCfg
@@ -468,15 +469,18 @@ list-machines:
 
   def default-row [machine] {
     {
-      machine: $machine,
-      inNixosCfg: "yes",
-      id: $"(ansi bg_red)Missing(ansi reset)",
-      pubIpv4: $"(ansi bg_red)Missing(ansi reset)",
-      pubIpv6: $"(ansi bg_red)Missing(ansi reset)"
+      Name: $machine,
+      Nix: $"(ansi green)OK",
+      pubIpv4: $"(ansi red)--",
+      pubIpv6: $"(ansi red)--",
+      Id: $"(ansi red)--",
+      Type: $"(ansi red)--"
     }
   }
 
   def main [] {
+    {{checkSshConfig}}
+
     let nixosJson = (safe-run { ^nix eval --json ".#nixosConfigurations" --apply "builtins.attrNames" } "Nix eval failed.")
     let sshJson = (safe-run { ^scj dump /dev/stdout -c .ssh_config } "scj failed.")
 
@@ -494,12 +498,12 @@ list-machines:
         } else if ($host | str ends-with ".ipv6") {
           { pubIpv6: $hostData }
         } else {
-          { id: $hostData }
+          { Id: $hostData, Type: $it.Tag }
         }
 
-        if ($acc | any {|row| $row.machine == $machine }) {
+        if ($acc | any {|row| $row.Name == $machine }) {
           $acc | each {|row|
-            if $row.machine == $machine {
+            if $row.Name == $machine {
               $row | merge $update
             } else {
               $row
@@ -512,6 +516,9 @@ list-machines:
     )
 
     $mergeTable
+      | sort-by Name
+      | enumerate
+      | each { |r| { index: ($r.index + 1) } | merge $r.item }
   }
 
 # Check mimir required config
