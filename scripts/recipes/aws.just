@@ -1,12 +1,6 @@
 # AWS specific recipes related to non-Tofu infrastructure.
 # Doing so will make diffing and patching the main repo Justfile easier.
 
-# Describe ssm active sessions
-aws-ssm-sessions:
-  #!/usr/bin/env bash
-  set -e
-  aws ssm describe-sessions --state Active
-
 # Describe an aws ec2 machine
 aws-ec2-describe NAME REGION:
   #!/usr/bin/env bash
@@ -46,7 +40,36 @@ aws-ec2-stop NAME REGION:
   ID=$(just aws-ec2-id {{NAME}} {{REGION}})
   aws --region {{REGION}} ec2 stop-instances --instance-ids "$ID"
 
-# Login to AWS SSO
+# Describe ssm active sessions
+aws-ssm-sessions:
+  #!/usr/bin/env bash
+  set -e
+  aws ssm describe-sessions --state Active
+
+# Export short term aws sso credentials
+aws-sso-export FILE="aws-sso.sh" AWS_PROFILE=null:
+  #!/usr/bin/env bash
+  set -e
+  if [ -n "{{AWS_PROFILE}}" ]; then
+    PROFILE="{{AWS_PROFILE}}"
+    echo "Exporting short term AWS SSO credentials for profile \"$PROFILE\"..."
+  elif [ -n "$AWS_PROFILE" ]; then
+    PROFILE="$AWS_PROFILE"
+    echo "Exporting short term AWS SSO credentials for profile \"$PROFILE\" from env var AWS_PROFILE..."
+  else
+    echo "ERROR: Either a recipe AWS_PROFILE arg must be given or the env var AWS_PROFILE must be set."
+  fi
+
+  if ! aws sts get-caller-identity --profile "$AWS_PROFILE" &> /dev/null; then
+    echo
+    nu -c 'print $"(ansi "bg_light_red")Please run:(ansi reset) `just aws-sso-login` first to obtain sso credentials"'
+    exit 1
+  fi
+
+  echo
+  aws configure export-credentials --format env > {{FILE}}
+
+# Login to aws sso
 aws-sso-login AWS_PROFILE=null:
   #!/usr/bin/env bash
   set -e
