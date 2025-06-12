@@ -840,7 +840,7 @@ ssh-list-ips PATTERN:
     | from json
     | default "" Host
     | default "" HostName
-    | where not ($it.Host =~ ".ipv(4|6)$")
+    | where ($it.Host =~ ".ipv4$")
     | where Host =~ "{{PATTERN}}"
     | get HostName
     | str join " "
