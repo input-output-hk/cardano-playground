@@ -822,13 +822,25 @@ ssh-for-each HOSTNAMES *ARGS:
   colmena exec --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}}
 
 # List machine ips based on regex pattern
+ssh-list-ids PATTERN:
+  #!/usr/bin/env nu
+  scj dump /dev/stdout -c .ssh_config
+    | from json
+    | default "" Host
+    | default "" HostName
+    | where not ($it.Host =~ ".ipv(4|6)$")
+    | where Host =~ "{{PATTERN}}"
+    | get HostName
+    | str join " "
+
+# List machine ips based on regex pattern
 ssh-list-ips PATTERN:
   #!/usr/bin/env nu
   scj dump /dev/stdout -c .ssh_config
     | from json
     | default "" Host
     | default "" HostName
-    | where not ($it.Host | str ends-with ".ipv6")
+    | where not ($it.Host =~ ".ipv(4|6)$")
     | where Host =~ "{{PATTERN}}"
     | get HostName
     | str join " "
@@ -840,7 +852,7 @@ ssh-list-names PATTERN:
     | from json
     | default "" Host
     | default "" HostName
-    | where not ($it.Host | str ends-with ".ipv6")
+    | where not ($it.Host =~ ".ipv(4|6)$")
     | where Host =~ "{{PATTERN}}"
     | get Host
     | str join " "
