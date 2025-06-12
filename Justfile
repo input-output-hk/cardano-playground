@@ -77,6 +77,8 @@ checkSshConfig := '''
       | select item where
       | where where != "eq"
       | sort-by item
+      | enumerate
+      | each { |r| { index: ($r.index + 1) } | merge $r.item }
   }
 
   const checkFile = ".consistency-check-ts"
