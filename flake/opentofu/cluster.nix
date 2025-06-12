@@ -560,11 +560,12 @@ in {
                     from_port = 443;
                     to_port = 443;
                   })
-                  (mkRule {
-                    description = "Allow SSH";
-                    from_port = 22;
-                    to_port = 22;
-                  })
+                  # No longer required with SSH over SSM
+                  # (mkRule {
+                  #   description = "Allow SSH";
+                  #   from_port = 22;
+                  #   to_port = 22;
+                  # })
                   (mkRule {
                     description = "Allow Cardano";
                     from_port = 3001;
