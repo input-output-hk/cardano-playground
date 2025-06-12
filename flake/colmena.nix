@@ -30,10 +30,10 @@ in
       # m5a-large.aws.instance.instance_type = "m5a.large";
       m5ad-large.aws.instance.instance_type = "m5ad.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
-      r5-large.aws.instance.instance_type = "r5.large";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
       r6a-large.aws.instance.instance_type = "r6a.large";
+      r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
@@ -724,7 +724,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
@@ -745,7 +745,7 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing
