@@ -683,6 +683,7 @@ in {
 
                     Host ${name}.ipv4
                       HostName ''${aws_eip.${name}[0].public_ip}
+                      Tag ${nodes.${name}.aws.region}
 
                     Host ${name}.ipv6
                       HostName ''${length(aws_instance.${name}[0].ipv6_addresses) > 0 ? aws_instance.${name}[0].ipv6_addresses[0] : "unavailable.ipv6"}

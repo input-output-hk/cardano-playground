@@ -452,6 +452,7 @@ list-machines:
       pubIpv6: $"(ansi red)--",
       Id: $"(ansi red)--",
       Type: $"(ansi red)--"
+      Region: $"(ansi red)--"
     }
   }
 
@@ -471,7 +472,7 @@ list-machines:
         let machine = ($host | str replace -r '\.ipv(4|6)$' '')
 
         let update = if ($host | str ends-with ".ipv4") {
-          { pubIpv4: $hostData }
+          { pubIpv4: $hostData, Region: $it.Tag }
         } else if ($host | str ends-with ".ipv6") {
           { pubIpv6: $hostData }
         } else {
@@ -799,6 +800,7 @@ ssh-config-example:
 
   Host machine-example-1.ipv4
     HostName 1.2.3.5
+    Tag eu-central-1
 
   Host machine-example-1.ipv6
     HostName ff00::01
