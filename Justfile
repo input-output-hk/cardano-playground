@@ -823,41 +823,51 @@ ssh-for-all *ARGS:
 ssh-for-each HOSTNAMES *ARGS:
   colmena exec --verbose --parallel 0 --on {{HOSTNAMES}} {{ARGS}}
 
-# List machine ips based on regex pattern
-ssh-list-ids PATTERN:
+# List machine id, ipv4, ipv6, name or region based on regex pattern
+ssh-list TYPE PATTERN:
   #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config
-    | from json
-    | default "" Host
-    | default "" HostName
-    | where not ($it.Host =~ ".ipv(4|6)$")
-    | where Host =~ "{{PATTERN}}"
-    | get HostName
-    | str join " "
+  const type = "{{TYPE}}"
 
-# List machine ips based on regex pattern
-ssh-list-ips PATTERN:
-  #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config
-    | from json
-    | default "" Host
-    | default "" HostName
-    | where ($it.Host =~ ".ipv4$")
-    | where Host =~ "{{PATTERN}}"
-    | get HostName
-    | str join " "
+  let sshCfg = (
+    scj dump /dev/stdout -c .ssh_config
+      | from json
+      | default "" Host
+      | default "" HostName
+  )
 
-# List machine names based on regex pattern
-ssh-list-names PATTERN:
-  #!/usr/bin/env nu
-  scj dump /dev/stdout -c .ssh_config
-    | from json
-    | default "" Host
-    | default "" HostName
-    | where not ($it.Host =~ ".ipv(4|6)$")
-    | where Host =~ "{{PATTERN}}"
-    | get Host
-    | str join " "
+  if ($type == "id") {
+    $sshCfg
+      | where not ($it.Host =~ ".ipv(4|6)$")
+      | where Host =~ "{{PATTERN}}"
+      | get HostName
+      | str join " "
+  } else if ($type == "ipv4") {
+    $sshCfg
+      | where ($it.Host =~ ".ipv4$")
+      | where Host =~ "{{PATTERN}}"
+      | get HostName
+      | str join " "
+  } else if ($type == "ipv6") {
+    $sshCfg
+      | where ($it.Host =~ ".ipv6$")
+      | where Host =~ "{{PATTERN}}"
+      | get HostName
+      | str join " "
+  } else if ($type == "name") {
+    $sshCfg
+      | where not ($it.Host =~ ".ipv(4|6)$")
+      | where Host =~ "{{PATTERN}}"
+      | get Host
+      | str join " "
+  } else if ($type == "region") {
+    $sshCfg
+      | where ($it.Host =~ ".ipv4$")
+      | where Host =~ "{{PATTERN}}"
+      | get Tag
+      | str join " "
+  } else {
+    print "The TYPE must be one of: id, ipv4, ipv6, name or region"
+  }
 
 # Start a local node for a specific env
 start-node ENV:
