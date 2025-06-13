@@ -52,10 +52,10 @@ aws-sso-export FILE="aws-sso.sh" AWS_PROFILE=null:
   set -e
   if [ -n "{{AWS_PROFILE}}" ]; then
     PROFILE="{{AWS_PROFILE}}"
-    echo "Exporting short term AWS SSO credentials for profile \"$PROFILE\"..."
+    echo "Exporting short term AWS SSO credentials for profile \"$PROFILE\" to file: {{FILE}}..."
   elif [ -n "$AWS_PROFILE" ]; then
     PROFILE="$AWS_PROFILE"
-    echo "Exporting short term AWS SSO credentials for profile \"$PROFILE\" from env var AWS_PROFILE..."
+    echo "Exporting short term AWS SSO credentials for profile \"$PROFILE\" from env var AWS_PROFILE to file {{FILE}}..."
   else
     echo "ERROR: Either a recipe AWS_PROFILE arg must be given or the env var AWS_PROFILE must be set."
   fi
