@@ -1,7 +1,6 @@
 # shellcheck disable=SC2148
 #
-# Various bash helper functions live here.
-
+# Various bash helper fns which aren't used enough to move to just recipes.
 
 # This can be used to simplify ssh sessions, rsync, ex:
 #   ssh -o "$(ssm-proxy-cmd "$REGION")" "$INSTANCE_ID"
@@ -33,4 +32,45 @@ submit() (
   done
   echo "Transaction $TX_SIGNED with txid $TXID submitted successfully."
   echo
+)
+
+foreach-pair() (
+  set -euo pipefail
+
+  [ -n "${DEBUG:-}" ] && set -x
+
+  if [ "$#" -ne 3 ]; then
+    echo "Usage:"
+    echo "  foreach-pair \$STRING_LIST_1 \$STRING_LIST_2 \$STRING_CMD"
+    echo
+    echo "Where:"
+    echo "  \$STRING_CMD has \$i and \$j embedded as iters from the two lists"
+    echo
+    echo "Example:"
+    echo "  foreach-pair \"\$(just ssh-list name "preview1.*")\" \"\$(just ssh-list region "preview1.*")\" 'just aws-ec2-status \$i \$j'"
+    exit 1
+  fi
+
+  local l1="$1"
+  local l2="$2"
+  local cmd="$3"
+
+  read -r -a l1 <<< "$l1"
+  read -r -a l2 <<< "$l2"
+
+  if [[ ${#l1[@]} -ne ${#l2[@]} ]]; then
+    echo "Error: Lists are not the same length." >&2
+    exit 1
+  fi
+
+  local length=${#l1[@]}
+
+  for ((n = 0; n < length; n++)); do
+    # shellcheck disable=SC2034
+    local i="${l1[n]}"
+    # shellcheck disable=SC2034
+    local j="${l2[n]}"
+
+    eval "$cmd" || true
+  done
 )
