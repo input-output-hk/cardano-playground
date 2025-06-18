@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" class="light" dir="ltr">
+<html lang="en" class="light sidebar-visible" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 
 
         <!-- Custom HTML head -->
-        
+
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
@@ -24,26 +24,29 @@
         <link rel="stylesheet" href="fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
-    </head>
-    <body class="sidebar-visible no-js">
-    <div id="body-container">
-        <!-- Provide site root to javascript -->
-        <script>
-            var path_to_root = "";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
-        </script>
 
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
             try {
-                var theme = localStorage.getItem('mdbook-theme');
-                var sidebar = localStorage.getItem('mdbook-sidebar');
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
 
                 if (theme.startsWith('"') && theme.endsWith('"')) {
                     localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
@@ -57,24 +60,22 @@
 
         <!-- Set the theme before any content is loaded, prevents flash -->
         <script>
-            var theme;
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
-            var html = document.querySelector('html');
+            const html = document.documentElement;
             html.classList.remove('light')
             html.classList.add(theme);
-            var body = document.querySelector('body');
-            body.classList.remove('no-js')
-            body.classList.add('js');
+            html.classList.add("js");
         </script>
 
         <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var body = document.querySelector('body');
-            var sidebar = null;
-            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
@@ -82,45 +83,25 @@
                 sidebar = 'hidden';
             }
             sidebar_toggle.checked = sidebar === 'visible';
-            body.classList.remove('sidebar-visible');
-            body.classList.add("sidebar-" + sidebar);
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="README-book.html">Cardano</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference</li><li class="chapter-item expanded "><a href="environments.html"><strong aria-hidden="true">1.</strong> Environments</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="env-preview.html"><strong aria-hidden="true">1.1.</strong> Preview</a></li><li class="chapter-item expanded "><a href="env-preprod.html"><strong aria-hidden="true">1.2.</strong> Pre-production</a></li><li class="chapter-item expanded "><a href="env-mainnet.html"><strong aria-hidden="true">1.3.</strong> Mainnet</a></li></ol></li><li class="chapter-item expanded "><a href="advanced.html"><strong aria-hidden="true">2.</strong> Advanced</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="adv-preview.html"><strong aria-hidden="true">2.1.</strong> Preview pre-release</a></li><li class="chapter-item expanded "><a href="adv-preprod.html"><strong aria-hidden="true">2.2.</strong> Pre-production pre-release</a></li></ol></li><li class="chapter-item expanded "><a href="cost-model.html"><strong aria-hidden="true">3.</strong> Cost Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cm-2024-07-30.html"><strong aria-hidden="true">3.1.</strong> 2024-07-30</a></li><li class="chapter-item expanded "><a href="cm-2023-02-14.html"><strong aria-hidden="true">3.2.</strong> 2023-02-14</a></li><li class="chapter-item expanded "><a href="cm-2022-11-05.html"><strong aria-hidden="true">3.3.</strong> 2022-11-05</a></li><li class="chapter-item expanded "><a href="cm-2022-07-01.html"><strong aria-hidden="true">3.4.</strong> 2022-07-01</a></li></ol></li></ol>
-            </div>
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
             </div>
         </nav>
 
-        <!-- Track and set sidebar scroll position -->
-        <script>
-            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
-            sidebarScrollbox.addEventListener('click', function(e) {
-                if (e.target.tagName === 'A') {
-                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
-                }
-            }, { passive: true });
-            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
-            sessionStorage.removeItem('sidebar-scroll');
-            if (sidebarScrollTop) {
-                // preserve sidebar scroll position when navigating via links within sidebar
-                sidebarScrollbox.scrollTop = sidebarScrollTop;
-            } else {
-                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
-                var activeSection = document.querySelector('#sidebar .active');
-                if (activeSection) {
-                    activeSection.scrollIntoView({ block: 'center' });
-                }
-            }
-        </script>
-
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
-                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -130,6 +111,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
@@ -191,7 +173,7 @@ It is the first blockchain platform to evolve out of a scientific philosophy and
 <br />
 <hr />
 <br />
-<center><sub><sup><span style="color:lightgray; font-style:italic">34301acf4d2229db1a881aa26aef88efbcda65f5</span></sup></sub></center>
+<center><sub><sup><span style="color:lightgray; font-style:italic">c6aba64fe2fa238a99eb47f6847534c06b6e7694</span></sup></sub></center>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="environments"><a class="header" href="#environments">Environments</a></h1>
 <p>The official Cardano Environment configuration files.</p>
 <p>Environment description and configuration files available are:</p>
@@ -392,10 +374,11 @@ Guardrails script UTxO: <code>dc06746a898fd230f164f47a3d749348b65655b8fb388ff275
 <li><a href="adv-preprod.html">Pre-production Testnet</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="advanced-configuration-preview-testnet"><a class="header" href="#advanced-configuration-preview-testnet">Advanced Configuration: Preview Testnet</a></h2>
-<p>There is currently no pre-release version available for the preview environment.</p>
-<p>The latest version available is cardano-node release <code>10.4.1</code>.</p>
+<p>Users wanting to test a cardano-node pre-release version on the preview
+environment may obtain compatible configuration files below.</p>
+<p>The latest version available is cardano-node pre-release <code>10.5.0</code>.</p>
 <h4 id="configuration-files-3"><a class="header" href="#configuration-files-3">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1</a></p>
+<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.0">10.5.0</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
 default, so should not be used with block-producers.
@@ -409,7 +392,6 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments-pre/preview/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments-pre/preview/submit-api-config.json">Submit API Config</a></li>
 <li><a href="environments-pre/preview/topology.json">Node Topology</a></li>
-<li><a href="environments-pre/preview/topology-genesis-mode.json">Node Topology (Genesis mode)</a></li>
 <li><a href="environments-pre/preview/peer-snapshot.json">Peer Snapshot</a></li>
 <li><a href="environments-pre/preview/byron-genesis.json">Byron Genesis</a></li>
 <li><a href="environments-pre/preview/shelley-genesis.json">Shelley Genesis</a></li>
@@ -417,36 +399,30 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments-pre/preview/conway-genesis.json">Conway Genesis</a></li>
 <li><a href="environments-pre/preview/guardrails-script.plutus">Compiled guardrails script</a></li>
 </ul>
+<h4 id="ouroboros-genesis-mode-3"><a class="header" href="#ouroboros-genesis-mode-3">Ouroboros Genesis Mode</a></h4>
+<p>Ouroboros genesis mode is now the default consensus mode on preview and preprod
+testnets starting with node <code>10.5.0</code>.  If needed, use of praos mode and the
+bootstrap peers found in the above topology file can be reverted to by setting:</p>
+<ul>
+<li>Node config's <code>ConsensusMode</code> option to a value of <code>PraosMode</code></li>
+</ul>
 <h4 id="utxo-hd-3"><a class="header" href="#utxo-hd-3">UTXO-HD</a></h4>
-<p>Users migrating from a previous version of the node should read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">release
+<p>Users migrating from a node version older than <code>10.4.1</code> should also read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1 release
 notes</a> and
 the consensus <a href="https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating">migration guide</a>
 to properly configure the node and convert the database such that a replay from
 genesis can be avoided.</p>
-<h4 id="ouroboros-genesis-mode-3"><a class="header" href="#ouroboros-genesis-mode-3">Ouroboros Genesis Mode</a></h4>
-<p>For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
-topology file given above can be used in place of the default topology file.
-The following requirements will also need to be met:</p>
-<ul>
-<li>
-<p>The node config file will need to have <code>ConsensusMode</code> set to <code>GenesisMode</code></p>
-</li>
-<li>
-<p>The peer snapshot file, provided above, will need to exist at the path
-declared at <code>peerSnapshotFile</code> in the genesis mode topology file: an absolute
-path, or a relative path with respect to the node binary directory</p>
-</li>
-</ul>
 <h4 id="guardrails-reference-script-utxo-3"><a class="header" href="#guardrails-reference-script-utxo-3">Guardrails reference script UTxO</a></h4>
 <p>For convenience, the guardrails script has been put on a UTxO so that it can be used as reference script in
 Treasury Withdrawal and Protocol Parameter Change proposals.</p>
 <p>Guardrails script address: <code>addr_test1wrazf7es2yngqh8jzexpv8v99g88xvx0nz83le2cea755eqf68ll6</code>
 Guardrails script UTxO: <code>f3f61635034140e6cec495a1c69ce85b22690e65ab9553ef408d524f58183649#0</code></p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="advanced-configuration-pre-production-testnet"><a class="header" href="#advanced-configuration-pre-production-testnet">Advanced Configuration: Pre-Production Testnet</a></h2>
-<p>There is currently no pre-release version available for the pre-production environment.</p>
-<p>The latest version available is cardano-node release <code>10.4.1</code>.</p>
+<p>Users wanting to test a cardano-node pre-release version on the pre-production
+environment may obtain compatible configuration files below.</p>
+<p>The latest version available is cardano-node pre-release <code>10.5.0</code>.</p>
 <h4 id="configuration-files-4"><a class="header" href="#configuration-files-4">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1</a></p>
+<p>Compatible with cardano-node pre-release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.0">10.5.0</a></p>
 <pre><code>NOTE:
 The non-block-producer node config has `PeerSharing` enabled by
 default, so should not be used with block-producers.
@@ -460,7 +436,6 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments-pre/preprod/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments-pre/preprod/submit-api-config.json">Submit API Config</a></li>
 <li><a href="environments-pre/preprod/topology.json">Node Topology</a></li>
-<li><a href="environments-pre/preprod/topology-genesis-mode.json">Node Topology (Genesis mode)</a></li>
 <li><a href="environments-pre/preprod/peer-snapshot.json">Peer Snapshot</a></li>
 <li><a href="environments-pre/preprod/byron-genesis.json">Byron Genesis</a></li>
 <li><a href="environments-pre/preprod/shelley-genesis.json">Shelley Genesis</a></li>
@@ -468,26 +443,19 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments-pre/preprod/conway-genesis.json">Conway Genesis</a></li>
 <li><a href="environments-pre/preprod/guardrails-script.plutus">Compiled guardrails script</a></li>
 </ul>
+<h4 id="ouroboros-genesis-mode-4"><a class="header" href="#ouroboros-genesis-mode-4">Ouroboros Genesis Mode</a></h4>
+<p>Ouroboros genesis mode is now the default consensus mode on preview and preprod
+testnets starting with node <code>10.5.0</code>.  If needed, use of praos mode and the
+bootstrap peers found in the above topology file can be reverted to by setting:</p>
+<ul>
+<li>Node config's <code>ConsensusMode</code> option to a value of <code>PraosMode</code></li>
+</ul>
 <h4 id="utxo-hd-4"><a class="header" href="#utxo-hd-4">UTXO-HD</a></h4>
-<p>Users migrating from a previous version of the node should read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">release
+<p>Users migrating from a node version older than <code>10.4.1</code> should also read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1 release
 notes</a> and
 the consensus <a href="https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating">migration guide</a>
 to properly configure the node and convert the database such that a replay from
 genesis can be avoided.</p>
-<h4 id="ouroboros-genesis-mode-4"><a class="header" href="#ouroboros-genesis-mode-4">Ouroboros Genesis Mode</a></h4>
-<p>For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
-topology file given above can be used in place of the default topology file.
-The following requirements will also need to be met:</p>
-<ul>
-<li>
-<p>The node config file will need to have <code>ConsensusMode</code> set to <code>GenesisMode</code></p>
-</li>
-<li>
-<p>The peer snapshot file, provided above, will need to exist at the path
-declared at <code>peerSnapshotFile</code> in the genesis mode topology file: an absolute
-path, or a relative path with respect to the node binary directory</p>
-</li>
-</ul>
 <h4 id="guardrails-reference-script-utxo-4"><a class="header" href="#guardrails-reference-script-utxo-4">Guardrails reference script UTxO</a></h4>
 <p>For convenience, the guardrails script has been put on a UTxO so that it can be used as reference script in
 Treasury Withdrawal and Update Protocol Parameter proposals.</p>
