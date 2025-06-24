@@ -30,10 +30,10 @@ in
       # m5a-large.aws.instance.instance_type = "m5a.large";
       m5ad-large.aws.instance.instance_type = "m5ad.large";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
-      r5-large.aws.instance.instance_type = "r5.large";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
       r6a-large.aws.instance.instance_type = "r6a.large";
+      r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
@@ -89,6 +89,9 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
           bperfNoPublish
+
+          # Until 10.5 is released -- see description below
+          absPeerSnap
         ];
       };
 
@@ -202,6 +205,17 @@ in
       };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
+      # Until 10.5.x is released, 10.4.1 will fail to start without this because
+      # node doesn't yet properly look up the relative path from topology to
+      # peer snapshot file.
+      #
+      # Setting this option null fixes the problem, but will leave a
+      # dangling peer snapshot file until 10.6.
+      #
+      # So until then, we'll switch from relative path that causes node failure
+      # to absolute path which does not.
+      absPeerSnap = {services.cardano-node.peerSnapshotFile = i: "/etc/cardano-node/peer-snapshot-${toString i}.json";};
+
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
@@ -215,6 +229,9 @@ in
             services.cardano-postgres.enablePsqlrc = true;
           }
           bperfNoPublish
+
+          # Until 10.5 is released -- see description above
+          absPeerSnap
         ];
       };
 
@@ -344,21 +361,21 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
 
-      newMetrics = {
-        imports = [
-          (
-            # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-            # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
-            import
-            config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-            (import
-              "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
-            .legacyPackages
-            .x86_64-linux
-          )
-          inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-        ];
-      };
+      # newMetrics = {
+      #   imports = [
+      #     (
+      #       # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
+      #       # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
+      #       import
+      #       config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+      #       (import
+      #         "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
+      #       .legacyPackages
+      #       .x86_64-linux
+      #     )
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
+      #   ];
+      # };
 
       # logRejected = {
       #   services = {
@@ -724,7 +741,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
@@ -742,10 +759,10 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel newMetrics previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r5-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing

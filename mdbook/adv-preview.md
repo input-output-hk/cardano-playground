@@ -1,12 +1,13 @@
 ## Advanced Configuration: Preview Testnet
 
-There is currently no pre-release version available for the preview environment.
+Users wanting to test a cardano-node pre-release version on the preview
+environment may obtain compatible configuration files below.
 
-The latest version available is cardano-node release `10.4.1`.
+The latest version available is cardano-node pre-release `10.5.0`.
 
 #### Configuration files
 
-Compatible with cardano-node release [10.4.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1)
+Compatible with cardano-node pre-release [10.5.0](https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.0)
 
 ```
 NOTE:
@@ -22,7 +23,6 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [DB Sync Config](environments-pre/preview/db-sync-config.json)
 - [Submit API Config](environments-pre/preview/submit-api-config.json)
 - [Node Topology](environments-pre/preview/topology.json)
-- [Node Topology (Genesis mode)](environments-pre/preview/topology-genesis-mode.json)
 - [Peer Snapshot](environments-pre/preview/peer-snapshot.json)
 - [Byron Genesis](environments-pre/preview/byron-genesis.json)
 - [Shelley Genesis](environments-pre/preview/shelley-genesis.json)
@@ -30,25 +30,21 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Conway Genesis](environments-pre/preview/conway-genesis.json)
 - [Compiled guardrails script](environments-pre/preview/guardrails-script.plutus)
 
+#### Ouroboros Genesis Mode
+
+Ouroboros genesis mode is now the default consensus mode on preview and preprod
+testnets starting with node `10.5.0`.  If needed, use of praos mode and the
+bootstrap peers found in the above topology file can be reverted to by setting:
+
+* Node config's `ConsensusMode` option to a value of `PraosMode`
+
 #### UTXO-HD
 
-Users migrating from a previous version of the node should read the [release
+Users migrating from a node version older than `10.4.1` should also read the [10.4.1 release
 notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1) and
 the consensus [migration guide](https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating)
 to properly configure the node and convert the database such that a replay from
 genesis can be avoided.
-
-#### Ouroboros Genesis Mode
-
-For those preferring to use Genesis mode over bootstrap peers, the Genesis mode
-topology file given above can be used in place of the default topology file.
-The following requirements will also need to be met:
-
-* The node config file will need to have `ConsensusMode` set to `GenesisMode`
-
-* The peer snapshot file, provided above, will need to exist at the path
-declared at `peerSnapshotFile` in the genesis mode topology file: an absolute
-path, or a relative path with respect to the node binary directory
 
 #### Guardrails reference script UTxO
 
