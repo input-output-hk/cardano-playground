@@ -63,7 +63,6 @@ with flake.lib; {
           // optionalAttrs isNg {
             lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
 
-            # Until upstream parts ng has capkgs version, use local flake pins
             pkgs = {
               cardano-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-cli-ng);
               cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng;

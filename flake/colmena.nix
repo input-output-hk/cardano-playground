@@ -82,11 +82,9 @@ in
       # Cardano-node modules for group deployment
       node = {
         imports = [
-          # Base cardano-node service
+          # Base cardano-node and tracer service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-
-          # For earlier versions of the tracing service, use `newMetrics` below
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -99,6 +97,7 @@ in
         imports = [
           # Base cardano-node service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -222,7 +221,7 @@ in
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -380,21 +379,6 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
 
-      # For the early versions of the new tracing system with the workbench modified nixos service
-      # newMetrics = {
-      #   imports = [
-      #     (
-      #       import
-      #       "${self.inputs.cardano-parts.inputs.cardano-tracer-service.outPath}/nix/nixos/cardano-tracer-service.nix"
-      #       (import "${self.inputs.cardano-parts.inputs.cardano-tracer-service.outPath}/default.nix" {system = "x86_64-linux";})
-      #       .legacyPackages
-      #       .x86_64-linux
-      #     )
-      #     {disabledModules = [config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng];}
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-      #   ];
-      # };
-
       # logRejected = {
       #   services = {
       #     cardano-node.extraNodeConfig = {
@@ -466,78 +450,6 @@ in
       #     };
       #   };
       # };
-
-      traceTxs = {
-        services.cardano-node.extraNodeConfig = {
-          TraceLocalTxSubmissionProtocol = true;
-          TraceLocalTxSubmissionServer = true;
-          TraceTxSubmissionProtocol = true;
-          TraceTxInbound = true;
-          TraceTxOutbound = true;
-        };
-      };
-
-      # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
-      #
-      # mempoolDisable = {
-      #   services.cardano-node.extraNodeConfig.TraceMempool = false;
-      # };
-      #
-      # p2p and legacy network debugging code
-      # netDebug = {
-      #   services.cardano-node = {
-      #     useNewTopology = false;
-      #     extraNodeConfig = {
-      #       TraceMux = true;
-      #       TraceConnectionManagerTransitions = true;
-      #       DebugPeerSelectionInitiator = true;
-      #       DebugPeerSelectionInitiatorResponder = true;
-      #       options.mapSeverity = {
-      #         "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
-      #         "cardano.node.ChainSyncProtocol" = "Error";
-      #         "cardano.node.ConnectionManager" = "Debug";
-      #         "cardano.node.ConnectionManagerTransition" = "Debug";
-      #         "cardano.node.DebugPeerSelection" = "Debug";
-      #         "cardano.node.Handshake" = "Debug";
-      #         "cardano.node.InboundGovernor" = "Debug";
-      #         "cardano.node.Mux" = "Info";
-      #         "cardano.node.PeerSelectionActions" = "Debug";
-      #         "cardano.node.PeerSelection" = "Info";
-      #         "cardano.node.resources" = "Notice";
-      #       };
-      #     };
-      #   };
-      # };
-      #
-      minLog = {
-        services.cardano-node.extraNodeConfig = {
-          # Let's make sure we can at least see the blockHeight in logs and metrics
-          TraceChainDb = true;
-
-          # And then shut everything else off
-          TraceAcceptPolicy = false;
-          TraceConnectionManager = false;
-          TraceDiffusionInitialization = false;
-          TraceDNSResolver = false;
-          TraceDNSSubscription = false;
-          TraceErrorPolicy = false;
-          TraceForge = false;
-          TraceHandshake = false;
-          TraceInboundGovernor = false;
-          TraceIpSubscription = false;
-          TraceLedgerPeers = false;
-          TraceLocalConnectionManager = false;
-          TraceLocalErrorPolicy = false;
-          TraceLocalHandshake = false;
-          TraceLocalRootPeers = false;
-          TraceMempool = false;
-          TracePeerSelectionActions = false;
-          TracePeerSelectionCounters = false;
-          TracePeerSelection = false;
-          TracePublicRootPeers = false;
-          TraceServer = false;
-        };
-      };
 
       # Optimize tcp sysctl and route params for long distance transmission.
       # Apply to one relay per pool group.
@@ -705,8 +617,6 @@ in
       #   ];
       # };
       #
-      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
-      #
       # Example of node pinning to a custom version; see also the relevant flake inputs.
       # dbsync921 = {
       #   imports = [
@@ -731,6 +641,81 @@ in
       #   cardano-parts.perNode.meta.hostsList =
       #     filter (name: hasPrefix prefix name) (attrNames nixosConfigurations);
       # };
+      #
+      # Legacy tracing system module code samples:
+      # traceTxs = {
+      #   services.cardano-node.extraNodeConfig = {
+      #     TraceLocalTxSubmissionProtocol = true;
+      #     TraceLocalTxSubmissionServer = true;
+      #     TraceTxSubmissionProtocol = true;
+      #     TraceTxInbound = true;
+      #     TraceTxOutbound = true;
+      #   };
+      # };
+      #
+      # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
+      #
+      # mempoolDisable = {
+      #   services.cardano-node.extraNodeConfig.TraceMempool = false;
+      # };
+      #
+      # p2p and legacy network debugging code
+      # netDebug = {
+      #   services.cardano-node = {
+      #     useNewTopology = false;
+      #     extraNodeConfig = {
+      #       TraceMux = true;
+      #       TraceConnectionManagerTransitions = true;
+      #       DebugPeerSelectionInitiator = true;
+      #       DebugPeerSelectionInitiatorResponder = true;
+      #       options.mapSeverity = {
+      #         "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
+      #         "cardano.node.ChainSyncProtocol" = "Error";
+      #         "cardano.node.ConnectionManager" = "Debug";
+      #         "cardano.node.ConnectionManagerTransition" = "Debug";
+      #         "cardano.node.DebugPeerSelection" = "Debug";
+      #         "cardano.node.Handshake" = "Debug";
+      #         "cardano.node.InboundGovernor" = "Debug";
+      #         "cardano.node.Mux" = "Info";
+      #         "cardano.node.PeerSelectionActions" = "Debug";
+      #         "cardano.node.PeerSelection" = "Info";
+      #         "cardano.node.resources" = "Notice";
+      #       };
+      #     };
+      #   };
+      # };
+      #
+      # minLog = {
+      #   services.cardano-node.extraNodeConfig = {
+      #     # Let's make sure we can at least see the blockHeight in logs and metrics
+      #     TraceChainDb = true;
+      #     # And then shut everything else off
+      #     TraceAcceptPolicy = false;
+      #     TraceConnectionManager = false;
+      #     TraceDiffusionInitialization = false;
+      #     TraceDNSResolver = false;
+      #     TraceDNSSubscription = false;
+      #     TraceErrorPolicy = false;
+      #     TraceForge = false;
+      #     TraceHandshake = false;
+      #     TraceInboundGovernor = false;
+      #     TraceIpSubscription = false;
+      #     TraceLedgerPeers = false;
+      #     TraceLocalConnectionManager = false;
+      #     TraceLocalErrorPolicy = false;
+      #     TraceLocalHandshake = false;
+      #     TraceLocalRootPeers = false;
+      #     TraceMempool = false;
+      #     TracePeerSelectionActions = false;
+      #     TracePeerSelectionCounters = false;
+      #     TracePeerSelection = false;
+      #     TracePublicRootPeers = false;
+      #     TraceServer = false;
+      #   };
+      # };
+      #
+      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+      #
     in {
       meta = {
         nixpkgs = import inputs.nixpkgs {
@@ -809,15 +794,10 @@ in
           previewRelMig
           mithrilRelay
           (declMSigner "preview1-bp-a-1")
-          {
-            services.cardano-node = {
-              useLegacyTracing = false;
-              ngTracer = true;
-            };
-          }
+          {services.cardano-node.useLegacyTracing = false;}
         ];
       };
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
@@ -859,10 +839,7 @@ in
           {
             services = {
               mithril-signer.enable = false;
-              cardano-node = {
-                useLegacyTracing = true;
-                # ngTracer = true;
-              };
+              cardano-node.useLegacyTracing = true;
             };
           }
         ];
