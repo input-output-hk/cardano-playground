@@ -257,6 +257,7 @@ in
       # };
 
       mithrilRelease = {imports = [nixosModules.mithril-release-pin];};
+      mithrilSignerDisable = {services.mithril-signer.enable = false;};
 
       dbsyncPub = {
         pkgs,
@@ -766,33 +767,7 @@ in
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing
-      preview1-test-a-1 = {
-        imports = [
-          eu-central-1
-          m5ad-large
-          # i7ie-2xlarge
-          (ebs 80)
-          (nodeRamPct 70)
-          (group "preview1")
-          node
-          # pparamsApi
-          # tcpTxOpt
-          bp
-          pre
-          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-          {
-            services.mithril-signer.enable = false;
-            # services.cardano-node = {
-            #   useLegacyTracing = false;
-            #   ngTracer = true;
-            #   # profiling = "space-cost";
-            # };
-            # services.cardano-tracer = {
-            #   # profiling = "space-cost";
-            # };
-          }
-        ];
-      };
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp pre mithrilSignerDisable tcpTxOpt];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node bp pre mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node traceTxs rel pre previewRelMig];};
