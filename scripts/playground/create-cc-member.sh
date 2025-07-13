@@ -2,15 +2,19 @@
 set -euo pipefail
 
 [ -n "${DEBUG:-}" ] && set -x
-[ -z "$ENV" ] && { echo "ENV var must be set"; exit 1; }
+[ -z "${ENV:-}" ] && { echo "ENV var must be set"; exit 1; }
 
-# There may be cases when we want more than one constitutional member.  For
-# these cases, the first CC should typically default to "" (no CC_INDEX), and
-# for additional members, assign an index: 2, 3, 4, ...
-[ -z "$CC_INDEX" ] && CC_INDEX=""
+if ! [ "${CC_INDEX+x}" = "x" ]; then
+  echo "CC_INDEX var must be set: suggest empty (\"\") for the first CC, then 2, 3, 4, ..., for additional CC"
+  exit 1
+fi
+
+SCRIPT_PATH=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
 
 # shellcheck disable=SC1091
-source ./bash-fns.sh
+source "$SCRIPT_DIR/../bash-fns.sh"
+
 DIR="cc-keys/cc${CC_INDEX}"
 mkdir -p "$DIR"/{ca,roles}
 
@@ -106,7 +110,7 @@ CREATE_ROLE voter 3
 
 # Create the orchestrator credentials if they don't already exist:
 echo
-if ! [ -f "orchestrator-${ENV}${CC_INDEX}.skey" ]; then
+if ! [ -f "$DIR/orchestrator.skey" ]; then
   echo "Creating orchestrator keys"
   cardano-cli address key-gen \
     --signing-key-file "$DIR/orchestrator.skey" \
@@ -116,15 +120,8 @@ if ! [ -f "orchestrator-${ENV}${CC_INDEX}.skey" ]; then
   cardano-cli address build \
     --payment-verification-key-file "$DIR/orchestrator.vkey" \
     --out-file "$DIR/orchestrator.addr"
-
-  cp "$DIR/orchestrator.skey" "orchestrator-${ENV}${CC_INDEX}.skey"
-  cp "$DIR/orchestrator.vkey" "orchestrator-${ENV}${CC_INDEX}.vkey"
-  cp "$DIR/orchestrator.addr" "orchestrator-${ENV}${CC_INDEX}.addr"
 else
-  echo "Restoring orchestrator keys"
-  cp --no-clobber "orchestrator-${ENV}${CC_INDEX}.skey" "$DIR/orchestrator.skey"
-  cp --no-clobber "orchestrator-${ENV}${CC_INDEX}.vkey" "$DIR/orchestrator.vkey"
-  cp --no-clobber "orchestrator-${ENV}${CC_INDEX}.addr" "$DIR/orchestrator.addr"
+  echo "Skipping orchestrator keys as they already exist"
 fi
 
 ORCH_ADDR=$(cat "$DIR/orchestrator.addr")
@@ -242,6 +239,9 @@ fi
 # Authorize the hot credential
 echo
 cardano-cli latest query utxo --address "$(cat "$DIR/init-cold/nft.addr")" > "$DIR/cold-nft.utxo"
+ORCH_UTXO=$(cardano-cli latest query utxo --address "$ORCH_ADDR" | jq -r 'to_entries | .[] | select(.value.value | keys | length == 1)')
+echo "Orchestrator UTXO:"
+echo "$ORCH_UTXO"
 
 if ! [ -f "$DIR/authorize/authorizeHot.cert" ]; then
   echo "Creating hot credential authorization"
