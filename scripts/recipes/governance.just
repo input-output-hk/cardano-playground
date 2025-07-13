@@ -93,8 +93,8 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
 
   # Basic query info
   echo "Current voting status for:"
-  echo "  ACTION_ID: $ACTION_ID"
-  echo "  ACTION_BECH: $ACTION_BECH"
+  L_JUSTIFY "ACTION_ID:" "$ACTION_ID" 35
+  L_JUSTIFY "ACTION_BECH:" "$ACTION_BECH" 35
   echo
 
   CURRENT_EPOCH=$(jq -re .epoch <<< "$TIP")
@@ -106,29 +106,37 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
     exit 1
   fi
 
-  # DREP_PWR_DIST is similar to DREP_DIST but only includes active dreps and
-  # those without `drep-alwaysAbstain` and `drep-noConfidence`.
   EPOCH=$(jq -re .epoch <<< "$TIP")
 
-  # The drep-stake-distribution query includes alwaysAbstain and alwaysNoConfidence dreps
+  # The drep-stake-distribution query includes expired dreps and system
+  # alwaysAbstain and alwaysNoConfidence dreps which are funded directly from
+  # stake delegation.
   DREP_DIST=$(eval "$CARDANO_CLI" latest query drep-stake-distribution --all-dreps 2> /dev/null)
 
-  # The drep-state query excludes alwaysAbstain and alwaysNoConfidence dreps
+  # DREP_PWR_DIST is similar to DREP_DIST but excludes expired dreps and system dreps (alwaysAbstain and alwaysNoConfidence).
   DREP_PWR_DIST=$(eval "$CARDANO_CLI" latest query drep-state --all-dreps --include-stake \
     | jq -re "[ .[] | select( .[1].expiry >= $EPOCH ) | [\"drep-\(.[0] | keys[0])-\(.[0] | to_entries[].value)\", (.[1].stake // 0)]]" 2> /dev/null)
 
+  # Get a distribution of all expired dreps
+  DREP_EXP_PWR_DIST=$(eval "$CARDANO_CLI" latest query drep-state --all-dreps --include-stake \
+    | jq -re "[ .[] | select( .[1].expiry < $EPOCH ) | [\"drep-\(.[0] | keys[0])-\(.[0] | to_entries[].value)\", (.[1].stake // 0)]]" 2> /dev/null)
+
+  # Calculate active and inactive drep power based on valid or expired dreps
   DREP_PWR_ACTIVE=$(jq -re "[.[][1]] | add // 0" <<< "$DREP_PWR_DIST" 2> /dev/null)
-  DREP_STAKE_TOTAL=$(jq -re '[del(.[] | select(.[0] == "drep-alwaysAbstain" or .[0] == "drep-alwaysNoConfidence")) | .[][1]] | add' <<< "$DREP_DIST" 2> /dev/null)
+  DREP_PWR_INACTIVE=$(jq -re "[.[][1]] | add // 0" <<< "$DREP_EXP_PWR_DIST" 2> /dev/null)
+
+  # All drep stake, including stake held by expired dreps, and stake auto delegated to always abstain or always no-confidence
+  DREP_STAKE_TOTAL=$(jq -re '[.[][1]] | add' <<< "$DREP_DIST" 2> /dev/null)
 
   # This is always 1 length for drep-alwaysNoConfidence;
   DREP_NOCONF_COUNT=$(jq -re '[.[] | select(.[0] == "drep-alwaysNoConfidence") | .[1]] | length' <<< "$DREP_DIST" 2> /dev/null)
   DREP_NOCONF_TOTAL=$(jq -re '(.[] | select(.[0] == "drep-alwaysNoConfidence") | .[1]) // 0' <<< "$DREP_DIST" 2> /dev/null)
 
-  # TODO: add a drep stake active % to gauge how much stake is locked up in expired dreps
   DREP_ALWAYS_ABSTAIN_TOTAL=$(jq -re '(.[] | select(.[0] == "drep-alwaysAbstain") | .[1]) // 0' <<< "$DREP_DIST" 2> /dev/null)
   echo "Some useful metrics:"
   R_JUSTIFY "CURRENT_EPOCH:" "$CURRENT_EPOCH" 50
   R_JUSTIFY "DREP_POWER_ACTIVE:" "$DREP_PWR_ACTIVE" 50
+  R_JUSTIFY "DREP_POWER_INACTIVE:" "$DREP_PWR_INACTIVE" 50
   R_JUSTIFY "DREP_STAKE_TOTAL:" "$DREP_STAKE_TOTAL" 50
   R_JUSTIFY "DREP_NOCONF_TOTAL:" "$DREP_NOCONF_TOTAL" 50
   R_JUSTIFY "DREP_ALWAYS_ABSTAIN:" "$DREP_ALWAYS_ABSTAIN_TOTAL" 50
@@ -253,6 +261,11 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
     # Calculate the acceptance percentage for the drep group
     if [ "$ACTION_TAG" != "NoConfidence" ]; then
       # Do a normal percentage calculation if not a `NoConfidence` action
+      # DREP_PWR_ACTIVE is drep stake for dreps who have not expired and it does not include alwaysNoConfidence or alwaysAbstain delegation
+      # DREP_NOCONF_TOTAL is only from direct stake key delegation and should be counted in the denominator
+      # DREP_STAKE_ABSTAIN is summed stake from explicit drep abstain votes
+      # which need to be removed from threshold denominator; the system
+      # alwaysAbstrain drep has already been excluded by using DREP_PWR_ACTIVE.
       DREP_PCT=$(bc <<< "scale=2; 100.00 * $DREP_STAKE_YES / ($DREP_PWR_ACTIVE + $DREP_NOCONF_TOTAL - $DREP_STAKE_ABSTAIN)" 2> /dev/null)
     else
       # Or, if a `NoConfidence` action, the always no confidence counts as yes
