@@ -564,7 +564,7 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
             read -r DENOMINATOR
           } <<< "$(jq -re '.numerator // "-", .denominator // "-"' <<< "$COMMITTEE_THRESHOLD")"
           COMMITTEE_THRESHOLD=$(bc <<< "scale=0; ($NUMERATOR * 100 / $DENOMINATOR) / 1")
-          echo -e "Approval of a governance measure requires $NUMERATOR out of $DENOMINATOR ($COMMITEE_THRESHOLD%) of the votes of committee members.$OFF\n"
+          echo -e "Approval of a governance measure requires $NUMERATOR out of $DENOMINATOR ($COMMITTEE_THRESHOLD%) of the votes of committee members.$OFF\n"
           ;;
 
         "number")
