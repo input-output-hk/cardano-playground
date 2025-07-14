@@ -74,3 +74,116 @@ foreach-pair() (
     eval "$cmd" || true
   done
 )
+
+return-utxo() (
+  set -euo pipefail
+
+  [ -n "${DEBUG:-}" ] && set -x
+
+  if [ "$#" -ne 5 ]; then
+    # shellcheck disable=SC2016
+    echo "$0"' $ENV $SEND_ADDR $UTXO $PAYMENT_SKEY $STAKE_SKEY'
+    echo
+    echo "  ENV          -- The environment to be used"
+    echo "  SEND_ADDR    -- The send to address"
+    echo "  UTXO         -- The UTXO including index in \$UTXO#IDX format"
+    echo "  PAYMENT_SKEY -- The path to the payment secret key"
+    echo "  STAKE_SKEY   -- The path to the stake secret key"
+    exit 1
+  else
+    # Read file contents rather than saving the path in case it is a streamed
+    # file input redirection from a decryption output.
+    ENV="$1"
+    SEND_ADDR="$2"
+    UTXO="$3"
+    PAYMENT_SKEY=$(< "$4")
+    STAKE_SKEY=$(< "$5")
+  fi
+
+  just set-default-cardano-env "$ENV"
+  echo
+
+  PROMPT() {
+    echo
+    read -p "Does this look correct [yY]? " -n 1 -r
+    echo
+    if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo "Aborting the fund transfer."
+      exit 1
+    fi
+    echo
+  }
+
+  TS=$(date -u +%y-%m-%d_%H-%M-%S)
+  BASENAME="tx-fund-transfer-$ENV-$TS"
+
+  PAYMENT_VKEY=$(cardano-cli latest key verification-key --signing-key-file <(echo -n "$PAYMENT_SKEY") --verification-key-file /dev/stdout)
+  STAKE_VKEY=$(cardano-cli latest key verification-key --signing-key-file <(echo -n "$STAKE_SKEY") --verification-key-file /dev/stdout)
+
+  SOURCE_ADDR=$(
+    cardano-cli latest address build \
+      --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") \
+      --stake-verification-key-file <(echo -n "$STAKE_VKEY") \
+    || { \
+      STAKE_VKEY_FROM_EXT=$(cardano-cli latest key non-extended-key --extended-verification-key-file <(echo -n "$STAKE_VKEY") --verification-key-file /dev/stdout)
+
+      cardano-cli latest address build \
+        --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") \
+        --stake-verification-key-file <(echo -n "$STAKE_VKEY_FROM_EXT")
+      }
+  )
+  echo "For environment $ENV, the source address of $SOURCE_ADDR contains the following UTxOs:"
+  cardano-cli latest query utxo --address "$SOURCE_ADDR" | jq 'to_entries | sort_by(.value.value.lovelace) | from_entries'
+  PROMPT
+
+  echo "For environment $ENV, the send to address of $SEND_ADDR contains the following UTxOs:"
+  cardano-cli latest query utxo --address "$SEND_ADDR" | jq 'to_entries | sort_by(.value.value.lovelace) | from_entries'
+  PROMPT
+
+  echo "The provided UTXO has an ID and value of:"
+  SELECTED_UTXO=$(
+    cardano-cli latest query utxo \
+      --address "$SOURCE_ADDR" \
+      --testnet-magic "$TESTNET_MAGIC" \
+    | jq -e -r --arg selectedUtxo "$UTXO" 'to_entries[]
+      |
+        select(.key == $selectedUtxo)
+          | {"txin": .key, "address": .value.address, "amount": .value.value.lovelace}'
+  )
+
+  TXIN=$(jq -r .txin <<< "$SELECTED_UTXO")
+  TXIN_VALUE=$(jq -r .amount <<< "$SELECTED_UTXO")
+  echo "  UTXO: $TXIN"
+  echo "  Value: $TXIN_VALUE"
+  echo
+  echo "Assembling transaction with details of:"
+  echo "  Send to address: $SEND_ADDR"
+  echo "  From address: $SOURCE_ADDR"
+  echo "  Send amount: $TXIN_VALUE lovelace"
+  echo "  Fee amount: 0.2 ADA"
+  echo "  Funding UTxO: $TXIN"
+  echo "  Funding UTxO value: $TXIN_VALUE lovelace"
+  PROMPT
+
+  cardano-cli latest transaction build-raw \
+    --tx-in "$TXIN" \
+    --tx-out "$SEND_ADDR+$((TXIN_VALUE - 200000))" \
+    --fee 200000 \
+    --out-file "$BASENAME.raw"
+
+  cardano-cli latest transaction sign \
+    --tx-body-file "$BASENAME.raw" \
+    --signing-key-file <(echo -n "$PAYMENT_SKEY") \
+    --signing-key-file <(echo -n "$STAKE_SKEY") \
+    --testnet-magic "$TESTNET_MAGIC" \
+    --out-file "$BASENAME.signed"
+
+  echo
+  echo "The transaction has been prepared and signed:"
+  cardano-cli debug transaction view --tx-file "$BASENAME.signed"
+  echo
+  echo "If you answer affirmative to the next prompt this transaction will be submitted to the network!"
+  PROMPT
+
+  submit "$BASENAME.signed"
+)
