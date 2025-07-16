@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2031
 set -euo pipefail
 
 [ -n "${DEBUG:-}" ] && set -x
@@ -6,10 +7,11 @@ set -euo pipefail
 
 [ -z "${ANCHOR_URL:-}" ] && { echo "ANCHOR_URL var must be set and should point to an ipfs://\$CIDv1 address"; exit 1; }
 [ -z "${DREP_INDEX:-}" ] && { echo "DREP_INDEX var must be set"; exit 1; }
-[ -z "${IPFS_GATEWAY_URI:-}" ] && { echo "IPFS_GATEWAY_URI var must be set, typically https://ipfs.io"; exit 1; }
 [ -z "${POOL_DELEG_ID:-}" ] && { echo "POOL_DELEG_ID var must be set for this use case so that funding this new drep counts towards both the drep and SPO vote classes"; exit 1; }
 [ -z "${TESTNET_MAGIC:-}" ] && { echo "TESTNET_MAGIC var must be set"; exit 1; }
 [ -z "${THRESHOLD:-}" ] && { echo "THRESHOLD var must be set and most likely should remain the same as the existing threshold"; exit 1; }
+
+export IPFS_GATEWAY_URI="https://ipfs.io"
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")

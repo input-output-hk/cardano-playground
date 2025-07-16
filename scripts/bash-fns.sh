@@ -123,7 +123,7 @@ return-utxo() (
   SOURCE_ADDR=$(
     cardano-cli latest address build \
       --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") \
-      --stake-verification-key-file <(echo -n "$STAKE_VKEY") \
+      --stake-verification-key-file <(echo -n "$STAKE_VKEY") 2> /dev/null \
     || { \
       STAKE_VKEY_FROM_EXT=$(cardano-cli latest key non-extended-key --extended-verification-key-file <(echo -n "$STAKE_VKEY") --verification-key-file /dev/stdout)
 
