@@ -3,47 +3,52 @@ set -euo pipefail
 
 [ -n "${DEBUG:-}" ] && set -x
 
-if [ "$#" -ne "4" ]; then
-  echo "Three arguments are required:"
-  echo "  $0 \$ENV \$ACTION_ID \$ACTION_IX \$VOTE"
+if [ "$#" -ne "6" ]; then
+  echo "Six arguments are required:"
+  echo "  $0 \$ENV \$CC_DIR \$ACTION_ID \$ACTION_IX \$VOTE \$ANCHOR_URL"
   echo
   echo "Where:"
-  echo "  ENV be 'preview' or 'preprod'"
+  echo "  ENV should be 'preview' or 'preprod'"
+  echo "  CC_DIR should be the cc-keys subdir for the environment, ex: 'cc' or 'cc2', etc"
   echo "  VOTE must be 'yes', 'no' or 'abstain'"
+  echo "  ANCHOR_URL must the be CC voting rationale"
   exit 1
 else
   ENV="$1"
-  ACTION_ID="$2"
-  ACTION_IX="$3"
-  VOTE="$4"
+  CC_DIR="$2"
+  ACTION_ID="$3"
+  ACTION_IX="$4"
+  VOTE="$5"
+  ANCHOR_URL="$6"
 fi
 
-ORCH_DIR="secrets/envs/$ENV/icc-keys"
+export IPFS_GATEWAY_URI="https://ipfs.io"
+
+ORCH_DIR="secrets/envs/$ENV/cc-keys/$CC_DIR"
 INITHOT_DIR="$ORCH_DIR/init-hot"
-SIGNER_DIR="$ORCH_DIR/testnets-secret"
+SIGNER_DIR="$ORCH_DIR/roles"
 ORCH_ADDR=$(just sops-decrypt-binary "$ORCH_DIR/orchestrator.addr")
 
-case "$VOTE" in
-  yes)
-    ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteYES.jsonld"
-    ;;
-  no)
-    ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteNO.jsonld"
-    ;;
-  abstain)
-    ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteABSTAIN.jsonld"
-    ;;
-  *)
-    echo "Error: Invalid third argument. Please provide 'yes', 'no', or 'abstain'."
-    exit 1
-    ;;
-esac
+# case "$VOTE" in
+#   yes)
+#     ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteYES.jsonld"
+#     ;;
+#   no)
+#     ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteNO.jsonld"
+#     ;;
+#   abstain)
+#     ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteABSTAIN.jsonld"
+#     ;;
+#   *)
+#     echo "Error: Invalid third argument. Please provide 'yes', 'no', or 'abstain'."
+#     exit 1
+#     ;;
+# esac
 
 # Hash the anchor data using cardano-cli.
 # Note that using the `--text` option would result in an incorrect hash.
 cardano-cli hash anchor-data \
- --file-text <(curl -sL "$ANCHOR") \
- --out-file anchor.hash
+  --url "$ANCHOR_URL" --out-file anchor.hash
 
 cardano-cli conway query utxo \
   --address "$(just sops-decrypt-binary "$INITHOT_DIR/nft.addr")" \
@@ -62,7 +67,7 @@ orchestrator-cli vote \
   --governance-action-tx-id "$ACTION_ID" \
   --governance-action-index "$ACTION_IX" \
   --"$VOTE" \
-  --metadata-url "$ANCHOR" \
+  --metadata-url "$ANCHOR_URL" \
   --metadata-hash "$(cat anchor.hash)" \
   --out-dir vote
 
