@@ -79,16 +79,17 @@ return-utxo() (
   set -euo pipefail
 
   [ -n "${DEBUG:-}" ] && set -x
+  SIGNING_TX_ARGS=()
 
-  if [ "$#" -ne 5 ]; then
+  if [ "$#" -ne 4 ] && [ "$#" -ne 5 ]; then
     # shellcheck disable=SC2016
-    echo "$0"' $ENV $SEND_ADDR $UTXO $PAYMENT_SKEY $STAKE_SKEY'
+    echo "$0"' $ENV $SEND_ADDR $UTXO $PAYMENT_SKEY [$STAKE_SKEY]'
     echo
     echo "  ENV          -- The environment to be used"
     echo "  SEND_ADDR    -- The send to address"
     echo "  UTXO         -- The UTXO including index in \$UTXO#IDX format"
     echo "  PAYMENT_SKEY -- The path to the payment secret key"
-    echo "  STAKE_SKEY   -- The path to the stake secret key"
+    echo "  [STAKE_SKEY] -- The path to the stake secret key [Optional]"
     exit 1
   else
     # Read file contents rather than saving the path in case it is a streamed
@@ -97,7 +98,9 @@ return-utxo() (
     SEND_ADDR="$2"
     UTXO="$3"
     PAYMENT_SKEY=$(< "$4")
-    STAKE_SKEY=$(< "$5")
+    if [ "$#" -eq 5 ]; then
+      STAKE_SKEY=$(< "$5")
+    fi
   fi
 
   just set-default-cardano-env "$ENV"
@@ -118,26 +121,39 @@ return-utxo() (
   BASENAME="tx-fund-transfer-$ENV-$TS"
 
   PAYMENT_VKEY=$(cardano-cli latest key verification-key --signing-key-file <(echo -n "$PAYMENT_SKEY") --verification-key-file /dev/stdout)
-  STAKE_VKEY=$(cardano-cli latest key verification-key --signing-key-file <(echo -n "$STAKE_SKEY") --verification-key-file /dev/stdout)
+
+  if [ "$#" -eq 5 ]; then
+    STAKE_VKEY=$(cardano-cli latest key verification-key --signing-key-file <(echo -n "$STAKE_SKEY") --verification-key-file /dev/stdout)
+
+    SIGNING_TX_ARGS+=(
+      "--signing-key-file" "<(echo -n \"$STAKE_SKEY\")" \
+    )
+  fi
 
   SOURCE_ADDR=$(
-    cardano-cli latest address build \
-      --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") \
-      --stake-verification-key-file <(echo -n "$STAKE_VKEY") 2> /dev/null \
-    || { \
-      STAKE_VKEY_FROM_EXT=$(cardano-cli latest key non-extended-key --extended-verification-key-file <(echo -n "$STAKE_VKEY") --verification-key-file /dev/stdout)
-
+    if [ "$#" -eq 4 ]; then
+      cardano-cli latest address build \
+        --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") 2> /dev/null
+    else
       cardano-cli latest address build \
         --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") \
-        --stake-verification-key-file <(echo -n "$STAKE_VKEY_FROM_EXT")
-      }
+        --stake-verification-key-file <(echo -n "$STAKE_VKEY") 2> /dev/null \
+      || { \
+        STAKE_VKEY_FROM_EXT=$(cardano-cli latest key non-extended-key --extended-verification-key-file <(echo -n "$STAKE_VKEY") --verification-key-file /dev/stdout)
+
+        cardano-cli latest address build \
+          --payment-verification-key-file <(echo -n "$PAYMENT_VKEY") \
+          --stake-verification-key-file <(echo -n "$STAKE_VKEY_FROM_EXT")
+        }
+    fi
   )
-  echo "For environment $ENV, the source address of $SOURCE_ADDR contains the following UTxOs:"
-  cardano-cli latest query utxo --address "$SOURCE_ADDR" | jq 'to_entries | sort_by(.value.value.lovelace) | from_entries'
+
+  echo "For environment $ENV, the source address of $SOURCE_ADDR contains the following lovelace only UTxOs:"
+  cardano-cli latest query utxo --address "$SOURCE_ADDR" | jq 'to_entries | map(select(.value.value | length == 1)) | sort_by(.value.value.lovelace) | from_entries'
   PROMPT
 
-  echo "For environment $ENV, the send to address of $SEND_ADDR contains the following UTxOs:"
-  cardano-cli latest query utxo --address "$SEND_ADDR" | jq 'to_entries | sort_by(.value.value.lovelace) | from_entries'
+  echo "For environment $ENV, the send to address of $SEND_ADDR contains the following lovelace only UTxOs:"
+  cardano-cli latest query utxo --address "$SEND_ADDR" | jq 'to_entries | map(select(.value.value | length == 1)) | sort_by(.value.value.lovelace) | from_entries'
   PROMPT
 
   echo "The provided UTXO has an ID and value of:"
@@ -174,7 +190,7 @@ return-utxo() (
   cardano-cli latest transaction sign \
     --tx-body-file "$BASENAME.raw" \
     --signing-key-file <(echo -n "$PAYMENT_SKEY") \
-    --signing-key-file <(echo -n "$STAKE_SKEY") \
+    "${SIGNING_TX_ARGS[@]}" \
     --testnet-magic "$TESTNET_MAGIC" \
     --out-file "$BASENAME.signed"
 
