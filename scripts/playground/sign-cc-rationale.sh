@@ -10,6 +10,9 @@ set -euo pipefail
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
 
+# See a example/template rationale files at CF CIP-136:
+# https://github.com/cardano-foundation/CIPs/tree/master/CIP-0136/examples
+
 cardano-signer sign --cip100 \
   --data-file "$RATIONALE_FILE" \
   --secret-key <(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/rationale-signer.json" | jq -r '.output.skey') \

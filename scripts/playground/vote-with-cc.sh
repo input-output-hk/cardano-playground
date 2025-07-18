@@ -29,24 +29,7 @@ INITHOT_DIR="$ORCH_DIR/init-hot"
 SIGNER_DIR="$ORCH_DIR/roles"
 ORCH_ADDR=$(just sops-decrypt-binary "$ORCH_DIR/orchestrator.addr")
 
-# case "$VOTE" in
-#   yes)
-#     ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteYES.jsonld"
-#     ;;
-#   no)
-#     ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteNO.jsonld"
-#     ;;
-#   abstain)
-#     ANCHOR="https://raw.githubusercontent.com/carloslodelar/proposals/refs/heads/main/voteABSTAIN.jsonld"
-#     ;;
-#   *)
-#     echo "Error: Invalid third argument. Please provide 'yes', 'no', or 'abstain'."
-#     exit 1
-#     ;;
-# esac
-
-# Hash the anchor data using cardano-cli.
-# Note that using the `--text` option would result in an incorrect hash.
+# For signing voting rationale, see scripts/playground/cc-sign-rationale.sh
 cardano-cli hash anchor-data \
   --url "$ANCHOR_URL" --out-file anchor.hash
 
