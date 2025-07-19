@@ -126,7 +126,7 @@ return-utxo() (
     STAKE_VKEY=$(cardano-cli latest key verification-key --signing-key-file <(echo -n "$STAKE_SKEY") --verification-key-file /dev/stdout)
 
     SIGNING_TX_ARGS+=(
-      "--signing-key-file" "<(echo -n \"$STAKE_SKEY\")" \
+      "--signing-key-file" "<(echo -n \"\$STAKE_SKEY\")"
     )
   fi
 
@@ -187,12 +187,15 @@ return-utxo() (
     --fee 200000 \
     --out-file "$BASENAME.raw"
 
-  cardano-cli latest transaction sign \
-    --tx-body-file "$BASENAME.raw" \
-    --signing-key-file <(echo -n "$PAYMENT_SKEY") \
-    "${SIGNING_TX_ARGS[@]}" \
-    --testnet-magic "$TESTNET_MAGIC" \
-    --out-file "$BASENAME.signed"
+  # shellcheck disable=2116
+  SIGNING_CMD=$(echo "cardano-cli latest transaction sign \
+    --tx-body-file \"\$BASENAME.raw\" \
+    --signing-key-file <(echo -n \"\$PAYMENT_SKEY\") \
+    ${SIGNING_TX_ARGS[*]} \
+    --testnet-magic \"\$TESTNET_MAGIC\" \
+    --out-file \$BASENAME.signed"
+  )
+  eval "$SIGNING_CMD"
 
   echo
   echo "The transaction has been prepared and signed:"
