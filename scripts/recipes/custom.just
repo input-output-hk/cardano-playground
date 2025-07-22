@@ -121,12 +121,12 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   }
 
   echo "For environment $ENV, the SEND_TO address of $SEND_ADDR contains the following UTxOs:"
-  eval "$CARDANO_CLI" latest query utxo --address "$SEND_ADDR"
+  eval "$CARDANO_CLI" latest query utxo --address "$SEND_ADDR" | jq
   PROMPT
 
   CHANGE_ADDR=$(just sops-decrypt-binary secrets/envs/$ENV/utxo-keys/rich-utxo.addr)
-  echo "For environment $ENV, the rich key address of $CHANGE_ADDR contains the following UTxOs:"
-  eval "$CARDANO_CLI" latest query utxo --address "$CHANGE_ADDR"
+  echo "For environment $ENV, the rich key address of $CHANGE_ADDR contains the following lovelace only UTxOs:"
+  eval "$CARDANO_CLI" latest query utxo --address "$CHANGE_ADDR" | jq 'to_entries | map(select(.value.value | length == 1)) | sort_by(.value.value.lovelace) | from_entries'
   PROMPT
 
   if [ "$UTXO" = "auto" ]; then
