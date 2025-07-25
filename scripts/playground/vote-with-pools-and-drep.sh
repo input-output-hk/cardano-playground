@@ -74,6 +74,7 @@ if [ -z "${DISABLE_DREP_VOTE:-}" ]; then
   WITNESS_OVERRIDE=$((WITNESS_OVERRIDE + 1))
 fi
 
+SIGN_TX_ARGS+=("--signing-key-file" "<(just sops-decrypt-binary \"secrets/envs/${ENV}/utxo-keys/rich-utxo.skey\")")
 RICH_ADDR=$(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.addr")
 
 TXIN=$(cardano-cli latest query utxo \
@@ -94,9 +95,11 @@ cardano-cli latest transaction build \
   --out-file vote-tx.raw
 
 # Sign the transaction:
-cardano-cli latest transaction sign \
+# shellcheck disable=SC1083,SC2116
+SIGNING_CMD=$(echo cardano-cli latest transaction sign \
   --tx-body-file vote-tx.raw \
-  --signing-key-file <(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.skey") \
-  "${SIGN_TX_ARGS[@]}" \
-  --testnet-magic "$TESTNET_MAGIC" \
+  "${SIGN_TX_ARGS[*]}" \
+  --testnet-magic \"\$TESTNET_MAGIC\" \
   --out-file vote-tx.signed
+)
+eval "$SIGNING_CMD"

@@ -89,9 +89,6 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
           bperfNoPublish
-
-          # Until 10.5 is released -- see description below
-          absPeerSnap
         ];
       };
 
@@ -219,17 +216,6 @@ in
       };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
-      # Until 10.5.x is released, 10.4.1 will fail to start without this because
-      # node doesn't yet properly look up the relative path from topology to
-      # peer snapshot file.
-      #
-      # Setting this option null fixes the problem, but will leave a
-      # dangling peer snapshot file until 10.6.
-      #
-      # So until then, we'll switch from relative path that causes node failure
-      # to absolute path which does not.
-      absPeerSnap = {services.cardano-node.peerSnapshotFile = i: "/etc/cardano-node/peer-snapshot-${toString i}.json";};
-
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
@@ -243,9 +229,6 @@ in
             services.cardano-postgres.enablePsqlrc = true;
           }
           bperfNoPublish
-
-          # Until 10.5 is released -- see description above
-          absPeerSnap
         ];
       };
 
