@@ -111,7 +111,7 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
   # The drep-stake-distribution query includes expired dreps and system
   # alwaysAbstain and alwaysNoConfidence dreps which are funded directly from
   # stake delegation.
-  DREP_DIST=$(eval "$CARDANO_CLI" latest query drep-stake-distribution --all-dreps 2> /dev/null)
+  DREP_DIST=$(eval "$CARDANO_CLI" latest query drep-stake-distribution --all-dreps 2> /dev/null | jq 'to_entries | map([.key, .value])')
 
   # DREP_PWR_DIST is similar to DREP_DIST but excludes expired dreps and system dreps (alwaysAbstain and alwaysNoConfidence).
   DREP_PWR_DIST=$(eval "$CARDANO_CLI" latest query drep-state --all-dreps --include-stake \
