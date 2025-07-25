@@ -20,7 +20,7 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [10.4.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1)
+Compatible with cardano-node release [10.5.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.1)
 
 ```
 NOTE:
@@ -45,22 +45,25 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
 - [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)
 
+#### Ouroboros Genesis Mode
+
+For those preferring to use Genesis mode over bootstrap peers, the following
+requirements will also need to be met:
+
+* The node config file will need to have `ConsensusMode` set to `GenesisMode`
+
+* To the topology file, a new key of `peerSnapshotFile` will need to be added
+and set to the path of the peer snapshot file, provided above.  The declared
+path can be absolute or relative with respect to the directory of the topology
+file.
+
 #### UTXO-HD
 
-Users migrating from a previous version of the node should read the [release
+Users migrating from a node version older than `10.4.1` should also read the [10.4.1 release
 notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1) and
 the consensus [migration guide](https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating)
 to properly configure the node and convert the database such that a replay from
 genesis can be avoided.
-
-#### Ouroboros Genesis Mode
-
-There is a known bug with the experimental Ouroboros Genesis feature that is
-not yet recommended for mainnet use: ChainSync Jumping (CSJ) is not disabled
-once a node is caught up. This should not affect normal operation of the
-syncing node, but does risk a DoS attack for the caught-up node. It will be
-corrected in a future release (Issue
-[IntersectMBO/ouroboros-consensus#1490](https://github.com/IntersectMBO/ouroboros-consensus/issues/1490)).
 
 #### Guardrails reference script UTxO
 
