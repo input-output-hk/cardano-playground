@@ -3,24 +3,12 @@ set -euo pipefail
 
 [ -n "${DEBUG:-}" ] && set -x
 
-if [ "$#" -ne "6" ]; then
-  echo "Six arguments are required:"
-  echo "  $0 \$ENV \$CC_DIR \$ACTION_ID \$ACTION_IX \$VOTE \$ANCHOR_URL"
-  echo
-  echo "Where:"
-  echo "  ENV should be 'preview' or 'preprod'"
-  echo "  CC_DIR should be the cc-keys subdir for the environment, ex: 'cc' or 'cc2', etc"
-  echo "  VOTE must be 'yes', 'no' or 'abstain'"
-  echo "  ANCHOR_URL must the be CC voting rationale"
-  exit 1
-else
-  ENV="$1"
-  CC_DIR="$2"
-  ACTION_ID="$3"
-  ACTION_IX="$4"
-  VOTE="$5"
-  ANCHOR_URL="$6"
-fi
+[ -z "${ENV:-}" ] && { echo "ENV var must be set"; exit 1; }
+[ -z "${CC_DIR:-}" ] && { echo "CC_DIR var must be set, example: 'cc' or 'cc2', ..."; exit 1; }
+[ -z "${ACTION_ID:-}" ] && { echo "ACTION_ID var must be set"; exit 1; }
+[ -z "${ACTION_IDX:-}" ] && { echo "ACTION_IDX var must be set"; exit 1; }
+[ -z "${VOTE:-}" ] && { echo "VOTE var must be set as 'yes', 'no' or 'abstain'"; exit 1; }
+[ -z "${ANCHOR_URL:-}" ] && { echo "ANCHOR_URL var must be set to the CC voting rationale, preferably as 'ipfs://...' using CIDv0"; exit 1; }
 
 export IPFS_GATEWAY_URI="https://ipfs.io"
 
@@ -48,7 +36,7 @@ orchestrator-cli vote \
   --utxo-file hot-nft.utxo \
   --hot-credential-script-file <(just sops-decrypt-binary "$INITHOT_DIR/credential.plutus") \
   --governance-action-tx-id "$ACTION_ID" \
-  --governance-action-index "$ACTION_IX" \
+  --governance-action-index "$ACTION_IDX" \
   --"$VOTE" \
   --metadata-url "$ANCHOR_URL" \
   --metadata-hash "$(cat anchor.hash)" \
