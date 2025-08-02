@@ -143,8 +143,9 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
 
   POOL_DIST=$(eval "$CARDANO_CLI" latest query spo-stake-distribution --all-spos 2> /dev/null)
   POOL_STAKE_TOTAL=$(jq -re '[.[][1]] | add // 0' <<< "$POOL_DIST" 2> /dev/null)
-  POOL_ABSTAIN_TOTAL=$(jq -re '[(.[] | select(.[2] == "drep-alwaysAbstain")) | .[1]] | add' <<< "$POOL_DIST")
-  POOL_NOCONF_TOTAL=$(jq -re '[(.[] | select(.[2] == "drep-alwaysNoConfidence")) | .[1]] | add' <<< "$POOL_DIST")
+  POOL_ABSTAIN_TOTAL=$(jq -re '[(.[] | select(.[2] == "drep-alwaysAbstain")) | .[1]] | add // 0' <<< "$POOL_DIST")
+  POOL_NOCONF_TOTAL=$(jq -re '[(.[] | select(.[2] == "drep-alwaysNoConfidence")) | .[1]] | add // 0' <<< "$POOL_DIST")
+
   R_JUSTIFY "POOL_STAKE_TOTAL:" "$POOL_STAKE_TOTAL" 50
   R_JUSTIFY "POOL_ABSTAIN_TOTAL:" "$POOL_ABSTAIN_TOTAL" 50
   R_JUSTIFY "POOL_NOCONF_TOTAL:" "$POOL_NOCONF_TOTAL" 50
@@ -619,16 +620,22 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
 
       ADD_HASHES_RENDER=$(jq -re "
         .[2] // {}
-          | to_entries[]
-          | \"Adding $GREEN\(.key)-\(.value)\"
-          | split(\"-\") | \"\(.[0])$OFF ► $BLUE\(.[1])$OFF (max term epoch \(.[2]))\"
+          | to_entries as \$entries
+          | if (\$entries | length) > 0
+            then []
+              | \"Adding $GREEN\(.key)-\(.value)\"
+              | split(\"-\")
+              | \"\(.[0])$OFF ► $BLUE\(.[1])$OFF (max term epoch \(.[2]))\"
+            else \"No additions\"
+            end
       " <<< "$ACTION_CONTENTS" 2> /dev/null)
 
       REM_HASHES_RENDER=$(jq -re "
         .[1][] // []
           | to_entries as \$entries
           | if (\$entries | length > 0)
-            then \"Remove $GREEN\(\$entries | .key)$OFF ◄ $RED\(\$entries | .value)$OFF\"
+            then \$entries[]
+              | \"Remove $GREEN\(.key)$OFF ◄ $RED\(.value)$OFF\"
             else \"No removals\"
             end
       " <<< "$ACTION_CONTENTS" 2> /dev/null)
