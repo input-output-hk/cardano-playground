@@ -763,9 +763,9 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
       preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel hiConn preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
-      preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel hiConn preprodRelMig];};
-      preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel hiConn preprodRelMig tcpTxOpt];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
+      preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig];};
+      preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig tcpTxOpt];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync-pre smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
@@ -784,9 +784,9 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
@@ -794,14 +794,14 @@ in
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel legacyT previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel previewRelMig tcpTxOpt];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt];};
 
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
