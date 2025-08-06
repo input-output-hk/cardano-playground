@@ -63,17 +63,17 @@ with flake.lib; {
           // optionalAttrs isNg {
             lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLibNg;
 
-            # Until upstream parts ng has capkgs version, use local flake pins
             pkgs = {
               cardano-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-cli-ng);
+              cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng;
               cardano-db-sync = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-sync-ng);
               cardano-db-tool = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-db-tool-ng);
-              cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng;
               cardano-faucet = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
+              cardano-node-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng;
               cardano-node = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-node-ng);
               cardano-smash = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-smash-ng);
               cardano-submit-api = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-submit-api-ng);
-              cardano-node-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-node-pkgs-ng;
+              cardano-tracer = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-tracer-ng);
               mithril-client-cli = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.mithril-client-cli-ng);
               mithril-signer = system: flake.withSystem system ({config, ...}: config.cardano-parts.pkgs.mithril-signer-ng);
             };

@@ -197,11 +197,11 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   eval "$CARDANO_CLI" latest transaction submit --tx-file "$BASENAME.signed"
   echo
 
-  TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file "$BASENAME.signed")
+  TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file "$BASENAME.signed" | jq -re .txhash)
   EXISTS="true"
 
   while [ "$EXISTS" = "true" ]; do
-    EXISTS=$(eval "$CARDANO_CLI" latest query tx-mempool tx-exists $TXID | jq -r .exists)
+    EXISTS=$(eval "$CARDANO_CLI" latest query tx-mempool tx-exists $TXID | jq -re .exists)
     if [ "$EXISTS" = "true" ]; then
       echo "The transaction still exists in the mempool, sleeping 5s: $TXID"
     else

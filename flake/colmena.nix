@@ -82,9 +82,9 @@ in
       # Cardano-node modules for group deployment
       node = {
         imports = [
-          # Base cardano-node service
+          # Base cardano-node and tracer service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
@@ -96,6 +96,7 @@ in
         imports = [
           # Base cardano-node service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
           # Config for cardano-node group deployments
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -216,9 +217,28 @@ in
       };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
-      dbsync = {
+      # dbsync = {
+      #   imports = [
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
+      #     {
+      #       services.cardano-node.shareNodeSocket = true;
+      #       services.cardano-postgres.enablePsqlrc = true;
+      #     }
+      #     bperfNoPublish
+      #   ];
+      # };
+
+      # While new tracing PRs are WIP, the new node service is required
+      dbsync-pre = {
         imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
@@ -228,7 +248,8 @@ in
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
           }
-          bperfNoPublish
+
+          pre
         ];
       };
 
@@ -359,22 +380,6 @@ in
       preprodRelMig = mkWorldRelayMig 30000;
       previewRelMig = mkWorldRelayMig 30002;
 
-      # newMetrics = {
-      #   imports = [
-      #     (
-      #       # Existing tracer service requires a pkgs with commonLib defined in the cardano-node repo flake overlay.
-      #       # We'll import it through flake-compat so we don't need a full flake input just for obtaining commonLib.
-      #       import
-      #       config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-      #       (import
-      #         "${config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service}/../../default.nix" {system = "x86_64-linux";})
-      #       .legacyPackages
-      #       .x86_64-linux
-      #     )
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-new-tracing
-      #   ];
-      # };
-
       # logRejected = {
       #   services = {
       #     cardano-node.extraNodeConfig = {
@@ -446,78 +451,6 @@ in
       #     };
       #   };
       # };
-
-      traceTxs = {
-        services.cardano-node.extraNodeConfig = {
-          TraceLocalTxSubmissionProtocol = true;
-          TraceLocalTxSubmissionServer = true;
-          TraceTxSubmissionProtocol = true;
-          TraceTxInbound = true;
-          TraceTxOutbound = true;
-        };
-      };
-
-      # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
-      #
-      # mempoolDisable = {
-      #   services.cardano-node.extraNodeConfig.TraceMempool = false;
-      # };
-      #
-      # p2p and legacy network debugging code
-      # netDebug = {
-      #   services.cardano-node = {
-      #     useNewTopology = false;
-      #     extraNodeConfig = {
-      #       TraceMux = true;
-      #       TraceConnectionManagerTransitions = true;
-      #       DebugPeerSelectionInitiator = true;
-      #       DebugPeerSelectionInitiatorResponder = true;
-      #       options.mapSeverity = {
-      #         "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
-      #         "cardano.node.ChainSyncProtocol" = "Error";
-      #         "cardano.node.ConnectionManager" = "Debug";
-      #         "cardano.node.ConnectionManagerTransition" = "Debug";
-      #         "cardano.node.DebugPeerSelection" = "Debug";
-      #         "cardano.node.Handshake" = "Debug";
-      #         "cardano.node.InboundGovernor" = "Debug";
-      #         "cardano.node.Mux" = "Info";
-      #         "cardano.node.PeerSelectionActions" = "Debug";
-      #         "cardano.node.PeerSelection" = "Info";
-      #         "cardano.node.resources" = "Notice";
-      #       };
-      #     };
-      #   };
-      # };
-      #
-      minLog = {
-        services.cardano-node.extraNodeConfig = {
-          # Let's make sure we can at least see the blockHeight in logs and metrics
-          TraceChainDb = true;
-
-          # And then shut everything else off
-          TraceAcceptPolicy = false;
-          TraceConnectionManager = false;
-          TraceDiffusionInitialization = false;
-          TraceDNSResolver = false;
-          TraceDNSSubscription = false;
-          TraceErrorPolicy = false;
-          TraceForge = false;
-          TraceHandshake = false;
-          TraceInboundGovernor = false;
-          TraceIpSubscription = false;
-          TraceLedgerPeers = false;
-          TraceLocalConnectionManager = false;
-          TraceLocalErrorPolicy = false;
-          TraceLocalHandshake = false;
-          TraceLocalRootPeers = false;
-          TraceMempool = false;
-          TracePeerSelectionActions = false;
-          TracePeerSelectionCounters = false;
-          TracePeerSelection = false;
-          TracePublicRootPeers = false;
-          TraceServer = false;
-        };
-      };
 
       # Optimize tcp sysctl and route params for long distance transmission.
       # Apply to one relay per pool group.
@@ -685,8 +618,6 @@ in
       #   ];
       # };
       #
-      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
-      #
       # Example of node pinning to a custom version; see also the relevant flake inputs.
       # dbsync921 = {
       #   imports = [
@@ -711,6 +642,83 @@ in
       #   cardano-parts.perNode.meta.hostsList =
       #     filter (name: hasPrefix prefix name) (attrNames nixosConfigurations);
       # };
+
+      # Legacy tracing system module code samples:
+      legacyT = {services.cardano-node.useLegacyTracing = true;};
+      #
+      # traceTxs = {
+      #   services.cardano-node.extraNodeConfig = {
+      #     TraceLocalTxSubmissionProtocol = true;
+      #     TraceLocalTxSubmissionServer = true;
+      #     TraceTxSubmissionProtocol = true;
+      #     TraceTxInbound = true;
+      #     TraceTxOutbound = true;
+      #   };
+      # };
+      #
+      # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
+      #
+      # mempoolDisable = {
+      #   services.cardano-node.extraNodeConfig.TraceMempool = false;
+      # };
+      #
+      # p2p and legacy network debugging code
+      # netDebug = {
+      #   services.cardano-node = {
+      #     useNewTopology = false;
+      #     extraNodeConfig = {
+      #       TraceMux = true;
+      #       TraceConnectionManagerTransitions = true;
+      #       DebugPeerSelectionInitiator = true;
+      #       DebugPeerSelectionInitiatorResponder = true;
+      #       options.mapSeverity = {
+      #         "cardano.node.DebugPeerSelectionInitiatorResponder" = "Debug";
+      #         "cardano.node.ChainSyncProtocol" = "Error";
+      #         "cardano.node.ConnectionManager" = "Debug";
+      #         "cardano.node.ConnectionManagerTransition" = "Debug";
+      #         "cardano.node.DebugPeerSelection" = "Debug";
+      #         "cardano.node.Handshake" = "Debug";
+      #         "cardano.node.InboundGovernor" = "Debug";
+      #         "cardano.node.Mux" = "Info";
+      #         "cardano.node.PeerSelectionActions" = "Debug";
+      #         "cardano.node.PeerSelection" = "Info";
+      #         "cardano.node.resources" = "Notice";
+      #       };
+      #     };
+      #   };
+      # };
+      #
+      # minLog = {
+      #   services.cardano-node.extraNodeConfig = {
+      #     # Let's make sure we can at least see the blockHeight in logs and metrics
+      #     TraceChainDb = true;
+      #     # And then shut everything else off
+      #     TraceAcceptPolicy = false;
+      #     TraceConnectionManager = false;
+      #     TraceDiffusionInitialization = false;
+      #     TraceDNSResolver = false;
+      #     TraceDNSSubscription = false;
+      #     TraceErrorPolicy = false;
+      #     TraceForge = false;
+      #     TraceHandshake = false;
+      #     TraceInboundGovernor = false;
+      #     TraceIpSubscription = false;
+      #     TraceLedgerPeers = false;
+      #     TraceLocalConnectionManager = false;
+      #     TraceLocalErrorPolicy = false;
+      #     TraceLocalHandshake = false;
+      #     TraceLocalRootPeers = false;
+      #     TraceMempool = false;
+      #     TracePeerSelectionActions = false;
+      #     TracePeerSelectionCounters = false;
+      #     TracePeerSelection = false;
+      #     TracePublicRootPeers = false;
+      #     TraceServer = false;
+      #   };
+      # };
+      #
+      # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
+      #
     in {
       meta = {
         nixpkgs = import inputs.nixpkgs {
@@ -755,14 +763,14 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
       preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
-      preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel hiConn preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
-      preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel hiConn preprodRelMig];};
-      preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node rel hiConn preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync pre smash preprodSmash];};
+      preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
+      preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig];};
+      preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig tcpTxOpt];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync-pre smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
-      preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
-      preprod2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig];};
+      preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp legacyT mithrilRelease (declMRel "preprod2-rel-b-1")];};
+      preprod2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel legacyT preprodRelMig];};
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig tcpTxOpt];};
 
@@ -776,24 +784,24 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node minLog rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync pre smash previewSmash];};
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre traceTxs rel previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel previewRelMig tcpTxOpt];};
+      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt];};
 
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -802,30 +810,18 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {
-        imports = [
-          eu-central-1
-          r5-xlarge
-          (ebs 300)
-          (group "mainnet1")
-          node
-          bp
-          {
-            services.mithril-signer.enable = false;
-          }
-        ];
-      };
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node bp mithrilSignerDisable];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node legacyT (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -839,9 +835,8 @@ in
       # Stopped machines until the `-eu` variant can run the jobs properly
       buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-af") disableAlertCount];};
       buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-ap") disableAlertCount];};
+      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-eu") disableAlertCount];};
       buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-sa") disableAlertCount];};
-
-      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-eu")];};
       # ---------------------------------------------------------------------------------------------------------
     };
 
