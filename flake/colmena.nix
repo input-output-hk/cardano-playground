@@ -239,7 +239,7 @@ in
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service-ng
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
@@ -574,7 +574,7 @@ in
             map (n: mkContainer n (toString (10 - n))) (lib.range 1 count);
         };
       };
-      #
+
       # disableP2p = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -828,6 +828,7 @@ in
       # Misc
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
+      misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
