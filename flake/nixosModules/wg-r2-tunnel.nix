@@ -71,6 +71,12 @@ flake: {
               publicKey = "tSWXADCEKG2yz2Cm4OB6AQRPW22ofuywOYFjfYZt328=";
               persistentKeepalive = 25;
             }
+            {
+              name = "ci10";
+              allowedIPs = ["10.100.0.10/32"];
+              publicKey = "izpTUdxSXH17HyhMxl22/BBQThvLl0VpLiF/n/X0lUs=";
+              persistentKeepalive = 25;
+            }
 
             # Hydra
             {
