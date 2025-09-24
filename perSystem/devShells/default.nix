@@ -1,10 +1,10 @@
-{
+flake: {
   # Uncomment for node service debugging
   # flake.config.cardano-parts.pkgs.special.cardano-node-service = "${flake.inputs.cardano-node-service.outPath}/nix/nixos";
 
   perSystem = {
     inputs',
-    # system,
+    system,
     ...
   }: {
     cardano-parts = {
@@ -17,11 +17,12 @@
       # the defined cardano-parts pkgs, but also deployable cluster groups which also may utilize them.
       #
       # Temporarily set all node and cli packages to the X.Y.Z tag
-      # pkgs = {
-      #   inherit (flake.inputs.cardano-node-ng.packages.${system}) cardano-cli cardano-node;
-      #   cardano-cli-ng = flake.inputs.cardano-node-ng.packages.${system}.cardano-cli;
-      #   cardano-node-ng = flake.inputs.cardano-node-ng.packages.${system}.cardano-node;
-      # };
+      pkgs = {
+        # inherit (flake.inputs.cardanoTest.packages.${system}) cardano-cli cardano-node;
+        cardano-cli-ng = flake.inputs.cardanoTest.packages.${system}.cardano-cli;
+        cardano-node-ng = flake.inputs.cardanoTest.packages.${system}.cardano-node;
+        cardano-tracer-ng = flake.inputs.cardanoTest.packages.${system}.cardano-tracer;
+      };
     };
   };
 }
