@@ -85,6 +85,20 @@ flake: {
               publicKey = "gGRNt3nw9Dt5Yoi0nK4G81UNeLMGMDw/QuZX6b0kQig=";
               persistentKeepalive = 25;
             }
+
+            # Midnight machines
+            {
+              name = "ci7";
+              allowedIPs = ["10.100.0.7/32"];
+              publicKey = "0BMk9CC/fp4Jr0y84BenfaZgwTtLPBR7kX/dRBusiBU=";
+              persistentKeepalive = 25;
+            }
+            {
+              name = "ci8";
+              allowedIPs = ["10.100.0.8/32"];
+              publicKey = "hf7PW+dZzFVowvIGyMO4hm6/UapKVZkTJokjaQLCRjU=";
+              persistentKeepalive = 25;
+            }
           ];
         };
       };
