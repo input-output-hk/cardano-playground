@@ -184,6 +184,10 @@ in {
 
               filter = [
                 {
+                  # If future stock ami nixos images don't properly install the
+                  # bootstrap key like at least a few recent 25.05 ami nixos
+                  # images appear to have done, this ami image is known good:
+                  # ami-039ad15344c5183b4 (nixos 24.11) in eu-central-1
                   name = "name";
                   values = ["nixos/25.05*"];
                 }
