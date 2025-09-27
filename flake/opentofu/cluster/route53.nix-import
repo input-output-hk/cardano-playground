@@ -49,4 +49,7 @@ in {
 
   # Example SRV record resource, where network could be substituted with any of preview, preprod or mainnet.
   # srv_network = mkSrv {name = "_cardano-network._tcp.${domain}"; records = ["0 10 3001 network1-rel-a-1.${domain}"];};
+
+  # Matomo
+  cname_matomo = mkCname {name = "matomo.${domain}"; records = ["misc1-matomo-a-1.${domain}"];};
 }
