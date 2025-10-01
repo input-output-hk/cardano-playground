@@ -78,6 +78,6 @@ flake: {
     services.cardano-tracer.environments = environments;
 
     # If the legacy tracing system is preferred:
-    # services.cardanoo-node.useLegacyTracing = true;
+    # services.cardano-node.useLegacyTracing = true;
   };
 }
