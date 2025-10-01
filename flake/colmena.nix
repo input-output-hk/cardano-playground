@@ -833,12 +833,18 @@ in
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
-      # Buildkite Temporary machines
+      # Buildkite temporary machines
       # Stopped machines until the `-eu` variant can run the jobs properly
       buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-af") disableAlertCount];};
       buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-ap") disableAlertCount];};
       buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-eu") disableAlertCount];};
       buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-sa") disableAlertCount];};
+      # ---------------------------------------------------------------------------------------------------------
+
+      # ---------------------------------------------------------------------------------------------------------
+      # Sanchonet temporary machines, for disaster recovery testing with the community
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node nixosModules.sanchonet];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node rel nixosModules.sanchonet];};
       # ---------------------------------------------------------------------------------------------------------
     };
 

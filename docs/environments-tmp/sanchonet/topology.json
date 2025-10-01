@@ -1,0 +1,23 @@
+{
+  "bootstrapPeers": [
+    {
+      "address": "sancho-testnet.able-pool.io",
+      "port": 6002
+    }   
+  ],
+  "localRoots": [
+    {
+      "accessPoints": [],
+      "advertise": false,
+      "trustable": false,
+      "valency": 1
+    }
+  ],
+  "publicRoots": [
+    {
+      "accessPoints": [],
+      "advertise": false
+    }
+  ],
+  "useLedgerAfterSlot": 33695977
+}
