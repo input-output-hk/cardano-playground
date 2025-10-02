@@ -75,7 +75,11 @@ flake: {
     # Provide the new custom sanchonet enivronments attr set to the
     # appropriate options and services.
     cardano-parts.perNode.lib.cardanoLib.environments = environments;
-    services.cardano-tracer.environments = environments;
+    services = {
+      cardano-tracer.environments = environments;
+
+      blockperf.enable = false;
+    };
 
     # If the legacy tracing system is preferred:
     # services.cardano-node.useLegacyTracing = true;
