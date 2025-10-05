@@ -15,7 +15,7 @@ Example for creating new pool keys:
 #   SLOTS_PER_KES_PERIOD=$(jq -r .slotsPerKESPeriod < "$PATH_TO/shelley-genesis.json")
 #   CURRENT_KES_PERIOD=$(( $SLOT / $SLOTS_PER_KES_PERIOD ))
 ENV=sanchonet \
-  CURRENT_KES_PERIOD="799" \
+  CURRENT_KES_PERIOD="562" \
   POOL_NAMES="${ENV}1-bp-a-1" \
   STAKE_POOL_DIR=secrets/groups/${ENV}1 \
   TESTNET_MAGIC=4 \
