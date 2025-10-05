@@ -22,7 +22,17 @@ flake: {
 
       mysql = {
         enable = true;
-        package = pkgs.mysql84;
+
+        # TODO: Consider pinning this so we don't have unexpected db breakage on machine updates
+        package = pkgs.mariadb;
+
+        initialDatabases = [{name = "matomo";}];
+        ensureUsers = [
+          {
+            name = "matomo";
+            ensurePermissions = {"matomo.*" = "ALL PRIVILEGES";};
+          }
+        ];
       };
 
       nginx.enable = true;
