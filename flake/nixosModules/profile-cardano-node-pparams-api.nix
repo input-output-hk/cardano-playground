@@ -26,8 +26,6 @@ flake: {
       cfg = config.services.cardano-node-pparams-api;
       cfgNode = config.services.cardano-node;
     in {
-      # imports = [flake.config.flake.nixosModules.module-nginx-vhost-exporter];
-
       options = {
         services.cardano-node-pparams-api = {
           acmeEmail = mkOption {
