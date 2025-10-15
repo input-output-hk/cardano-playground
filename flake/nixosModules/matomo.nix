@@ -6,21 +6,42 @@ flake: {
     lib,
     ...
   }: let
-    inherit (lib) concatMapStringsSep elem isBool mkBefore mkForce optionalString;
+    inherit (lib) concatMapStringsSep elem isBool mkAfter mkBefore mkForce mkMerge mkOrder optionalString;
     inherit (flake.config.flake.cardano-parts.cluster.infra.aws) domain;
     hostname = "${name}.${domain}";
+
+    matomoPackage = pkgs.matomo.overrideAttrs (old: {
+      postInstall =
+        old.postInstall or ""
+        + ''
+          mv $out/share/js $out/share/js-read-only
+          ln -sv /var/lib/matomo-js $out/share/js
+        '';
+    });
   in {
     imports = [flake.self.inputs.cardano-parts.nixosModules.module-nginx-vhost-exporter];
 
     key = ./matomo.nix;
 
     config = {
+      environment = {
+        systemPackages = with pkgs; [
+          matomoPackage
+          php
+        ];
+        variables.PIWIK_USER_PATH = "/var/lib/matomo";
+      };
+
       networking.firewall.allowedTCPPorts = [80 443];
 
       services = {
         matomo = {
           inherit hostname;
-          enable = builtins.trace pkgs.matomo.outPath true;
+
+          enable = true;
+
+          package = matomoPackage;
+
           nginx = {
             serverName = hostname;
             serverAliases = ["matomo.${domain}"];
@@ -122,89 +143,110 @@ flake: {
       systemd = let
         cfgBackup = config.services.mysqlBackup;
       in {
-        # Allow multiple mysql backups to exist without being overwritten. Aging
-        # clean up will be handled by tmpfiles. This code re-uses the upstream
-        # service definition with some modifications.
-        #
-        # The upstream module should have two options added for flexibility:
-        # 1) An option backup name suffix.
-        # 2) An option declaring the tmpfiles rule, defaulting to what it is currently.
-        services.mysql-backup.script = let
-          dumpBinary =
-            if
-              (
-                lib.getName config.services.mysql.package
-                == lib.getName pkgs.mariadb
-                && lib.versionAtLeast config.services.mysql.package.version "11.0.0"
-              )
-            then "${config.services.mysql.package}/bin/mariadb-dump"
-            else "${config.services.mysql.package}/bin/mysqldump";
+        services = {
+          matomo-setup-update.preStart = mkAfter ''
+            while ! [ -d /var/lib/matomo-js ]; do
+              echo "Waiting for tmpfiles creation of /var/lib/matomo-js..."
+              sleep 2
+            done
 
-          compressionAlgs = {
-            gzip = rec {
-              pkg = pkgs.gzip;
-              ext = ".gz";
-              minLevel = 1;
-              maxLevel = 9;
-              cmd = compressionLevelFlag: "${pkg}/bin/gzip -c ${cfgBackup.gzipOptions} ${compressionLevelFlag}";
-            };
-            xz = rec {
-              pkg = pkgs.xz;
-              ext = ".xz";
-              minLevel = 0;
-              maxLevel = 9;
-              cmd = compressionLevelFlag: "${pkg}/bin/xz -z -c ${compressionLevelFlag} -";
-            };
-            zstd = rec {
-              pkg = pkgs.zstd;
-              ext = ".zst";
-              minLevel = 1;
-              maxLevel = 19;
-              cmd = compressionLevelFlag: "${pkg}/bin/zstd ${compressionLevelFlag} -";
-            };
-          };
-
-          compressionLevelFlag = optionalString (cfgBackup.compressionLevel != null) (
-            "-" + toString cfgBackup.compressionLevel
-          );
-
-          selectedAlg = compressionAlgs.${cfgBackup.compressionAlg};
-          compressionCmd = selectedAlg.cmd compressionLevelFlag;
-
-          shouldUseSingleTransaction = db:
-            if isBool cfgBackup.singleTransaction
-            then cfgBackup.singleTransaction
-            else elem db cfgBackup.singleTransaction;
-
-          backupDatabaseScript = db: ''
-            date=$(date -u "+%Y-%m-%d_%H-%M-%S")
-            dest="${cfgBackup.location}/${db}-''${date}${selectedAlg.ext}"
-            if ${dumpBinary} ${optionalString (shouldUseSingleTransaction db) "--single-transaction"} ${db} | ${compressionCmd} > $dest.tmp; then
-              mv $dest.tmp $dest
-              echo "Backed up to $dest"
-            else
-              echo "Failed to back up to $dest"
-              rm -f $dest.tmp
-              failed="$failed ${db}"
-            fi
-          '';
-        in
-          mkForce ''
-            set -o pipefail
-            failed=""
-            ${concatMapStringsSep "\n" backupDatabaseScript cfgBackup.databases}
-            if [ -n "$failed" ]; then
-              echo "Backup of database(s) failed:$failed"
-              exit 1
+            if ! [ -f /var/lib/matomo-js/index.php ]; then
+              cp -v ${config.services.matomo.package}/share/js-read-only/* /var/lib/matomo-js/
+              chown -R matomo:matomo /var/lib/matomo-js
             fi
           '';
 
-        # Provide an age expiration as the first and therefore overriding rule
-        # for the backup path until the module makes the tmpfiles rule an
-        # option.
-        tmpfiles.rules = mkBefore [
-          "d ${cfgBackup.location} 0700 ${cfgBackup.user} - 7d -"
-        ];
+          # Allow multiple mysql backups to exist without being overwritten. Aging
+          # clean up will be handled by tmpfiles. This code re-uses the upstream
+          # service definition with some modifications.
+          #
+          # The upstream module should have two options added for flexibility:
+          # 1) An option backup name suffix.
+          # 2) An option declaring the tmpfiles rule, defaulting to what it is currently.
+          mysql-backup.script = let
+            dumpBinary =
+              if
+                (
+                  lib.getName config.services.mysql.package
+                  == lib.getName pkgs.mariadb
+                  && lib.versionAtLeast config.services.mysql.package.version "11.0.0"
+                )
+              then "${config.services.mysql.package}/bin/mariadb-dump"
+              else "${config.services.mysql.package}/bin/mysqldump";
+
+            compressionAlgs = {
+              gzip = rec {
+                pkg = pkgs.gzip;
+                ext = ".gz";
+                minLevel = 1;
+                maxLevel = 9;
+                cmd = compressionLevelFlag: "${pkg}/bin/gzip -c ${cfgBackup.gzipOptions} ${compressionLevelFlag}";
+              };
+              xz = rec {
+                pkg = pkgs.xz;
+                ext = ".xz";
+                minLevel = 0;
+                maxLevel = 9;
+                cmd = compressionLevelFlag: "${pkg}/bin/xz -z -c ${compressionLevelFlag} -";
+              };
+              zstd = rec {
+                pkg = pkgs.zstd;
+                ext = ".zst";
+                minLevel = 1;
+                maxLevel = 19;
+                cmd = compressionLevelFlag: "${pkg}/bin/zstd ${compressionLevelFlag} -";
+              };
+            };
+
+            compressionLevelFlag = optionalString (cfgBackup.compressionLevel != null) (
+              "-" + toString cfgBackup.compressionLevel
+            );
+
+            selectedAlg = compressionAlgs.${cfgBackup.compressionAlg};
+            compressionCmd = selectedAlg.cmd compressionLevelFlag;
+
+            shouldUseSingleTransaction = db:
+              if isBool cfgBackup.singleTransaction
+              then cfgBackup.singleTransaction
+              else elem db cfgBackup.singleTransaction;
+
+            backupDatabaseScript = db: ''
+              date=$(date -u "+%Y-%m-%d_%H-%M-%S")
+              dest="${cfgBackup.location}/${db}-''${date}${selectedAlg.ext}"
+              if ${dumpBinary} ${optionalString (shouldUseSingleTransaction db) "--single-transaction"} ${db} | ${compressionCmd} > $dest.tmp; then
+                mv $dest.tmp $dest
+                echo "Backed up to $dest"
+              else
+                echo "Failed to back up to $dest"
+                rm -f $dest.tmp
+                failed="$failed ${db}"
+              fi
+            '';
+          in
+            mkForce ''
+              set -o pipefail
+              failed=""
+              ${concatMapStringsSep "\n" backupDatabaseScript cfgBackup.databases}
+              if [ -n "$failed" ]; then
+                echo "Backup of database(s) failed:$failed"
+                exit 1
+              fi
+            '';
+        };
+
+        tmpfiles.rules =
+          # Provide an age expiration as the first and therefore overriding rule
+          # for the backup path until the module makes the tmpfiles rule an
+          # option.
+          mkMerge [
+            (mkBefore [
+              "d ${cfgBackup.location} 0700 ${cfgBackup.user} - 7d -"
+            ])
+            # Ensure a writable matomo js state directory exists
+            (mkOrder 1000 [
+              "d /var/lib/matomo-js 0750 matomo matomo - -"
+            ])
+          ];
       };
     };
   };
