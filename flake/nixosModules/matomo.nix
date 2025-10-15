@@ -54,6 +54,26 @@ flake: {
           ];
         };
 
+        mysqlBackup = {
+          enable = true;
+
+          # This will be created automatically by services.mysql.ensureUsers.
+          user = "mysqlbackup";
+
+          # This will ensure consistency and point-in-time snapshot backups.
+          singleTransaction = true;
+
+          location = "/var/lib/mysql-backup";
+
+          databases = ["matomo"];
+
+          # Scheduled for a low load time:
+          #   US East Coast = ~4:00 am
+          #   US West Coast = ~1:00 am
+          #   Japan = ~6:00 pm
+          calendar = "08:00:00";
+        };
+
         nginx = {
           enable = true;
           eventsConfig = "worker_connections 4096;";
