@@ -7,6 +7,7 @@ flake: {
     ...
   }: let
     inherit (lib) concatMapStringsSep elem isBool mkAfter mkBefore mkForce mkMerge mkOrder optionalString;
+    inherit (pkgs) fetchurl writeText;
     inherit (flake.config.flake.cardano-parts.cluster.infra.aws) domain;
     hostname = "${name}.${domain}";
 
@@ -14,10 +15,23 @@ flake: {
       postInstall =
         old.postInstall or ""
         + ''
-          mv $out/share/js $out/share/js-read-only
-          ln -sv /var/lib/matomo-js $out/share/js
+          mkdir -p $out/read-only/share/js
+
+          # Preserve the share/js directory as a mutable source of truth
+          mv $out/share/js $out/read-only/share/
+          ln -sv /var/lib/matomo-mutable/share/js $out/share/js
+
+          # Preserve the matomo.js file as a matable source of truth
+          mv $out/share/matomo.js $out/read-only/share/
+          ln -sv /var/lib/matomo-mutable/share/matomo.js $out/share/matomo.js
         '';
     });
+
+    # Geoip db source to bootstrap the geoip plugin
+    dbIp = fetchurl {
+      url = "https://download.db-ip.com/free/dbip-city-lite-2025-10.mmdb.gz";
+      hash = "sha256-3DTgkx2UJ46Si6r30kNAbkQtgf9tT8ViDiW9b6u1YLU=";
+    };
   in {
     imports = [flake.self.inputs.cardano-parts.nixosModules.module-nginx-vhost-exporter];
 
@@ -75,6 +89,15 @@ flake: {
               ensurePermissions = {"matomo.*" = "ALL PRIVILEGES";};
             }
           ];
+
+          configFile = writeText "my.cnf" ''
+            [galera]
+
+            [mysqld]
+            datadir=/var/lib/mysql
+            port=3306
+            max_allowed_packet = 64M
+          '';
         };
 
         mysqlBackup = {
@@ -142,19 +165,36 @@ flake: {
 
       systemd = let
         cfgBackup = config.services.mysqlBackup;
+        mutDir = "/var/lib/matomo-mutable";
       in {
         services = {
-          matomo-setup-update.preStart = mkAfter ''
-            while ! [ -d /var/lib/matomo-js ]; do
-              echo "Waiting for tmpfiles creation of /var/lib/matomo-js..."
-              sleep 2
-            done
+          matomo-setup-update = {
+            path = with pkgs; [gzip];
+            preStart = mkAfter ''
+              MUT_DIR="${mutDir}"
+              while ! [ -d "$MUT_DIR" ]; do
+                echo "Waiting for tmpfiles creation of $MUT_DIR..."
+                sleep 2
+              done
 
-            if ! [ -f /var/lib/matomo-js/index.php ]; then
-              cp -v ${config.services.matomo.package}/share/js-read-only/* /var/lib/matomo-js/
-              chown -R matomo:matomo /var/lib/matomo-js
-            fi
-          '';
+              # Bootstrap mutable matomo js directory to avoid archiving and other errors
+              if ! [ -f "$MUT_DIR/share/js/index.php" ]; then
+                mkdir -p "$MUT_DIR"/share/js
+                cp -v ${config.services.matomo.package}/read-only/share/js/* "$MUT_DIR"/share/js/
+                cp -v ${config.services.matomo.package}/read-only/share/matomo.js "$MUT_DIR"/share/
+                chown -R matomo:matomo "$MUT_DIR"
+                chmod u+w "$MUT_DIR"/share/matomo.js
+              fi
+
+              # Bootstrap a geoip db to provide a working OOTB geoip plugin
+              if ! [ -f /var/lib/matomo/misc/DBIP-City.mmdb ]; then
+                echo "Placing an initial geoip db to /var/lib/matomo/misc/DBIP-City.mmdb..."
+                gunzip -c ${dbIp} > /var/lib/matomo/misc/DBIP-City.mmdb
+                chown matomo:matomo /var/lib/matomo/misc/DBIP-City.mmdb
+                chmod 0660 /var/lib/matomo/misc/DBIP-City.mmdb
+              fi
+            '';
+          };
 
           # Allow multiple mysql backups to exist without being overwritten. Aging
           # clean up will be handled by tmpfiles. This code re-uses the upstream
@@ -244,7 +284,7 @@ flake: {
             ])
             # Ensure a writable matomo js state directory exists
             (mkOrder 1000 [
-              "d /var/lib/matomo-js 0750 matomo matomo - -"
+              "d ${mutDir} 0750 matomo matomo - -"
             ])
           ];
       };
