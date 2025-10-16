@@ -200,6 +200,55 @@ in
       # Note: not including a topology profile will default to edge topology if module profile-cardano-node-group is imported
       topoBp = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "bp";};}];};
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
+      topoRelSancho = {
+        imports = [
+          inputs.cardano-parts.nixosModules.profile-cardano-node-topology
+          (nixos: {
+            services.cardano-node = {
+              bootstrapPeers = null;
+              publicProducers = nixos.lib.mkForce [];
+              useLedgerAfterSlot = -1;
+              extraNodeConfig = {
+                PeerSharing = false;
+              };
+            };
+            services.cardano-node-topology = {
+              extraProducers = [
+                {
+                  address = "sancho-testnet.able-pool.io";
+                  port = 6002;
+                  trustable = true;
+                }
+                {
+                  address = "94.136.30.221";
+                  port = 3001;
+                  trustable = true;
+                }
+                {
+                  address = "202.61.236.233";
+                  port = 6002;
+                  trustable = true;
+                }
+                {
+                  address = "150.143.150.135";
+                  port = 9000;
+                  trustable = true;
+                }
+                {
+                  address = "64.23.159.5";
+                  port = 4000;
+                  trustable = true;
+                }
+                {
+                  address = "sanchonet.sevensspo.org";
+                  port = 7123;
+                  trustable = true;
+                }
+              ];
+            };
+          })
+        ];
+      };
 
       # Roles
       bp = {
@@ -216,6 +265,7 @@ in
         ];
       };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
+      relSancho = {imports = [topoRelSancho];};
 
       # dbsync = {
       #   imports = [
@@ -816,7 +866,7 @@ in
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node bp mithrilSignerDisable];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node-pre bp mithrilSignerDisable];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
@@ -844,7 +894,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node bp nixosModules.sanchonet];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node rel nixosModules.sanchonet];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node relSancho nixosModules.sanchonet];};
       # ---------------------------------------------------------------------------------------------------------
     };
 
