@@ -17,7 +17,7 @@ INITHOT_DIR="$ORCH_DIR/init-hot"
 SIGNER_DIR="$ORCH_DIR/roles"
 ORCH_ADDR=$(just sops-decrypt-binary "$ORCH_DIR/orchestrator.addr")
 
-# For signing voting rationale, see scripts/playground/cc-sign-rationale.sh
+# For signing voting rationale, see scripts/playground/sign-cc-rationale.sh
 cardano-cli hash anchor-data \
   --url "$ANCHOR_URL" --out-file anchor.hash
 

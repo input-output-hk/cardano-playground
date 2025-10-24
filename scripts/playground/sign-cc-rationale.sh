@@ -17,6 +17,7 @@ cardano-signer sign --cip100 \
   --data-file "$RATIONALE_FILE" \
   --secret-key <(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/rationale-signer.json" | jq -r '.output.skey') \
   --author-name "IOE Node SRE for ${ENV^}" \
+  --replace \
   --out-file "$RATIONALE_FILE.signed"
 
 cardano-signer verify --cip100 \
