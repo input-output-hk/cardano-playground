@@ -401,7 +401,7 @@ dedelegate-pools ENV *IDXS=null:
       --wallet-mnemonic <(just sops-decrypt-binary secrets/envs/{{ENV}}/utxo-keys/faucet.mnemonic) \
       --delegation-index "$i"
 
-    TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file tx-deleg-account-$i-restore.txsigned)
+    TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file tx-deleg-account-$i-restore.txsigned | jq -r .txhash)
     EXISTS="true"
 
     while [ "$EXISTS" = "true" ]; do
