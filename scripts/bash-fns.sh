@@ -15,7 +15,7 @@ submit() (
 
   EXISTS="true"
   while [ "$EXISTS" = "true" ]; do
-    EXISTS=$(cardano-cli latest query tx-mempool tx-exists "$TXID" | jq -re .exists)
+    EXISTS=$(cardano-cli latest query tx-mempool tx-exists "$TXID" | jq -re .exists || true)
     if [ "$EXISTS" = "true" ]; then
       echo "The transaction still exists in the mempool, sleeping 5s: $TXID"
     else

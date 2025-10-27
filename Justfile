@@ -112,6 +112,7 @@ checkSshConfig := '''
       | where ($it.machine | str ends-with ".ipv4")
       | rename machine pubIpv4
       | update machine { $in | str replace ".ipv4" "" }
+      | update pubIpv4 { $in | if $in == "unavailable.ipv4" { null } else { $in } }
       | sort-by machine
     )
 
@@ -404,7 +405,7 @@ dedelegate-pools ENV *IDXS=null:
     EXISTS="true"
 
     while [ "$EXISTS" = "true" ]; do
-      EXISTS=$(eval "$CARDANO_CLI" latest query tx-mempool tx-exists $TXID | jq -r .exists)
+      EXISTS=$(eval "$CARDANO_CLI" latest query tx-mempool tx-exists $TXID | jq -r .exists || true)
       if [ "$EXISTS" = "true" ]; then
         echo "Pool de-delegation index $i tx still exists in the mempool, sleeping 5s: $TXID"
       else

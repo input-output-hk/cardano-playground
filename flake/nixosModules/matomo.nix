@@ -150,6 +150,10 @@ flake: {
         };
 
         nginx-vhost-exporter.enable = true;
+
+        redis.servers.matomo = {
+          enable = true;
+        };
       };
 
       security.acme = {
