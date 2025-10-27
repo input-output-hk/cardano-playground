@@ -9,9 +9,9 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2025-08-14";
 
     # Local pins for additional customization:
-    cardanoTest.url = "github:IntersectMBO/cardano-node/10.5.1";
-    # cardanoTest.url = "github:IntersectMBO/cardano-node/jl/10.6.0-pre-nix-cfg-updates";
-    # cardanoTest.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/jl/10.6.0-pre-nix-cfg-updates";
+    # cardanoTest.url = "github:IntersectMBO/cardano-node/10.5.1";
+    # cardanoTest.url = "github:IntersectMBO/cardano-node/ana/10.6-final-integration-mix";
+    # cardanoTest.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/ana/10.6-final-integration-mix";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
