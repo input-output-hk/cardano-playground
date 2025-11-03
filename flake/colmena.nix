@@ -29,6 +29,7 @@ in
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       # m5a-large.aws.instance.instance_type = "m5a.large";
       m5ad-large.aws.instance.instance_type = "m5ad.large";
+      m5ad-xlarge.aws.instance.instance_type = "m5ad.xlarge";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
@@ -791,8 +792,8 @@ in
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing
-      # preview1-test-a-1 = {imports = [eu-central-1 m5ad-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb tcpTxOpt];};
+      # preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb tcpTxOpt];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
