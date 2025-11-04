@@ -120,6 +120,7 @@ in
           bperfNoPublish
           {
             cardano-parts.perNode = {
+              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
               pkgs = {
                 inherit
                   (inputs.cardano-node-lmdb-test.packages.x86_64-linux)
@@ -146,6 +147,7 @@ in
           bperfNoPublish
           {
             cardano-parts.perNode = {
+              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
               pkgs = {
                 inherit
                   (inputs.cardano-node-lmdb-test.packages.x86_64-linux)
@@ -172,6 +174,7 @@ in
           bperfNoPublish
           {
             cardano-parts.perNode = {
+              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
               pkgs = {
                 inherit
                   (inputs.cardano-node-lmdb-test-traces.packages.x86_64-linux)
@@ -903,13 +906,13 @@ in
       #     C: 10.6 with patches (https://github.com/IntersectMBO/cardano-node/commit/1ac429175dd4ebb391e633900a514ea145355475)
       #     D : 10.6 with traces (and patches) (https://github.com/IntersectMBO/cardano-node/commit/93437a0fb34161f7b6e07334f0760ed670d28b02)
       # With new tracing, syncing from Genesis, we will run
-      #     2 - 10.5.1 LMDB
-      #     3 - 10.6 InMemory (ana/10.6-final-integration-mix branch)
-      #     4 - 10.6 LMDB with patches, full chain replay
-      #     5 - 10.6 InMemory with patches, full chain replay
-      #     6 - 10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling
-      #     7 - 10.6 LMDB with patches and new traces, full chain replay
-      # Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
+      #     preview1-test-a-1 - Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
+      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay
+      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch)
+      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay
+      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay
+      #     preview1-test-a-6 - 10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling
+      #     preview1-test-a-7 - 10.6 LMDB with patches and new traces, full chain replay
 
       # preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
       # Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
