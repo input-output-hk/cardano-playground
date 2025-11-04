@@ -13,6 +13,10 @@
     # cardanoTest.url = "github:IntersectMBO/cardano-node/ana/10.6-final-integration-mix";
     # cardanoTest.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/ana/10.6-final-integration-mix";
 
+    cardano-node-lmdb-test.url = "github:IntersectMBO/cardano-node/da/lmdb-srp-test";
+    # cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-beta";
+    # cardano-tracer-prom-test.url = "github:IntersectMBO/cardano-node/...";
+
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
   };
