@@ -14,6 +14,7 @@
     # cardanoTest.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/ana/10.6-final-integration-mix";
 
     cardano-node-lmdb-test.url = "github:IntersectMBO/cardano-node/da/lmdb-srp-test";
+    cardano-node-lmdb-test-traces.url = "github:IntersectMBO/cardano-node/93437a0fb34161f7b6e07334f0760ed670d28b02";
     # cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-beta";
     # cardano-tracer-prom-test.url = "github:IntersectMBO/cardano-node/...";
 
