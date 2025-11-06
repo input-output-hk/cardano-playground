@@ -13,9 +13,11 @@
     # cardanoTest.url = "github:IntersectMBO/cardano-node/ana/10.6-final-integration-mix";
     # cardanoTest.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/ana/10.6-final-integration-mix";
 
-    # Testing Pins Round 1 and 2
+    # Testing Pins Round 1, 2 and 3
     cardano-node-bang.url = "github:IntersectMBO/cardano-node/js/bang";
     cardano-node-bang-profiled.url = "github:IntersectMBO/cardano-node/da/bang-profiled";
+
+    cardano-node-strict.url = "github:IntersectMBO/cardano-node/js/with-replayed-block-strict";
 
     cardano-node-10-5-1-profiled.url = "github:IntersectMBO/cardano-node/da/10.5.1-tmp-profiled";
     cardano-node-10-6-0-profiled.url = "github:IntersectMBO/cardano-node/da/10.6-final-integration-mix-profiled";
