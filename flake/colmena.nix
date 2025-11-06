@@ -63,6 +63,12 @@ in
         };
       };
 
+      profiled = {
+        services.cardano-node = {
+          rts_flags_override = ["-l" "-hi"];
+        };
+      };
+
       # Declare a static ipv6. This should only be used for public machines
       # where ip exposure in committed code is acceptable and a vanity address
       # is needed. Ie: don't use this for bps.
@@ -94,31 +100,31 @@ in
       };
 
       # temporary branch for profiling 10.5.1
-      # node-10-5-1-tmp-profiled = {
-      #   imports = [
-      #     # Base cardano-node and tracer service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-      #     # Config for cardano-node group deployments
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     bperfNoPublish
-      #     {
-      #       cardano-parts.perNode = {
-      #         # lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
-      #         pkgs = {
-      #           inherit
-      #             (inputs.cardano-node-10-5-1-tmp-profiled-test.packages.x86_64-linux)
-      #             cardano-cli
-      #             cardano-node
-      #             cardano-submit-api
-      #             cardano-tracer
-      #             ;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
+      node-profiled = {
+        imports = [
+          # Base cardano-node and tracer service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+          {
+            cardano-parts.perNode = {
+              pkgs = {
+                inherit
+                  (inputs.cardano-node-10-5-1-profiled.packages.x86_64-linux)
+                  cardano-cli
+                  cardano-node
+                  cardano-submit-api
+                  cardano-tracer
+                  ;
+              };
+            };
+          }
+          profiled
+        ];
+      };
 
       node-pre = {
         imports = [
@@ -135,12 +141,95 @@ in
         ];
       };
 
-      # node-pre-js-bang = {
+      node-pre-profiled = {
+        imports = [
+          # Base cardano-node service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
+              pkgs = {
+                inherit
+                  (inputs.cardano-node-10-6-0-profiled.packages.x86_64-linux)
+                  cardano-cli
+                  cardano-node
+                  cardano-submit-api
+                  cardano-tracer
+                  ;
+              };
+            };
+          }
+          profiled
+        ];
+      };
+
+      node-bang = {
+        imports = [
+          # Base cardano-node service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
+              pkgs = {
+                inherit
+                  (inputs.cardano-node-bang.packages.x86_64-linux)
+                  cardano-cli
+                  cardano-node
+                  cardano-submit-api
+                  cardano-tracer
+                  ;
+              };
+            };
+          }
+        ];
+      };
+
+      node-bang-profiled = {
+        imports = [
+          # Base cardano-node service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
+              pkgs = {
+                inherit
+                  (inputs.cardano-node-bang-profiled.packages.x86_64-linux)
+                  cardano-cli
+                  cardano-node
+                  cardano-submit-api
+                  cardano-tracer
+                  ;
+              };
+            };
+          }
+          profiled
+        ];
+      };
+
+      # node-lmdb = {
       #   imports = [
       #     # Base cardano-node service
       #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
       #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-      #
+
       #     # Config for cardano-node group deployments
       #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
       #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
@@ -150,7 +239,7 @@ in
       #         lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
       #         pkgs = {
       #           inherit
-      #             (inputs.cardano-node-lmdb-test.packages.x86_64-linux)
+      #             (inputs.cardano-node-js-bang.packages.x86_64-linux)
       #             cardano-cli
       #             cardano-node
       #             cardano-submit-api
@@ -162,7 +251,7 @@ in
       #   ];
       # };
 
-      node-lmdb-test = {
+      node-lmdb-profiled = {
         imports = [
           # Base cardano-node service
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
@@ -177,7 +266,7 @@ in
               lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
               pkgs = {
                 inherit
-                  (inputs.cardano-node-js-bang.packages.x86_64-linux)
+                  (inputs.cardano-node-lmdb-profiled.packages.x86_64-linux)
                   cardano-cli
                   cardano-node
                   cardano-submit-api
@@ -186,62 +275,36 @@ in
               };
             };
           }
+          profiled
         ];
       };
 
-      node-lmdb-test-profiled = {
-        imports = [
-          # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      # node-lmdb-test-traces = {
+      #   imports = [
+      #     # Base cardano-node service
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          bperfNoPublish
-          {
-            cardano-parts.perNode = {
-              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
-              pkgs = {
-                inherit
-                  (inputs.cardano-node-lmdb-test.packages.x86_64-linux)
-                  cardano-cli
-                  cardano-submit-api
-                  cardano-tracer
-                  ;
-                cardano-node = inputs.cardano-node-lmdb-test.packages.x86_64-linux.cardano-node.profiled;
-              };
-            };
-          }
-        ];
-      };
-
-      node-lmdb-test-traces = {
-        imports = [
-          # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          bperfNoPublish
-          {
-            cardano-parts.perNode = {
-              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
-              pkgs = {
-                inherit
-                  (inputs.cardano-node-lmdb-test-traces.packages.x86_64-linux)
-                  cardano-cli
-                  cardano-node
-                  cardano-submit-api
-                  cardano-tracer
-                  ;
-              };
-            };
-          }
-        ];
-      };
+      #     # Config for cardano-node group deployments
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     bperfNoPublish
+      #     {
+      #       cardano-parts.perNode = {
+      #         lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
+      #         pkgs = {
+      #           inherit
+      #             (inputs.cardano-node-lmdb-test-traces.packages.x86_64-linux)
+      #             cardano-cli
+      #             cardano-node
+      #             cardano-submit-api
+      #             cardano-tracer
+      #             ;
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
 
       # node-lsm-test = {
       #   imports = [
@@ -967,67 +1030,43 @@ in
       #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay
       #     preview1-test-a-6 - 10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling
       #     preview1-test-a-7 - 10.6 LMDB with patches and new traces, full chain replay
+      #
+      # -----------------------
+      #
+      ### Round 2 2025-11-05
+      #     preview1-test-a-1 - 10.6 LMDB with patches, ledger replay from genesis only (chain is already in sync), with -hi profiling
+      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay, with -hi profiling
+      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch), full chain replay, with -hi profiling
+      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay, with -hi profiling
+      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay, with -hi profiling
+      #     preview1-test-a-6 - 10.6 LMDB js/bang, full chain replay
+      #     preview1-test-a-7 - 10.6 LMDB js/bang, full chain replay, with -hi profiling
 
-      ### round 2 2025-11-05
-      #     preview1-test-a-1 - Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
-      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay
-      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch)
-      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay
-      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay
-      #     preview1-test-a-6 - 10.6 LMDB js/bang
-      #     preview1-test-a-7 - 10.6 LMDB with patches and new traces, full chain replay
-
+      # Prior config of preview1-test-a-1 to return to when testing rounds are over
       # preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
-      # Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
-      # started replay at: 2025-11-04 18:05:33.0477Z, Volatile DB with max slot seen SlotNo 95623169
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lmdb-test lmdb];};
 
-      #     10.5.1 LMDB full chain replay from Genesis - started replay at: 2025-11-04 18:31:31.6613Z
-      preview1-test-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node lmdb];};
+      #     10.6.0 LMDB with patches ONLY ledger replay (chain is already in sync), with -hi profiling
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lmdb-profiled lmdb];};
 
-      #     10.6 InMemory (ana/10.6-final-integration-mix branch) - started a replay at: 2025-11-04 18:47:32.7666Z
-      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
+      #     10.5.1 LMDB,  full chain replay, with -hi profiling
+      preview1-test-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-profiled lmdb];};
 
-      #     10.6 LMDB with patches, full chain replay - started a replay at: 2025-11-04 19:03:37.6060Z - not seeing block metrics
-      preview1-test-a-4 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lmdb-test lmdb];};
+      #     10.6 InMemory (ana/10.6-final-integration-mix branch), full chain replay, with -hi profiling
+      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre-profiled];};
 
-      #     10.6 InMemory with patches, full chain replay - start a replay at: 2025-11-04 19:20:31.6120Z - did see the relay error - not seeing block metrics
-      preview1-test-a-5 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lmdb-test];};
+      #     10.6 LMDB with patches, full chain replay, with -hi profiling
+      preview1-test-a-4 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lmdb-profiled lmdb];};
 
-      #     10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling - did see the relay error - started a replay at: 2025-11-04 20:51:59.1179Z
-      preview1-test-a-6 = {
-        imports = [
-          eu-central-1
-          m5ad-xlarge
-          (ebs 80)
-          (nodeRamPct 70)
-          (group "preview1")
-          node-lmdb-test-profiled
-          lmdb
-          {
-            services.cardano-node = {
-              eventlog = true;
-              profiling = "space-type";
-            };
-          }
-        ];
-      };
+      #     10.6 InMemory with patches, full chain replay, with -hi profiling
+      preview1-test-a-5 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lmdb-profiled];};
 
-      #     10.6 LMDB with patches and new traces, full chain replay - did see the relay error - started a replay at: 2025-11-04 21:16:48.6045Z
-      preview1-test-a-7 = {
-        imports = [
-          eu-central-1
-          m5ad-xlarge
-          (ebs 80)
-          (nodeRamPct 70)
-          (group "preview1")
-          node-lmdb-test-traces
-          lmdb
-        ];
-      };
+      #     10.6 LMDB with patches, full chain replay, js-bang
+      preview1-test-a-6 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-bang lmdb];};
 
-      #   test js/bang
-      # preview1-test-a-8 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre-js-bang lmdb];};
+      #     10.6 LMDB with patches, full chain replay, js-bang with -hi profiling
+      preview1-test-a-7 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-bang-profiled lmdb];};
+
+      # -----------------------
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
