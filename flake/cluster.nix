@@ -34,6 +34,13 @@ with flake.lib; {
       function = "cardano-parts";
       repo = "https://github.com/input-output-hk/cardano-playground";
 
+      owner = "ioe";
+      environment = "testnets";
+      project = "cardano-playground";
+
+      # This is the tf var secrets name
+      costCenter = "tag_costCenter";
+
       # These options must remain true for the playground cluster as ip info is required
       abortOnMissingIpModule = true;
       warnOnMissingIpModule = true;
