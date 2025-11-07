@@ -420,16 +420,15 @@ in {
                 # flake/colmena.nix are merged.
                 tags = {Name = name;} // node.aws.instance.tags or {};
 
-                # Using volume_tags ensures all created volumes get tagged.
-                # Default tags are not inherited to the volume level automatically.
-                volume_tags = defaultTags // {Name = name;} // node.aws.instance.tags or {};
-
                 root_block_device = {
                   inherit (node.aws.instance.root_block_device) volume_size;
                   volume_type = "gp3";
                   iops = node.aws.instance.root_block_device.iops or 3000;
                   throughput = node.aws.instance.root_block_device.throughput or 125;
                   delete_on_termination = true;
+
+                  # Default tags are not inherited to the volume level automatically.
+                  tags = defaultTags // {Name = name;} // node.aws.instance.tags or {};
                 };
 
                 metadata_options = {

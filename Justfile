@@ -284,8 +284,17 @@ cardano-testnet isNg *ARGS:
 cf STACKNAME:
   #!/usr/bin/env nu
   mkdir cloudFormation
+  let secretName = (nix eval --raw '.#cardano-parts.cluster.infra.generic.costCenter')
+  let costCenter = (
+    just sops-decrypt-binary secrets/tf/cluster.tfvars
+    | lines
+    | where { |it| $it =~ $secretName }
+    | parse $"($secretName) = \"{secret}\""
+    | get 0.secret
+    | to text
+  )
   nix eval --json '.#cloudFormation.{{STACKNAME}}' | from json | save --force 'cloudFormation/{{STACKNAME}}.json'
-  rain deploy --debug --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
+  rain deploy --debug --params costCenter=($costCenter) --termination-protection ./cloudFormation/{{STACKNAME}}.json
 
 # Prep dbsync for delegation analysis
 dbsync-prep ENV HOST ACCTS="501":

@@ -38,7 +38,7 @@ with flake.lib; {
       environment = "testnets";
       project = "cardano-playground";
 
-      # This is the tf var secrets name
+      # This is the tf var secrets name located in secrets/tf/cluster.tfvars
       costCenter = "tag_costCenter";
 
       # These options must remain true for the playground cluster as ip info is required
