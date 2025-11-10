@@ -251,32 +251,32 @@ in
         ];
       };
 
-      node-lmdb = {
-        imports = [
-          # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      # node-lmdb = {
+      #   imports = [
+      #     # Base cardano-node service
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          bperfNoPublish
-          {
-            cardano-parts.perNode = {
-              lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
-              pkgs = {
-                inherit
-                  (inputs.cardano-node-js-bang.packages.x86_64-linux)
-                  cardano-cli
-                  cardano-node
-                  cardano-submit-api
-                  cardano-tracer
-                  ;
-              };
-            };
-          }
-        ];
-      };
+      #     # Config for cardano-node group deployments
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     bperfNoPublish
+      #     {
+      #       cardano-parts.perNode = {
+      #         lib.cardanoLib = inputs.cardano-parts.cardano-parts.pkgs.special.cardanoLibNg "x86_64-linux";
+      #         pkgs = {
+      #           inherit
+      #             (inputs.cardano-node-js-bang.packages.x86_64-linux)
+      #             cardano-cli
+      #             cardano-node
+      #             cardano-submit-api
+      #             cardano-tracer
+      #             ;
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
 
       # node-lmdb-profiled = {
       #   imports = [
@@ -1123,12 +1123,12 @@ in
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-lmdb bp mithrilSignerDisable];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-strict bp mithrilSignerDisable];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-lmdb lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-lmdb lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-strict lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-strict lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node legacyT (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
