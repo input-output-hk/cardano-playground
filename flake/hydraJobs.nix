@@ -12,6 +12,20 @@ with lib; {
       pkgs,
       ...
     }: let
+      # A sampling of cluster machines to build in CI to validate new work
+      # isn't breaking them.
+      machineBuildList = [
+        # Buildkite
+        "buildkite1-eu-central-1-1"
+
+        # Mainnet, PraosMode, edge, relay and bp configs
+        "mainnet1-dbsync-a-1"
+        "mainnet1-rel-a-1"
+
+        # Preprod, GenesisMode, bp
+        "preprod1-bp-a-1"
+      ];
+
       nixosCfgsNoIpModule =
         mapAttrs
         (name: cfg:
@@ -32,7 +46,7 @@ with lib; {
               ];
             }
           else cfg)
-        parts.config.flake.nixosConfigurations;
+        (filterAttrs (n: _: elem n machineBuildList) parts.config.flake.nixosConfigurations);
 
       jobs = {
         nixosConfigurations =
