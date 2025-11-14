@@ -16,8 +16,10 @@ with flake.lib; {
         us-east-2 = true;
 
         # Temporary machine usage in these regions for buildkite one-off tests
+        # and wireguard CF tunnel tests.
         af-south-1 = true;
         ap-southeast-2 = true;
+        eu-north-1 = true;
         sa-east-1 = true;
       };
 

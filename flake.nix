@@ -13,21 +13,7 @@
     # cardanoTest.url = "github:IntersectMBO/cardano-node/ana/10.6-final-integration-mix";
     # cardanoTest.url = "path:/home/jlotoski/work/iohk/cardano-node-wt/ana/10.6-final-integration-mix";
 
-    # Testing Pins Round 1, 2 and 3
-    cardano-node-bang.url = "github:IntersectMBO/cardano-node/js/bang";
-    cardano-node-bang-profiled.url = "github:IntersectMBO/cardano-node/da/bang-profiled";
-
-    cardano-node-strict.url = "github:IntersectMBO/cardano-node/js/with-replayed-block-strict";
-
-    cardano-node-10-5-1-profiled.url = "github:IntersectMBO/cardano-node/da/10.5.1-tmp-profiled";
-    cardano-node-10-6-0-profiled.url = "github:IntersectMBO/cardano-node/da/10.6-final-integration-mix-profiled";
-
-    cardano-node-lmdb.url = "github:IntersectMBO/cardano-node/da/lmdb-srp-test";
-    cardano-node-lmdb-profiled.url = "github:IntersectMBO/cardano-node/da/lmdb-srp-test-tmp-profiled";
-
-    # cardano-node-lmdb-test-traces.url = "github:IntersectMBO/cardano-node/93437a0fb34161f7b6e07334f0760ed670d28b02";
     # cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-beta";
-    # cardano-tracer-prom-test.url = "github:IntersectMBO/cardano-node/...";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";

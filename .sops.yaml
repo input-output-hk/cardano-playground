@@ -5,6 +5,7 @@ keys:
   # Misc
   - &misc1-metadata-a-1 age187hd0pffv549vfcmnw5u9yg3fck9e4psesz2xchrklqjqepccd7s6vlkcv
   - &misc1-wg-a-1 age1ryvlcaajedpnkdyugnre6yysht5ahkn3yrwz48wvywpn2sxwfqtqrc8qmn
+  - &misc1-wg-b-1 age1tsyap098spn8j6nshvc56y4cucfuxr53wcapdy39lxqm8qfuvf7qd60m06
 
   # Preprod
   - &preprod1-bp-a-1 age1zhewzr3r8u4qmu9c5asw0vv9pw9qxvah9y60reu5uggrr8vrd95skhn3q3
@@ -126,11 +127,18 @@ creation_rules:
       - *misc1-metadata-a-1
 
   # Miscellaneous group specific, wireguard tunnel
-  - path_regex: secrets/groups/misc1/deploy/.*wg.*$
+  - path_regex: secrets/groups/misc1/deploy/.*wg-a-1.*$
     key_groups:
     - age:
       - *sre
       - *misc1-wg-a-1
+
+  # Miscellaneous group specific, wireguard tunnel arn
+  - path_regex: secrets/groups/misc1/deploy/.*wg-b-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *misc1-wg-b-1
 
   # Temporary buildkite testing
   - path_regex: secrets/buildkite/.*$
