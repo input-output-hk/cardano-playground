@@ -18,6 +18,9 @@ files.  Node will now intelligently set PeerSharing, and a few other config
 parameters based on forging status.
 
 * The legacy non-p2p networking mode is no longer available.
+
+* Avoid connecting PeerSharing enabled nodes to a block producer using
+`InitiatorOnlyMode` as the block producer's IP will be leaked.
 ```
 
 - [Node Config](environments-pre/preview/config.json)
