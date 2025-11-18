@@ -42,10 +42,8 @@ As of node `10.6.0` the new tracing system is default.  The legacy tracing
 system is still available, with a legacy config provided above, but is
 deprecated and will be removed in the near future.
 
-New tracing system documentation can be found at: [Quick
-start](https://developers.cardano.org/docs/operate-a-stake-pool/node-operations/new-tracing-system/new-tracing-system/).
-Additionally a metrics migration guide can be found
-[here](https://update-me.com).
+See the [10.6.0 release notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.0)
+for more information.
 
 
 #### Ouroboros Genesis Mode
