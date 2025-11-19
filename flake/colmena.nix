@@ -37,7 +37,7 @@ in
       r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
-      # t3-medium.aws.instance.instance_type = "t3.medium";
+      t3-medium.aws.instance.instance_type = "t3.medium";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
       t3a-large.aws.instance.instance_type = "t3a.large";
       # t3a-xlarge.aws.instance.instance_type = "t3a.xlarge";
@@ -824,62 +824,7 @@ in
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
-
-      # Smallest d variant for testing
-
-      # We are going to investigate these 4 versions of the node:
-      #     A: 10.5.1 (tag 10.5.1 , https://github.com/IntersectMBO/cardano-node/tree/10.5.1, https://github.com/IntersectMBO/cardano-node/commit/ca1ec278070baf4481564a6ba7b4a5b9e3d9f366)
-      #     B: 10.6 integration branch (for V2 inmemory) (tip of Ana's branch, https://github.com/IntersectMBO/cardano-node/commit/9a132bb72045e9462f0612e5df5af07c7206635a)
-      #     C: 10.6 with patches (https://github.com/IntersectMBO/cardano-node/commit/1ac429175dd4ebb391e633900a514ea145355475)
-      #     D : 10.6 with traces (and patches) (https://github.com/IntersectMBO/cardano-node/commit/93437a0fb34161f7b6e07334f0760ed670d28b02)
-      # With new tracing, syncing from Genesis, we will run
-      #     preview1-test-a-1 - Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
-      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay
-      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch)
-      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay
-      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay
-      #     preview1-test-a-6 - 10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling
-      #     preview1-test-a-7 - 10.6 LMDB with patches and new traces, full chain replay
-      #
-      # -----------------------
-      #
-      ### Round 2 2025-11-05
-      #     preview1-test-a-1 - 10.6 LMDB with patches, ledger replay from genesis only (chain is already in sync), with -hi profiling
-      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay, with -hi profiling
-      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch), full chain replay, with -hi profiling
-      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay, with -hi profiling
-      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay, with -hi profiling
-      #     preview1-test-a-6 - 10.6 LMDB js/bang, full chain replay
-      #     preview1-test-a-7 - 10.6 LMDB js/bang, full chain replay, with -hi profiling
-      #
-      # -----------------------
-      #
-      ### Round 3 2025-11-06
-      #
-      #  - We've already run LMDB bang once, so:
-      #    - repeat 2x more for 3 LMDB bang genesis re-syncs total
-      #    - run 3x for 3 LMDB strict genesis re-syncs total
-      #    - run 1x for 1 InMem bang genesis re-sync
-      #    - run 1x for 1 InMem strict genesis re-sync
-      #
-      #     preview1-test-a-1 - 10.6 LMDB bang
-      #     preview1-test-a-2 - 10.6 LMDB bang
-      #     preview1-test-a-3 - 10.6 LMDB strict
-      #     preview1-test-a-4 - 10.6 LMDB strict
-      #     preview1-test-a-5 - 10.6 LMDB strict
-      #     preview1-test-a-6 - 10.6 InMemory bang
-      #     preview1-test-a-7 - 10.6 InMemory strict
-
-      # Prior config of preview1-test-a-1 to return to when testing rounds are over
-      # preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
-
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
-      preview1-test-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
-      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
-      preview1-test-a-4 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
-      preview1-test-a-5 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
-      preview1-test-a-6 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
-      preview1-test-a-7 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
 
       # -----------------------
 
@@ -920,7 +865,7 @@ in
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
-      misc1-wg-b-1 = {imports = [eu-north-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
+      misc1-wg-b-1 = {imports = [eu-north-1 t3-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
       misc1-matomo-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.matomo];};
       # ---------------------------------------------------------------------------------------------------------
 
