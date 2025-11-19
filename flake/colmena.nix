@@ -7,8 +7,6 @@
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
   inherit (config.flake.cardano-parts.cluster.infra.aws) domain;
-
-  cfgGeneric = config.flake.cardano-parts.cluster.infra.generic;
 in
   with builtins;
   with lib; {
@@ -17,6 +15,7 @@ in
       af-south-1.aws.region = "af-south-1";
       ap-southeast-2.aws.region = "ap-southeast-2";
       eu-central-1.aws.region = "eu-central-1";
+      eu-north-1.aws.region = "eu-north-1";
       eu-west-1.aws.region = "eu-west-1";
       sa-east-1.aws.region = "sa-east-1";
       us-east-2.aws.region = "us-east-2";
@@ -29,13 +28,16 @@ in
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       # m5a-large.aws.instance.instance_type = "m5a.large";
       m5ad-large.aws.instance.instance_type = "m5ad.large";
+      m5ad-xlarge.aws.instance.instance_type = "m5ad.xlarge";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
       r5-2xlarge.aws.instance.instance_type = "r5.2xlarge";
+      # r5d-4xlarge.aws.instance.instance_type = "r5d.4xlarge";
       r6a-large.aws.instance.instance_type = "r6a.large";
       r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
+      # t3-medium.aws.instance.instance_type = "t3.medium";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
       t3a-large.aws.instance.instance_type = "t3a.large";
       # t3a-xlarge.aws.instance.instance_type = "t3a.xlarge";
@@ -56,11 +58,18 @@ in
 
         # Since all machines are assigned a group, this is a good place to include default aws instance tags
         aws.instance.tags = {
-          inherit (cfgGeneric) organization tribe function repo;
+          # This group environment name will override the
+          # flake.cluster.infra.generic environment name for aws instances.
           environment = config.flake.cardano-parts.cluster.groups.${name}.meta.environmentName;
           group = name;
         };
       };
+
+      # profiled = {
+      #   services.cardano-node = {
+      #     rts_flags_override = ["-l" "-hi"];
+      #   };
+      # };
 
       # Declare a static ipv6. This should only be used for public machines
       # where ip exposure in committed code is acceptable and a vanity address
@@ -106,6 +115,32 @@ in
           pre
         ];
       };
+
+      # node-lsm-test = {
+      #   imports = [
+      #     # Base cardano-node service
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+
+      #     # Config for cardano-node group deployments
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     bperfNoPublish
+      #     {
+      #       cardano-parts.perNode = {
+      #         pkgs = {
+      #           inherit
+      #             (inputs.cardano-node-lsm-test.packages.x86_64-linux)
+      #             cardano-cli
+      #             cardano-node
+      #             cardano-submit-api
+      #             cardano-tracer
+      #             ;
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
 
       # Include blockPerf by default with no upstream push to CF -- only push prom metrics
       bperfNoPublish = {
@@ -239,7 +274,7 @@ in
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service-ng
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
@@ -574,7 +609,7 @@ in
             map (n: mkContainer n (toString (10 - n))) (lib.range 1 count);
         };
       };
-      #
+
       # disableP2p = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -791,7 +826,62 @@ in
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Smallest d variant for testing
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
+
+      # We are going to investigate these 4 versions of the node:
+      #     A: 10.5.1 (tag 10.5.1 , https://github.com/IntersectMBO/cardano-node/tree/10.5.1, https://github.com/IntersectMBO/cardano-node/commit/ca1ec278070baf4481564a6ba7b4a5b9e3d9f366)
+      #     B: 10.6 integration branch (for V2 inmemory) (tip of Ana's branch, https://github.com/IntersectMBO/cardano-node/commit/9a132bb72045e9462f0612e5df5af07c7206635a)
+      #     C: 10.6 with patches (https://github.com/IntersectMBO/cardano-node/commit/1ac429175dd4ebb391e633900a514ea145355475)
+      #     D : 10.6 with traces (and patches) (https://github.com/IntersectMBO/cardano-node/commit/93437a0fb34161f7b6e07334f0760ed670d28b02)
+      # With new tracing, syncing from Genesis, we will run
+      #     preview1-test-a-1 - Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
+      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay
+      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch)
+      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay
+      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay
+      #     preview1-test-a-6 - 10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling
+      #     preview1-test-a-7 - 10.6 LMDB with patches and new traces, full chain replay
+      #
+      # -----------------------
+      #
+      ### Round 2 2025-11-05
+      #     preview1-test-a-1 - 10.6 LMDB with patches, ledger replay from genesis only (chain is already in sync), with -hi profiling
+      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay, with -hi profiling
+      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch), full chain replay, with -hi profiling
+      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay, with -hi profiling
+      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay, with -hi profiling
+      #     preview1-test-a-6 - 10.6 LMDB js/bang, full chain replay
+      #     preview1-test-a-7 - 10.6 LMDB js/bang, full chain replay, with -hi profiling
+      #
+      # -----------------------
+      #
+      ### Round 3 2025-11-06
+      #
+      #  - We've already run LMDB bang once, so:
+      #    - repeat 2x more for 3 LMDB bang genesis re-syncs total
+      #    - run 3x for 3 LMDB strict genesis re-syncs total
+      #    - run 1x for 1 InMem bang genesis re-sync
+      #    - run 1x for 1 InMem strict genesis re-sync
+      #
+      #     preview1-test-a-1 - 10.6 LMDB bang
+      #     preview1-test-a-2 - 10.6 LMDB bang
+      #     preview1-test-a-3 - 10.6 LMDB strict
+      #     preview1-test-a-4 - 10.6 LMDB strict
+      #     preview1-test-a-5 - 10.6 LMDB strict
+      #     preview1-test-a-6 - 10.6 InMemory bang
+      #     preview1-test-a-7 - 10.6 InMemory strict
+
+      # Prior config of preview1-test-a-1 to return to when testing rounds are over
+      # preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
+
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
+      preview1-test-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
+      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
+      preview1-test-a-4 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
+      preview1-test-a-5 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
+      preview1-test-a-6 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
+      preview1-test-a-7 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
+
+      # -----------------------
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
@@ -816,27 +906,37 @@ in
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node bp mithrilSignerDisable];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre bp mithrilSignerDisable];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 300) (group "mainnet1") node legacyT (openFwTcp 3001)];};
+      # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre legacyT (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Misc
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
+      misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
+      misc1-wg-b-1 = {imports = [eu-north-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
+      misc1-matomo-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.matomo];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
-      # Buildkite Temporary machines
+      # Buildkite temporary machines
       # Stopped machines until the `-eu` variant can run the jobs properly
       buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-af") disableAlertCount];};
       buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-ap") disableAlertCount];};
       buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-eu") disableAlertCount];};
       buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") buildkite (bkCfg "core-tech-bench-sa") disableAlertCount];};
+      # ---------------------------------------------------------------------------------------------------------
+
+      # ---------------------------------------------------------------------------------------------------------
+      # Sanchonet temporary machines, for disaster recovery testing with the community
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node bp nixosModules.sanchonet];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node rel nixosModules.sanchonet];};
       # ---------------------------------------------------------------------------------------------------------
     };
 

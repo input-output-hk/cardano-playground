@@ -16,8 +16,10 @@ with flake.lib; {
         us-east-2 = true;
 
         # Temporary machine usage in these regions for buildkite one-off tests
+        # and wireguard CF tunnel tests.
         af-south-1 = true;
         ap-southeast-2 = true;
+        eu-north-1 = true;
         sa-east-1 = true;
       };
 
@@ -33,6 +35,13 @@ with flake.lib; {
       tribe = "coretech";
       function = "cardano-parts";
       repo = "https://github.com/input-output-hk/cardano-playground";
+
+      owner = "ioe";
+      environment = "testnets";
+      project = "cardano-playground";
+
+      # This is the tf var secrets name located in secrets/tf/cluster.tfvars
+      costCenter = "tag_costCenter";
 
       # These options must remain true for the playground cluster as ip info is required
       abortOnMissingIpModule = true;
@@ -88,6 +97,7 @@ with flake.lib; {
       // (mkGroup "preview3" "preview" "preview-node.${dns}" "preview3-node.${dns}" false false)
       // (mkGroup "mainnet1" "mainnet" null null false false)
       // (mkGroup "misc1" "preprod" null null false false)
-      // (mkGroup "buildkite1" "buildkite" null null false false);
+      // (mkGroup "buildkite1" "buildkite" null null false false)
+      // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" false false);
   };
 }

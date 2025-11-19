@@ -7,6 +7,10 @@ Each network faucet will need to have its own wallet mnemonic, address and a
 json config file created and populated with the wallet mnemonic and appropriate
 api keys, default limits, network, recaptcha and cors settings.
 
+## Public Faucet URL
+The faucet url the public can use to obtain funds is found at:
+[https://docs.cardano.org/cardano-testnets/tools/faucet](https://docs.cardano.org/cardano-testnets/tools/faucet).
+
 ## Setup Files
 New wallet mnemonics can be made from the ops shell with:
 ```bash

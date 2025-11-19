@@ -138,6 +138,28 @@ with lib; let
   groupMultivalueDnsAttrs = mkMultivalueDnsAttrs "groupRelayMultivalueDns" groupMultivalueDnsList;
 
   mkCustomRoute53Records = import ./cluster/route53.nix-import;
+
+  sensitiveString = {
+    type = "string";
+    sensitive = true;
+    nullable = false;
+  };
+
+  defaultTags = {
+    inherit
+      (infra.generic)
+      environment
+      function
+      organization
+      owner
+      project
+      repo
+      tribe
+      ;
+
+    # costCenter is saved as a secret
+    costCenter = "\${var.${infra.generic.costCenter}}";
+  };
 in {
   flake.opentofu.cluster = inputs.cardano-parts.inputs.terranix.lib.terranixConfiguration {
     inherit system;
@@ -161,13 +183,19 @@ in {
           };
         };
 
+        variable = {
+          # costCenter tag should remain secret in public repos
+          "${infra.generic.costCenter}" = sensitiveString;
+        };
+
         provider.aws = forEach (attrNames cluster.regions) (region: {
           inherit region;
           alias = underscore region;
-          default_tags.tags = {
-            inherit (infra.generic) organization tribe function repo;
-            environment = "generic";
-          };
+
+          # Default tagging is inconsistent across aws resources, but including
+          # it may help tag some resources that might have otherwise been
+          # missed.
+          default_tags.tags = defaultTags;
         });
 
         # Common parameters:
@@ -184,6 +212,10 @@ in {
 
               filter = [
                 {
+                  # If future stock ami nixos images don't properly install the
+                  # bootstrap key like at least a few recent 25.05 ami nixos
+                  # images appear to have done, this ami image is known good:
+                  # ami-039ad15344c5183b4 (nixos 24.11) in eu-central-1
                   name = "name";
                   values = ["nixos/25.05*"];
                 }
@@ -324,6 +356,8 @@ in {
                         gateway_id = "\${data.aws_internet_gateway.${region}.id}";
                       }
                     ];
+
+                  tags = defaultTags;
                 };
               }
           );
@@ -346,6 +380,7 @@ in {
                   + " cidrsubnet(${ipv6CidrBlock}, ${toString ipv6SubnetCidrBits} - parseint(tolist(regex(\"/([0-9]+)$\", ${ipv6CidrBlock}))[0], 10), each.key)}";
 
                 availability_zone = "\${each.value.availability_zone}";
+                tags = defaultTags;
               };
             });
 
@@ -358,6 +393,7 @@ in {
                 ${region} = {
                   provider = awsProviderFor region;
                   assign_generated_ipv6_cidr_block = true;
+                  tags = defaultTags;
                 };
               }
           );
@@ -378,6 +414,10 @@ in {
                 vpc_security_group_ids = [
                   "\${aws_security_group.common_${underscore region}[0].id}"
                 ];
+
+                # Provider level `default_tags` are automatically inherited at
+                # the instance level.  Instance specific tags defined in
+                # flake/colmena.nix are merged.
                 tags = {Name = name;} // node.aws.instance.tags or {};
 
                 root_block_device = {
@@ -386,14 +426,9 @@ in {
                   iops = node.aws.instance.root_block_device.iops or 3000;
                   throughput = node.aws.instance.root_block_device.throughput or 125;
                   delete_on_termination = true;
-                  tags =
-                    # Root block device tags aren't applied like the other
-                    # resources since terraform-aws-provider v5.39.0.
-                    #
-                    # We need to strip the following tag attrs or tofu
-                    # constantly tries to re-apply them.
-                    {Name = name;}
-                    // removeAttrs (node.aws.instance.tags or {}) ["organization" "tribe" "function" "repo"];
+
+                  # Default tags are not inherited to the volume level automatically.
+                  tags = defaultTags // {Name = name;} // node.aws.instance.tags or {};
                 };
 
                 metadata_options = {
@@ -433,6 +468,7 @@ in {
           aws_iam_instance_profile.ec2_profile = {
             name = "ec2Profile";
             role = "\${aws_iam_role.ec2_role.name}";
+            tags = defaultTags;
           };
 
           aws_iam_role.ec2_role = {
@@ -447,6 +483,8 @@ in {
                 }
               ];
             };
+
+            tags = defaultTags;
           };
 
           aws_iam_role_policy_attachment = let
@@ -495,6 +533,8 @@ in {
                 }
               ];
             };
+
+            tags = defaultTags;
           };
 
           tls_private_key.bootstrap.algorithm = "ED25519";
@@ -508,6 +548,7 @@ in {
               provider = awsProviderFor region;
               key_name = "bootstrap";
               public_key = "\${tls_private_key.bootstrap.public_key_openssh}";
+              tags = defaultTags;
             };
           });
 
@@ -515,6 +556,8 @@ in {
             inherit (node.aws.instance) count;
             provider = awsProviderFor node.aws.region;
             instance = "\${aws_instance.${name}[0].id}";
+
+            # Provider level `default_tags` are automatically inherited.
             tags = {Name = name;} // node.aws.instance.tags or {};
           });
 
@@ -623,6 +666,8 @@ in {
                     protocol = "-1";
                   })
                 ];
+
+                tags = defaultTags;
               };
             });
 
