@@ -102,20 +102,20 @@ in
         ];
       };
 
-      node-pre = {
-        imports = [
-          # Base cardano-node service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      # node-pre = {
+      #   imports = [
+      #     # Base cardano-node service
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          bperfNoPublish
+      #     # Config for cardano-node group deployments
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     bperfNoPublish
 
-          pre
-        ];
-      };
+      #     pre
+      #   ];
+      # };
 
       # node-10-5-2 = {
       #   imports = [
@@ -224,7 +224,7 @@ in
       declMSigner = node: {services.mithril-relay.signerIp = nixosConfigurations.${node}.config.ips.privateIpv4 or "ip-module not available";};
 
       # Profiles
-      pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+      # pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
       openFwTcp = port: {networking.firewall.allowedTCPPorts = [port];};
 
@@ -1057,7 +1057,7 @@ in
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
@@ -1066,9 +1066,9 @@ in
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre legacyT (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node legacyT (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
