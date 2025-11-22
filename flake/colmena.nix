@@ -1,4 +1,5 @@
-{
+flake @ {
+  moduleWithSystem,
   inputs,
   config,
   lib,
@@ -313,6 +314,47 @@ in
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
           }
+          bperfNoPublish
+        ];
+      };
+
+      # Dbsync only pre-release, not any other pre-release components that `pre` module would add
+      dbsync-pre-only = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          (moduleWithSystem ({
+            system,
+            config,
+          }: nixos: {
+            cardano-parts.perNode = {
+              # In this case, we want the default cardanoLib since node is just release versioned in this case
+              # lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLib "x86_64-linux";
+              pkgs = {
+                cardano-db-sync = config.cardano-parts.pkgs.cardano-db-sync-ng;
+                cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng system;
+                cardano-db-tool = config.cardano-parts.pkgs.cardano-db-tool-ng;
+                cardano-smash = config.cardano-parts.pkgs.cardano-smash-ng;
+              };
+              meta = {
+                cardano-db-sync-service = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-service-ng;
+                cardano-smash-service = flake.config.flake.cardano-parts.pkgs.special.cardano-smash-service-ng;
+              };
+            };
+
+            services = {
+              cardano-node.shareNodeSocket = true;
+              cardano-postgres.enablePsqlrc = true;
+
+              # Fast deployment w/o ledger replay wait
+              cardano-db-sync.logConfig.insert_options.ledger = "disable";
+            };
+          }))
           bperfNoPublish
         ];
       };
@@ -1034,7 +1076,7 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
