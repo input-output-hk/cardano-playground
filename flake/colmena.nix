@@ -331,7 +331,7 @@ in
           (moduleWithSystem ({
             system,
             config,
-          }: nixos: {
+          }: _: {
             cardano-parts.perNode = {
               # In this case, we want the default cardanoLib since node is just release versioned in this case
               # lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLib "x86_64-linux";
@@ -939,10 +939,10 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1")];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -1036,26 +1036,6 @@ in
           }
         ];
       };
-      # preview1-test-a-1 = {
-      #   imports = [
-      #     eu-central-1
-      #     m5ad-xlarge
-      #     (ebs 80)
-      #     (group "preview1")
-
-      #     # "${inputs.cardano-10-1-4}/nix/nixos/cardano-node-service.nix"
-      #     # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     # {
-      #     #   services.cardano-node = {
-      #     #     enable = true;
-      #     #     environment = "preview";
-      #     #     package = inputs.cardano-10-1-4.packages.x86_64-linux.cardano-node;
-      #     #     hostAddr = "0.0.0.0";
-      #     #     useLegacyTracing = false;
-      #     #   };
-      #     # }
-      #   ];
-      # };
 
       # -----------------------
 
@@ -1067,7 +1047,7 @@ in
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node bp mithrilRelease (declMRel "preview3-rel-c-1")];};
       preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig prevMod];};
       preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig prevMod];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
