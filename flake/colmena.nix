@@ -884,6 +884,7 @@ in
       #
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
       #
+      inherit (nixosModules) metrics-scraper;
     in {
       meta = {
         nixpkgs = import inputs.nixpkgs {
@@ -927,7 +928,8 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1") metrics-scraper];};
+
       preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig tcpTxOpt];};
@@ -939,7 +941,7 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp mithrilRelease (declMRel "preprod3-rel-c-1") metrics-scraper];};
       preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig];};
       preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig];};
       preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
@@ -1017,6 +1019,7 @@ in
           (nodeRamPct 70)
           (group "preview1")
           node
+          metrics-scraper
           {
             services.cardano-node = {
               extraNodeConfig.ConsensusMode = "PraosMode";
