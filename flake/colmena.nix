@@ -102,20 +102,20 @@ in
         ];
       };
 
-      # node-pre = {
-      #   imports = [
-      #     # Base cardano-node service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      node-pre = {
+        imports = [
+          # Base cardano-node service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
-      #     # Config for cardano-node group deployments
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     bperfNoPublish
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
 
-      #     pre
-      #   ];
-      # };
+          pre
+        ];
+      };
 
       # node-10-5-2 = {
       #   imports = [
@@ -224,7 +224,7 @@ in
       declMSigner = node: {services.mithril-relay.signerIp = nixosConfigurations.${node}.config.ips.privateIpv4 or "ip-module not available";};
 
       # Profiles
-      # pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
+      pre = {imports = [inputs.cardano-parts.nixosModules.profile-pre-release];};
 
       openFwTcp = port: {networking.firewall.allowedTCPPorts = [port];};
 
@@ -941,10 +941,10 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node bp mithrilRelease (declMRel "preprod3-rel-c-1") metrics-scraper];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1") metrics-scraper];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -1018,7 +1018,7 @@ in
           (ebs 80)
           (nodeRamPct 70)
           (group "preview1")
-          node
+          node-pre
           metrics-scraper
           {
             services.cardano-node = {
@@ -1042,15 +1042,15 @@ in
 
       # -----------------------
 
-      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node hiConn rel legacyT previewRelMig prevMod];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1") prevMod];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node hiConn rel previewRelMig tcpTxOpt prevMod];};
+      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig prevMod];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1") prevMod];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt prevMod];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig prevMod];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig prevMod];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
+      preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -1070,8 +1070,8 @@ in
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node legacyT (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre legacyT (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
