@@ -699,6 +699,13 @@ in
         };
       };
 
+      praosMode = {
+        services.cardano-node = {
+          extraNodeConfig.ConsensusMode = "PraosMode";
+          peerSnapshotFile = null;
+        };
+      };
+
       prevMod = {
         services.cardano-node-topology.extraProducers = [
           {
@@ -954,91 +961,9 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1") prevMod];};
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig prevMod];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt prevMod];};
-      preview1-dbsync-a-1 = {
-        imports = [
-          eu-central-1
-          r6a-large
-          (ebs 250)
-          (group "preview1")
-          dbsync
-          smash
-          previewSmash
-          {
-            services.cardano-node = {
-              extraNodeConfig.ConsensusMode = "PraosMode";
-              peerSnapshotFile = null;
-              bootstrapPeers = [
-                {
-                  address = "preview1.volcyada.com";
-                  port = 6004;
-                }
-                {
-                  address = "preview-node.play.dev.cardano.org";
-                  port = 3001;
-                }
-              ];
-              useLedgerAfterSlot = mkForce 97042000;
-            };
-          }
-        ];
-      };
-      preview1-faucet-a-1 = {
-        imports = [
-          eu-central-1
-          r6a-large
-          (ebs 80)
-          (nodeRamPct 70)
-          (group "preview1")
-          node
-          faucet
-          previewFaucet
-          {
-            services.cardano-node = {
-              extraNodeConfig.ConsensusMode = "PraosMode";
-              peerSnapshotFile = null;
-              bootstrapPeers = [
-                {
-                  address = "preview1.volcyada.com";
-                  port = 6004;
-                }
-                {
-                  address = "preview-node.play.dev.cardano.org";
-                  port = 3001;
-                }
-              ];
-              useLedgerAfterSlot = mkForce 97042000;
-            };
-          }
-        ];
-      };
-      preview1-test-a-1 = {
-        imports = [
-          eu-central-1
-          m5ad-xlarge
-          (ebs 80)
-          (nodeRamPct 70)
-          (group "preview1")
-          node-pre
-          metrics-scraper
-          {
-            services.cardano-node = {
-              extraNodeConfig.ConsensusMode = "PraosMode";
-              peerSnapshotFile = null;
-              bootstrapPeers = [
-                {
-                  address = "preview1.volcyada.com";
-                  port = 6004;
-                }
-                {
-                  address = "preview-node.play.dev.cardano.org";
-                  port = 3001;
-                }
-              ];
-              useLedgerAfterSlot = mkForce 97042000;
-            };
-          }
-        ];
-      };
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash praosMode];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet praosMode];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre metrics-scraper praosMode];};
 
       # -----------------------
 
