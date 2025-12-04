@@ -117,29 +117,6 @@ in
         ];
       };
 
-      # node-10-5-2 = {
-      #   imports = [
-      #     # Base cardano-node and tracer service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-      #     # Config for cardano-node group deployments
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     bperfNoPublish
-      #     {
-      #       cardano-parts.perNode = {
-      #         pkgs = {
-      #           inherit
-      #             (inputs.cardano-node-10-5-2.packages.x86_64-linux)
-      #             cardano-cli
-      #             cardano-node
-      #             ;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
-
       # node-lsm-test = {
       #   imports = [
       #     # Base cardano-node service
@@ -159,31 +136,6 @@ in
       #             cardano-node
       #             cardano-submit-api
       #             cardano-tracer
-      #             ;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
-
-      # Old node:
-      # node-10-1-4 = {
-      #   imports = [
-      #     # Base cardano-node service
-      #     "${inputs.cardano-10-1-4}/nix/nixos/cardano-node-service.nix"
-      #     "${inputs.cardano-parts-v2025-01-17}/flake/nixosModules/profile-cardano-node-group.nix"
-
-      #     # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-
-      #     # Config for cardano-node group deployments
-      #     {
-      #       cardano-parts.perNode = {
-      #         lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.cardano-parts-v2025-01-17.inputs.iohk-nix "x86_64-linux";
-      #         pkgs = {
-      #           inherit
-      #             (inputs.cardano-node-10-1-4.packages.x86_64-linux)
-      #             cardano-cli
-      #             cardano-node
       #             ;
       #         };
       #       };
