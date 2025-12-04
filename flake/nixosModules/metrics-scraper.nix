@@ -48,10 +48,11 @@ flake: {
             ExecStart = pkgs.writeShellScript "scrape-metrics" ''
               set -uo pipefail
 
+              umask 077
               TIMESTAMP=$(${pkgs.coreutils}/bin/date +%s)
               OUTPUT_FILE="scrape-${cfg.nodeName}-$TIMESTAMP.txt"
 
-              ${pkgs.curl}/bin/curl -s "${cfg.metricsUrl}" > "$OUTPUT_FILE" 2>&1 || true
+              ${pkgs.curl}/bin/curl -s "${cfg.metricsUrl}" 2>&1 | install -m 600 /dev/stdin "$OUTPUT_FILE" || true
             '';
           };
         };
