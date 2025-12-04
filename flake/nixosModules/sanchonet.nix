@@ -28,6 +28,7 @@ flake: {
       "LastKnownBlockVersion-Minor"
       "LedgerDB"
       "MaxKnownMajorProtocolVersion"
+      "MinNodeVersion"
       "Protocol"
       "RequiresNetworkMagic"
       "ShelleyGenesisHash"

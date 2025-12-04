@@ -1,4 +1,5 @@
-{
+flake @ {
+  moduleWithSystem,
   inputs,
   config,
   lib,
@@ -37,7 +38,7 @@ in
       r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
-      # t3-medium.aws.instance.instance_type = "t3.medium";
+      t3-medium.aws.instance.instance_type = "t3.medium";
       t3a-medium.aws.instance.instance_type = "t3a.medium";
       t3a-large.aws.instance.instance_type = "t3a.large";
       # t3a-xlarge.aws.instance.instance_type = "t3a.xlarge";
@@ -252,29 +253,11 @@ in
       };
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
-      # dbsync = {
-      #   imports = [
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
-      #     {
-      #       services.cardano-node.shareNodeSocket = true;
-      #       services.cardano-postgres.enablePsqlrc = true;
-      #     }
-      #     bperfNoPublish
-      #   ];
-      # };
-
-      # While new tracing PRs are WIP, the new node service is required
-      dbsync-pre = {
+      dbsync = {
         imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
@@ -283,10 +266,68 @@ in
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
           }
-
-          pre
+          bperfNoPublish
         ];
       };
+
+      # Dbsync only pre-release, not any other pre-release components that `pre` module would add
+      dbsync-pre-only = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          (moduleWithSystem ({
+            system,
+            config,
+          }: _: {
+            cardano-parts.perNode = {
+              # In this case, we want the default cardanoLib since node is just release versioned in this case
+              # lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLib "x86_64-linux";
+              pkgs = {
+                cardano-db-sync = config.cardano-parts.pkgs.cardano-db-sync-ng;
+                cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng system;
+                cardano-db-tool = config.cardano-parts.pkgs.cardano-db-tool-ng;
+                cardano-smash = config.cardano-parts.pkgs.cardano-smash-ng;
+              };
+              meta = {
+                cardano-db-sync-service = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-service-ng;
+                cardano-smash-service = flake.config.flake.cardano-parts.pkgs.special.cardano-smash-service-ng;
+              };
+            };
+
+            services = {
+              cardano-node.shareNodeSocket = true;
+              cardano-postgres.enablePsqlrc = true;
+
+              # Fast deployment w/o ledger replay wait
+              cardano-db-sync.logConfig.insert_options.ledger = "disable";
+            };
+          }))
+          bperfNoPublish
+        ];
+      };
+
+      # dbsync-pre = {
+      #   imports = [
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service-ng
+      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
+      #     {
+      #       services.cardano-node.shareNodeSocket = true;
+      #       services.cardano-postgres.enablePsqlrc = true;
+      #     }
+
+      #     pre
+      #   ];
+      # };
 
       # ogmios = {
       #   imports = [
@@ -610,6 +651,54 @@ in
         };
       };
 
+      praosMode = {
+        services.cardano-node = {
+          extraNodeConfig.ConsensusMode = "PraosMode";
+          peerSnapshotFile = null;
+        };
+      };
+
+      prevMod = {
+        services.cardano-node-topology.extraProducers = [
+          {
+            address = "preview1.volcyada.com";
+            port = 6004;
+          }
+          {
+            address = "tn-preview.psilobyte.io";
+            port = 4201;
+          }
+          # BBHMN
+          {
+            address = "74.122.122.121";
+            port = 6200;
+          }
+          {
+            address = "relay01.preview.junglestakepool.com";
+            port = 3001;
+          }
+          {
+            address = "hida.duckdns.org";
+            port = 3000;
+          }
+        ];
+        services.cardano-node = {
+          extraNodeConfig.ConsensusMode = "PraosMode";
+          peerSnapshotFile = null;
+          bootstrapPeers = [
+            {
+              address = "preview1.volcyada.com";
+              port = 6004;
+            }
+            {
+              address = "preview-node.play.dev.cardano.org";
+              port = 3001;
+            }
+          ];
+          useLedgerAfterSlot = mkForce 97042000;
+        };
+      };
+
       # disableP2p = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -754,6 +843,7 @@ in
       #
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
       #
+      inherit (nixosModules) metrics-scraper;
     in {
       meta = {
         nixpkgs = import inputs.nixpkgs {
@@ -797,11 +887,12 @@ in
       # Setup cardano-world networks:
       # ---------------------------------------------------------------------------------------------------------
       # Preprod, two-thirds on release tag, one-third on pre-release tag
-      preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1")];};
+      preprod1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node bp mithrilRelease (declMRel "preprod1-rel-a-1") metrics-scraper];};
+
       preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync-pre smash preprodSmash];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp legacyT mithrilRelease (declMRel "preprod2-rel-b-1")];};
@@ -809,7 +900,7 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1") metrics-scraper];};
       preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig];};
       preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig];};
       preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre hiConn rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
@@ -819,79 +910,24 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig];};
-      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
-
-      # Smallest d variant for testing
-
-      # We are going to investigate these 4 versions of the node:
-      #     A: 10.5.1 (tag 10.5.1 , https://github.com/IntersectMBO/cardano-node/tree/10.5.1, https://github.com/IntersectMBO/cardano-node/commit/ca1ec278070baf4481564a6ba7b4a5b9e3d9f366)
-      #     B: 10.6 integration branch (for V2 inmemory) (tip of Ana's branch, https://github.com/IntersectMBO/cardano-node/commit/9a132bb72045e9462f0612e5df5af07c7206635a)
-      #     C: 10.6 with patches (https://github.com/IntersectMBO/cardano-node/commit/1ac429175dd4ebb391e633900a514ea145355475)
-      #     D : 10.6 with traces (and patches) (https://github.com/IntersectMBO/cardano-node/commit/93437a0fb34161f7b6e07334f0760ed670d28b02)
-      # With new tracing, syncing from Genesis, we will run
-      #     preview1-test-a-1 - Also adding a 10.6 LMDB with patches ledger replay from genesis only (chain is already in sync).
-      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay
-      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch)
-      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay
-      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay
-      #     preview1-test-a-6 - 10.6 LMDB with patches, full chain replay, and "space-type" and eventlog profiling
-      #     preview1-test-a-7 - 10.6 LMDB with patches and new traces, full chain replay
-      #
-      # -----------------------
-      #
-      ### Round 2 2025-11-05
-      #     preview1-test-a-1 - 10.6 LMDB with patches, ledger replay from genesis only (chain is already in sync), with -hi profiling
-      #     preview1-test-a-2 - 10.5.1 LMDB, full chain replay, with -hi profiling
-      #     preview1-test-a-3 - 10.6 InMemory (ana/10.6-final-integration-mix branch), full chain replay, with -hi profiling
-      #     preview1-test-a-4 - 10.6 LMDB with patches, full chain replay, with -hi profiling
-      #     preview1-test-a-5 - 10.6 InMemory with patches, full chain replay, with -hi profiling
-      #     preview1-test-a-6 - 10.6 LMDB js/bang, full chain replay
-      #     preview1-test-a-7 - 10.6 LMDB js/bang, full chain replay, with -hi profiling
-      #
-      # -----------------------
-      #
-      ### Round 3 2025-11-06
-      #
-      #  - We've already run LMDB bang once, so:
-      #    - repeat 2x more for 3 LMDB bang genesis re-syncs total
-      #    - run 3x for 3 LMDB strict genesis re-syncs total
-      #    - run 1x for 1 InMem bang genesis re-sync
-      #    - run 1x for 1 InMem strict genesis re-sync
-      #
-      #     preview1-test-a-1 - 10.6 LMDB bang
-      #     preview1-test-a-2 - 10.6 LMDB bang
-      #     preview1-test-a-3 - 10.6 LMDB strict
-      #     preview1-test-a-4 - 10.6 LMDB strict
-      #     preview1-test-a-5 - 10.6 LMDB strict
-      #     preview1-test-a-6 - 10.6 InMemory bang
-      #     preview1-test-a-7 - 10.6 InMemory strict
-
-      # Prior config of preview1-test-a-1 to return to when testing rounds are over
-      # preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre bp mithrilSignerDisable tcpTxOpt];};
-
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
-      preview1-test-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
-      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb];};
-      preview1-test-a-4 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
-      preview1-test-a-5 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
-      preview1-test-a-6 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
-      preview1-test-a-7 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre];};
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1") prevMod];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig prevMod];};
+      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt prevMod];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash praosMode];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet praosMode];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre metrics-scraper praosMode];};
 
       # -----------------------
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig prevMod];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1") prevMod];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt prevMod];};
 
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -900,17 +936,17 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre disableAlertCount];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node (openFwTcp 3001)];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre bp mithrilSignerDisable];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable];};
 
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre legacyT (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
@@ -919,8 +955,8 @@ in
       # Misc
       misc1-metadata-a-1 = {imports = [eu-central-1 t3a-large (ebs 80) (group "misc1") metadata nixosModules.cardano-ipfs];};
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
-      misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
-      misc1-wg-b-1 = {imports = [eu-north-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel];};
+      misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel disableAlertCount];};
+      misc1-wg-b-1 = {imports = [eu-north-1 t3-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel disableAlertCount];};
       misc1-matomo-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.matomo];};
       # ---------------------------------------------------------------------------------------------------------
 
