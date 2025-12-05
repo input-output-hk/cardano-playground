@@ -414,16 +414,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1764880269,
-        "narHash": "sha256-Dvgvcji5vy1SNqM0Oq+qHVBJbqjx7sDixZPR9bfCwns=",
+        "lastModified": 1764893770,
+        "narHash": "sha256-8765ijZikUX1/RWohCzQRO4JNQCNrgL/a2Wl1WIY8Nk=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "45d18305ef426c9ab53c62df7f69fa11d294cee3",
+        "rev": "0b565b13cff49726b731f74d2a5503b05e7407ef",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2025-12-04",
+        "ref": "next-2025-12-05",
         "repo": "cardano-parts",
         "type": "github"
       }
@@ -1117,15 +1117,16 @@
         "sodium": "sodium_3"
       },
       "locked": {
-        "lastModified": 1762970280,
-        "narHash": "sha256-1OZsxij29cBXBFK2NtexgBXbkt2a2sqnRq1HB8RejxE=",
+        "lastModified": 1764859324,
+        "narHash": "sha256-cRcdI0wG/mpd2d7E9KSiTu3oUwsk/4tElmLiQcRB9n0=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "a704b93ea51ee1a8a7e456659e0b28ddba280a95",
+        "rev": "64b6d9abd02ac20354b187e610cd0c8c9052ef1b",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "coot/new-tracing-system",
         "repo": "iohk-nix",
         "type": "github"
       }
