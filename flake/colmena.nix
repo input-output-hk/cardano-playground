@@ -117,31 +117,36 @@ in
         ];
       };
 
-      # node-lsm-test = {
-      #   imports = [
-      #     # Base cardano-node service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      node-lsm-test = {
+        imports = [
+          # Base cardano-node service
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          "${inputs.cardano-node-lsm-service-test}/nix/nixos/cardano-node-service.nix"
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
-      #     # Config for cardano-node group deployments
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     bperfNoPublish
-      #     {
-      #       cardano-parts.perNode = {
-      #         pkgs = {
-      #           inherit
-      #             (inputs.cardano-node-lsm-test.packages.x86_64-linux)
-      #             cardano-cli
-      #             cardano-node
-      #             cardano-submit-api
-      #             cardano-tracer
-      #             ;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+          {
+            cardano-parts.perNode = {
+              pkgs = {
+                inherit
+                  (inputs.cardano-node-lsm-test.packages.x86_64-linux)
+                  cardano-cli
+                  cardano-node
+                  cardano-submit-api
+                  cardano-tracer
+                  ;
+              };
+            };
+            services.cardano-node = {
+              withUtxoHdLsm = true;
+              lsmDatabasePath = "/ephemeral/cardano-node/";
+            };
+          }
+        ];
+      };
 
       # Include blockPerf by default with no upstream push to CF -- only push prom metrics
       bperfNoPublish = {
@@ -915,7 +920,7 @@ in
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt prevMod];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash praosMode];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet praosMode];};
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre metrics-scraper praosMode];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lsm-test metrics-scraper praosMode];};
 
       # -----------------------
 

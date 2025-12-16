@@ -9,7 +9,12 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2025-12-05";
 
     # Local pins for additional customization:
-    # cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-beta";
+    # cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-10.6.1";
+    cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/4ffd4626997c1714f8872027531f8591a786a656";
+    cardano-node-lsm-service-test = {
+      url = "github:IntersectMBO/cardano-node/amick/nixos-lsm";
+      flake = false;
+    };
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
