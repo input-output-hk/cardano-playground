@@ -1,5 +1,13 @@
 {self, ...}: {
   flake.nixosModules.common = {config, ...}: {
+    environment = {
+      # Enable terminfo for common terminal types like `xterm-256color` and `tmux-256color`.
+      enableAllTerminfo = true;
+
+      # Use C locale for time to ensure consistent date retrieval and log timestamp formatting.
+      variables.LC_TIME = "C";
+    };
+
     programs.auth-keys-hub.github = {
       teams = ["input-output-hk/node-sre"];
 
