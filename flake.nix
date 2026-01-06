@@ -9,6 +9,7 @@
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2025-12-05";
 
     # Local pins for additional customization:
+    cardano-node-10-5-4.url = "github:IntersectMBO/cardano-node/a9263dcf3478516f8c4804e679f2598aeea87b1e";
     # cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-10.6.1";
     cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/4ffd4626997c1714f8872027531f8591a786a656";
     cardano-node-lsm-service-test = {
