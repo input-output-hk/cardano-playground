@@ -265,6 +265,7 @@ start-demo-ng:
   export USE_ENCRYPTION="${USE_ENCRYPTION:-true}"
   export USE_DECRYPTION="${USE_DECRYPTION:-true}"
   export USE_NODE_CONFIG_BP="${USE_NODE_CONFIG_BP:-false}"
+  export USE_FINAL_CONSTITUTION_IN_GENESIS="${USE_FINAL_CONSTITUTION_IN_GENESIS:-true}"
   export DEBUG="${DEBUG:-true}"
   export RETIRE_BOOTSTRAP_POOL="${RETIRE_BOOTSTRAP_POOL:-true}"
   export SECURITY_PARAM="${SECURITY_PARAM:-8}"
@@ -273,9 +274,15 @@ start-demo-ng:
 
   # Use a final constitution copy from mainnet to indicate when we are no longer using an interim constitution.
   export IPFS_GATEWAY_URI="https://ipfs.io"
-  export CONSTITUTION_HASH="2a61e2f4b63442978140c77a70daab3961b22b12b63b13949a390c097214d1c5"
-  export CONSTITUTION_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvclu3oli7qdyz4uhhuvmy"
-  export SCRIPT_HASH="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
+  CONSTITUTION_ANCHOR_DATAHASH="2a61e2f4b63442978140c77a70daab3961b22b12b63b13949a390c097214d1c5"
+  CONSTITUTION_ANCHOR_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvclu3oli7qdyz4uhhuvmy"
+  CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
+
+  if [ "$USE_FINAL_CONSTITUTION_IN_GENESIS" = "true" ]; then
+    export CONSTITUTION_ANCHOR_DATAHASH
+    export CONSTITUTION_ANCHOR_URL
+    export CONSTITUTION_SCRIPT
+  fi
 
   export ERA_CMD=conway
 
@@ -453,53 +460,55 @@ start-demo-ng:
   WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
   echo
 
-  # Only the CC and Drep members need to approve the new constitution.
-  # Drep votes are now required since Conway bootstrap is complete.
-  echo "Submitting a new constitution..."
-  PROPOSAL_ARGS=(
-    "--constitution-url" "$CONSTITUTION_URL"
-    "--constitution-hash" "$CONSTITUTION_HASH"
-    "--constitution-script-hash" "$SCRIPT_HASH"
-  )
-  ACTION="create-constitution" \
-    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
-    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-  sleep "$FIXED_DELAY_SECS"
-  WAIT_FOR_MEMPOOL
-  echo
+  if ! [ "$USE_FINAL_CONSTITUTION_IN_GENESIS" = "true" ]; then
+    # Only the CC and Drep members need to approve the new constitution.
+    # Drep votes are now required since Conway bootstrap is complete.
+    echo "Submitting a new constitution..."
+    PROPOSAL_ARGS=(
+      "--constitution-url" "$CONSTITUTION_ANCHOR_URL"
+      "--constitution-hash" "$CONSTITUTION_ANCHOR_DATAHASH"
+      "--constitution-script-hash" "$CONSTITUTION_SCRIPT"
+    )
+    ACTION="create-constitution" \
+      STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
+      nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+    echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+    sleep "$FIXED_DELAY_SECS"
+    WAIT_FOR_MEMPOOL
+    echo
 
-  # To obtain the governance action from proposal query, we would have to wait for the next epoch.
-  # Instead, we'll obtain the action id from the txid of the signed transaction body.
-  export ACTION_TX_ID=$(
-    cardano-cli latest transaction txid --tx-file tx-create-constitution.txsigned | jq -r .txhash
-  )
+    # To obtain the governance action from proposal query, we would have to wait for the next epoch.
+    # Instead, we'll obtain the action id from the txid of the signed transaction body.
+    export ACTION_TX_ID=$(
+      cardano-cli latest transaction txid --tx-file tx-create-constitution.txsigned | jq -r .txhash
+    )
 
-  for i in $(seq 1 "$NUM_CC_KEYS"); do
-    echo "Submitting the CC$i vote for the new constitution..."
+    for i in $(seq 1 "$NUM_CC_KEYS"); do
+      echo "Submitting the CC$i vote for the new constitution..."
+        DECISION=yes \
+        ROLE=cc \
+        VOTE_KEY="$CC_DIR/cc-$i-hot" \
+        nix run .#job-submit-vote
+      WAIT_FOR_MEMPOOL
+      echo
+    done
+
+    echo "Submitting the drep-0 vote for the new constitution..."
       DECISION=yes \
-      ROLE=cc \
-      VOTE_KEY="$CC_DIR/cc-$i-hot" \
+      ROLE=drep \
+      VOTE_KEY="$DREP_DIR/drep-0" \
       nix run .#job-submit-vote
     WAIT_FOR_MEMPOOL
     echo
-  done
 
-  echo "Submitting the drep-0 vote for the new constitution..."
-    DECISION=yes \
-    ROLE=drep \
-    VOTE_KEY="$DREP_DIR/drep-0" \
-    nix run .#job-submit-vote
-  WAIT_FOR_MEMPOOL
-  echo
+    echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the new constitution votes to register..."
+    WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
+    echo
 
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the new constitution votes to register..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
-  echo
-
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 4)) for the new constitution votes to ratify..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 4))"
-  echo
+    echo "Sleeping until epoch $((CURRENT_EPOCH + 4)) for the new constitution votes to ratify..."
+    WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 4))"
+    echo
+  fi
 
   just query-tip demo "$TESTNET_MAGIC"
   echo
