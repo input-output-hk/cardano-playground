@@ -245,6 +245,9 @@ start-demo-ng:
   export GENESIS_DIR=state-demo-ng
   export BULK_CREDS=state-demo-ng/bulk.creds.all.json
   export CC_DIR=state-demo-ng/envs/custom/cc-keys
+  export DREP_DEPOSIT="500000000"
+  export DREP_DIR=state-demo-ng/envs/custom/drep
+  export VOTING_POWER="10000000000"
   export DATA_DIR=state-demo-ng/rundir
   export KEY_DIR=state-demo-ng/envs/custom
   export PAYMENT_KEY=state-demo-ng/envs/custom/utxo-keys/rich-utxo
@@ -252,7 +255,7 @@ start-demo-ng:
   export CARDANO_NODE_SOCKET_PATH="$STATEDIR/node-demo.socket"
   export START_TIME=$(date --utc +"%Y-%m-%dT%H:%M:%SZ" --date " now + 30 seconds")
 
-  export NUM_CC_KEYS="${NUM_CC_KEYS:-1}"
+  export NUM_CC_KEYS="${NUM_CC_KEYS:-3}"
   export NUM_GENESIS_KEYS="${NUM_GENESIS_KEYS:-3}"
   export TESTNET_MAGIC="${TESTNET_MAGIC:-42}"
   export POOL_MARGIN="${POOL_MARGIN:-"0.5"}"
@@ -267,6 +270,12 @@ start-demo-ng:
   export SECURITY_PARAM="${SECURITY_PARAM:-8}"
   export SLOT_LENGTH="${SLOT_LENGTH:-100}"
   export FIXED_DELAY_SECS="${FIXED_DELAY_SECS:-10}"
+
+  # Use a final constitution copy from mainnet to indicate when we are no longer using an interim constitution.
+  export IPFS_GATEWAY_URI="https://ipfs.io"
+  export CONSTITUTION_HASH="2a61e2f4b63442978140c77a70daab3961b22b12b63b13949a390c097214d1c5"
+  export CONSTITUTION_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvclu3oli7qdyz4uhhuvmy"
+  export SCRIPT_HASH="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
 
   export ERA_CMD=conway
 
@@ -305,6 +314,17 @@ start-demo-ng:
     echo "Mempool is clear..."
   }
 
+  WAIT_FOR_TIP() {
+    TYPE="$1"
+    TARGET="$2"
+    EPOCH="$1"
+
+    while true; do
+        [ "$(jq -re ".$TYPE" <<< "$(just query-tip demo "$TESTNET_MAGIC")")" = "$TARGET" ] && break;
+      sleep 2
+    done
+  }
+
   echo "Registering stake pools..."
   POOL_RELAY=demo-ng.local \
     POOL_RELAY_PORT=3001 \
@@ -335,24 +355,27 @@ start-demo-ng:
     echo
   fi
 
-  WAIT_FOR_TIP() {
-    TYPE="$1"
-    TARGET="$2"
-    EPOCH="$1"
+  for i in $(seq 1 "$NUM_CC_KEYS"); do
+    echo "Authorizing CC$i member's hot credentials..."
+    INDEX="$i" \
+      nix run .#job-register-cc
+    echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+    sleep "$FIXED_DELAY_SECS"
+    WAIT_FOR_MEMPOOL
+    echo
+  done
 
-    while true; do
-        [ "$(jq -re ".$TYPE" <<< "$(just query-tip demo "$TESTNET_MAGIC")")" = "$TARGET" ] && break;
-      sleep 2
-    done
-  }
-
-  echo "Authorizing the CC member's hot credentials..."
-  INDEX=1 \
-    nix run .#job-register-cc
-  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-  sleep "$FIXED_DELAY_SECS"
+  echo "Creating and registering drep-0"
+  if [ -n "''${USE_ENCRYPTION:-}" ]; then
+    export POOL_DELEG_ID=$(just sops-decrypt-binary "$STAKE_POOL_DIR/no-deploy/sp-1-pool.id")
+  else
+    export POOL_DELEG_ID=$(cat "$STAKE_POOL_DIR/no-deploy/sp-1-pool.id")
+  fi
+  INDEX="0" \
+    STAKE_DEPOSIT="2000000" \
+    VOTING_POWER="10000000000" \
+    nix run .#job-register-drep
   WAIT_FOR_MEMPOOL
-  echo
 
   # If both cost model and plomin HF are submitted in the same epoch and
   # ratified in the same epoch, cost model may fail to enact.
@@ -375,33 +398,41 @@ start-demo-ng:
   WAIT_FOR_MEMPOOL
   echo
 
-  # Only the CC member needs to approve the cost model, but CC and SPOs need to approve the HF
-  echo "Submitting the CC vote for cost model..."
-  ACTION_TX_ID=$(
+  # Only the CC members need to approve the cost model, but both CCs and SPOs need to approve the HF.
+  # Drep votes are disallowed during Conway bootstrapping.
+  export ACTION_TX_ID=$(
     cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
       | jq -r 'map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
-  ) \
-    DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-1-hot" \
-    nix run .#job-submit-vote
+  )
+
+  for i in $(seq 1 "$NUM_CC_KEYS"); do
+    echo "Submitting the CC$i vote for the cost model..."
+      DECISION=yes \
+      ROLE=cc \
+      VOTE_KEY="$CC_DIR/cc-$i-hot" \
+      nix run .#job-submit-vote
+    WAIT_FOR_MEMPOOL
+    echo
+  done
+
   echo "Sleeping until plomin HF can be voted on, epoch 2"
   WAIT_FOR_TIP "epoch" "2"
   echo
 
-  echo "Submitting the CC vote for the Plomin hard fork..."
   export ACTION_TX_ID=$(
     cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
       | jq -r 'map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
   )
-  DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-1-hot" \
-    nix run .#job-submit-vote
-  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-  sleep "$FIXED_DELAY_SECS"
-  WAIT_FOR_MEMPOOL
-  echo
+
+  for i in $(seq 1 "$NUM_CC_KEYS"); do
+    echo "Submitting the CC$i vote for the Plomin hard fork..."
+    DECISION=yes \
+      ROLE=cc \
+      VOTE_KEY="$CC_DIR/cc-$i-hot" \
+      nix run .#job-submit-vote
+    WAIT_FOR_MEMPOOL
+    echo
+  done
 
   POOL_NAME_ARR=($POOL_NAMES)
   for i in $(seq 1 "${#POOL_NAME_ARR[@]}"); do
@@ -410,10 +441,9 @@ start-demo-ng:
       ROLE=spo \
       VOTE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f${i} -d' ' <<< "$POOL_NAMES")-cold" \
       nix run .#job-submit-vote
-    echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-    sleep "$FIXED_DELAY_SECS"
     WAIT_FOR_MEMPOOL
   done
+
   CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
   echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the plomin HF votes to register..."
   WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
@@ -423,8 +453,55 @@ start-demo-ng:
   WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
   echo
 
+  # Only the CC and Drep members need to approve the new constitution.
+  # Drep votes are now required since Conway bootstrap is complete.
+  echo "Submitting a new constitution..."
+  PROPOSAL_ARGS=(
+    "--constitution-url" "$CONSTITUTION_URL"
+    "--constitution-hash" "$CONSTITUTION_HASH"
+    "--constitution-script-hash" "$SCRIPT_HASH"
+  )
+  ACTION="create-constitution" \
+    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
+    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
+  WAIT_FOR_MEMPOOL
+  echo
+
+  # To obtain the governance action from proposal query, we would have to wait for the next epoch.
+  # Instead, we'll obtain the action id from the txid of the signed transaction body.
+  export ACTION_TX_ID=$(
+    cardano-cli latest transaction txid --tx-file tx-create-constitution.txsigned | jq -r .txhash
+  )
+
+  for i in $(seq 1 "$NUM_CC_KEYS"); do
+    echo "Submitting the CC$i vote for the new constitution..."
+      DECISION=yes \
+      ROLE=cc \
+      VOTE_KEY="$CC_DIR/cc-$i-hot" \
+      nix run .#job-submit-vote
+    WAIT_FOR_MEMPOOL
+    echo
+  done
+
+  echo "Submitting the drep-0 vote for the new constitution..."
+    DECISION=yes \
+    ROLE=drep \
+    VOTE_KEY="$DREP_DIR/drep-0" \
+    nix run .#job-submit-vote
+  WAIT_FOR_MEMPOOL
+  echo
+
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the new constitution votes to register..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
+  echo
+
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 4)) for the new constitution votes to ratify..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 4))"
+  echo
+
   just query-tip demo "$TESTNET_MAGIC"
   echo
   echo "Finished sequence..."
-  echo "Note that any further gov actions will require a constitution to be adopted."
   echo
