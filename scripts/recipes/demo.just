@@ -375,7 +375,7 @@ start-demo-ng:
   done
 
   echo "Creating and registering drep-0"
-  if [ -n "''${USE_ENCRYPTION:-}" ]; then
+  if [ "$USE_DECRYPTION" = true ]; then
     export POOL_DELEG_ID=$(just sops-decrypt-binary "$STAKE_POOL_DIR/no-deploy/sp-1-pool.id")
   else
     export POOL_DELEG_ID=$(cat "$STAKE_POOL_DIR/no-deploy/sp-1-pool.id")
