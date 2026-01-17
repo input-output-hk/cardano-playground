@@ -42,7 +42,7 @@ ERA_CMD="alonzo" \
 nix run .#job-gen-custom-node-config
 ```
 
-Create stake pools with each belonging to a seperate pool group
+Create stake pools with each belonging to a separate pool group
 ```bash
 # In the cardano-playground Justfile, the start-demo recipe
 # creates multiple pools under a single group.  This approach

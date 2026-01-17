@@ -918,11 +918,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1768524803,
-        "narHash": "sha256-gc3R2oEnFcD4zsNVyGV5ukiQyFh9g3/5h3B0qfeKZZo=",
+        "lastModified": 1768879843,
+        "narHash": "sha256-WFx4Cw7bNw3ljM+81mRQfKRPB+wOkvIa7xq8KWp4GEc=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "6a755dad33770bbb3f117f6f9bf1f8ec5a24ede8",
+        "rev": "d8a7d4f3583c9e38522ce725247ef010a992e8c8",
         "type": "github"
       },
       "original": {
@@ -3012,16 +3012,16 @@
         "sodium": "sodium_6"
       },
       "locked": {
-        "lastModified": 1764859324,
-        "narHash": "sha256-cRcdI0wG/mpd2d7E9KSiTu3oUwsk/4tElmLiQcRB9n0=",
+        "lastModified": 1768879711,
+        "narHash": "sha256-DWKhwND/uw+3yud2QzG0ziwWR/GV17se6ImF+UxVHG0=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "64b6d9abd02ac20354b187e610cd0c8c9052ef1b",
+        "rev": "e6b68fe9c580d7009c694c6e9b79754b53d575d6",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "coot/new-tracing-system",
+        "ref": "jl/dijkstra",
         "repo": "iohk-nix",
         "type": "github"
       }
