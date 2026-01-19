@@ -270,7 +270,6 @@ start-demo-ng:
   export RETIRE_BOOTSTRAP_POOL="${RETIRE_BOOTSTRAP_POOL:-true}"
   export SECURITY_PARAM="${SECURITY_PARAM:-8}"
   export SLOT_LENGTH="${SLOT_LENGTH:-100}"
-  export FIXED_DELAY_SECS="${FIXED_DELAY_SECS:-10}"
 
   # Use a final constitution copy from mainnet to indicate when we are no longer using an interim constitution.
   export IPFS_GATEWAY_URI="https://ipfs.io"
@@ -338,15 +337,11 @@ start-demo-ng:
   POOL_RELAY=demo-ng.local \
     POOL_RELAY_PORT=3001 \
     nix run .#job-register-stake-pools
-  echo "Sleeping 10 seconds until $(date -d  @$(($(date +%s) + 10)))"
-  sleep 10
   WAIT_FOR_MEMPOOL
   echo
 
   echo "Delegating rewards stake key..."
   nix run .#job-delegate-rewards-stake-key
-  echo "Sleeping 10 seconds until $(date -d  @$(($(date +%s) + 10)))"
-  sleep 10
   WAIT_FOR_MEMPOOL
   echo
 
@@ -355,8 +350,6 @@ start-demo-ng:
     BOOTSTRAP_POOL_DIR="$KEY_DIR/bootstrap-pool" \
       RICH_KEY="$KEY_DIR/utxo-keys/rich-utxo" \
       nix run .#job-retire-bootstrap-pool
-    echo "Sleeping 10 seconds until $(date -d  @$(($(date +%s) + 10)))"
-    sleep 10
     WAIT_FOR_MEMPOOL
     echo
   else
@@ -368,8 +361,6 @@ start-demo-ng:
     echo "Authorizing CC$i member's hot credentials..."
     INDEX="$i" \
       nix run .#job-register-cc
-    echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-    sleep "$FIXED_DELAY_SECS"
     WAIT_FOR_MEMPOOL
     echo
   done
@@ -430,8 +421,6 @@ start-demo-ng:
   ACTION="create-hardfork" \
     STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
     nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-  sleep "$FIXED_DELAY_SECS"
   WAIT_FOR_MEMPOOL
   echo
 
@@ -481,8 +470,6 @@ start-demo-ng:
     ACTION="create-constitution" \
       STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
       nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-    echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-    sleep "$FIXED_DELAY_SECS"
     WAIT_FOR_MEMPOOL
     echo
 
@@ -520,7 +507,7 @@ start-demo-ng:
   fi
 
   echo "Submitting a Dijkstra hard fork action..."
-  PREV_GOV_ACTION=$(cardano-cli latest query gov-state | jq -r '.nextRatifyState.nextEnactState.prevGovActionIds.HardFork')
+  PREV_GOV_ACTION=$(cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" | jq -r '.nextRatifyState.nextEnactState.prevGovActionIds.HardFork')
   PREV_GOV_ACTION_TX_ID=$(jq '.txId' <<< "$PREV_GOV_ACTION")
   PREV_GOV_ACTION_INDEX=$(jq '.govActionIx' <<< "$PREV_GOV_ACTION")
   PROPOSAL_ARGS=(
@@ -532,14 +519,8 @@ start-demo-ng:
   ACTION="create-hardfork" \
     STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
     nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-  sleep "$FIXED_DELAY_SECS"
   WAIT_FOR_MEMPOOL
   echo
-
-  CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the Dijkstra HF proposal to vote..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
 
   export ACTION_TX_ID=$(
     cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
@@ -574,12 +555,13 @@ start-demo-ng:
   WAIT_FOR_MEMPOOL
   echo
 
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Dijkstra hard fork to ratify..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
+  CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the Dijkstra hard fork to ratify..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
   echo
 
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the Dijkstra hard fork to enact..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Dijkstra hard fork to enact..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
   echo
 
   just query-tip demo "$TESTNET_MAGIC"
