@@ -177,8 +177,8 @@ start-demo:
   # Only the CC member needs to approve the cost model, but CC and SPOs need to approve the HF
   echo "Submitting the CC vote for cost model..."
   ACTION_TX_ID=$(
-    cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
-      | jq -r 'map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
+    cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
+      | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
   ) \
     DECISION=yes \
     ROLE=cc \
@@ -190,8 +190,8 @@ start-demo:
 
   echo "Submitting the CC vote for the Plomin hard fork..."
   export ACTION_TX_ID=$(
-    cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
-      | jq -r 'map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
+    cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
+      | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
   )
   DECISION=yes \
     ROLE=cc \
@@ -386,32 +386,29 @@ start-demo-ng:
     nix run .#job-register-drep
   WAIT_FOR_MEMPOOL
 
-  # If both cost model and plomin HF are submitted in the same epoch and
-  # ratified in the same epoch, cost model may fail to enact.
+  # If the cost model is submitted near the end of the epoch and voted on, it
+  # will fail to ratify in the next epoch.
+  echo "Sleeping to submit the cost model at the start of the next epoch, epoch 1"
+  WAIT_FOR_TIP "epoch" "1"
+  echo
+
+  # If both cost model and Plomin hard fork proposal are submitted in the same
+  # epoch, the cost model will fail to take effect and PlutusV2 will be
+  # missing.  We'll delay submission of Plutus HF proposal by one epoch to
+  # allow for ratification of the cost model first.
   echo "Submitting a Plomin prep cost model action..."
   PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/mainnet-plutusv3-pv10-prep.json")
   ACTION="create-protocol-parameters-update" \
     STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
     nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  echo "Sleeping until cost model can be voted on, epoch 1"
-  WAIT_FOR_TIP "epoch" "1"
-  echo
-
-  echo "Submitting a Plomin hard fork action..."
-  PROPOSAL_ARGS=("--protocol-major-version" "10" "--protocol-minor-version" "0")
-  ACTION="create-hardfork" \
-    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
-    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
-  sleep "$FIXED_DELAY_SECS"
   WAIT_FOR_MEMPOOL
   echo
 
   # Only the CC members need to approve the cost model, but both CCs and SPOs need to approve the HF.
   # Drep votes are disallowed during Conway bootstrapping.
   export ACTION_TX_ID=$(
-    cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
-      | jq -r 'map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
+    cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
+      | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
   )
 
   for i in $(seq 1 "$NUM_CC_KEYS"); do
@@ -424,13 +421,23 @@ start-demo-ng:
     echo
   done
 
-  echo "Sleeping until plomin HF can be voted on, epoch 2"
+  echo "Sleeping until the cost model proposal ratifies, epoch 2"
   WAIT_FOR_TIP "epoch" "2"
   echo
 
+  echo "Submitting a Plomin hard fork action..."
+  PROPOSAL_ARGS=("--protocol-major-version" "10" "--protocol-minor-version" "0")
+  ACTION="create-hardfork" \
+    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
+    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
+  WAIT_FOR_MEMPOOL
+  echo
+
   export ACTION_TX_ID=$(
-    cardano-cli latest query proposals --testnet-magic "$TESTNET_MAGIC" --all-proposals \
-      | jq -r 'map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
+    cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
+      | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
   )
 
   for i in $(seq 1 "$NUM_CC_KEYS"); do
@@ -454,11 +461,11 @@ start-demo-ng:
   done
 
   CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the plomin HF votes to register..."
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the Plomin HF votes to ratify..."
   WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
   echo
 
-  echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Plomin HF action to ratify..."
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Plomin HF action to enact..."
   WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
   echo
 
@@ -503,14 +510,77 @@ start-demo-ng:
     WAIT_FOR_MEMPOOL
     echo
 
-    echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the new constitution votes to register..."
+    echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the new constitution votes to ratify..."
     WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
     echo
 
-    echo "Sleeping until epoch $((CURRENT_EPOCH + 4)) for the new constitution votes to ratify..."
+    echo "Sleeping until epoch $((CURRENT_EPOCH + 4)) for the new constitution votes to enact..."
     WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 4))"
     echo
   fi
+
+  echo "Submitting a Dijkstra hard fork action..."
+  PREV_GOV_ACTION=$(cardano-cli latest query gov-state | jq -r '.nextRatifyState.nextEnactState.prevGovActionIds.HardFork')
+  PREV_GOV_ACTION_TX_ID=$(jq '.txId' <<< "$PREV_GOV_ACTION")
+  PREV_GOV_ACTION_INDEX=$(jq '.govActionIx' <<< "$PREV_GOV_ACTION")
+  PROPOSAL_ARGS=(
+    "--prev-governance-action-tx-id" "$PREV_GOV_ACTION_TX_ID"
+    "--prev-governance-action-index" "$PREV_GOV_ACTION_INDEX"
+    "--protocol-major-version" "11"
+    "--protocol-minor-version" "0"
+  )
+  ACTION="create-hardfork" \
+    STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
+    nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+  echo "Sleeping $FIXED_DELAY_SECS seconds until $(date -d  @$(($(date +%s) + $FIXED_DELAY_SECS)))"
+  sleep "$FIXED_DELAY_SECS"
+  WAIT_FOR_MEMPOOL
+  echo
+
+  CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the Dijkstra HF proposal to vote..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
+
+  export ACTION_TX_ID=$(
+    cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
+      | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
+  )
+
+  for i in $(seq 1 "$NUM_CC_KEYS"); do
+    echo "Submitting the CC$i vote for the Dijkstra hard fork..."
+    DECISION=yes \
+      ROLE=cc \
+      VOTE_KEY="$CC_DIR/cc-$i-hot" \
+      nix run .#job-submit-vote
+    WAIT_FOR_MEMPOOL
+    echo
+  done
+
+  POOL_NAME_ARR=($POOL_NAMES)
+  for i in $(seq 1 "${#POOL_NAME_ARR[@]}"); do
+    echo "Submitting the pool $i vote for the Dijkstra hard fork..."
+    DECISION=yes \
+      ROLE=spo \
+      VOTE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f${i} -d' ' <<< "$POOL_NAMES")-cold" \
+      nix run .#job-submit-vote
+    WAIT_FOR_MEMPOOL
+  done
+
+  echo "Submitting the drep-0 vote for the Dijkstra hard fork..."
+    DECISION=yes \
+    ROLE=drep \
+    VOTE_KEY="$DREP_DIR/drep-0" \
+    nix run .#job-submit-vote
+  WAIT_FOR_MEMPOOL
+  echo
+
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Dijkstra hard fork to ratify..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
+  echo
+
+  echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the Dijkstra hard fork to enact..."
+  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
+  echo
 
   just query-tip demo "$TESTNET_MAGIC"
   echo
