@@ -202,10 +202,11 @@ return-utxo() (
 
 # A handy faucet submission function with mempool monitoring, usable on custom networks.
 # CARDANO_NODE_{NETWORK_ID,SOCKET_PATH}, TESTNET_MAGIC should already be exported.
-# SEND_ADDR, LOVELACE, RICH_ADDR and RICH vars need to be provided.
 faucet() (
   SEND_ADDR="$1"
-  LOVELACE="$2"
+  RICH_ADDR="$2"
+  RICH_SKEY_PATH="$3"
+  LOVELACE="$4"
 
   UTXOS=$(cardano-cli query utxo --address "$RICH_ADDR")
   UTXO=$(jq -r 'to_entries | max_by(.value.value.lovelace) | { (.key): .value }' <<< "$UTXOS")
@@ -220,9 +221,28 @@ faucet() (
 
   cardano-cli latest transaction sign \
     --tx-body-file faucet.txbody \
-    --signing-key-file "$RICH.skey" \
+    --signing-key-file "$RICH_SKEY_PATH" \
     --testnet-magic "$TESTNET_MAGIC" \
     --out-file faucet.txsigned
 
   submit faucet.txsigned
+)
+
+wait-for-mempool() (
+  while true; do
+      [ "$(cardano-cli latest query tx-mempool info | jq -re .numberOfTxs || true)" = "0" ] && break;
+    echo "Waiting for the mempool to settle..."
+    sleep 2
+  done
+  echo "Mempool is clear..."
+)
+
+wait-for-tip() (
+  TYPE="$1"
+  TARGET="$2"
+
+  while true; do
+      [ "$(jq -re ".$TYPE" <<< "$(cardano-cli latest query tip)")" = "$TARGET" ] && break;
+    sleep 2
+  done
 )
