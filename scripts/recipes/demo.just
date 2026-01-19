@@ -240,6 +240,8 @@ start-demo-ng:
   fi
 
   echo "Generating state-demo-ng config..."
+  echo "Sourcing bash helper functions..."
+  source scripts/bash-fns.sh
 
   export ENV=custom
   export GENESIS_DIR=state-demo-ng
@@ -294,9 +296,16 @@ start-demo-ng:
   if [ "$USE_DECRYPTION" = true ]; then
     BOOTSTRAP_CREDS=$(just sops-decrypt-binary "$KEY_DIR"/bootstrap-pool/bulk.creds.bootstrap.json)
     POOL_CREDS=$(just sops-decrypt-binary "$STAKE_POOL_DIR"/no-deploy/bulk.creds.pools.json)
+
+    # Bash helper fns don't have encryption/decryption support, so we set up
+    # some vars to enable faucet use in the case the bootstrap pool is not retired.
+    RICH_ADDR=$(just sops-decrypt-binary "$PAYMENT_KEY".addr)
+    RICH_CONTENT=$(just sops-decrypt-binary "$PAYMENT_KEY".skey)
   else
     BOOTSTRAP_CREDS=$(cat "$KEY_DIR"/bootstrap-pool/bulk.creds.bootstrap.json)
     POOL_CREDS=$(cat "$STAKE_POOL_DIR"/no-deploy/bulk.creds.pools.json)
+    RICH_ADDR=$(cat "$PAYMENT_KEY".addr)
+    RICH_CONTENT=$(cat "$PAYMENT_KEY".skey)
   fi
   (
     jq -r '.[]' <<< "$BOOTSTRAP_CREDS"
@@ -313,36 +322,16 @@ start-demo-ng:
   sleep 30
   echo
 
-  WAIT_FOR_MEMPOOL() {
-    while true; do
-        [ "$(cardano-cli latest query tx-mempool info --testnet-magic $TESTNET_MAGIC | jq -re .numberOfTxs || true)" = "0" ] && break;
-      echo "Waiting for the mempool to settle..."
-      sleep 2
-    done
-    echo "Mempool is clear..."
-  }
-
-  WAIT_FOR_TIP() {
-    TYPE="$1"
-    TARGET="$2"
-    EPOCH="$1"
-
-    while true; do
-        [ "$(jq -re ".$TYPE" <<< "$(just query-tip demo "$TESTNET_MAGIC")")" = "$TARGET" ] && break;
-      sleep 2
-    done
-  }
-
   echo "Registering stake pools..."
   POOL_RELAY=demo-ng.local \
     POOL_RELAY_PORT=3001 \
     nix run .#job-register-stake-pools
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
   echo
 
   echo "Delegating rewards stake key..."
   nix run .#job-delegate-rewards-stake-key
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
   echo
 
   if [ "$RETIRE_BOOTSTRAP_POOL" = "true" ]; then
@@ -350,10 +339,12 @@ start-demo-ng:
     BOOTSTRAP_POOL_DIR="$KEY_DIR/bootstrap-pool" \
       RICH_KEY="$KEY_DIR/utxo-keys/rich-utxo" \
       nix run .#job-retire-bootstrap-pool
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
   else
     echo "Skipping bootstrap pool retirement..."
+    echo "Adding an extra UTXO to the rich key address for collateral funding..."
+    faucet "$RICH_ADDR" "$RICH_ADDR" <(echo "$RICH_CONTENT") 1000000000
     echo
   fi
 
@@ -361,7 +352,7 @@ start-demo-ng:
     echo "Authorizing CC$i member's hot credentials..."
     INDEX="$i" \
       nix run .#job-register-cc
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
   done
 
@@ -375,12 +366,12 @@ start-demo-ng:
     STAKE_DEPOSIT="2000000" \
     VOTING_POWER="10000000000" \
     nix run .#job-register-drep
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
 
   # If the cost model is submitted near the end of the epoch and voted on, it
   # will fail to ratify in the next epoch.
   echo "Sleeping to submit the cost model at the start of the next epoch, epoch 1"
-  WAIT_FOR_TIP "epoch" "1"
+  wait-for-tip "epoch" "1"
   echo
 
   # If both cost model and Plomin hard fork proposal are submitted in the same
@@ -392,7 +383,7 @@ start-demo-ng:
   ACTION="create-protocol-parameters-update" \
     STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
     nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
   echo
 
   # Only the CC members need to approve the cost model, but both CCs and SPOs need to approve the HF.
@@ -408,12 +399,12 @@ start-demo-ng:
       ROLE=cc \
       VOTE_KEY="$CC_DIR/cc-$i-hot" \
       nix run .#job-submit-vote
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
   done
 
   echo "Sleeping until the cost model proposal ratifies, epoch 2"
-  WAIT_FOR_TIP "epoch" "2"
+  wait-for-tip "epoch" "2"
   echo
 
   echo "Submitting a Plomin hard fork action..."
@@ -421,7 +412,7 @@ start-demo-ng:
   ACTION="create-hardfork" \
     STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
     nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
   echo
 
   export ACTION_TX_ID=$(
@@ -435,7 +426,7 @@ start-demo-ng:
       ROLE=cc \
       VOTE_KEY="$CC_DIR/cc-$i-hot" \
       nix run .#job-submit-vote
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
   done
 
@@ -446,16 +437,16 @@ start-demo-ng:
       ROLE=spo \
       VOTE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f${i} -d' ' <<< "$POOL_NAMES")-cold" \
       nix run .#job-submit-vote
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
   done
 
   CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
   echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the Plomin HF votes to ratify..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
+  wait-for-tip "epoch" "$((CURRENT_EPOCH + 1))"
   echo
 
   echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Plomin HF action to enact..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
+  wait-for-tip "epoch" "$((CURRENT_EPOCH + 2))"
   echo
 
   if ! [ "$USE_FINAL_CONSTITUTION_IN_GENESIS" = "true" ]; then
@@ -470,7 +461,7 @@ start-demo-ng:
     ACTION="create-constitution" \
       STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
       nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
 
     # To obtain the governance action from proposal query, we would have to wait for the next epoch.
@@ -485,7 +476,7 @@ start-demo-ng:
         ROLE=cc \
         VOTE_KEY="$CC_DIR/cc-$i-hot" \
         nix run .#job-submit-vote
-      WAIT_FOR_MEMPOOL
+      wait-for-mempool
       echo
     done
 
@@ -494,15 +485,15 @@ start-demo-ng:
       ROLE=drep \
       VOTE_KEY="$DREP_DIR/drep-0" \
       nix run .#job-submit-vote
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
 
     echo "Sleeping until epoch $((CURRENT_EPOCH + 3)) for the new constitution votes to ratify..."
-    WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 3))"
+    wait-for-tip "epoch" "$((CURRENT_EPOCH + 3))"
     echo
 
     echo "Sleeping until epoch $((CURRENT_EPOCH + 4)) for the new constitution votes to enact..."
-    WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 4))"
+    wait-for-tip "epoch" "$((CURRENT_EPOCH + 4))"
     echo
   fi
 
@@ -519,7 +510,7 @@ start-demo-ng:
   ACTION="create-hardfork" \
     STAKE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f1 -d' ' <<< "$POOL_NAMES")-owner-stake" \
     nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
   echo
 
   export ACTION_TX_ID=$(
@@ -533,7 +524,7 @@ start-demo-ng:
       ROLE=cc \
       VOTE_KEY="$CC_DIR/cc-$i-hot" \
       nix run .#job-submit-vote
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
     echo
   done
 
@@ -544,7 +535,7 @@ start-demo-ng:
       ROLE=spo \
       VOTE_KEY="$STAKE_POOL_DIR/no-deploy/$(cut -f${i} -d' ' <<< "$POOL_NAMES")-cold" \
       nix run .#job-submit-vote
-    WAIT_FOR_MEMPOOL
+    wait-for-mempool
   done
 
   echo "Submitting the drep-0 vote for the Dijkstra hard fork..."
@@ -552,16 +543,16 @@ start-demo-ng:
     ROLE=drep \
     VOTE_KEY="$DREP_DIR/drep-0" \
     nix run .#job-submit-vote
-  WAIT_FOR_MEMPOOL
+  wait-for-mempool
   echo
 
   CURRENT_EPOCH=$(jq -re ".epoch" <<< "$(just query-tip demo "$TESTNET_MAGIC")")
   echo "Sleeping until epoch $((CURRENT_EPOCH + 1)) for the Dijkstra hard fork to ratify..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 1))"
+  wait-for-tip "epoch" "$((CURRENT_EPOCH + 1))"
   echo
 
   echo "Sleeping until epoch $((CURRENT_EPOCH + 2)) for the Dijkstra hard fork to enact..."
-  WAIT_FOR_TIP "epoch" "$((CURRENT_EPOCH + 2))"
+  wait-for-tip "epoch" "$((CURRENT_EPOCH + 2))"
   echo
 
   just query-tip demo "$TESTNET_MAGIC"
