@@ -228,6 +228,68 @@ faucet() (
   submit faucet.txsigned
 )
 
+run-node-faketime() (
+  if [ "${UNSTABLE:-}" = "true" ]; then
+    CMD="cardano-node-ng"
+  else
+    CMD="cardano-node"
+  fi
+
+  faketime "$1" "$CMD" run \
+    --config "$DATA_DIR"/node-config.json \
+    --database-path "$DATA_DIR"/db \
+    --topology "$DATA_DIR"/topology.json \
+    +RTS -N2 -A16m -qg -qb -M3584M -RTS \
+    --socket-path "$DATA_DIR"/node.socket \
+    --bulk-credentials-file "$GENESIS_DIR"/bulk.creds.all.json \
+    | tee -a "$DATA_DIR"/node.log
+)
+
+synth-prep() (
+  echo "Prepping for block synthesis..."
+  cp "$DATA_DIR"/db/protocolMagicId "$DATA_DIR"/
+  rm "$DATA_DIR"/db/{clean,gsm,lock,protocolMagicId} -rf
+)
+
+synth-restore() (
+  cp "$DATA_DIR"/protocolMagicId "$DATA_DIR"/db/
+  echo "Synthesis clean up complete."
+)
+
+synth-slots() (
+  if [ "${UNSTABLE:-}" = "true" ]; then
+    CMD="db-synthesizer-ng"
+  else
+    CMD="db-synthesizer"
+  fi
+
+  synth-prep
+  "$CMD" \
+    --config "$DATA_DIR"/node-config.json \
+    --db "$DATA_DIR"/db \
+    --bulk-credentials-file "$GENESIS_DIR/bulk.creds.all.json" \
+    -a \
+    -s "$1"
+  synth-restore
+)
+
+synth-epochs() (
+  if [ "${UNSTABLE:-}" = "true" ]; then
+    CMD="db-synthesizer-ng"
+  else
+    CMD="db-synthesizer"
+  fi
+
+  synth-prep
+  "$CMD" \
+    --config "$DATA_DIR"/node-config.json \
+    --db "$DATA_DIR"/db \
+    --bulk-credentials-file "$GENESIS_DIR/bulk.creds.all.json" \
+    -a \
+    -e "$1"
+  synth-restore
+)
+
 wait-for-mempool() (
   while true; do
       [ "$(cardano-cli latest query tx-mempool info | jq -re .numberOfTxs || true)" = "0" ] && break;
