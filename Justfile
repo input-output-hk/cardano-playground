@@ -36,8 +36,8 @@ checkEnv := '''
 checkEnvWithoutOverride := '''
   ENV="${1:-}"
 
-  if ! [[ "$ENV" =~ ^mainnet$|^preprod$|^preview$|^demo$ ]]; then
-    echo "Error: only node environments for demo, mainnet, preprod and preview are supported"
+  if ! [[ "$ENV" =~ ^mainnet$|^preprod$|^preview$|^dijkstra$|^demo$ ]]; then
+    echo "Error: only node environments for demo, dijkstra, mainnet, preprod and preview are supported"
     exit 1
   fi
 
@@ -47,6 +47,8 @@ checkEnvWithoutOverride := '''
     MAGIC="1"
   elif [ "$ENV" = "preview" ]; then
     MAGIC="2"
+  elif [ "$ENV" = "dijkstra" ]; then
+    MAGIC="6"
   elif [ "$ENV" = "demo" ]; then
     MAGIC="42"
   fi
@@ -372,8 +374,8 @@ dedelegate-pools ENV *IDXS=null:
   set -euo pipefail
   {{checkEnvWithoutOverride}}
 
-  if ! [[ "$ENV" =~ ^preprod$|^preview$ ]]; then
-    echo "Error: only node environments for preprod and preview are supported"
+  if ! [[ "$ENV" =~ ^preprod$|^preview$|^dijkstra$ ]]; then
+    echo "Error: only node environments for preprod, preview and dijkstra are supported"
     exit 1
   fi
 
@@ -549,7 +551,7 @@ query-tip-all:
   #!/usr/bin/env bash
   set -euo pipefail
   QUERIED=0
-  for i in mainnet preprod preview demo; do
+  for i in mainnet preprod preview dijkstra demo; do
     TIP=$(just query-tip $i 2>&1) && {
       echo "Environment: $i"
       echo "$TIP"
@@ -574,7 +576,7 @@ query-tip ENV TESTNET_MAGIC=null:
     CARDANO_CLI="cardano-cli-ng"
   elif [[ "$ENV" =~ ^mainnet$|^preprod$|^preview$ ]]; then
     CARDANO_CLI="cardano-cli"
-  elif [[ "$ENV" =~ ^demo$ ]]; then
+  elif [[ "$ENV" =~ ^dijkstra$|^demo$ ]]; then
     CARDANO_CLI="cardano-cli-ng"
   fi
 
@@ -891,8 +893,8 @@ start-node ENV:
   set -euo pipefail
   {{stateDir}}
 
-  if ! [[ "{{ENV}}" =~ ^mainnet$|^preprod$|^preview$ ]]; then
-    echo "Error: only node environments for mainnet, preprod, and preview are supported for start-node recipe"
+  if ! [[ "{{ENV}}" =~ ^mainnet$|^preprod$|^preview$|^dijkstra$ ]]; then
+    echo "Error: only node environments for mainnet, preprod, preview and dijkstra are supported for start-node recipe"
     exit 1
   fi
 
@@ -928,7 +930,7 @@ start-node ENV:
 stop-all:
   #!/usr/bin/env bash
   set -euo pipefail
-  for i in mainnet preprod preview demo; do
+  for i in mainnet preprod preview dijkstra demo; do
     just stop-node $i
   done
 
@@ -1068,8 +1070,8 @@ truncate-chain ENV SLOT:
   [ -n "${DEBUG:-}" ] && set -x
   {{stateDir}}
 
-  if ! [[ "{{ENV}}" =~ ^mainnet$|^preprod$|^preview$ ]]; then
-    echo "Error: only node environments for mainnet, preprod, and preview are supported for truncate-chain recipe"
+  if ! [[ "{{ENV}}" =~ ^mainnet$|^preprod$|^preview$|^dijkstra$ ]]; then
+    echo "Error: only node environments for mainnet, preprod, preview and dijkstra are supported for truncate-chain recipe"
     exit 1
   fi
 
