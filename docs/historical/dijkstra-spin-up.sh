@@ -1,3 +1,9 @@
+#!/bin/env bash
+# shellcheck disable=SC2031,SC2317,SC2155
+
+# This script is meant more as a guide than an actual straight executable.
+# It requires interactivity with node starts, stops, block synthesis and time feedback.
+
 # Source bash helper functions
 source scripts/bash-fns.sh
 
@@ -76,8 +82,8 @@ BOOTSTRAP_CREDS=$(cat "$KEY_DIR"/bootstrap-pool/bulk.creds.bootstrap.json)
 
 # This is to adjust the starting conway genesis to match preview closely
 # without having to parameterize the nix job-gen-custom-node-config-data-ng
-# helper extensively. We'll customize slightly with committeeMinSize at 3 and
-# committeeMaxTerm length at the guardrails maximum.
+# helper extensively. Our starting genesis is still customized slightly with
+# committeeMinSize at 3 and committeeMaxTerm length at the guardrails maximum.
 jq -S '. += {
   "govActionDeposit": 100000000000,
   "minFeeRefScriptCostPerByte": 15,
@@ -99,6 +105,11 @@ jq --sort-keys \
   }' \
   < "$DATA_DIR/node-config.json" \
   | sponge "$DATA_DIR/node-config.json"
+
+# At this point interactivity will be required.
+# This script will exit and the remainder can be executed interactivity using
+# the following as a guide.
+exit 0
 
 # Start the node 30 seconds before the chain is scheduled to start forging.
 run-node-faketime '2025-12-31 23:59:30Z'
@@ -145,7 +156,13 @@ POOL_NAMES="${ENV}3-bp-c-1" \
   nix run .#job-delegate-rewards-stake-key
 wait-for-mempool
 
-# Retire the bootstrap pool
+# Retire the bootstrap pool.
+#
+# If the bootstrap pool is not retired, an extra UTxO will need to be sent to the
+# rich address for collateral UTxO input in subsequent Txs.  Also, some quirky
+# behavior was noted with genesis embedded pools in prior node versions.  By
+# retiring the bootstrap pool and keeping the new backbone pools as the primary
+# forgers, we avoid any residual unexpected edge cases.
 BOOTSTRAP_POOL_DIR="$KEY_DIR/bootstrap-pool" \
   RICH_KEY="$KEY_DIR/utxo-keys/rich-utxo" \
   nix run .#job-retire-bootstrap-pool
@@ -194,14 +211,13 @@ for i in $(seq 1 "$NUM_CC_KEYS"); do
   echo
 done
 
-
-# Let a few blocks forge and obtain slotsToEpochEnd
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
 synth-slots $((85370 - 180))
 run-node-faketime '2026-01-01 23:59:00Z'
 
-# At the epoch rollover, verify the gov-state shows PlutusV2 available:
+# After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
 
 # Example output:
@@ -211,6 +227,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 #   "PlutusV3"
 # ]
 
+# In epoch 1, submit a Plomin hard fork
 echo "Submitting a Plomin hard fork action..."
 PROPOSAL_ARGS=("--protocol-major-version" "10" "--protocol-minor-version" "0")
 ACTION="create-hardfork" \
@@ -254,32 +271,35 @@ DECISION=yes \
   nix run .#job-submit-vote
 wait-for-mempool
 
-# Let a few blocks forge and obtain slotsToEpochEnd
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 2
 echo "Synthesize blocks until just before the Plomin hard fork ratifies, epoch 2"
 synth-slots $((85801 - 180))
-
 run-node-faketime '2026-01-02 23:59:00Z'
 
-# Ensure the Plomin hard fork has ratified once epoch 2 is reached:
+# After the epoch rollover into epcoh 2, verify the Plomin hard fork has ratified:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
-{
-  "major": 10,
-  "minor": 0
-}
 
-# Let a few blocks forge and obtain slotsToEpochEnd
+# Example output:
+# {
+#   "major": 10,
+#   "minor": 0
+# }
+
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 3
 echo "Synthesize blocks until just before the Plomin hard fork enacts, epoch 3"
 synth-slots $((86268 - 180))
 run-node-faketime '2026-01-03 23:59:00Z'
 
-# Ensure the Plomin hard fork has enacted once epoch 3 is reached:
+# After the epoch rollover into epcoh 3, verify the Plomin hard fork has enacted:
 cardano-cli query protocol-parameters | jq .protocolVersion
-{
-  "major": 10,
-  "minor": 0
-}
+
+# Example output:
+# {
+#   "major": 10,
+#   "minor": 0
+# }
 
 # Submit a parameter change action to adjust network parameters to better match other networks
 echo "Submitting a ParameterChange action..."
@@ -343,7 +363,7 @@ echo "Submitting the drep-0 vote for the parameter update..."
   nix run .#job-submit-vote
 wait-for-mempool
 
-# Let a few blocks forge and obtain slotsToEpochEnd
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 4
 echo "Synthesize blocks until just before the parameter change ratifies, epoch 4"
 synth-slots $((82690 - 180))
@@ -352,20 +372,22 @@ run-node-faketime '2026-01-04 23:59:00Z'
 # Ensure the parameter change has ratified once epoch 4 is reached:
 cardano-cli latest query gov-state \
   | jq '.futurePParams.contents | {maxBlockBodySize,maxBlockExecutionUnits,maxTxExecutionUnits,minPoolCost}'
-{
-  "maxBlockBodySize": 90112,
-  "maxBlockExecutionUnits": {
-    "memory": 72000000,
-    "steps": 20000000000
-  },
-  "maxTxExecutionUnits": {
-    "memory": 16500000,
-    "steps": 10000000000
-  },
-  "minPoolCost": 170000000
-}
 
-# Let a few blocks forge and obtain slotsToEpochEnd
+# Example
+# {
+#   "maxBlockBodySize": 90112,
+#   "maxBlockExecutionUnits": {
+#     "memory": 72000000,
+#     "steps": 20000000000
+#   },
+#   "maxTxExecutionUnits": {
+#     "memory": 16500000,
+#     "steps": 10000000000
+#   },
+#   "minPoolCost": 170000000
+# }
+
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 5
 echo "Synthesize blocks until just before the parameter change enacts, epoch 5"
 synth-slots $((85983 - 180))
@@ -374,30 +396,39 @@ run-node-faketime '2026-01-05 23:59:00Z'
 # Ensure the parameter change has enacted once epoch 5 is reached:
 cardano-cli latest query protocol-parameters \
   | jq '{maxBlockBodySize,maxBlockExecutionUnits,maxTxExecutionUnits,minPoolCost}'
-{
-  "maxBlockBodySize": 90112,
-  "maxBlockExecutionUnits": {
-    "memory": 72000000,
-    "steps": 20000000000
-  },
-  "maxTxExecutionUnits": {
-    "memory": 16500000,
-    "steps": 10000000000
-  },
-  "minPoolCost": 170000000
-}
+
+# Example
+# {
+#   "maxBlockBodySize": 90112,
+#   "maxBlockExecutionUnits": {
+#     "memory": 72000000,
+#     "steps": 20000000000
+#   },
+#   "maxTxExecutionUnits": {
+#     "memory": 16500000,
+#     "steps": 10000000000
+#   },
+#   "minPoolCost": 170000000
+# }
 
 # Synth to real time
-# First get to next epoch threshold (no 3 minute modifier):
+# First get to next epoch threshold (no 3 minute substraction back from the epoch boundary):
 synth-slots 86293
 
-Now at the start of epoch 6 on 2026-01-07 00:00Z.
-We, for example are real-time on day 2026-01-20Z.
+# Then synth the number of epochs to get the current day, UTC
 synth-epochs 13
 
-# Start 1m before epoch 19
-run-node-faketime '2026-01-19 23:59:30Z'
+# Finally, synth to slightly ahead of real time, using the number of hours in
+# the current day UTC to prepare for a push to the remote machines -- 3 hours in
+# this example.
+synth-slots $((3 * 3600))
 
-# Synth to slightly ahead of real time for a push to the remote machines
-synth-slots $((3600 * 3))
+# Start the node for a moment at it's current near-future (shortly after now)
+# tip time in order to allow node to process all the volatile state into
+# immutable and ledger as required.  Once that is complete, node can be stopped
+# and the state can be tgz packaged or similar in prep for a push to the remote
+# backbone machines.
+run-node-faketime '2026-01-20 03:00:00Z'
 
+# See docs/explain/new-network.md for details on migrating this prepared chain
+# state from a local preparation environment to the full remote machine cluster.

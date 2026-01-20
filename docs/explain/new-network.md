@@ -618,3 +618,9 @@ registered and the genesis bootstrap pool retired.
 
 An example of this procedure is provided in the `Justfile` recipes with
 `just start-demo-ng`.
+
+## New Network Next Gen Spin Up
+
+An outline for spinning up a cluster directly into Conway using a single
+genesis embedded bootstrap pool followed by 3 backbone pools is detailed in
+`docs/historical/dijkstra-spin-up.sh`.
