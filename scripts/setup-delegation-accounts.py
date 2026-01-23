@@ -39,17 +39,16 @@ if arguments["--delegation-amount"]:
 else:
   delegation_amount = 10000000000000
 
-if not arguments["--print-only"]:
-  if arguments["--signing-key-file"] and os.path.exists(arguments["--signing-key-file"]):
-    utxo_signing_key = Path(arguments["--signing-key-file"])
-  else:
-    print("Must specify signing key file")
-    exit(1)
+if arguments["--signing-key-file"] and os.path.exists(arguments["--signing-key-file"]):
+  utxo_signing_key = Path(arguments["--signing-key-file"])
+else:
+  print("Must specify signing key file")
+  exit(1)
 
-  if arguments["--testnet-magic"]:
-    network_args = ["--testnet-magic", arguments["--testnet-magic"]]
-  else:
-    network_args = ["--mainnet"]
+if arguments["--testnet-magic"]:
+  network_args = ["--testnet-magic", arguments["--testnet-magic"]]
+else:
+  network_args = ["--mainnet"]
 
 last_txin = ""
 
@@ -280,11 +279,10 @@ else:
   exit(1)
 
 # Convert the signing key to a str so sops decryption and file redirection can be used for the file input arg
-if not arguments["--print-only"]:
-  with open(utxo_signing_key, "r") as file:
-    utxo_signing_key_str = file.read()
-  payment_addr = derive_payment_address_cli_skey(utxo_signing_key_str)
-  txin = getLargestUtxoForAddress(payment_addr)
+with open(utxo_signing_key, "r") as file:
+  utxo_signing_key_str = file.read()
+payment_addr = derive_payment_address_cli_skey(utxo_signing_key_str)
+txin = getLargestUtxoForAddress(payment_addr)
 
 printStr = ""
 for i in range(0, num_accounts):
@@ -292,12 +290,12 @@ for i in range(0, num_accounts):
     stake_vkey_ext = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=True)
     stake_vkey = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=False)
     stake_address = derive_stake_address(stake_vkey_ext)
+    delegation_address = derive_delegation_address(payment_addr, stake_vkey_ext)
     if arguments["--print-only"]:
       if i == 0:
         printStr="CREATE TABLE IF NOT EXISTS faucet_stake_addr AS (SELECT * FROM json_each_text('{"
       printStr+=f'"{i}":"{stake_address}",'
     else:
-      delegation_address = derive_delegation_address(payment_addr, stake_vkey_ext)
       txin = createTx(txin, stake_vkey, delegation_address, payment_addr, utxo_signing_key_str, f"tx-deleg-account-{i}.txsigned", delegation_amount)
       print(f"Setting up delegation for {i} and submitting the transaction")
       sendTx(f"tx-deleg-account-{i}.txsigned")
