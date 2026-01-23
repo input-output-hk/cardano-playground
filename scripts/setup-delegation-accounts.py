@@ -255,7 +255,7 @@ def signTx(tx_body, utxo_signing_key_str, out_file):
   if p.returncode != 0:
       print(p.stderr)
       raise Exception(f"Unknown error signing transaction")
-  cli_args = ["cardano-cli", "latest", "transaction", "txid", "--tx-file", out_file]
+  cli_args = ["cardano-cli", "latest", "transaction", "txid", "--tx-file", out_file, "--output-text"]
   p = subprocess.run(cli_args, input=None, capture_output=True, text=True)
   if p.returncode != 0:
       print(p.stderr)
