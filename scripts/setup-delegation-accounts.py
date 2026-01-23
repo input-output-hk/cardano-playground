@@ -173,6 +173,25 @@ def derive_child_key(key, derivation, public=False, chain_code=True):
   else:
     return skey
 
+def derive_stake_skey(stake_xsk):
+  cli_args = [
+      "cardano-cli",
+      "latest",
+      "key",
+      "convert-cardano-address-key",
+      "--shelley-stake-key",
+      "--signing-key-file",
+      "/dev/stdin",
+      "--out-file",
+      "/dev/stdout"
+  ]
+  p = subprocess.run(cli_args, input=stake_xsk, capture_output=True, text=True)
+  if p.returncode != 0:
+      print(p.stderr)
+      raise Exception(f"Unknown error deriving stake skey")
+  skey = p.stdout.rstrip()
+  return skey
+
 def generateStakeRegistration(stake_vkey, file):
   network_args = []
   pparams = cli.getPParamsJson(*network_args)
@@ -194,7 +213,7 @@ def generateStakeRegistration(stake_vkey, file):
       raise Exception(f"Unknown error generating registration certificate")
   return
 
-def createTx(txin, stake_vkey, delegation_address, change_address, payment_signing_key_str, out_file, delegation_amount):
+def createTx(txin, stake_vkey, stake_skey, delegation_address, change_address, payment_signing_key_str, out_file, delegation_amount):
   with tempfile.NamedTemporaryFile("w+") as stake_reg_cert, tempfile.NamedTemporaryFile("w+") as tx_body:
     generateStakeRegistration(stake_vkey, stake_reg_cert)
     new_lovelace = txin[1] - 2000000 - 200000 - delegation_amount
@@ -221,7 +240,7 @@ def createTx(txin, stake_vkey, delegation_address, change_address, payment_signi
         print(p.stderr)
         print(f"died at tx file: {out_file}")
         raise Exception(f"Unknown error creating transaction")
-    txid = signTx(tx_body, payment_signing_key_str, out_file)
+    txid = signTx(tx_body, payment_signing_key_str, stake_skey, out_file)
     return (f"{txid}#0", new_lovelace)
 
 def getLargestUtxoForAddress(address):
@@ -242,12 +261,13 @@ def getLargestUtxoForAddress(address):
       exit(1)
     return txin
 
-def signTx(tx_body, utxo_signing_key_str, out_file):
+def signTx(tx_body, utxo_signing_key_str, stake_skey_str, out_file):
   cli_args = [
     "bash",
     "-c",
     f"cardano-cli latest transaction sign --tx-body-file {tx_body.name}"
     f" --signing-key-file <(echo '{utxo_signing_key_str}')"
+    f" --signing-key-file <(echo '{stake_skey_str}')"
     f" --out-file {out_file}"
   ]
   p = subprocess.run(cli_args, input=None, capture_output=True, text=True)
@@ -290,6 +310,8 @@ for i in range(0, num_accounts):
   with tempfile.NamedTemporaryFile("w+") as registration_cert:
     stake_vkey_ext = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=True)
     stake_vkey = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=False)
+    stake_xsk = derive_child_key(wallet_account_skey, f"2/{i}", public=False)
+    stake_skey = derive_stake_skey(stake_xsk)
     stake_address = derive_stake_address(stake_vkey_ext)
     delegation_address = derive_delegation_address(payment_addr, stake_vkey_ext)
     if arguments["--print-only"]:
@@ -300,9 +322,9 @@ for i in range(0, num_accounts):
       faucetStakeSql+=f'"{i}":"{stake_address}",'
       faucetDelegSql+=f'"{i}":"{delegation_address}",'
     else:
-      txin = createTx(txin, stake_vkey, delegation_address, payment_addr, utxo_signing_key_str, f"tx-deleg-account-{i}.txsigned", delegation_amount)
-      print(f"Setting up delegation for {i} and submitting the transaction")
-      sendTx(f"tx-deleg-account-{i}.txsigned")
+      txin = createTx(txin, stake_vkey, stake_skey, delegation_address, payment_addr, utxo_signing_key_str, f"tx-deleg-account-{i:03}.txsigned", delegation_amount)
+      print(f"Setting up delegation for {i:03} and submitting the transaction")
+      sendTx(f"tx-deleg-account-{i:03}.txsigned")
 
 if arguments["--print-only"]:
   faucetStakeSql = faucetStakeSql.rstrip(',') + "}'));"
