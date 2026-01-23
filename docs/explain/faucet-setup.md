@@ -91,7 +91,7 @@ Faucet Pool Delegation:      1000000000000   # Funded via setup-delegation-accou
 Faucet delegation_utxo_size: 10              # Via faucet config file
 max_stake_key_index:         500             # Via faucet config file
 
-# Historical Sanchonet
+# Historical Sanchonet, Dijkstra:
 Faucet UTxO:                 100000200000    # Funded via distribute.py, ~10,000 UTxO, below
 Faucet Pool Delegation:      10000000000000  # Funded via setup-delegation-accounts.py, below
 Faucet delegation_utxo_size: 10              # Via faucet config file

@@ -35,6 +35,7 @@ export CURRENT_KES_PERIOD="0"
 export POOL_MARGIN="1.0"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
+export POOL_PLEDGE="10000000000000"
 
 # Basic secrets setup vars:
 export BULK_CREDS="$GENESIS_DIR/bulk.creds.all.json"
