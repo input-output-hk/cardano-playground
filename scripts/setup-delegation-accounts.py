@@ -8,7 +8,7 @@ Usage:
 
 Options:
     -h --help                    Show this screen
-    -p --print-only              Print sql for creation of faucet_stake_addr table only, take no other action
+    -p --print-only              Print sql for creation of faucet_stake_addr and faucet_deleg_addr tables only, take no other action
     -t --testnet-magic <INT>     Testnet Magic
     -s --signing-key-file <FILE> Signing Key
     -w --wallet-mnemonic <FILE>  mnemonic file cardano-address uses
@@ -284,7 +284,8 @@ with open(utxo_signing_key, "r") as file:
 payment_addr = derive_payment_address_cli_skey(utxo_signing_key_str)
 txin = getLargestUtxoForAddress(payment_addr)
 
-printStr = ""
+faucetStakeSql = ""
+faucetDelegSql = ""
 for i in range(0, num_accounts):
   with tempfile.NamedTemporaryFile("w+") as registration_cert:
     stake_vkey_ext = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=True)
@@ -293,13 +294,18 @@ for i in range(0, num_accounts):
     delegation_address = derive_delegation_address(payment_addr, stake_vkey_ext)
     if arguments["--print-only"]:
       if i == 0:
-        printStr="CREATE TABLE IF NOT EXISTS faucet_stake_addr AS (SELECT * FROM json_each_text('{"
-      printStr+=f'"{i}":"{stake_address}",'
+        faucetStakeSql="CREATE TABLE IF NOT EXISTS faucet_stake_addr AS (SELECT * FROM json_each_text('{"
+        faucetDelegSql="CREATE TABLE IF NOT EXISTS faucet_deleg_addr AS (SELECT * FROM json_each_text('{"
+
+      faucetStakeSql+=f'"{i}":"{stake_address}",'
+      faucetDelegSql+=f'"{i}":"{delegation_address}",'
     else:
       txin = createTx(txin, stake_vkey, delegation_address, payment_addr, utxo_signing_key_str, f"tx-deleg-account-{i}.txsigned", delegation_amount)
       print(f"Setting up delegation for {i} and submitting the transaction")
       sendTx(f"tx-deleg-account-{i}.txsigned")
 
 if arguments["--print-only"]:
-  printStr = printStr.rstrip(',') + "}'));"
-  print(printStr)
+  faucetStakeSql = faucetStakeSql.rstrip(',') + "}'));"
+  faucetDelegSql = faucetDelegSql.rstrip(',') + "}'));"
+  print(faucetStakeSql)
+  print(faucetDelegSql)
