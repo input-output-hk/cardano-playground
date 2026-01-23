@@ -273,8 +273,8 @@ if arguments["--wallet-mnemonic"]:
   with open(arguments["--wallet-mnemonic"], 'r') as file:
     mnemonic = file.read().replace('\n', '')
   wallet_root_skey = initialize_root_key(mnemonic)
-  wallet_account_vkey = derive_account_key(wallet_root_skey, public=False)
-  wallet_account_skey = derive_account_key(wallet_root_skey, public=True)
+  wallet_account_skey = derive_account_key(wallet_root_skey, public=False)
+  wallet_account_vkey = derive_account_key(wallet_root_skey, public=True)
 else:
   print("Must specify wallet mnemonic")
   exit(1)
@@ -289,8 +289,8 @@ if not arguments["--print-only"]:
 printStr = ""
 for i in range(0, num_accounts):
   with tempfile.NamedTemporaryFile("w+") as registration_cert:
-    stake_vkey_ext = derive_child_key(wallet_account_vkey, f"2/{i}", public=True, chain_code=True)
-    stake_vkey = derive_child_key(wallet_account_vkey, f"2/{i}", public=True, chain_code=False)
+    stake_vkey_ext = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=True)
+    stake_vkey = derive_child_key(wallet_account_skey, f"2/{i}", public=True, chain_code=False)
     stake_address = derive_stake_address(stake_vkey_ext)
     if arguments["--print-only"]:
       if i == 0:
