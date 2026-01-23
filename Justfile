@@ -302,13 +302,17 @@ cf STACKNAME:
 dbsync-prep ENV HOST ACCTS="501":
   #!/usr/bin/env bash
   set -euo pipefail
+  {{checkEnvWithoutOverride}}
+
   TMPFILE="/tmp/create-faucet-stake-keys-table-{{ENV}}.sql"
 
   echo "Creating stake key sql injection command for environment {{ENV}} (this will take a minute)..."
   NOMENU=true \
   scripts/setup-delegation-accounts.py \
     --print-only \
+    --testnet-magic "$MAGIC" \
     --wallet-mnemonic <(sops -d secrets/envs/{{ENV}}/utxo-keys/faucet.mnemonic) \
+    --signing-key-file <(sops -d secrets/envs/{{ENV}}/utxo-keys/rich-utxo.skey) \
     --num-accounts {{ACCTS}} \
     > "$TMPFILE"
 
