@@ -75,9 +75,7 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     exit 1
   fi
 
-  just set-default-cardano-env "$ENV" "$MAGIC" "$PPID"
-  export CARDANO_NODE_NETWORK_ID="$MAGIC"
-  export TESTNET_MAGIC="$MAGIC"
+  source <(just set-default-cardano-env $ENV)
   echo
 
   [ -n "${DEBUG:-}" ] && set -x
