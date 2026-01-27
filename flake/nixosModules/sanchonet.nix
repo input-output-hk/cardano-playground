@@ -30,7 +30,10 @@ flake: {
       "LedgerDB"
       "MaxKnownMajorProtocolVersion"
       "MinNodeVersion"
-      "PeerSharing"
+
+      # PeerSharing is auto-configured by node per forge role as of 10.6.x
+      # "PeerSharing"
+
       "Protocol"
       "RequiresNetworkMagic"
       "ShelleyGenesisHash"
@@ -82,8 +85,6 @@ flake: {
     # appropriate options and services.
     cardano-parts.perNode.lib.cardanoLib.environments = environments;
     services = {
-      cardano-node.useLegacyTracing = true;
-
       cardano-tracer.environments = environments;
 
       blockperf.enable = false;

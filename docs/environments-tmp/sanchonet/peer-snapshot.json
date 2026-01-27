@@ -5,11 +5,11 @@
       "relativeStake": 0.12402957836845932,
       "relays": [
         {
-          "domain": "relay1.sanchonet.pool.cardanofoundation.org",
+          "address": "relay1.sanchonet.pool.cardanofoundation.org",
           "port": 30004
         },
         {
-          "domain": "relay2.sanchonet.pool.cardanofoundation.org",
+          "address": "relay2.sanchonet.pool.cardanofoundation.org",
           "port": 30004
         }
       ]
@@ -19,7 +19,7 @@
       "relativeStake": 0.12110106675246718,
       "relays": [
         {
-          "domain": "sancho-testnet.able-pool.io",
+          "address": "sancho-testnet.able-pool.io",
           "port": 6002
         },
         {
@@ -37,7 +37,7 @@
       "relativeStake": 0.11650044858620305,
       "relays": [
         {
-          "domain": "sancho-testnet.able-pool.io",
+          "address": "sancho-testnet.able-pool.io",
           "port": 6002
         }
       ]
@@ -47,7 +47,7 @@
       "relativeStake": 0.11215440020596762,
       "relays": [
         {
-          "domain": "sanchonet-node.play.dev.cardano.org",
+          "address": "sanchonet-node.play.dev.cardano.org",
           "port": 3001
         }
       ]
@@ -57,7 +57,7 @@
       "relativeStake": 0.1097439897180583,
       "relays": [
         {
-          "domain": "sanchorelay1.intertreecryptoconsultants.com",
+          "address": "sanchorelay1.intertreecryptoconsultants.com",
           "port": 6002
         }
       ]
@@ -77,7 +77,7 @@
       "relativeStake": 0.10166017459335197,
       "relays": [
         {
-          "domain": "test.stakepool.at",
+          "address": "test.stakepool.at",
           "port": 3001
         }
       ]
@@ -87,7 +87,7 @@
       "relativeStake": 0.08983913434694128,
       "relays": [
         {
-          "domain": "relay.hephy.io",
+          "address": "relay.hephy.io",
           "port": 9000
         }
       ]
@@ -97,20 +97,20 @@
       "relativeStake": 0.0422840338779721,
       "relays": [
         {
-          "domain": "node1.cardano.gratis",
+          "address": "node1.cardano.gratis",
           "port": 6401
         },
         {
-          "domain": "node2.cardano.gratis",
+          "address": "node2.cardano.gratis",
           "port": 6402
         },
         {
-          "domain": "mbb3.cardano.gratis",
+          "address": "mbb3.cardano.gratis",
           "port": 6403
         }
       ]
     }
   ],
-  "slotNo": 82754119,
-  "version": 1
+  "slotNo": 82759153,
+  "version": 2
 }
