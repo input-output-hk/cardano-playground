@@ -14,9 +14,7 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
     exit 1
   fi
 
-  just set-default-cardano-env {{ENV}} "$MAGIC" "$PPID"
-  export CARDANO_NODE_NETWORK_ID="$MAGIC"
-  export TESTNET_MAGIC="$MAGIC"
+  source <(just set-default-cardano-env {{ENV}})
   echo
 
   [ -n "${DEBUG:-}" ] && set -x
@@ -853,9 +851,7 @@ vote-with-pool ENV POOL ACTION_ID ACTION_IDX VOTE:
     exit 1
   fi
 
-  just set-default-cardano-env {{ENV}} "$MAGIC" "$PPID"
-  export CARDANO_NODE_NETWORK_ID="$MAGIC"
-  export TESTNET_MAGIC="$MAGIC"
+  source <(just set-default-cardano-env {{ENV}})
   echo
 
   [ -n "${DEBUG:-}" ] && set -x

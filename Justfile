@@ -37,7 +37,8 @@ checkEnvWithoutOverride := '''
   ENV="${1:-}"
 
   if ! [[ "$ENV" =~ ^mainnet$|^preprod$|^preview$|^dijkstra$|^demo$ ]]; then
-    echo "Error: only node environments for demo, dijkstra, mainnet, preprod and preview are supported"
+    >&2 echo "Error: only node environments for demo, dijkstra, mainnet, preprod and preview are supported"
+    >&2 echo "Usage: just set-default-cardano-env <env>"
     exit 1
   fi
 
@@ -387,7 +388,8 @@ dedelegate-pools ENV *IDXS=null:
     echo "Dedelegation cannot be performed on the mainnet environment"
     exit 1
   fi
-  just set-default-cardano-env {{ENV}} "$MAGIC" "$PPID"
+
+  source <(just set-default-cardano-env {{ENV}})
 
   if [ "$(jq -re .syncProgress <<< "$(just query-tip {{ENV}})")" != "100.00" ]; then
     echo "Please wait until the local tip of environment {{ENV}} is 100.00 before dedelegation"
@@ -631,91 +633,28 @@ save-ssh-config:
   $key.values.content | (parse --regex '(?ms)(.*)\n').capture0 | to text | save --force .ssh_config
   chmod 0600 .ssh_config
 
-# Set the shell's default node env
-set-default-cardano-env ENV TESTNET_MAGIC=null PPID=null:
+# Set the shell's default node env - outputs export commands to stdout for sourcing
+set-default-cardano-env ENV TESTNET_MAGIC=null:
   #!/usr/bin/env bash
   set -euo pipefail
   {{checkEnv}}
   {{stateDir}}
+
   # The log and socket file may not exist immediately upon node startup, so only check for the pid file
   if ! [ -s "$STATEDIR/node-{{ENV}}.pid" ]; then
-    echo "Environment {{ENV}} does not appear to be running as $STATEDIR/node-{{ENV}}.pid does not exist"
+    >&2 echo "Error: Environment {{ENV}} does not appear to be running as $STATEDIR/node-{{ENV}}.pid does not exist"
     exit 1
   fi
 
-  echo "Linking: $(ln -sfv "$STATEDIR/node-{{ENV}}.socket" node.socket)"
-  echo "Linking: $(ln -sfv "$STATEDIR/node-{{ENV}}.log" node.log)"
-  echo
+  >&2 echo "Linking: $(ln -sfv "$STATEDIR/node-{{ENV}}.socket" node.socket)"
+  >&2 echo "Linking: $(ln -sfv "$STATEDIR/node-{{ENV}}.log" node.log)"
+  >&2 echo ""
+  >&2 echo "To set environment variables in your shell, run:"
+  >&2 echo "  source <(just set-default-cardano-env {{ENV}})"
 
-  if [ -n "{{PPID}}" ]; then
-    PARENTID="{{PPID}}"
-  else
-    PARENTID="$PPID"
-  fi
-
-  SHELLPID=$(cat /proc/$PARENTID/status | awk '/PPid/ {print $2}')
-  DEFAULT_PATH=$(pwd)/node.socket
-
-  echo "Updating shell env vars:"
-  echo "  CARDANO_NODE_SOCKET_PATH=$DEFAULT_PATH"
-  echo "  CARDANO_NODE_NETWORK_ID=$MAGIC"
-  echo "  TESTNET_MAGIC=$MAGIC"
-
-  # Ptrace permissions are no longer "classic" by default starting in nixpkgs 24.05
-  AUTO_SET_ENV={{autoSetEnv}}
-  if [ -f /proc/sys/kernel/yama/ptrace_scope ] && [ "$AUTO_SET_ENV" != "false" ]; then
-     if [ "$(cat /proc/sys/kernel/yama/ptrace_scope)" = "0" ]; then
-       AUTO_SET_ENV=true
-     else
-       echo
-       echo "For just scripts to automatically set cardano environment variables in bash and zsh shells, ptrace classic permission needs to be enabled."
-       echo "This requires sudo access and will persist ptrace classic permission until the next reboot by writing:"
-       echo "  echo 0 > /proc/sys/kernel/yama/ptrace_scope"
-       echo
-       read -p "Do you have sudo access and wish to proceed [yY]? " -n 1 -r
-       echo
-       if [[ $REPLY =~ ^[Yy]$ ]]; then
-         if sudo bash -c 'echo 0 > /proc/sys/kernel/yama/ptrace_scope'; then
-           echo "ptrace_scope classic permission successfully set."
-           AUTO_SET_ENV=true
-         else
-           echo "ptrace_scope classic permission change unsuccessful."
-         fi
-       fi
-     fi
-  fi
-
-  SH=$(cat /proc/$SHELLPID/comm)
-  if [[ "$SH" =~ bash$|zsh$ ]] && [ "$AUTO_SET_ENV" = "true" ]; then
-    # Modifying a parent shells env vars is generally not done
-    # This is a hacky way to accomplish it in bash and zsh
-    gdb -iex "set auto-load no" /proc/$SHELLPID/exe $SHELLPID <<END >/dev/null
-      call (int) setenv("CARDANO_NODE_SOCKET_PATH", "$DEFAULT_PATH", 1)
-      call (int) setenv("CARDANO_NODE_NETWORK_ID", "$MAGIC", 1)
-      call (int) setenv("TESTNET_MAGIC", "$MAGIC", 1)
-  END
-
-    # Zsh env vars get updated, but the shell doesn't reflect this
-    if [ "$SH" = "zsh" ]; then
-      echo
-      echo "Cardano env vars have been updated as seen by \`env\`, but zsh \`echo \$VAR\` will not reflect this."
-      echo "To sync zsh shell vars with env vars:"
-      echo "  source scripts/sync-env-vars.sh"
-    fi
-  else
-    echo
-    if ! [[ "$SH" =~ bash$|zsh$ ]]; then
-      echo "Unexpected shell: $SH"
-    fi
-
-    if [ "$AUTO_SET_ENV" != "true" ]; then
-      echo "ptrace_scope: classic permission not enabled"
-    fi
-    echo "The following vars will need to be manually exported, or the equivalent operation for your shell:"
-    echo "  export CARDANO_NODE_SOCKET_PATH=$DEFAULT_PATH"
-    echo "  export CARDANO_NODE_NETWORK_ID=$MAGIC"
-    echo "  export TESTNET_MAGIC=$MAGIC"
-  fi
+  echo "export CARDANO_NODE_SOCKET_PATH=\"$(pwd)/node.socket\""
+  echo "export CARDANO_NODE_NETWORK_ID=\"$MAGIC\""
+  echo "export TESTNET_MAGIC=\"$MAGIC\""
 
 # Show nix flake details
 show-flake *ARGS:
@@ -928,7 +867,10 @@ start-node ENV:
   DATA_DIR="$STATEDIR" \
   SOCKET_PATH="$STATEDIR/node-{{ENV}}.socket" \
   nohup setsid nix run .#run-cardano-node &> "$STATEDIR/node-{{ENV}}.log" & echo $! > "$STATEDIR/node-{{ENV}}.pid" &
-  just set-default-cardano-env {{ENV}} "" "$PPID"
+  echo "Node started for {{ENV}}"
+  echo ""
+  echo "Set up your shell environment with:"
+  echo "  source <(just set-default-cardano-env {{ENV}})"
 
 # Stop all local nodes
 stop-all:

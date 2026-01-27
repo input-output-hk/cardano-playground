@@ -32,6 +32,24 @@ Note that the nix version must be at least `2.17` and `fetch-closure`,
 `flakes` and `nix-command` must be included in your nix config for
 `experimental-features`.
 
+## Shell convenience functions
+
+For easier interaction with cardano node, add these functions to `~/.bashrc` or `~/.zshrc`:
+
+```bash
+set-default-cardano-env() { source <(just set-default-cardano-env "$1"); }
+start-node() { just start-node "$1" && set-default-cardano-env "$1"; }
+```
+
+The `start-node` function starts cardano node for the specified environment, and calls `set-default-cardano-env`.
+The `set-default-cardano-env` function sets up env vars for cardano-cli to use.
+
+```bash
+# E.G.
+start-node preprod
+set-default-cardano-env preprod
+```
+
 ## AWS
 
 From the parent AWS org, create an IAM identity center user with your name and
