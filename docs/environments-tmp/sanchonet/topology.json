@@ -3,7 +3,7 @@
     {
       "address": "sancho-testnet.able-pool.io",
       "port": 6002
-    }   
+    }
   ],
   "localRoots": [
     {
@@ -13,6 +13,7 @@
       "valency": 1
     }
   ],
+  "peerSnapshotFile": "peer-snapshot.json",
   "publicRoots": [
     {
       "accessPoints": [],

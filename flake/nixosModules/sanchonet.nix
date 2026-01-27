@@ -21,6 +21,7 @@ flake: {
       "CheckpointsHash"
       "ConsensusMode"
       "ConwayGenesisHash"
+      "DijkstraGenesisHash"
       "ExperimentalHardForksEnabled"
       "ExperimentalProtocolsEnabled"
       "LastKnownBlockVersion-Alt"
@@ -29,6 +30,7 @@ flake: {
       "LedgerDB"
       "MaxKnownMajorProtocolVersion"
       "MinNodeVersion"
+      "PeerSharing"
       "Protocol"
       "RequiresNetworkMagic"
       "ShelleyGenesisHash"
@@ -45,6 +47,7 @@ flake: {
       ByronGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/byron-genesis.json";
       ConwayGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/conway-genesis.json";
       ShelleyGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/shelley-genesis.json";
+      DijkstraGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/dijkstra-genesis.json";
     };
 
     # Generate the base sanchonet config, stripped of non-essential params
@@ -70,6 +73,8 @@ flake: {
       nodeConfig = cardanoLibNg.defaultLogConfig // sanchoCfg;
       nodeConfigLegacy = cardanoLib.defaultLogConfigLegacy // sanchoCfg;
 
+      peerSnapshot = fromJSON (readFile "${flake.self}/docs/environments-tmp/sanchonet/peer-snapshot.json");
+
       useLedgerAfterSlot = 33695977;
     };
   in {
@@ -77,6 +82,8 @@ flake: {
     # appropriate options and services.
     cardano-parts.perNode.lib.cardanoLib.environments = environments;
     services = {
+      cardano-node.useLegacyTracing = true;
+
       cardano-tracer.environments = environments;
 
       blockperf.enable = false;

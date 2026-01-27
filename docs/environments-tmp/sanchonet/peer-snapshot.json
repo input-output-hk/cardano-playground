@@ -1,0 +1,116 @@
+{
+  "bigLedgerPools": [
+    {
+      "accumulatedStake": 0.12402957836845932,
+      "relativeStake": 0.12402957836845932,
+      "relays": [
+        {
+          "domain": "relay1.sanchonet.pool.cardanofoundation.org",
+          "port": 30004
+        },
+        {
+          "domain": "relay2.sanchonet.pool.cardanofoundation.org",
+          "port": 30004
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.2451306451209265,
+      "relativeStake": 0.12110106675246718,
+      "relays": [
+        {
+          "domain": "sancho-testnet.able-pool.io",
+          "port": 6002
+        },
+        {
+          "address": "202.61.236.233",
+          "port": 6002
+        },
+        {
+          "address": "64.23.159.5",
+          "port": 4000
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.36163109370712954,
+      "relativeStake": 0.11650044858620305,
+      "relays": [
+        {
+          "domain": "sancho-testnet.able-pool.io",
+          "port": 6002
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.47378549391309716,
+      "relativeStake": 0.11215440020596762,
+      "relays": [
+        {
+          "domain": "sanchonet-node.play.dev.cardano.org",
+          "port": 3001
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.5835294836311554,
+      "relativeStake": 0.1097439897180583,
+      "relays": [
+        {
+          "domain": "sanchorelay1.intertreecryptoconsultants.com",
+          "port": 6002
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.6922992315978829,
+      "relativeStake": 0.1087697479667274,
+      "relays": [
+        {
+          "address": "64.23.159.5",
+          "port": 4000
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.7939594061912348,
+      "relativeStake": 0.10166017459335197,
+      "relays": [
+        {
+          "domain": "test.stakepool.at",
+          "port": 3001
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.8837985405381761,
+      "relativeStake": 0.08983913434694128,
+      "relays": [
+        {
+          "domain": "relay.hephy.io",
+          "port": 9000
+        }
+      ]
+    },
+    {
+      "accumulatedStake": 0.9260825744161483,
+      "relativeStake": 0.0422840338779721,
+      "relays": [
+        {
+          "domain": "node1.cardano.gratis",
+          "port": 6401
+        },
+        {
+          "domain": "node2.cardano.gratis",
+          "port": 6402
+        },
+        {
+          "domain": "mbb3.cardano.gratis",
+          "port": 6403
+        }
+      ]
+    }
+  ],
+  "slotNo": 82754119,
+  "version": 1
+}
