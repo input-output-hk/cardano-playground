@@ -164,7 +164,10 @@ in
             };
             services.cardano-node = {
               withUtxoHdLsm = true;
-              lsmDatabasePath = "/ephemeral/cardano-node/";
+
+              # Try relative paths, important for pre-canned use cases, like Daedalus
+              lsmDatabasePath = "lsm/";
+              # lsmDatabasePath = "/ephemeral/cardano-node/";
             };
           }
 
@@ -731,6 +734,8 @@ in
         };
       };
 
+      #deployIpv4 = {name, ...}: {deployment.targetHost = "${name}.ipv4";};
+      #
       # disableP2p = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -955,7 +960,7 @@ in
       preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt prevMod];};
 
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod legacyT];};
       preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
       preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
       # ---------------------------------------------------------------------------------------------------------
@@ -998,7 +1003,7 @@ in
       # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre legacyT (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
