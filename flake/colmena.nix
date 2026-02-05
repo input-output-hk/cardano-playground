@@ -358,6 +358,15 @@ in
           }
 
           pre
+          bperfNoPublish
+        ];
+      };
+
+      sanchoDb = {
+        imports = [
+          dbsync-pre
+          smash
+          ({config, ...}: {services.smash.environment = config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet;})
         ];
       };
 
@@ -1028,6 +1037,8 @@ in
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre bp nixosModules.sanchonet];};
       sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel nixosModules.sanchonet];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") sanchoDb nixosModules.sanchonet];};
+
       # ---------------------------------------------------------------------------------------------------------
     };
 
