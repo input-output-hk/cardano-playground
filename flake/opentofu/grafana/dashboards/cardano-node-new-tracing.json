@@ -2841,8 +2841,8 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "txsMempoolTimeoutHard{environment=\"$environment\",instance=~\"$instance_name\"}",
-          "legendFormat": "__auto",
+          "expr": "cardano_node_metrics_txsMempoolTimeoutHard_counter{environment=\"$environment\",instance=~\"$instance_name\"}",
+          "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -2933,8 +2933,8 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "txsMempoolTimeoutSoft{environment=\"$environment\",instance=~\"$instance_name\"}",
-          "legendFormat": "__auto",
+          "expr": "cardano_node_metrics_txsMempoolTimeoutSoft_counter{environment=\"$environment\",instance=~\"$instance_name\"}",
+          "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -3250,5 +3250,5 @@
   "timezone": "utc",
   "title": "Cardano Node: Application metrics (New Tracing)",
   "uid": "Oe0reiHea",
-  "version": 20
+  "version": 21
 }
