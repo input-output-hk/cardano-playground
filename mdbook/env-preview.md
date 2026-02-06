@@ -27,7 +27,7 @@ Informed: Cardano Core Tribe, COO, Director of Engineering
 
 #### Configuration files
 
-Compatible with cardano-node release [10.5.3](https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.3)
+Compatible with cardano-node release [10.5.4](https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.4)
 
 ```
 NOTE:
@@ -44,6 +44,7 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 - [Submit API Config](environments/preview/submit-api-config.json)
 - [Node Topology](environments/preview/topology.json)
 - [Peer Snapshot](environments/preview/peer-snapshot.json)
+- [Checkpoints](environments/preview/checkpoints.json)
 - [Byron Genesis](environments/preview/byron-genesis.json)
 - [Shelley Genesis](environments/preview/shelley-genesis.json)
 - [Alonzo Genesis](environments/preview/alonzo-genesis.json)
