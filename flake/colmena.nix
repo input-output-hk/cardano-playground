@@ -695,53 +695,54 @@ in
         };
       };
 
-      praosMode = {
-        services.cardano-node = {
-          extraNodeConfig.ConsensusMode = "PraosMode";
-          peerSnapshotFile = null;
-        };
-      };
+      # praosMode = {
+      #   services.cardano-node = {
+      #     extraNodeConfig.ConsensusMode = "PraosMode";
+      #     peerSnapshotFile = null;
+      #   };
+      # };
 
-      prevMod = {
-        services.cardano-node-topology.extraProducers = [
-          {
-            address = "preview1.volcyada.com";
-            port = 6004;
-          }
-          {
-            address = "tn-preview.psilobyte.io";
-            port = 4201;
-          }
-          # BBHMN
-          {
-            address = "74.122.122.121";
-            port = 6200;
-          }
-          {
-            address = "relay01.preview.junglestakepool.com";
-            port = 3001;
-          }
-          {
-            address = "hida.duckdns.org";
-            port = 3000;
-          }
-        ];
-        services.cardano-node = {
-          extraNodeConfig.ConsensusMode = "PraosMode";
-          peerSnapshotFile = null;
-          bootstrapPeers = [
-            {
-              address = "preview1.volcyada.com";
-              port = 6004;
-            }
-            {
-              address = "preview-node.play.dev.cardano.org";
-              port = 3001;
-            }
-          ];
-          useLedgerAfterSlot = mkForce 97042000;
-        };
-      };
+      # Preview community temp topology tie in plus praos fallback
+      # prevMod = {
+      #   services.cardano-node-topology.extraProducers = [
+      #     {
+      #       address = "preview1.volcyada.com";
+      #       port = 6004;
+      #     }
+      #     {
+      #       address = "tn-preview.psilobyte.io";
+      #       port = 4201;
+      #     }
+      #     # BBHMN
+      #     {
+      #       address = "74.122.122.121";
+      #       port = 6200;
+      #     }
+      #     {
+      #       address = "relay01.preview.junglestakepool.com";
+      #       port = 3001;
+      #     }
+      #     {
+      #       address = "hida.duckdns.org";
+      #       port = 3000;
+      #     }
+      #   ];
+      #   services.cardano-node = {
+      #     extraNodeConfig.ConsensusMode = "PraosMode";
+      #     peerSnapshotFile = null;
+      #     bootstrapPeers = [
+      #       {
+      #         address = "preview1.volcyada.com";
+      #         port = 6004;
+      #       }
+      #       {
+      #         address = "preview-node.play.dev.cardano.org";
+      #         port = 3001;
+      #       }
+      #     ];
+      #     useLedgerAfterSlot = mkForce 97042000;
+      #   };
+      # };
 
       #deployIpv4 = {name, ...}: {deployment.targetHost = "${name}.ipv4";};
       #
@@ -956,22 +957,22 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1") prevMod];};
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig prevMod];};
-      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt prevMod];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash praosMode];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet praosMode];};
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lsm-test metrics-scraper noBPerf];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig prevMod];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1") prevMod];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt prevMod];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt];};
 
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod legacyT];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
