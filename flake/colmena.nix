@@ -695,12 +695,13 @@ in
         };
       };
 
-      # praosMode = {
-      #   services.cardano-node = {
-      #     extraNodeConfig.ConsensusMode = "PraosMode";
-      #     peerSnapshotFile = null;
-      #   };
-      # };
+      praosMode = {
+        services.cardano-node = {
+          extraNodeConfig.ConsensusMode = "PraosMode";
+          peerSnapshotFile = null;
+          useLedgerAfterSlot = -1;
+        };
+      };
 
       # Preview community temp topology tie in plus praos fallback
       # prevMod = {
@@ -1014,7 +1015,7 @@ in
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
 
       # Temporarily remove ram8gib to see if soft mempool timeouts stop
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
@@ -1038,9 +1039,9 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre bp nixosModules.sanchonet];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel nixosModules.sanchonet];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") sanchoDb nixosModules.sanchonet];};
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre bp nixosModules.sanchonet praosMode];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel nixosModules.sanchonet praosMode];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") sanchoDb nixosModules.sanchonet praosMode];};
 
       # ---------------------------------------------------------------------------------------------------------
     };

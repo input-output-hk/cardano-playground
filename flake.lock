@@ -739,11 +739,11 @@
         "utils": "utils_3"
       },
       "locked": {
-        "lastModified": 1770075120,
-        "narHash": "sha256-cm/oya6DZhtevgZuDbMtHRcA3AN6F74je6AcT15qosQ=",
+        "lastModified": 1770351395,
+        "narHash": "sha256-bmGtS9EEW/hw8/cKg9l5XCdAZXo9owCZ0Fk+r7VFgLo=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "23bb47705ebd98d420d87ebf4c81ac7f31d96fed",
+        "rev": "3ba615046cd11e8c287f51d61a1418b982fe4e64",
         "type": "github"
       },
       "original": {
@@ -916,11 +916,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1770341442,
-        "narHash": "sha256-WvyHZXHriaJFHcBB9Oj1LrY2b1LPW5B41jyilOZYISA=",
+        "lastModified": 1770659541,
+        "narHash": "sha256-ZQh5AF1hW9b7bnaCXchn7Dwkv57IfNzq5VaGtXyMU0Y=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "0632593238b00ef2a094f598887b6f324e2af9af",
+        "rev": "9c44f190d15ade69ebd1209ead42ef279c3ae235",
         "type": "github"
       },
       "original": {
