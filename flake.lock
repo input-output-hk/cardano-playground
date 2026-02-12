@@ -580,7 +580,7 @@
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2026-02-12",
+        "ref": "next-2026-02-13",
         "repo": "cardano-parts",
         "type": "github"
       }
