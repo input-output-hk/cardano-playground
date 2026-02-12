@@ -116,31 +116,6 @@ in
         ];
       };
 
-      # node-10-5-4-rc = {
-      #   imports = [
-      #     # Base cardano-node and tracer service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-      #     # Config for cardano-node group deployments
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     bperfNoPublish
-      #     {
-      #       cardano-parts.perNode = {
-      #         pkgs = {
-      #           inherit
-      #             (inputs.cardano-node-10-5-4.packages.x86_64-linux)
-      #             cardano-cli
-      #             cardano-node
-      #             cardano-submit-api
-      #             cardano-tracer
-      #             ;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
-
       node-lsm-test = {
         imports = [
           # Base cardano-node service
