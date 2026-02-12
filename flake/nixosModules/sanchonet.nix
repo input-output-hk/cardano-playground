@@ -21,6 +21,7 @@ flake: {
       "CheckpointsHash"
       "ConsensusMode"
       "ConwayGenesisHash"
+      "DijkstraGenesisHash"
       "ExperimentalHardForksEnabled"
       "ExperimentalProtocolsEnabled"
       "LastKnownBlockVersion-Alt"
@@ -29,6 +30,10 @@ flake: {
       "LedgerDB"
       "MaxKnownMajorProtocolVersion"
       "MinNodeVersion"
+
+      # PeerSharing is auto-configured by node per forge role as of 10.6.x
+      # "PeerSharing"
+
       "Protocol"
       "RequiresNetworkMagic"
       "ShelleyGenesisHash"
@@ -45,6 +50,7 @@ flake: {
       ByronGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/byron-genesis.json";
       ConwayGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/conway-genesis.json";
       ShelleyGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/shelley-genesis.json";
+      DijkstraGenesisFile = "${flake.self}/docs/environments-tmp/sanchonet/dijkstra-genesis.json";
     };
 
     # Generate the base sanchonet config, stripped of non-essential params
@@ -53,6 +59,8 @@ flake: {
       (filterAttrs (n: _: elem n reqAttrs) (fromJSON
           (readFile "${flake.self}/docs/environments-tmp/sanchonet/config.json")))
       // absGenesisPaths;
+
+    nodeConfig = cardanoLibNg.defaultLogConfig // sanchoCfg;
 
     # Make an custom sanchonet "environments" attribute consumed by upstream node,
     # tracer, etc, services.
@@ -67,8 +75,12 @@ flake: {
 
       # Generate both a nodeConfig and nodeConfigLegacy for new or legacy
       # tracing system.
-      nodeConfig = cardanoLibNg.defaultLogConfig // sanchoCfg;
+      inherit nodeConfig;
       nodeConfigLegacy = cardanoLib.defaultLogConfigLegacy // sanchoCfg;
+
+      dbSyncConfig = cardanoLibNg.mkExplorerConfig "sanchonet" nodeConfig // cardanoLibNg.defaultExplorerLogConfig;
+
+      peerSnapshot = fromJSON (readFile "${flake.self}/docs/environments-tmp/sanchonet/peer-snapshot.json");
 
       useLedgerAfterSlot = 33695977;
     };
@@ -76,11 +88,7 @@ flake: {
     # Provide the new custom sanchonet enivronments attr set to the
     # appropriate options and services.
     cardano-parts.perNode.lib.cardanoLib.environments = environments;
-    services = {
-      cardano-tracer.environments = environments;
-
-      blockperf.enable = false;
-    };
+    services.cardano-tracer.environments = environments;
 
     # If the legacy tracing system is preferred:
     # services.cardano-node.useLegacyTracing = true;

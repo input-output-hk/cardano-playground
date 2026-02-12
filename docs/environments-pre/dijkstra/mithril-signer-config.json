@@ -1,0 +1,6 @@
+{
+  "network": "dijkstra",
+  "network_magic": 6,
+  "run_interval": 60000,
+  "store_retention_limit": 5
+}

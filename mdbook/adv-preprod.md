@@ -3,11 +3,11 @@
 Users wanting to test a cardano-node pre-release version on the pre-production
 environment may obtain compatible configuration files below.
 
-The latest version available is cardano-node pre-release `10.6.1`.
+The latest version available is cardano-node pre-release `10.6.2`.
 
 #### Configuration files
 
-Compatible with cardano-node pre-release [10.6.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.1)
+Compatible with cardano-node pre-release [10.6.2](https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.2)
 
 ```
 NOTE:

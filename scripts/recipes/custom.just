@@ -70,8 +70,8 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   set -euo pipefail
   {{checkEnvWithoutOverride}}
 
-  if ! [[ "$ENV" =~ ^preprod$|^preview$|^demo$ ]]; then
-    echo "Error: only node environments for preprod and preview and demo are supported"
+  if ! [[ "$ENV" =~ ^preprod$|^preview$|^dijkstra$|^demo$ ]]; then
+    echo "Error: only node environments for preprod, preview, dijkstra and demo are supported"
     exit 1
   fi
 
@@ -107,6 +107,8 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     CARDANO_CLI="cardano-cli-ng"
   elif [[ "$ENV" =~ ^preprod$|^preview$ ]]; then
     CARDANO_CLI="cardano-cli"
+  else
+    CARDANO_CLI="cardano-cli-ng"
   fi
 
   PROMPT() {
@@ -219,8 +221,8 @@ kes-rotate ENV CURRENT_KES_PERIOD:
 
   [ -n "${DEBUG:-}" ] && set -x
 
-  if ! [[ "{{ENV}}" =~ preprod$|preview$ ]]; then
-    echo "Error: only node environments for preprod and preview are supported for kes-rotate recipe"
+  if ! [[ "{{ENV}}" =~ ^preprod$|^preview$|^dijkstra$ ]]; then
+    echo "Error: only node environments for preprod, preview and dijkstra are supported for kes-rotate recipe"
     exit 1
   fi
 

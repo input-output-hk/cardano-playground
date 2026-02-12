@@ -1,5 +1,4 @@
 flake @ {
-  moduleWithSystem,
   inputs,
   config,
   lib,
@@ -117,31 +116,38 @@ in
         ];
       };
 
-      # node-lsm-test = {
-      #   imports = [
-      #     # Base cardano-node service
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+      node-lsm-test = {
+        imports = [
+          # Base cardano-node service
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          "${inputs.cardano-node-lsm-service-test}/nix/nixos/cardano-node-service.nix"
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
 
-      #     # Config for cardano-node group deployments
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     bperfNoPublish
-      #     {
-      #       cardano-parts.perNode = {
-      #         pkgs = {
-      #           inherit
-      #             (inputs.cardano-node-lsm-test.packages.x86_64-linux)
-      #             cardano-cli
-      #             cardano-node
-      #             cardano-submit-api
-      #             cardano-tracer
-      #             ;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+          {
+            cardano-parts.perNode = {
+              pkgs = {
+                cardano-cli = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-cli;
+                cardano-node = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-node;
+                cardano-submit-api = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-submit-api;
+                cardano-tracer = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-tracer;
+              };
+            };
+            services.cardano-node = {
+              withUtxoHdLsm = true;
+
+              # Try relative paths, important for pre-canned use cases, like Daedalus
+              lsmDatabasePath = "lsm/";
+              # lsmDatabasePath = "/ephemeral/cardano-node/";
+            };
+          }
+
+          pre
+        ];
+      };
 
       # Include blockPerf by default with no upstream push to CF -- only push prom metrics
       bperfNoPublish = {
@@ -236,6 +242,7 @@ in
       # Note: not including a topology profile will default to edge topology if module profile-cardano-node-group is imported
       topoBp = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "bp";};}];};
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
+      topoEdge = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "edge";};}];};
 
       # Roles
       bp = {
@@ -270,64 +277,32 @@ in
         ];
       };
 
-      # Dbsync only pre-release, not any other pre-release components that `pre` module would add
-      dbsync-pre-only = {
+      dbsync-pre = {
         imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service-ng
           inputs.cardano-parts.nixosModules.profile-cardano-db-sync
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
-          (moduleWithSystem ({
-            system,
-            config,
-          }: _: {
-            cardano-parts.perNode = {
-              # In this case, we want the default cardanoLib since node is just release versioned in this case
-              # lib.cardanoLib = flake.config.flake.cardano-parts.pkgs.special.cardanoLib "x86_64-linux";
-              pkgs = {
-                cardano-db-sync = config.cardano-parts.pkgs.cardano-db-sync-ng;
-                cardano-db-sync-pkgs = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-pkgs-ng system;
-                cardano-db-tool = config.cardano-parts.pkgs.cardano-db-tool-ng;
-                cardano-smash = config.cardano-parts.pkgs.cardano-smash-ng;
-              };
-              meta = {
-                cardano-db-sync-service = flake.config.flake.cardano-parts.pkgs.special.cardano-db-sync-service-ng;
-                cardano-smash-service = flake.config.flake.cardano-parts.pkgs.special.cardano-smash-service-ng;
-              };
-            };
+          {
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+          }
 
-            services = {
-              cardano-node.shareNodeSocket = true;
-              cardano-postgres.enablePsqlrc = true;
-
-              # Fast deployment w/o ledger replay wait
-              cardano-db-sync.logConfig.insert_options.ledger = "disable";
-            };
-          }))
+          pre
           bperfNoPublish
         ];
       };
 
-      # dbsync-pre = {
-      #   imports = [
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service-ng
-      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
-      #     {
-      #       services.cardano-node.shareNodeSocket = true;
-      #       services.cardano-postgres.enablePsqlrc = true;
-      #     }
-
-      #     pre
-      #   ];
-      # };
+      sanchoDb = {
+        imports = [
+          dbsync-pre
+          smash
+          ({config, ...}: {services.smash.environment = config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet;})
+        ];
+      };
 
       # ogmios = {
       #   imports = [
@@ -431,6 +406,7 @@ in
 
       preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
+      dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
 
       metadata = {
         imports = [
@@ -603,6 +579,8 @@ in
         };
       };
 
+      noBPerf = {services.blockperf.enable = false;};
+
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
 
       bkCfg = queue: {
@@ -655,31 +633,16 @@ in
         services.cardano-node = {
           extraNodeConfig.ConsensusMode = "PraosMode";
           peerSnapshotFile = null;
+          useLedgerAfterSlot = -1;
         };
       };
 
-      prevMod = {
+      # Preview community temp topology tie in plus praos fallback
+      sanchoMod = {
         services.cardano-node-topology.extraProducers = [
           {
-            address = "preview1.volcyada.com";
-            port = 6004;
-          }
-          {
-            address = "tn-preview.psilobyte.io";
-            port = 4201;
-          }
-          # BBHMN
-          {
-            address = "74.122.122.121";
-            port = 6200;
-          }
-          {
-            address = "relay01.preview.junglestakepool.com";
-            port = 3001;
-          }
-          {
-            address = "hida.duckdns.org";
-            port = 3000;
+            address = "sanchorelay1.intertreecryptoconsultants.com";
+            port = 6002;
           }
         ];
         services.cardano-node = {
@@ -687,18 +650,16 @@ in
           peerSnapshotFile = null;
           bootstrapPeers = [
             {
-              address = "preview1.volcyada.com";
-              port = 6004;
-            }
-            {
-              address = "preview-node.play.dev.cardano.org";
-              port = 3001;
+              address = "sanchorelay1.intertreecryptoconsultants.com";
+              port = 6002;
             }
           ];
-          useLedgerAfterSlot = mkForce 97042000;
+          useLedgerAfterSlot = -1;
         };
       };
 
+      #deployIpv4 = {name, ...}: {deployment.targetHost = "${name}.ipv4";};
+      #
       # disableP2p = {
       #   services.cardano-node = {
       #     useNewTopology = false;
@@ -843,6 +804,11 @@ in
       #
       # gcLogging = {services.cardano-node.extraNodeConfig.options.mapBackends."cardano.node.resources" = ["EKGViewBK" "KatipBK"];};
       #
+      # Reminders:
+      #
+      # Dbsync only pre-release, not any other pre-release components that `pre` module would add
+      # tig -Sdbsync-pre-only
+      #
       inherit (nixosModules) metrics-scraper;
     in {
       meta = {
@@ -893,7 +859,7 @@ in
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node hiConn rel preprodRelMig tcpTxOpt];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node bp legacyT mithrilRelease (declMRel "preprod2-rel-b-1")];};
       preprod2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node hiConn rel legacyT preprodRelMig];};
@@ -910,24 +876,42 @@ in
       # Preview, one-third on release tag, two-thirds on pre-release tag
       preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node bp mithrilRelease (declMRel "preview1-rel-a-1")];};
       # preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel maxVerbosity previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
-      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1") prevMod];};
-      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig prevMod];};
-      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt prevMod];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash praosMode];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet praosMode];};
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre metrics-scraper praosMode];};
-
-      # -----------------------
+      preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig mithrilRelay (declMSigner "preview1-bp-a-1")];};
+      preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig];};
+      preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node hiConn rel previewRelMig tcpTxOpt];};
+      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lsm-test metrics-scraper noBPerf];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig prevMod];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1") prevMod];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt prevMod];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel previewRelMig tcpTxOpt];};
 
       preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig prevMod];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt prevMod];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre hiConn rel previewRelMig mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      # ---------------------------------------------------------------------------------------------------------
+
+      # ---------------------------------------------------------------------------------------------------------
+      # Dijkstra, all on pre-release tag
+      dijkstra1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre bp noBPerf];};
+      dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel noBPerf];};
+      dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel noBPerf];};
+      dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel noBPerf];};
+      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-pre smash];};
+      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet dijkstraFaucet noBPerf];};
+
+      dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp noBPerf];};
+      dijkstra2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel noBPerf];};
+      dijkstra2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel noBPerf];};
+      dijkstra2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel noBPerf];};
+
+      dijkstra3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre bp noBPerf];};
+      dijkstra3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel noBPerf];};
+      dijkstra3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel noBPerf];};
+      dijkstra3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel noBPerf];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -936,8 +920,8 @@ in
       # Rel-a-{2,3} lmdb and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre-only disableAlertCount];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
 
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001) bp gcLogging];};
       # mainnet1-rel-a-1 = {imports = [eu-central-1 m5a-2xlarge (ebs 300) (group "mainnet1") node nodeGhc963 (openFwTcp 3001)];};
@@ -947,8 +931,10 @@ in
       # Also keep the lmdb and extra debug mainnet node in stopped state for now
       # mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 300) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre legacyT (openFwTcp 3001)];};
+
+      # Temporarily remove ram8gib to see if soft mempool timeouts stop
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -971,8 +957,10 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
-      sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node bp nixosModules.sanchonet];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node rel nixosModules.sanchonet];};
+      sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre bp nixosModules.sanchonet praosMode noBPerf];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel nixosModules.sanchonet sanchoMod noBPerf];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") sanchoDb nixosModules.sanchonet topoEdge sanchoMod noBPerf];};
+
       # ---------------------------------------------------------------------------------------------------------
     };
 

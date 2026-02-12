@@ -20,6 +20,12 @@ keys:
   - &preview2-bp-b-1 age1jcfeznfkxx2rmeej9f4frvnjqkxdpd9kg56l57nmtamq53802fjq7x2y69
   - &preview3-bp-c-1 age13tc9mjgu7hwfxsa84hq0tcz7eeg9m6f0fmg8gzxwme30pfxf7g4sfk2y0k
 
+  # Dijkstra
+  - &dijkstra1-bp-a-1 age194qdyth7xx3wmagha9la33dtnmj9h3lht269n9muqlvjp7l9dqhs9qhzwp
+  - &dijkstra1-faucet-a-1 age1y6jyxkr9hv8ly7yd729yw80x2ws02uvp9xcfk9vcmuuvxczadyrq6uwckz
+  - &dijkstra2-bp-b-1 age1t9as7exjuulvemglr0hl7nv32l8n6sj6ncgl60tdf87tqsmc59kqqnuhu0
+  - &dijkstra3-bp-c-1 age19mn5wwslzv0cm5m6tctn308ycxvjgt5ky07ar8suujc85tgj2p4q9m56d4
+
   # Sanchonet
   - &sanchonet1-bp-a-1 age1sxhjqwnuf5duczjv5fwle492jpm7fhwunkwhp6agle6y75yqdeas586aaj
 
@@ -104,6 +110,31 @@ creation_rules:
     - age:
       - *sre
       - *preview3-bp-c-1
+
+  # Dijkstra specific
+  - path_regex: secrets/groups/dijkstra1/deploy/dijkstra1-bp-a-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *dijkstra1-bp-a-1
+
+  - path_regex: secrets/groups/dijkstra1/deploy/.*faucet.*$
+    key_groups:
+    - age:
+      - *sre
+      - *dijkstra1-faucet-a-1
+
+  - path_regex: secrets/groups/dijkstra2/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *dijkstra2-bp-b-1
+
+  - path_regex: secrets/groups/dijkstra3/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *dijkstra3-bp-c-1
 
   # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*$

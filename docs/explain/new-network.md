@@ -42,7 +42,7 @@ ERA_CMD="alonzo" \
 nix run .#job-gen-custom-node-config
 ```
 
-Create stake pools with each belonging to a seperate pool group
+Create stake pools with each belonging to a separate pool group
 ```bash
 # In the cardano-playground Justfile, the start-demo recipe
 # creates multiple pools under a single group.  This approach
@@ -618,3 +618,9 @@ registered and the genesis bootstrap pool retired.
 
 An example of this procedure is provided in the `Justfile` recipes with
 `just start-demo-ng`.
+
+## New Network Next Gen Spin Up
+
+An outline for spinning up a cluster directly into Conway using a single
+genesis embedded bootstrap pool followed by 3 backbone pools is detailed in
+`docs/historical/dijkstra-spin-up.sh`.
