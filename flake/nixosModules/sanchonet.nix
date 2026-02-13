@@ -1,10 +1,5 @@
 flake: {
-  flake.nixosModules.sanchonet = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
+  flake.nixosModules.sanchonet = {lib, ...}: let
     inherit (builtins) elem fromJSON readFile;
     inherit (lib) filterAttrs;
 

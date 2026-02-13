@@ -1,4 +1,4 @@
-flake @ {
+{
   inputs,
   config,
   lib,
@@ -545,7 +545,12 @@ in
 
             CHANGE_ROUTE "-4" "$DEFAULT_ROUTE"
 
-            DEFAULT_ROUTE=$(ip -6 route list default)
+            # Default ipv6 route output may look like:
+            #   default via fe80::8c2:6ff:feb3:c2d dev ens5 proto ra metric 1002 expires 1795sec pref medium
+            #
+            # The `1795sec` arg will not be accepted in a route change
+            # statement so must be filtered.
+            DEFAULT_ROUTE=$(ip -6 route list default | sed 's/ expires [0-9]\+sec//')
             if [ "$DEFAULT_ROUTE" = "" ]; then
               echo "The -6 default route is not set, skipping."
             else
@@ -933,7 +938,7 @@ in
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
 
       # Temporarily remove ram8gib to see if soft mempool timeouts stop
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb (openFwTcp 3001)];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb ram8gib legacyT (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
