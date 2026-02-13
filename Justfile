@@ -177,7 +177,7 @@ checkSshConfig := '''
 
     let inconsistent = (
       $comparisons
-      | filter {|comp| $comp.result | is-not-empty }
+      | where {|comp| $comp.result | is-not-empty}
     )
 
     $inconsistent | each {|comp|
