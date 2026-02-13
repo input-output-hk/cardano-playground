@@ -1,5 +1,14 @@
-{self, ...}: {
-  flake.nixosModules.common = {config, ...}: {
+flake @ {self, ...}: {
+  flake.nixosModules.common = {
+    config,
+    lib,
+    ...
+  }: let
+    inherit (builtins) toJSON;
+    inherit (lib) escapeShellArg;
+
+    inherit (flake.config.flake.cardano-parts.cluster.infra.generic) project;
+  in {
     programs.auth-keys-hub.github = {
       teams = ["input-output-hk/node-sre"];
 
@@ -37,5 +46,11 @@
       owner = config.programs.auth-keys-hub.user;
       inherit (config.programs.auth-keys-hub) group;
     };
+
+    system.systemBuilderCommands = ''
+      printf '%s' ${
+        escapeShellArg (toJSON ((removeAttrs self.sourceInfo ["outPath"]) // {outPathStr = self.sourceInfo.outPath;}))
+      } > $out/source-info-${project}.json
+    '';
   };
 }
