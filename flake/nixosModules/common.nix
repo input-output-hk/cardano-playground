@@ -48,6 +48,47 @@ flake @ {self, ...}: {
       inherit (config.programs.auth-keys-hub) group;
     };
 
+    services.alloy.extraAlloyConfig = ''
+      loki.write "default" {
+        endpoint {
+          url = "https://playground.monitoring.aws.iohkdev.io/loki/api/v1/push"
+          basic_auth {
+            username = local.file.remote_write_username.content
+            password = local.file.remote_write_password.content
+          }
+        }
+      }
+
+      loki.source.journal "default" {
+        relabel_rules = discovery.relabel.journal.rules
+        forward_to    = [loki.write.default.receiver]
+        labels        = {
+          job = "systemd-journal",
+          group = "${config.cardano-parts.cluster.group.groupName}",
+          environment = "${config.cardano-parts.cluster.group.meta.environmentName}",
+        }
+      }
+
+      discovery.relabel "journal" {
+        targets = []
+
+        rule {
+          source_labels = ["__journal__hostname"]
+          target_label  = "instance"
+        }
+
+        rule {
+          source_labels = ["__journal__systemd_unit"]
+          target_label  = "systemd_unit"
+        }
+
+        rule {
+          source_labels = ["__journal_syslog_identifier"]
+          target_label  = "syslog_identifier"
+        }
+      }
+    '';
+
     system.systemBuilderCommands = ''
       printf '%s' ${
         escapeShellArg (toJSON ((removeAttrs self.sourceInfo ["outPath"]) // {outPathStr = self.sourceInfo.outPath;}))
