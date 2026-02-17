@@ -481,7 +481,7 @@ list-machines:
     let sshJson = (safe-run { ^scj dump /dev/stdout -c .ssh_config } "scj failed.")
 
     let baseTable = ($nixosJson | from json | each { |it| default-row $it })
-    let sshTable = ($sshJson | from json | where {|e| $e | get -i HostName | is-not-empty } | reject -i ProxyCommand)
+    let sshTable = ($sshJson | from json | where {|e| $e | get -o HostName | is-not-empty } | reject -o ProxyCommand)
 
     let mergeTable = (
       $sshTable | reduce --fold $baseTable { |it, acc|
@@ -1099,8 +1099,8 @@ update-ips:
   )
 
   let ipTable = ($instanceTable
-    | insert private_ipv4 {|row| $eipTable | where name == $row.name | get --ignore-errors 0.private_ipv4}
-    | insert public_ipv4 {|row| $eipTable | where name == $row.name | get --ignore-errors 0.public_ipv4}
+    | insert private_ipv4 {|row| $eipTable | where name == $row.name | get -o 0.private_ipv4}
+    | insert public_ipv4 {|row| $eipTable | where name == $row.name | get -o 0.public_ipv4}
   )
 
   ($ipTable
