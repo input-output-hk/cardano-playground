@@ -4,6 +4,16 @@
   "GenesisHash": "d4b8de7a11d929a323373cbab6c1a9bdc931beffff11db111cf9d57356ee1937",
   "PrometheusPort": 8080,
   "RequiresNetworkMagic": "RequiresMagic",
+  "TraceOptions": {
+    "": {
+      "backends": [
+        "EKGBackend",
+        "Stdout HumanFormatColoured"
+      ],
+      "detail": "DNormal",
+      "severity": "Info"
+    }
+  },
   "defaultBackends": [
     "KatipBK"
   ],
