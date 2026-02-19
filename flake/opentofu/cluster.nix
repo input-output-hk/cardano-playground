@@ -115,7 +115,7 @@ with lib; let
                 {
                   name = "${nodeName}-${md5 dns}-AAAA";
                   value = {
-                    count = "\${length(aws_instance.${nodeName}[0].ipv6_addresses) > 0 ? 1 : 0}";
+                    count = "\${data.aws_vpc.${underscore nodes.${nodeName}.aws.region}.ipv6_cidr_block != \"\" ? 1 : 0}";
                     zone_id = "\${data.aws_route53_zone.selected.zone_id}";
                     name = dns;
                     type = "AAAA";
