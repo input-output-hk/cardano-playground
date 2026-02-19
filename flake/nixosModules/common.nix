@@ -9,6 +9,11 @@ flake @ {self, ...}: {
 
     inherit (flake.config.flake.cardano-parts.cluster.infra.generic) project;
   in {
+    imports = [
+      # The ami module needs to be imported when we are building our own amis
+      flake.config.flake.nixosModules.ami
+    ];
+
     programs.auth-keys-hub.github = {
       teams = ["input-output-hk/node-sre"];
 

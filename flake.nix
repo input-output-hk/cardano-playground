@@ -8,6 +8,14 @@
     cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-02-13";
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2026-02-13";
 
+    amis = {
+      url = "github:NixOS/amis";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "cardano-parts/treefmt-nix";
+      };
+    };
+
     # Local pins for additional customization:
     cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-10.6.1";
     cardano-node-lsm-service-test = {

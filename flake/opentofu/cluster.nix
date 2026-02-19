@@ -204,23 +204,22 @@ in {
           aws_route53_zone.selected.name = "${cluster.domain}.";
 
           aws_ami = mapRegions ({region, ...}: {
-            "nixos_${system}_${region}" = {
-              owners = ["427812963091"];
-              most_recent = true;
+            "nixos_${system}_${underscore region}" = {
               provider = "aws.${region}";
-
+              most_recent = true;
+              owners = [infra.aws.orgId];
               filter = [
                 {
-                  # If future stock ami nixos images don't properly install the
-                  # bootstrap key like at least a few recent 25.05 ami nixos
-                  # images appear to have done, this ami image is known good:
-                  # ami-039ad15344c5183b4 (nixos 24.11) in eu-central-1
                   name = "name";
-                  values = ["nixos/25.05*"];
+                  values = ["NixOS/*"];
                 }
                 {
-                  name = "architecture";
-                  values = [(builtins.head (splitString "-" system))];
+                  name = "tag:system";
+                  values = [system];
+                }
+                {
+                  name = "tag:version";
+                  values = ["25.11.*"];
                 }
               ];
             };
@@ -405,7 +404,10 @@ in {
                 inherit (node.aws.instance) count instance_type;
 
                 provider = awsProviderFor region;
-                ami = "\${data.aws_ami.nixos_${system}_${underscore region}.id}";
+                ami =
+                  node.aws.instance.ami or "\${data.aws_ami.nixos_${
+                    with node.nixpkgs; crossSystem.system or localSystem.system
+                  }_${underscore region}.id}";
                 iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
 
                 monitoring = true;

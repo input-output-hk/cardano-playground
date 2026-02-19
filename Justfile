@@ -979,7 +979,7 @@ template-patch FILE:
   patch "{{FILE}}" < <(echo "$PATCH_FILE")
   git add -p "{{FILE}}"
 
-# Run tofu for cluster or grafana workspace
+# Run tofu for bootstrap, cluster or grafana workspace
 tofu *ARGS:
   #!/usr/bin/env bash
   set -euo pipefail
@@ -989,7 +989,7 @@ tofu *ARGS:
   SOPS=("sops" "--input-type" "binary" "--output-type" "binary" "--decrypt")
 
   read -r -a ARGS <<< "{{ARGS}}"
-  if [[ ${ARGS[0]} =~ cluster|grafana ]]; then
+  if [[ ${ARGS[0]} =~ bootstrap|cluster|grafana ]]; then
     WORKSPACE="${ARGS[0]}"
     ARGS=("${ARGS[@]:1}")
   else
