@@ -851,6 +851,7 @@ in
         inputs.cardano-parts.nixosModules.profile-basic
         inputs.cardano-parts.nixosModules.profile-common
         inputs.cardano-parts.nixosModules.profile-grafana-alloy
+        nixosModules.ami
         nixosModules.common
         nixosModules.ip-module-check
       ];
