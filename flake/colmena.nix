@@ -586,6 +586,34 @@ in
 
       noBPerf = {services.blockperf.enable = false;};
 
+      jsonLogging = {config, ...}: {
+        services = {
+          cardano-node.extraNodeConfig = {
+            TraceOptions = {
+              "" = {
+                severity = "Notice";
+                backends = [
+                  "EKGBackend"
+                  "Forwarder"
+                  "Stdout MachineFormat"
+                  "PrometheusSimple suffix 127.0.0.1 12798"
+                ];
+              };
+            };
+          };
+
+          cardano-tracer = mkIf (!config.services.cardano-node.useLegacyTracing) {
+            logging = [
+              {
+                logFormat = "ForMachine";
+                logMode = "FileMode";
+                logRoot = "/var/lib/cardano-tracer";
+              }
+            ];
+          };
+        };
+      };
+
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
 
       bkCfg = queue: {
@@ -892,7 +920,7 @@ in
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lsm-test metrics-scraper noBPerf];};
-      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf];};
+      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre jsonLogging noBPerf];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre hiConn rel legacyT previewRelMig];};
