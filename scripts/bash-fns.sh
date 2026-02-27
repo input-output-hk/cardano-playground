@@ -237,7 +237,7 @@ run-node-faketime() (
 
   # If an older glibc is needed, obtain it from the correct nixpkgs:
   # nix run github:nixos/nixpkgs/nixos-23.05#libfaketime -- "$1" "$CMD" run \
-  libfaketime -- "$1" "$CMD" run \
+  faketime "$1" "$CMD" run \
     --config "$DATA_DIR"/node-config.json \
     --database-path "$DATA_DIR"/db \
     --topology "$DATA_DIR"/topology.json \
