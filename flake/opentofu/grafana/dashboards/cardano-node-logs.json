@@ -546,7 +546,7 @@
           },
           "direction": "forward",
           "editorMode": "code",
-          "expr": "{systemd_unit=\"$log_source\", environment=~\"$environment\", group=~\"$group\", instance=~\"$instance\"} |~ \"${suggested_search}\" |~ \"(?i)${regex_search}\"",
+          "expr": "{systemd_unit=\"$log_source\", environment=~\"$environment\", group=~\"$group\", instance=~\"$instance\"} |~ \"$${suggested_search}\" |~ \"(?i)$${regex_search}\"",
           "legendFormat": "",
           "maxLines": 5000,
           "queryType": "range",

@@ -545,7 +545,7 @@
           },
           "direction": "forward",
           "editorMode": "code",
-          "expr": "{systemd_unit=\"$log_source\", environment=~\"$environment\", group=~\"$group\", instance=~\"$instance\"} |~ \"${suggested_search}\" |~ \"(?i)${regex_search}\" | json",
+          "expr": "{systemd_unit=\"$log_source\", environment=~\"$environment\", group=~\"$group\", instance=~\"$instance\"} |~ \"$${suggested_search}\" |~ \"(?i)$${regex_search}\" | json",
           "legendFormat": "{{instance}}",
           "maxLines": 5000,
           "queryType": "range",
@@ -816,5 +816,5 @@
   "timezone": "utc",
   "title": "Cardano Node: Logs JSON",
   "uid": "67f14cd5-d581-4595-9d17-6433269e8b66",
-  "version": 5
+  "version": 6
 }
