@@ -36,7 +36,7 @@ in {
     #   - Without filter: No tofu apply needed, but must manually silence alerts for 6 hours for disabled/removed machines.
     {
       alert = "machine_metrics_absent";
-      expr = ''(up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"} offset 6h unless up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"} offset 4h unless up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"} offset 90m unless up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"} offset 20m unless up{job=~"integrations/(agent|alloy)-check", instance=~"${enabledMachinePattern}"})'';
+      expr = ''(up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 6h unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 4h unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 90m unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 20m unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"})'';
       for = "5m";
       labels.severity = "page";
       annotations = {
@@ -47,7 +47,7 @@ in {
     # When adding new machines, remind ourselves to tofu apply
     {
       alert = "unexpected_new_machine";
-      expr = ''count(up{job=~"integrations/(agent|alloy)-check"}) > ${enabledMachineCount}'';
+      expr = ''count(up{job=~"integrations/alloy-check"}) > ${enabledMachineCount}'';
       for = "5m";
       labels.severity = "warning";
       annotations = {
