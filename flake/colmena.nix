@@ -60,7 +60,7 @@ in
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
-          ++ optionals (hasPrefix "sanchonet" name) [nixosModules.sanchonet noBPerf];
+          ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
 
         cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
 
@@ -280,14 +280,6 @@ in
 
           pre
           bperfNoPublish
-        ];
-      };
-
-      sanchoDb = {
-        imports = [
-          dbsync-pre
-          smash
-          ({config, ...}: {services.smash.environment = config.cardano-parts.perNode.lib.cardanoLib.environments.sanchonet;})
         ];
       };
 
@@ -813,7 +805,7 @@ in
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre bp];};
       sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") sanchoDb];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync-pre smash];};
 
       # ---------------------------------------------------------------------------------------------------------
     };

@@ -17,7 +17,7 @@
     "Backend": "V2InMemory",
     "NumOfDiskSnapshots": 2,
     "QueryBatchSize": 100000,
-    "SnapshotInterval": 4320
+    "SnapshotInterval": 864
   },
   "MinNodeVersion": "10.6.2",
   "Protocol": "Cardano",
@@ -34,7 +34,6 @@
     "maxReconnectDelay": 30
   },
   "TraceOptionMetricsPrefix": "cardano.node.metrics.",
-  "TraceOptionNodeName": "example-sanchonet-hostname",
   "TraceOptionResourceFrequency": 1000,
   "TraceOptions": {
     "": {
