@@ -35,11 +35,23 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc.js"></script>
     </head>
     <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
     <div id="body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
@@ -80,10 +92,13 @@
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
+                sidebar_toggle.checked = false;
             }
-            sidebar_toggle.checked = sidebar === 'visible';
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
@@ -117,7 +132,7 @@
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
                             <i class="fa fa-search"></i>
                         </button>
                     </div>
@@ -131,7 +146,7 @@
                         <a href="https://github.com/input-output-hk/cardano-playground" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/input-output-hk/cardano-playground/edit/main/docs/./env-mainnet.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/input-output-hk/cardano-playground/edit/main/docs/./env-mainnet.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -140,7 +155,12 @@
 
                 <div id="search-wrapper" class="hidden">
                     <form id="searchbar-outer" class="searchbar-outer">
-                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
                     </form>
                     <div id="searchresults-outer" class="searchresults-outer hidden">
                         <div id="searchresults-header" class="searchresults-header"></div>
@@ -174,17 +194,23 @@ Accountable: Head of SRE/Release Squad Lead</p>
 <p>Consulted: SPOs, IOG Tribes, IOG Executive Team</p>
 <p>Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community</p>
 <h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.5.4">10.5.4</a></p>
+<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.2">10.6.2</a></p>
 <pre><code>NOTE:
-The non-block-producer node config has `PeerSharing` enabled by
-default, so should not be used with block-producers.
+* The new tracing system is now default.  See additional notes below.
 
-Additionally, avoid connecting a block-producer not using p2p to a p2p
-PeerSharing enabled relay as the block-producer's IP will be leaked.
+* There is no longer a need to maintain separate non-forger and forger config
+files.  Node will now intelligently set PeerSharing, and a few other config
+parameters based on forging status.
+
+* The legacy non-p2p networking mode is no longer available.
+
+* Avoid connecting PeerSharing enabled nodes to a block producer using
+`InitiatorOnlyMode` as the block producer's IP will be leaked.
 </code></pre>
 <ul>
-<li><a href="environments/mainnet/config.json">Node Config (Non-block-producers -- see note above)</a></li>
-<li><a href="environments/mainnet/config-bp.json">Node Config (Block-producers)</a></li>
+<li><a href="environments/mainnet/config.json">Node Config</a></li>
+<li><a href="environments/mainnet/config-legacy.json">Node Config Legacy</a></li>
+<li><a href="environments/mainnet/tracer-config.json">Tracer Config</a></li>
 <li><a href="environments/mainnet/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments/mainnet/submit-api-config.json">Submit API Config</a></li>
 <li><a href="environments/mainnet/topology.json">Node Topology</a></li>
@@ -197,20 +223,15 @@ PeerSharing enabled relay as the block-producer's IP will be leaked.
 <li><a href="environments/mainnet/conway-genesis.json">Conway Genesis</a></li>
 <li><a href="environments/mainnet/guardrails-script.plutus">Compiled guardrails script</a></li>
 </ul>
+<h4 id="new-tracing-system"><a class="header" href="#new-tracing-system">New Tracing System</a></h4>
+<p>As of node <code>10.6.0</code> the new tracing system is default.  The legacy tracing
+system is still available, with a legacy config provided above, but is
+deprecated and will be removed in the near future.</p>
+<p>See the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.0">10.6.0 release notes</a>
+for more information.</p>
 <h4 id="ouroboros-genesis-mode"><a class="header" href="#ouroboros-genesis-mode">Ouroboros Genesis Mode</a></h4>
-<p>For those preferring to use Genesis mode over bootstrap peers, the following
-requirements will also need to be met:</p>
-<ul>
-<li>
-<p>The node config file will need to have <code>ConsensusMode</code> set to <code>GenesisMode</code></p>
-</li>
-<li>
-<p>To the topology file, a new key of <code>peerSnapshotFile</code> will need to be added
-and set to the path of the peer snapshot file, provided above.  The declared
-path can be absolute or relative with respect to the directory of the topology
-file.</p>
-</li>
-</ul>
+<p>For those preferring to use Genesis mode over Praos mode bootstrap peers, the
+node config file will need to have <code>ConsensusMode</code> set to <code>GenesisMode</code>.</p>
 <h4 id="utxo-hd"><a class="header" href="#utxo-hd">UTXO-HD</a></h4>
 <p>Users migrating from a node version older than <code>10.4.1</code> should also read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1 release
 notes</a> and
@@ -269,6 +290,7 @@ Guardrails script UTxO: <code>dc06746a898fd230f164f47a3d749348b65655b8fb388ff275
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
+
 
 
     </div>

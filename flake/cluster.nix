@@ -1,5 +1,5 @@
-flake @ {withSystem, ...}:
-with flake.lib; {
+{lib, ...}:
+with lib; {
   # Define some cluster-wide configuration.
   # This has to evaluate fast and is imported in various places.
   flake.cardano-parts.cluster = rec {

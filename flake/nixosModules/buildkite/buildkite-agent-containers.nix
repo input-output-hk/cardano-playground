@@ -246,7 +246,7 @@ flake @ {
                 };
               };
 
-              system.extraSystemBuilderCmds = ''
+              system.systemBuilderCommands = ''
                 ln -sv ${pkgs.path} $out/nixpkgs
               '';
 
@@ -316,7 +316,7 @@ flake @ {
 
                     # Provide NIX_PATH, unless it's already set by the pipeline
                     if [ -z "''${NIX_PATH:-}" ]; then
-                        # See system.extraSystemBuilderCmds
+                        # See system.systemBuilderCommands
                         export NIX_PATH="nixpkgs=/run/current-system/nixpkgs"
                     fi
 
