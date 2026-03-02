@@ -4,6 +4,7 @@
   ...
 }: {
   perSystem = {system, ...}: {
+    # The virtiofs virtualisation seems to require >= 1M nofile hard limit to build successfully.
     packages.ami =
       (inputs.nixpkgs.lib.nixosSystem {
         modules = [
