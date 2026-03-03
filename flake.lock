@@ -596,11 +596,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1772335991,
-        "narHash": "sha256-4jfc6f/7uG/GhPZUCeq6uCICO59wFg+Z6A3nVyKs/z8=",
+        "lastModified": 1772555092,
+        "narHash": "sha256-BSLDjbsZgqQ4uzdGh9dNP/woOETykMEqgR6u0cPUCiE=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "9c29aea7083a2a0e9019b9ea74c180a3a36e599c",
+        "rev": "3e061d655b519cce6724daab2744c8804a63499c",
         "type": "github"
       },
       "original": {
