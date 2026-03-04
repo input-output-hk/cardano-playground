@@ -578,50 +578,36 @@ in
       #     filter (name: hasPrefix prefix name) (attrNames nixosConfigurations);
       # };
       #
-      # logRejected = {
-      #   services = {
-      #     cardano-node.extraNodeConfig = {
-      #       TraceOptionResourceFrequency = 60000;
-      #       TraceOptions = {
-      #         "Mempool" = {
-      #           severity = "Debug";
-      #           detail = "DDetailed";
-      #         };
-      #         # "Mempool.MempoolAttemptAdd" = {
-      #         #   severity = "Debug";
-      #         #   detail = "DDetailed";
-      #         # };
-      #         # "Mempool.MempoolAttemptingSync" = {
-      #         #   severity = "Debug";
-      #         #   detail = "DDetailed";
-      #         # };
-      #         # "Mempool.MempoolLedgerFound" = {
-      #         #   severity = "Debug";
-      #         #   detail = "DDetailed";
-      #         # };
-      #         # "Mempool.MempoolLedgerNotFound" = {
-      #         #   severity = "Debug";
-      #         #   detail = "DDetailed";
-      #         # };
-      #         # "Mempool.MempoolSyncDone" = {
-      #         #   severity = "Debug";
-      #         #   detail = "DDetailed";
-      #         # };
-      #         # "Mempool.MempoolSyncNotNeeded" = {
-      #         #   severity = "Debug";
-      #         #   detail = "DDetailed";
-      #         # };
-      #         "TxSubmission.TxInbound" = {
-      #           severity = "Debug";
-      #           detail = "DDetailed";
-      #         };
-      #         "TxSubmission.TxOutbound" = {
-      #           severity = "Debug";
-      #           detail = "DDetailed";
-      #         };
-      #         Resources.severity = "Debug";
-      #       };
-      #     };
+      logRejected = {
+        services = {
+          cardano-node.extraNodeConfig = {
+            TraceOptionResourceFrequency = 60000;
+            TraceOptions = {
+              "Mempool" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              "Mempool.AttemptAdd" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              "Mempool.SyncNotNeeded" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              "TxSubmission.TxInbound" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              "TxSubmission.TxOutbound" = {
+                severity = "Debug";
+                detail = "DDetailed";
+              };
+              Resources.severity = "Debug";
+            };
+          };
+        };
+      };
       #
       # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
       #
@@ -776,7 +762,7 @@ in
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable logRejected];};
 
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb ram8gib legacyT (openFwTcp 3001)];};
