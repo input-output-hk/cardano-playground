@@ -12,15 +12,15 @@ Set env vars for voting.  In this example, we'll use preview and a given
 action id and index.  Adjust accordingly for your use case.
 ```bash
 export ENV=preview
-export CARDANO_NODE_NETWORK_ID=2
-export TESTNET_MAGIC=2
 export ACTION_ID=9ac7d4f3bb9367a35c3b204e96bbee979f7e7a5aeb004429bccb1ba911805a2c
 export ACTION_IDX=0
 ```
 
 If not already started, start node and wait until the chain is sync'd to tip.
+Then set up your shell environment variables.
 ```bash
 just start-node $ENV
+source <(just set-default-cardano-env $ENV)
 just query-tip $ENV
 ```
 
