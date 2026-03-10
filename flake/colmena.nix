@@ -609,6 +609,45 @@ in
         };
       };
       #
+      # logSimple = nixos: {
+      #   services.cardano-node.nodeConfig = let
+      #     inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+      #     inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
+      #   in
+      #     mkOverride 40 (cardanoLib.environments.${environmentName}.nodeConfig
+      #       // {
+      #         TraceOptions = {
+      #           "" = {
+      #             backends = [
+      #               "EKGBackend"
+      #               "Forwarder"
+      #               "PrometheusSimple suffix 127.0.0.1 12798"
+      #               "Stdout HumanFormatColoured"
+      #             ];
+      #
+      #             # Each tracer can specify the level of details for printing messages.
+      #             # Options include `DMinimal`, `DNormal`, `DDetailed`, and `DMaximum`. If
+      #             # no implementation is given, `DNormal` is chosen.
+      #             detail = "DNormal";
+      #
+      #             # The severity levels, ranging from the least severe (`Debug`) to the
+      #             # most severe (`Emergency`), provide a framework for ignoring messages
+      #             # with severity levels below a globally configured severity cutoff.
+      #             #
+      #             # The full list of severities are:
+      #             # `Debug`, `Info`, `Notice`, `Warning`, `Error`, `Critical`, `Alert` and
+      #             # `Emergency`.
+      #             #
+      #             # To enhance severity filtering, there is also the option of `Silence`
+      #             # which allows for the unconditional silencing of a specific trace,
+      #             # essentially representing the deactivation of tracers -- a semantic
+      #             # continuation of the functionality in the legacy system.
+      #             severity = "Info";
+      #           };
+      #         };
+      #       });
+      # };
+      #
       # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
       #
       # praosMode = {
