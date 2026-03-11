@@ -19,7 +19,7 @@ export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-01-01T00:00:00Z"
+export START_TIME="2026-02-15T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -113,7 +113,12 @@ jq --sort-keys \
 exit 0
 
 # Start the node 30 seconds before the chain is scheduled to start forging.
-run-node-faketime '2025-12-31 23:59:30Z'
+# Note that if you run older versions of node, the libfaketime will need to
+# match the glibc version.  In this case, the run-node-faketime fn can be
+# modified to use an older libfaketime package with the appropriate glibc build
+# using somthing like:
+#   nix run github:nixos/nixpkgs/nixos-23.05#libfaketime -- "$1" "$CMD" run ...
+run-node-faketime "$(date -u -d "$START_TIME - 30 seconds" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # Continue operations in another shell window.
 # Source the same bash helper functions given above in the new window.
@@ -194,6 +199,7 @@ PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/mainnet-plutusv3-pv10-pr
 ACTION="create-protocol-parameters-update" \
   STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
   nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+wait-for-mempool
 
 # Only the CC members need to approve the cost model, but both CCs and SPOs need to approve the HF.
 # Drep votes are disallowed during Conway bootstrapping.
@@ -215,8 +221,8 @@ done
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((85370 - 180))
-run-node-faketime '2026-01-01 23:59:00Z'
+synth-slots $((86400 - 595 - 180))
+run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
@@ -275,8 +281,8 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 2
 echo "Synthesize blocks until just before the Plomin hard fork ratifies, epoch 2"
-synth-slots $((85801 - 180))
-run-node-faketime '2026-01-02 23:59:00Z'
+synth-slots $((86053 - 180))
+run-node-faketime "$(date -u -d "$START_TIME + 2 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epcoh 2, verify the Plomin hard fork has ratified:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
@@ -290,8 +296,8 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 3
 echo "Synthesize blocks until just before the Plomin hard fork enacts, epoch 3"
-synth-slots $((86268 - 180))
-run-node-faketime '2026-01-03 23:59:00Z'
+synth-slots $((86300 - 180))
+run-node-faketime "$(date -u -d "$START_TIME + 3 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epcoh 3, verify the Plomin hard fork has enacted:
 cardano-cli query protocol-parameters | jq .protocolVersion
@@ -367,8 +373,8 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 4
 echo "Synthesize blocks until just before the parameter change ratifies, epoch 4"
-synth-slots $((82690 - 180))
-run-node-faketime '2026-01-04 23:59:00Z'
+synth-slots $((85987 - 180))
+run-node-faketime "$(date -u -d "$START_TIME + 4 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # Ensure the parameter change has ratified once epoch 4 is reached:
 cardano-cli latest query gov-state \
@@ -391,8 +397,8 @@ cardano-cli latest query gov-state \
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 5
 echo "Synthesize blocks until just before the parameter change enacts, epoch 5"
-synth-slots $((85983 - 180))
-run-node-faketime '2026-01-05 23:59:00Z'
+synth-slots $((86298 - 180))
+run-node-faketime "$(date -u -d "$START_TIME + 5 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # Ensure the parameter change has enacted once epoch 5 is reached:
 cardano-cli latest query protocol-parameters \

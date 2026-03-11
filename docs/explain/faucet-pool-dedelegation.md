@@ -152,6 +152,7 @@ environment, if not already started, and waiting for the node to completely
 synchronize:
 ```bash
 just start-node "$ENV"
+source <(just set-default-cardano-env "$ENV")
 ```
 
 Then, run the de-delegation recipe and wait for the de-delegation script to

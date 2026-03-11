@@ -21,10 +21,10 @@ keys:
   - &preview3-bp-c-1 age13tc9mjgu7hwfxsa84hq0tcz7eeg9m6f0fmg8gzxwme30pfxf7g4sfk2y0k
 
   # Dijkstra
-  - &dijkstra1-bp-a-1 age194qdyth7xx3wmagha9la33dtnmj9h3lht269n9muqlvjp7l9dqhs9qhzwp
-  - &dijkstra1-faucet-a-1 age1y6jyxkr9hv8ly7yd729yw80x2ws02uvp9xcfk9vcmuuvxczadyrq6uwckz
-  - &dijkstra2-bp-b-1 age1t9as7exjuulvemglr0hl7nv32l8n6sj6ncgl60tdf87tqsmc59kqqnuhu0
-  - &dijkstra3-bp-c-1 age19mn5wwslzv0cm5m6tctn308ycxvjgt5ky07ar8suujc85tgj2p4q9m56d4
+  - &dijkstra1-bp-a-1 age18jtrsvmgdsz7007yttj0elmwaq890dz228jhl3a5hpg5fenzxf2sap2wcz
+  - &dijkstra1-faucet-a-1 age1fmqm27fdwldfmsuq2xy2qtgl5tzameuzxn29s2ka9e4063lsdcls4ezlgk
+  - &dijkstra2-bp-b-1 age18effywervp368ygfyxsywvcs89nnkrs7lm3s3z09kzcy758n29astfnrpx
+  - &dijkstra3-bp-c-1 age1aflfe3ufz6vun3kwxy4ht83g8thu30dsmzpv3va6epeqcnffkfzqzeapgy
 
   # Sanchonet
   - &sanchonet1-bp-a-1 age1sxhjqwnuf5duczjv5fwle492jpm7fhwunkwhp6agle6y75yqdeas586aaj

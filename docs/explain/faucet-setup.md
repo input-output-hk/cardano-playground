@@ -123,9 +123,11 @@ utxo set initialized
 
 Faucet now needs to be funded with UTxOs for ADA requests and pool delegations.
 Pool delegation preparation also needs to be performed.  If not already
-started, start a node for the environment of interest:
+started, start a node for the environment of interest and set up your shell
+environment:
 ```bash
 just start-node "$ENV"
+source <(just set-default-cardano-env "$ENV")
 ```
 
 For general UTxO funding, a `rewards.json` file will needs to be prepared in

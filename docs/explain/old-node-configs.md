@@ -48,65 +48,89 @@
 
 ## Version Reference:
 
+* Node `10.6.2`
+  * Environment configs can be found in `result/environments-pre/config/` after running:
+    ```bash
+    nix run github:input-output-hk/cardano-playground/node-10.6.2-pre-config#job-gen-env-config
+    ```
+
 * Node `10.6.1`
   * Environment configs can be found in `result/environments-pre/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.6.1-pre-config#job-gen-env-config
+    ```
+
+* Node `10.5.4`
+  * Environment configs can be found in `result/environments/config/` after running:
+    ```bash
+    nix run github:input-output-hk/cardano-playground/node-10.5.4-config#job-gen-env-config
+    ```
 
 * Node `10.5.3`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.5.3-config#job-gen-env-config
+    ```
 
 * Node `10.5.1`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.5.1-config#job-gen-env-config
+    ```
 
 * Node `10.4.1`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.4.1-config#job-gen-env-config
+    ```
 
 * Node `10.3.1`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.3.1-config#job-gen-env-config
+    ```
 
 * Node `10.2.1`
   * Environment configs can be found in `result/environments-pre/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.2.1-pre-config#job-gen-env-config
+    ```
 
 * Node `10.1.4`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.1.4-config#job-gen-env-config
+    ```
 
 * Node `10.1.3`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.1.3-config#job-gen-env-config
+    ```
 
 * Node `10.1.2`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.1.2-config#job-gen-env-config
+    ```
 
 * Node `10.1.1`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-10.1.1-config#job-gen-env-config
+    ```
 
 * Node `9.2.1`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-9.2.1-config#job-gen-env-config
+    ```
 
 * Node `9.2.0`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash
     nix run github:input-output-hk/cardano-playground/node-9.2.0-config#job-gen-env-config
+    ```
 
 * Node `9.1.1`
   * Environment configs can be found in `result/environments/config/` after running:
