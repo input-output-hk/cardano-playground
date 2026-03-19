@@ -16,13 +16,6 @@
       };
     };
 
-    # Local pins for additional customization:
-    cardano-node-lsm-test.url = "github:IntersectMBO/cardano-node/js/lsm-10.6.1";
-    cardano-node-lsm-service-test = {
-      url = "github:IntersectMBO/cardano-node/amick/nixos-lsm";
-      flake = false;
-    };
-
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
   };

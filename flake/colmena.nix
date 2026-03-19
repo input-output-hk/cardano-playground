@@ -101,39 +101,6 @@ in
         ];
       };
 
-      node-lsm-test = {
-        imports = [
-          # Base cardano-node service
-          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
-          "${inputs.cardano-node-lsm-service-test}/nix/nixos/cardano-node-service.nix"
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
-
-          # Config for cardano-node group deployments
-          inputs.cardano-parts.nixosModules.profile-cardano-node-group
-          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-          bperfNoPublish
-          {
-            cardano-parts.perNode = {
-              pkgs = {
-                cardano-cli = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-cli;
-                cardano-node = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-node;
-                cardano-submit-api = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-submit-api;
-                cardano-tracer = mkForce inputs.cardano-node-lsm-test.packages.x86_64-linux.cardano-tracer;
-              };
-            };
-            services.cardano-node = {
-              withUtxoHdLsm = true;
-
-              # Try relative paths, important for pre-canned use cases, like Daedalus
-              lsmDatabasePath = "lsm/";
-              # lsmDatabasePath = "/ephemeral/cardano-node/";
-            };
-          }
-
-          pre
-        ];
-      };
-
       # Include blockPerf by default with no upstream push to CF -- only push prom metrics
       bperfNoPublish = {
         imports = [
@@ -191,6 +158,13 @@ in
         services.cardano-node = {
           lmdbDatabasePath = "/ephemeral/cardano-node/";
           withUtxoHdLmdb = true;
+        };
+      };
+
+      lsm = {
+        services.cardano-node = {
+          lsmDatabasePath = "/ephemeral/cardano-node/";
+          withUtxoHdLsmt = true;
         };
       };
 
@@ -491,33 +465,33 @@ in
         };
       };
 
-      jsonLogging = {config, ...}: {
-        services = {
-          cardano-node.extraNodeConfig = {
-            TraceOptions = {
-              "" = {
-                severity = "Notice";
-                backends = [
-                  "EKGBackend"
-                  "Forwarder"
-                  "Stdout MachineFormat"
-                  "PrometheusSimple suffix 127.0.0.1 12798"
-                ];
-              };
-            };
-          };
+      # jsonLogging = {config, ...}: {
+      #   services = {
+      #     cardano-node.extraNodeConfig = {
+      #       TraceOptions = {
+      #         "" = {
+      #           severity = "Notice";
+      #           backends = [
+      #             "EKGBackend"
+      #             "Forwarder"
+      #             "Stdout MachineFormat"
+      #             "PrometheusSimple suffix 127.0.0.1 12798"
+      #           ];
+      #         };
+      #       };
+      #     };
 
-          cardano-tracer = mkIf (!config.services.cardano-node.useLegacyTracing) {
-            logging = [
-              {
-                logFormat = "ForMachine";
-                logMode = "FileMode";
-                logRoot = "/var/lib/cardano-tracer";
-              }
-            ];
-          };
-        };
-      };
+      #     cardano-tracer = mkIf (!config.services.cardano-node.useLegacyTracing) {
+      #       logging = [
+      #         {
+      #           logFormat = "ForMachine";
+      #           logMode = "FileMode";
+      #           logRoot = "/var/lib/cardano-tracer";
+      #         }
+      #       ];
+      #     };
+      #   };
+      # };
 
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
 
@@ -569,7 +543,6 @@ in
 
       amiZfs = {imports = [nixosModules.ami];};
       legacyT = {services.cardano-node.useLegacyTracing = true;};
-      newRts = {services.cardano-node.rts_flags_override = ["-qg1" "-qb1"];};
       noBPerf = {services.blockperf.enable = false;};
       # deployIpv4 = {name, ...}: {deployment.targetHost = "${name}.ipv4";};
       #
@@ -578,36 +551,36 @@ in
       #     filter (name: hasPrefix prefix name) (attrNames nixosConfigurations);
       # };
       #
-      logRejected = {
-        services = {
-          cardano-node.extraNodeConfig = {
-            TraceOptionResourceFrequency = 60000;
-            TraceOptions = {
-              "Mempool" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              "Mempool.AttemptAdd" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              "Mempool.SyncNotNeeded" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              "TxSubmission.TxInbound" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              "TxSubmission.TxOutbound" = {
-                severity = "Debug";
-                detail = "DDetailed";
-              };
-              Resources.severity = "Debug";
-            };
-          };
-        };
-      };
+      # logRejected = {
+      #   services = {
+      #     cardano-node.extraNodeConfig = {
+      #       TraceOptionResourceFrequency = 60000;
+      #       TraceOptions = {
+      #         "Mempool" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         "Mempool.AttemptAdd" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         "Mempool.SyncNotNeeded" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         "TxSubmission.TxInbound" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         "TxSubmission.TxOutbound" = {
+      #           severity = "Debug";
+      #           detail = "DDetailed";
+      #         };
+      #         Resources.severity = "Debug";
+      #       };
+      #     };
+      #   };
+      # };
       #
       # logSimple = nixos: {
       #   services.cardano-node.nodeConfig = let
@@ -653,10 +626,24 @@ in
       # praosMode = {
       #   services.cardano-node = {
       #     extraNodeConfig.ConsensusMode = "PraosMode";
-      #     peerSnapshotFile = null;
-      #     useLedgerAfterSlot = -1;
+
+      #     # Useful when the peer-snapshot version is being upgraded
+      #     # peerSnapshotFile = null;
+      #     # useLedgerAfterSlot = -1;
       #   };
       # };
+
+      sanchoPeers = {
+        services.cardano-node-topology.extraProducers = [
+          {
+            address = "sancho-testnet.able-pool.io";
+            port = 6002;
+            # Keep explicitly non-trustable and no advertise
+            trustable = true;
+            advertise = false;
+          }
+        ];
+      };
       #
       # profiled = {
       #   services.cardano-node = {
@@ -744,10 +731,10 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1") newRts];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig newRts];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig newRts];};
-      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt newRts];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1")];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -759,18 +746,21 @@ in
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-lsm-test noBPerf];};
-      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre jsonLogging noBPerf amiZfs];};
+
+      # Lsm, lmdb and in-mem pre-release backend testing
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb noBPerf];};
+      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs];};
+      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf amiZfs];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel legacyT];};
       preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel tcpTxOpt];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1") newRts];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel newRts];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel newRts];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt newRts];};
+      preview3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -803,7 +793,7 @@ in
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync disableAlertCount];};
       mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable];};
 
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001) logRejected];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb ram8gib legacyT (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
@@ -829,9 +819,8 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre bp];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel];};
       sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync-pre smash];};
-
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel sanchoPeers];};
       # ---------------------------------------------------------------------------------------------------------
     };
 
