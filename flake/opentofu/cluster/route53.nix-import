@@ -48,6 +48,9 @@ in {
   cname_smash_preprod = mkCname {name = "preprod-smash.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_smash_preview = mkCname {name = "preview-smash.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
   cname_smash_dijkstra = mkCname {name = "dijkstra-smash.${domain}"; records = ["dijkstra1-dbsync-a-1.${domain}"];};
+  cname_smash_sanchonet = mkCname {name = "sanchonet-smash.${domain}"; records = ["sanchonet1-dbsync-a-1.${domain}"];};
+  cname_smash_mainnet = mkCname {name = "mainnet-smash.${domain}"; records = ["mainnet1-dbsync-a-1.${domain}"];};
+  cname_smash_mainnet2 = mkCname {name = "mainnet2-smash.${domain}"; records = ["mainnet1-dbsync-a-2.${domain}"];};
 
   # Example SRV record resource, where network could be substituted with any of preview, preprod or mainnet.
   # srv_network = mkSrv {name = "_cardano-network._tcp.${domain}"; records = ["0 10 3001 network1-rel-a-1.${domain}"];};
