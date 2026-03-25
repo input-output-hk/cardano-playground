@@ -23,7 +23,7 @@
     "contents": "/tmp/tracer.socket",
     "tag": "AcceptAt"
   },
-  "networkMagic": 2,
+  "networkMagic": 4,
   "resourceFreq": null,
   "rotation": {
     "rpFrequencySecs": 60,

@@ -2,7 +2,7 @@
   "EnableFutureGenesis": true,
   "EnableLogMetrics": false,
   "EnableLogging": true,
-  "NetworkName": "preprod",
+  "NetworkName": "sanchonet",
   "NodeConfigFile": "config.json",
   "PrometheusPort": 8080,
   "RequiresNetworkMagic": "RequiresMagic",
