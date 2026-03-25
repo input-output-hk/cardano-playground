@@ -2,11 +2,11 @@
 
 There is currently no pre-release version available for the preview environment.
 
-The latest version available is cardano-node release `10.6.2`.
+The latest version available is cardano-node release `10.7.0`.
 
 #### Configuration files
 
-Compatible with cardano-node release [10.6.2](https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.2)
+Compatible with cardano-node release [10.7.0](https://github.com/IntersectMBO/cardano-node/releases/tag/10.7.0)
 
 ```
 NOTE:
