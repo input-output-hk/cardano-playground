@@ -991,7 +991,7 @@ tofu *ARGS:
   SOPS=("sops" "--input-type" "binary" "--output-type" "binary" "--decrypt")
 
   read -r -a ARGS <<< "{{ARGS}}"
-  if [[ ${ARGS[0]} =~ bootstrap|cluster|grafana ]]; then
+  if [[ ${ARGS[0]} =~ bootstrap|cluster|grafana|k8s ]]; then
     WORKSPACE="${ARGS[0]}"
     ARGS=("${ARGS[@]:1}")
   else
