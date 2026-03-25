@@ -2,11 +2,10 @@ self:
 with builtins;
 with self.lib;
 let
-  # Setting enableAlertCount to false will exclude a machine from being added to machine count and per-machine alerts.
+  # Setting enableAlertCount to false will exclude a machine from being added to machine count alerts.
   # This can be useful if a machine exists, but is mostly kept in a stopped state.
   enabledMachineNames = attrNames (filterAttrs (_: v: v.config.cardano-parts.perNode.meta.enableAlertCount) self.nixosConfigurations);
   enabledMachineCount = toString (length enabledMachineNames);
-  enabledMachinePattern = concatStringsSep "|" enabledMachineNames;
 in {
   namespace = "cardano-parts-integrations";
   name = "cardano-parts";
@@ -22,21 +21,17 @@ in {
         description = "{{ $labels.instance }} has had {{ printf \"%.0f\" $value }} coredump(s) in the past hour. Please investigate.";
       };
     }
-    # Alert on missing machine metrics using multiple offset/unless checks.
-    # Checks if instances existed at 6h, 4h, 90m, or 20m ago, but are now missing.
-    # This reduces gaps compared to a single offset check.
-    # Trade-offs:
-    #   - Alert stays firing for up to 6 hours after a machine goes down.
-    #   - Alert auto-resolves after 6 hours of continuous downtime.
-    #   - Multiple snapshots reduce likelihood of missing a down machine
-    #        that was also down recently.
-    #   - New machines need 20m of uptime before they're monitored.
-    # Note: The instance=~"${enabledMachinePattern}" filter is optional:
-    #   - With filter: Need `tofu grafana apply` after machine changes, but respects enableAlertCount.
-    #   - Without filter: No tofu apply needed, but must manually silence alerts for 6 hours for disabled/removed machines.
+    # Alert per-instance if machine metrics go missing.
+    # Uses multiple offset checks (6h, 4h, 90m, 20m) to detect machines that were up but are now down.
+    # - Alerts within 5m for machines already being monitored
+    # - Multiple snapshots reduce the chance of missing a machine that had intermittent downtime
+    # - Alert stays firing for up to 6h after downtime, then auto-resolves
+    # - New machines need 20m of uptime before being monitored
+    # - When shutting down a cold standby: silence this alert for 6h and add disableAlertCount in colmena.nix
+    # - Still need `just tofu grafana apply` when creating/destroying machines or adding/removing disableAlertCount
     {
       alert = "machine_metrics_absent";
-      expr = ''(up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 6h unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 4h unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 90m unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"}) or (up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"} offset 20m unless up{job=~"integrations/alloy-check", instance=~"${enabledMachinePattern}"})'';
+      expr = ''(up{job=~"integrations/alloy-check"} offset 6h unless up{job=~"integrations/alloy-check"}) or (up{job=~"integrations/alloy-check"} offset 4h unless up{job=~"integrations/alloy-check"}) or (up{job=~"integrations/alloy-check"} offset 90m unless up{job=~"integrations/alloy-check"}) or (up{job=~"integrations/alloy-check"} offset 20m unless up{job=~"integrations/alloy-check"})'';
       for = "5m";
       labels.severity = "page";
       annotations = {
@@ -44,7 +39,20 @@ in {
         description = "{{ $labels.instance }} stopped reporting metrics.";
       };
     }
-    # When adding new machines, remind ourselves to tofu apply
+    # Count-based sanity check for missing machines.
+    # Complements machine_metrics_absent by showing total count vs expected.
+    # Useful to verify you haven't missed any silenced alerts.
+    {
+      alert = "unexpected_missing_machine";
+      expr = ''count(up{job=~"integrations/alloy-check"}) < ${enabledMachineCount}'';
+      for = "5m";
+      labels.severity = "page";
+      annotations = {
+        summary = "Machines are missing.";
+        description = "${enabledMachineCount} machines are expected, but only {{ $value }} are up. Check machine_metrics_absent alerts for details.";
+      };
+    }
+    # Reminds us to tofu apply when new machines are added.
     {
       alert = "unexpected_new_machine";
       expr = ''count(up{job=~"integrations/alloy-check"}) > ${enabledMachineCount}'';
