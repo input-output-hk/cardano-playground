@@ -1,0 +1,75 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: aws-load-balancer-webhook
+  labels:
+    app.kubernetes.io/name: aws-load-balancer-controller
+webhooks:
+- name: vingressclassparams.elbv2.k8s.aws
+  clientConfig:
+    service:
+      name: aws-load-balancer-webhook-service
+      namespace: aws-load-balancer-controller
+      path: /validate-elbv2-k8s-aws-v1beta1-ingressclassparams
+  failurePolicy: Fail
+  admissionReviewVersions:
+  - v1beta1
+  objectSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: NotIn
+      values:
+      - aws-load-balancer-controller
+  rules:
+  - apiGroups:
+    - elbv2.k8s.aws
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ingressclassparams
+  sideEffects: None
+- name: vtargetgroupbinding.elbv2.k8s.aws
+  clientConfig:
+    service:
+      name: aws-load-balancer-webhook-service
+      namespace: aws-load-balancer-controller
+      path: /validate-elbv2-k8s-aws-v1beta1-targetgroupbinding
+  failurePolicy: Fail
+  admissionReviewVersions:
+  - v1beta1
+  rules:
+  - apiGroups:
+    - elbv2.k8s.aws
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - targetgroupbindings
+  sideEffects: None
+- name: vingress.elbv2.k8s.aws
+  clientConfig:
+    service:
+      name: aws-load-balancer-webhook-service
+      namespace: aws-load-balancer-controller
+      path: /validate-networking-v1-ingress
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  admissionReviewVersions:
+  - v1beta1
+  rules:
+  - apiGroups:
+    - networking.k8s.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ingresses
+  sideEffects: None

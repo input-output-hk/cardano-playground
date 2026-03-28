@@ -1,0 +1,10 @@
+---
+apiVersion: networking.k8s.io/v1  # first, required
+kind: IngressClass  # required
+metadata:  # required
+  name: TODO  # first, required
+  labels:  # required
+    app.kubernetes.io/name: TODO  # first, required
+  annotations: {}
+spec:  # required
+  controller: k8s.io/ingress-nginx

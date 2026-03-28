@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-load-balancer-controller
+  namespace: aws-load-balancer-controller
+  labels:
+    app.kubernetes.io/name: aws-load-balancer-controller
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: aws-load-balancer-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: aws-load-balancer-controller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: aws-load-balancer-controller
+      containers:
+      - name: aws-load-balancer-controller
+        image: public.ecr.aws/eks/aws-load-balancer-controller:v3.1.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --cluster-name=playground-1
+        - --ingress-class=alb
+        ports:
+        - name: webhook-server
+          containerPort: 9443
+          protocol: TCP
+        - name: metrics-server
+          containerPort: 8080
+          protocol: TCP
+        resources: {}
+        livenessProbe:
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 2
+          httpGet:
+            port: 61779
+            path: /healthz
+            scheme: HTTP
+        readinessProbe:
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 2
+          httpGet:
+            port: 61779
+            path: /readyz
+            scheme: HTTP
+        volumeMounts:
+        - name: cert
+          mountPath: /tmp/k8s-webhook-server/serving-certs
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+      terminationGracePeriodSeconds: 10
+      securityContext:
+        fsGroup: 65534
+      volumes:
+      - name: cert
+        secret:
+          secretName: aws-load-balancer-tls
+          defaultMode: 420
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - aws-load-balancer-controller
+      priorityClassName: system-cluster-critical

@@ -1,0 +1,8 @@
+---
+apiVersion: elbv2.k8s.aws/v1beta1  # first, required
+kind: IngressClassParams  # required
+metadata:  # required
+  name: TODO  # first, required
+  labels:  # required
+    app.kubernetes.io/name: TODO  # first, required
+  annotations: {}
