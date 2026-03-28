@@ -10,6 +10,11 @@
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
+
+    inplace-image-tag-updater = {
+      url = "github:snarlysodboxer/inplace-image-tag-updater";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs: let

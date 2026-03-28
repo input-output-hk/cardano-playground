@@ -15,7 +15,7 @@ with lib; let
     clusterName = "playground-1";
     version = "1.34";
     # IMPORTANT: When upgrading the Kubernetes version, also update the kubectl version in:
-    #   perSystem/overlays/kubectl.nix
+    #   perSystem/overlays/custom-packages.nix
     region = "eu-central-1";
 
     useDefaultVpc = true;
@@ -918,7 +918,7 @@ in {
         output = {
           kubeconfig_command = {
             description = "Command to configure kubectl access to the cluster";
-            value = "aws eks update-kubeconfig --region ${eksConfig.region} --name ${eksConfig.clusterName}";
+            value = "aws eks update-kubeconfig --region ${eksConfig.region} --name ${eksConfig.clusterName} --alias playground-1";
           };
 
           # IRSA Role ARNs - annotate Kubernetes ServiceAccounts with these ARNs
