@@ -20,6 +20,8 @@ with lib; let
     repositories = [
       # "playground/example-app"
       "argocd"
+      "dex"
+      "redis"
     ];
   };
 

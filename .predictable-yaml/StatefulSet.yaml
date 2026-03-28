@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1  # first, required
+kind: StatefulSet  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # preferred
+  labels:  # required
+    app.kubernetes.io/name: TODO  # required
+  annotations: {}
+spec:  # required
+  replicas: 1  # first, preferred
+  serviceName: TODO  # preferred
+  podManagementPolicy: OrderedReady  # preferred
+  updateStrategy:  # required
+    type: RollingUpdate  # required
+  selector:  # preferred
+    matchLabels:  # preferred
+      app.kubernetes.io/name: TODO  # required
+  template:  # required
+    metadata:  # preferred
+      labels:  # preferred
+        app.kubernetes.io/name: TODO  # required
+    spec: {}  # ditto=Pod.spec
+  volumeClaimTemplates:
+  - metadata:  # required
+      name: TODO  # first, required
+    spec:  # required
+      accessModes: []
+      resources: {}
