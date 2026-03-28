@@ -1,0 +1,10 @@
+---
+apiVersion: cert-manager.io/v1  # first, required
+kind: Issuer  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # required
+  labels:  # required
+    app.kubernetes.io/name: TODO  # first, required
+spec:  # required
+  selfSigned: {}  # preferred

@@ -1,0 +1,11 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: aws-load-balancer-root-issuer
+  namespace: aws-load-balancer-controller
+  labels:
+    app.kubernetes.io/name: aws-load-balancer-controller
+spec:
+  ca:
+    secretName: aws-load-balancer-root-cert

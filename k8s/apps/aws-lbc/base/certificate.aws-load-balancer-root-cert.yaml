@@ -1,0 +1,19 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: aws-load-balancer-root-cert
+  namespace: aws-load-balancer-controller
+  labels:
+    app.kubernetes.io/name: aws-load-balancer-controller
+spec:
+  issuerRef:
+    kind: Issuer
+    name: aws-load-balancer-selfsigned-issuer
+  secretName: aws-load-balancer-root-cert
+  duration: 43800h0m0s
+  commonName: ca.webhook.aws-load-balancer-controller
+  isCA: true
+  subject:
+    organizations:
+    - aws-load-balancer-controller
