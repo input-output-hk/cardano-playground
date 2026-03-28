@@ -233,6 +233,63 @@ sopsConfigSetup := '''
 default:
   @just --list
 
+# Build container image
+build-image IMAGE:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  IMAGE_NAME=$(nix eval --raw .#{{IMAGE}}-image.imageName)
+  IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag)
+
+  echo "Building ${IMAGE_NAME}:${IMAGE_TAG}..."
+  nix build .#{{IMAGE}}-image
+
+  echo "Image built: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+# Push container image to ECR
+push-image IMAGE:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  if [ ! -L result ]; then
+    echo "Error: No 'result' symlink found. Run 'just build-image {{IMAGE}}' first."
+    exit 1
+  fi
+
+  IMAGE_NAME=$(nix eval --raw .#{{IMAGE}}-image.imageName 2>/dev/null)
+  IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
+
+  # Get the repository URL directly from terraform (e.g., argocd -> argocd_url)
+  REPO_URL=$(just tofu ecr output -raw ${IMAGE_NAME/\//_}_url 2>/dev/null | tail -1)
+
+  echo "Pushing ${IMAGE_NAME}:${IMAGE_TAG} to ${REPO_URL}..."
+  # Crane will use amazon-ecr-credential-helper automatically for ECR auth
+  crane push result "${REPO_URL}:${IMAGE_TAG}"
+
+  echo "Image pushed to ${REPO_URL}:${IMAGE_TAG}"
+
+# Update container image tags in Kubernetes configs
+bump-image IMAGE:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  IMAGE_NAME=$(nix eval --raw .#{{IMAGE}}-image.imageName 2>/dev/null)
+  IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
+  REPO_URL=$(just tofu ecr output -raw ${IMAGE_NAME/\//_}_url 2>/dev/null | tail -1)
+
+  echo "Updating image tag in Kubernetes configs..."
+  git grep -l "image:.*${REPO_URL}" k8s/ | \
+    inplace-image-tag-updater --image "${REPO_URL}" --newTag "${IMAGE_TAG}"
+
+  echo "Updated image tags to ${REPO_URL}:${IMAGE_TAG}"
+  echo "Test with: kustomize build <path-to-overlay> | kubectl diff -f -"
+
+# Build, push, and bump container image
+release-image IMAGE:
+  @just build-image {{IMAGE}}
+  @just push-image {{IMAGE}}
+  @just bump-image {{IMAGE}}
+
 # Deploy select machines
 apply *ARGS:
   colmena apply --verbose --on {{ARGS}}
@@ -991,7 +1048,7 @@ tofu *ARGS:
   SOPS=("sops" "--input-type" "binary" "--output-type" "binary" "--decrypt")
 
   read -r -a ARGS <<< "{{ARGS}}"
-  if [[ ${ARGS[0]} =~ bootstrap|cluster|grafana|k8s ]]; then
+  if [[ ${ARGS[0]} =~ bootstrap|cluster|grafana|k8s|ecr ]]; then
     WORKSPACE="${ARGS[0]}"
     ARGS=("${ARGS[@]:1}")
   else

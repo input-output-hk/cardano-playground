@@ -2,11 +2,23 @@
   # Uncomment for node service debugging
   # flake.config.cardano-parts.pkgs.special.cardano-node-service = "${flake.inputs.cardano-node-service.outPath}/nix/nixos";
 
-  perSystem = {inputs', ...}: {
+  perSystem = {
+    inputs',
+    pkgs,
+    ...
+  }: {
     cardano-parts = {
       shell.global = {
         defaultShell = "ops";
-        extraPkgs = [inputs'.cardano-parts.packages.pre-push];
+        extraPkgs = with pkgs; [
+          inputs'.cardano-parts.packages.pre-push
+          kubectl
+          kustomize
+          kustomize-sops
+          inplace-image-tag-updater
+          crane
+          amazon-ecr-credential-helper
+        ];
       };
 
       # Note that these package config assignments impact not only the devShell which utilize

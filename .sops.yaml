@@ -40,6 +40,14 @@ keys:
 
 creation_rules:
   # -------------------------------------------------------
+  # Kubernetes secrets
+  - path_regex: k8s/.*/secret\..*\.yaml$
+    encrypted_regex: "^(data|stringData)$"
+    key_groups:
+    - age:
+      - *sre
+
+  # -------------------------------------------------------
   # General environment secrets are admin only
   - path_regex: (secrets|workbench)/envs/.*$
     key_groups:
