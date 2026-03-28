@@ -1,0 +1,14 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1  # first, required
+kind: Role  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # preferred
+  labels:  # required
+    app.kubernetes.io/name: TODO  # required
+  annotations: {}
+rules:  # required
+- apiGroups: []  # first, preferred
+  resources: []  # preferred
+  resourceNames: []  # preferred
+  verbs: []  # preferred

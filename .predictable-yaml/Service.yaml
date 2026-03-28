@@ -1,0 +1,21 @@
+---
+apiVersion: v1  # first, required
+kind: Service  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # preferred
+  labels:  # required
+    app.kubernetes.io/name: TODO  # required
+  annotations: {}
+spec:  # required
+  type: ClusterIP  # first, required
+  clusterIP: None
+  sessionAffinity: None
+  loadBalancerIP: example
+  selector:  # preferred
+    app.kubernetes.io/name: TODO  # required
+  ports:
+  - name: TODO  # first, required
+    port: TODO  # required
+    targetPort: TODO  # required
+    protocol: TCP

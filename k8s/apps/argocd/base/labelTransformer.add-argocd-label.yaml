@@ -1,0 +1,10 @@
+---
+apiVersion: builtin
+kind: LabelTransformer
+metadata:
+  name: add-argocd-label
+labels:
+  app.kubernetes.io/instance: argocd
+fieldSpecs:
+- path: metadata/labels
+  create: true

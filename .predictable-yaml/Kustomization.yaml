@@ -1,0 +1,47 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1  # first, required
+kind: Kustomization  # required
+
+namespace: TODO
+
+replicas:
+- name: TODO  # first, required
+  count: 1  # required
+
+resources: []
+
+components: []
+
+patches:
+- target:  # first
+    group: TODO  # preferred
+    version: TODO  # preferred
+    kind: TODO  # required
+    name: TODO  # preferred
+    namespace: TODO  # preferred
+  path: TODO  # preferred
+  patch: TODO
+
+generators: []
+
+generatorOptions:
+  labels:
+    app: TODO  # first
+  annotations: {}
+
+configMapGenerator:
+- name: TODO  # first, required
+  namespace: TODO  # preferred
+  behavior: TODO
+  files: []
+  options:
+    disableNameSuffixHash: true
+    labels:
+      app: TODO  # first, preferred
+
+images:
+- name: TODO  # first, required
+  newName: TODO
+  newTag: TODO
+
+transformers: []

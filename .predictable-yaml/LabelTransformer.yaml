@@ -1,0 +1,11 @@
+---
+apiVersion: builtin  # first, required
+kind: LabelTransformer  # required
+metadata:  # required
+  name: TODO  # first, required
+labels:  # required
+  app.kubernetes.io/instance: TODO  # first, preferred
+fieldSpecs:  # required
+- path: metadata/labels  # first, required
+  kind: TODO  # preferred
+  create: TODO  # required

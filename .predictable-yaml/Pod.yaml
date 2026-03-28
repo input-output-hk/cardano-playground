@@ -1,0 +1,121 @@
+---
+apiVersion: core/v1  # first, required
+kind: Pod  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # preferred
+  labels:  # required
+    app: TODO  # first, required
+  annotations: {}
+spec:  # required
+  serviceAccountName: TODO  # first, preferred
+  automountServiceAccountToken: TODO  # preferred
+  initContainers: {}  # ditto=.spec.containers
+  containers:  # required
+  - name: TODO  # first, required
+    image: TODO  # required
+    imagePullPolicy: IfNotPresent  # required
+    command:  # preferred
+    - TODO
+    args:  # preferred
+    - TODO
+    envFrom:
+    - secretRef:
+        name: TODO  # first
+    - configMapRef:
+        name: TODO  # first
+    env:
+    - name: TODO  # first, required
+    ports:
+    - name: TODO  # first, required
+      containerPort: TODO  # preferred
+      hostPort: TODO
+      protocol: TCP
+    resources:  # preferred
+      requests:  # preferred
+        cpu: TODO  # preferred
+        memory: TODO  # preferred
+      limits:  # preferred
+        cpu: TODO  # preferred
+        memory: TODO  # preferred
+    lifecycle: {}
+    startupProbe:  # preferred
+      periodSeconds: 10  # preferred
+      initialDelaySeconds: 60  # preferred
+      timeoutSeconds: 30  # preferred
+      successThreshold: 1  # preferred
+      failureThreshold: 10  # preferred
+      httpGet:  # preferred
+        port: http  # first, required
+        path: /  # required
+        scheme: HTTP
+    livenessProbe: {}  # ditto=.spec.containers[0].startupProbe
+    readinessProbe: {}  # ditto=.spec.containers[0].startupProbe
+    volumeMounts:
+    - name: TODO  # first, required
+      mountPath: TODO  # preferred
+      subPath: example
+      readOnly: true
+    securityContext:
+      privileged: TODO
+      allowPrivilegeEscalation: TODO
+      capabilities:
+        drop: []
+  terminationGracePeriodSeconds: 300
+  restartPolicy: OnFailure
+  dnsPolicy: ClusterFirst
+  securityContext:
+    runAsNonRoot: TODO
+    runAsUser: TODO
+    runAsGroup: TODO
+    seccompProfile:
+      type: TODO
+  volumes:
+  - name: TODO  # first, required
+    configMap:
+      name: TODO  # first, required
+      defaultMode: 493
+      optional: true
+      items:
+      - key: TODO  # first
+        path: TODO
+    secret:
+      secretName: TODO  # required
+      defaultMode: 493
+      optional: true
+      items:
+      - key: TODO  # first
+        path: TODO
+  nodeSelector: {}
+  tolerations:
+  - effect: TODO  # first, preferred
+    key: TODO  # preferred
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app: TODO  # first
+          matchExpressions:
+          - key: TODO  # first, required
+            operator: In  # required
+            values: []  # required
+        nodeSelectorTerms:
+        - matchLabels:
+            app: TODO  # first
+          matchExpressions:
+          - key: TODO  # first, required
+            operator: In  # required
+            values: []  # required
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 5  # preferred
+        podAffinityTerm:  # preferred
+          topologyKey: kubernetes.io/hostname  # preferred
+          labelSelector:  # preferred
+            matchLabels:  # preferred
+              app: TODO  # first, preferred
+            matchExpressions:
+            - key: TODO  # first, required
+              operator: In  # required
+              values: []  # required

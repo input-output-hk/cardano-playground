@@ -1,0 +1,69 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# NOTE: not using ApplicationSets, Dex, or Notifications
+resources:
+- clusterRole.argocd-application-controller.yaml
+# - clusterRole.argocd-applicationset-controller.yaml
+- clusterRole.argocd-server.yaml
+- clusterRoleBinding.argocd-application-controller.yaml
+# - clusterRoleBinding.argocd-applicationset-controller.yaml
+- clusterRoleBinding.argocd-server.yaml
+- configMap.argocd-cm.yaml
+- configMap.argocd-cmd-params-cm.yaml
+- configMap.argocd-gpg-keys-cm.yaml
+# - configMap.argocd-notifications-cm.yaml
+- configMap.argocd-rbac-cm.yaml
+- configMap.argocd-ssh-known-hosts-cm.yaml
+- configMap.argocd-tls-certs-cm.yaml
+- customResourceDefinition.applications.argoproj.io.yaml
+# - customResourceDefinition.applicationsets.argoproj.io.yaml
+- customResourceDefinition.appprojects.argoproj.io.yaml
+# - deployment.argocd-applicationset-controller.yaml
+# - deployment.argocd-dex-server.yaml
+# - deployment.argocd-notifications-controller.yaml
+- deployment.argocd-redis.yaml
+- deployment.argocd-repo-server.yaml
+- deployment.argocd-server.yaml
+- namespace.argocd.yaml
+- networkPolicy.argocd-application-controller-network-policy.yaml
+# - networkPolicy.argocd-applicationset-controller-network-policy.yaml
+# - networkPolicy.argocd-dex-server-network-policy.yaml
+# - networkPolicy.argocd-notifications-controller-network-policy.yaml
+- networkPolicy.argocd-redis-network-policy.yaml
+- networkPolicy.argocd-repo-server-network-policy.yaml
+- networkPolicy.argocd-server-network-policy.yaml
+- role.argocd-application-controller.yaml
+# - role.argocd-applicationset-controller.yaml
+# - role.argocd-dex-server.yaml
+# - role.argocd-notifications-controller.yaml
+- role.argocd-redis.yaml
+- role.argocd-server.yaml
+- roleBinding.argocd-application-controller.yaml
+# - roleBinding.argocd-applicationset-controller.yaml
+# - roleBinding.argocd-dex-server.yaml
+# - roleBinding.argocd-notifications-controller.yaml
+- roleBinding.argocd-redis.yaml
+- roleBinding.argocd-server.yaml
+# - secret.argocd-notifications-secret.yaml
+- secret.argocd-secret.yaml
+# - service.argocd-applicationset-controller.yaml
+# - service.argocd-dex-server.yaml
+- service.argocd-metrics.yaml
+# - service.argocd-notifications-controller-metrics.yaml
+- service.argocd-redis.yaml
+- service.argocd-repo-server.yaml
+- service.argocd-server-metrics.yaml
+- service.argocd-server.yaml
+- serviceAccount.argocd-application-controller.yaml
+# - serviceAccount.argocd-applicationset-controller.yaml
+# - serviceAccount.argocd-dex-server.yaml
+# - serviceAccount.argocd-notifications-controller.yaml
+- serviceAccount.argocd-redis.yaml
+- serviceAccount.argocd-repo-server.yaml
+- serviceAccount.argocd-server.yaml
+- statefulSet.argocd-application-controller.yaml
+
+transformers:
+- labelTransformer.add-argocd-label.yaml
