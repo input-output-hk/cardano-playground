@@ -1,0 +1,33 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: cert-manager-webhook
+  labels:
+    app.kubernetes.io/name: webhook
+    app: webhook
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: webhook
+  annotations:
+    cert-manager.io/inject-ca-from-secret: cert-manager/cert-manager-webhook-ca
+webhooks:
+- name: webhook.cert-manager.io
+  clientConfig:
+    service:
+      name: cert-manager-webhook
+      namespace: cert-manager
+      path: /mutate
+  failurePolicy: Fail
+  sideEffects: None
+  admissionReviewVersions: [v1]
+  rules:
+  - apiGroups:
+    - cert-manager.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - certificaterequests
+  matchPolicy: Equivalent
+  timeoutSeconds: 30
