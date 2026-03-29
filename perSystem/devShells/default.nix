@@ -12,12 +12,15 @@
         defaultShell = "ops";
         extraPkgs = with pkgs; [
           inputs'.cardano-parts.packages.pre-push
+          inputs'.predictable-yaml.packages.default
+          amazon-ecr-credential-helper
+          crane
+          inplace-image-tag-updater
+          kfilt
           kubectl
           kustomize
           kustomize-sops
-          inplace-image-tag-updater
-          crane
-          amazon-ecr-credential-helper
+          yamlfmt
         ];
       };
 

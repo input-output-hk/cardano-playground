@@ -1,0 +1,8 @@
+---
+formatter:
+  type: basic
+  indent: 2
+  include_document_start: true
+  retain_line_breaks: true
+  indentless_arrays: true
+  pad_line_comments: 2
