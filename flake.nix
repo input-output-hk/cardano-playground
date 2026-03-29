@@ -23,6 +23,11 @@
       url = "github:snarlysodboxer/inplace-image-tag-updater";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    predictable-yaml = {
+      url = "github:snarlysodboxer/predictable-yaml";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs: let
