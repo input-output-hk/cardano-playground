@@ -17,5 +17,5 @@ spec:  # required
   ports:
   - name: TODO  # first, required
     port: TODO  # required
-    targetPort: TODO  # required
+    targetPort: TODO  # preferred
     protocol: TCP

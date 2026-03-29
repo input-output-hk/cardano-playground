@@ -5,4 +5,5 @@ metadata:  # required
   name: TODO  # first, required
   labels:  # required
     app.kubernetes.io/name: TODO  # required
+  annotations: {}
 spec: {}  # required

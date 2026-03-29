@@ -4,7 +4,8 @@ kind: ClusterRoleBinding  # required
 metadata:  # required
   name: TODO  # first, required
   labels:  # required
-    app.kubernetes.io/name: TODO  # required
+    app: TODO  # first
+    app.kubernetes.io/name: TODO
   annotations: {}
 roleRef:  # required
   apiGroup: rbac.authorization.k8s.io  # first, required

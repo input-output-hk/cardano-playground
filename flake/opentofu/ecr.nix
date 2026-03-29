@@ -18,9 +18,10 @@ with lib; let
     region = "eu-central-1";
     # To add a new container image repo: add to this list and run `just tofu ecr apply`
     repositories = [
-      # "playground/example-app"
       "argocd"
-      "dex"
+      "cert-manager-cainjector"
+      "cert-manager-controller"
+      "cert-manager-webhook"
       "redis"
     ];
   };

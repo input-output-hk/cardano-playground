@@ -256,17 +256,33 @@ push-image IMAGE:
     exit 1
   fi
 
-  IMAGE_NAME=$(nix eval --raw .#{{IMAGE}}-image.imageName 2>/dev/null)
   IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
 
-  # Get the repository URL directly from terraform (e.g., argocd -> argocd_url)
-  REPO_URL=$(just tofu ecr output -raw ${IMAGE_NAME/\//_}_url 2>/dev/null | tail -1)
+  echo "Getting AWS account ID..."
+  if ! AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
+    echo "Error: AWS credentials not working. Please authenticate first."
+    exit 1
+  fi
 
-  echo "Pushing ${IMAGE_NAME}:${IMAGE_TAG} to ${REPO_URL}..."
-  # Crane will use amazon-ecr-credential-helper automatically for ECR auth
+  # Construct ECR repository URL
+  REGION="eu-central-1"
+  REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/{{IMAGE}}"
+
+  # Configure crane to use ECR credential helper
+  export DOCKER_CONFIG=$(mktemp -d)
+  trap "rm -rf $DOCKER_CONFIG" EXIT
+  cat > $DOCKER_CONFIG/config.json <<EOF
+  {
+    "credHelpers": {
+      "${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com": "ecr-login"
+    }
+  }
+  EOF
+
+  echo "Pushing {{IMAGE}}:${IMAGE_TAG} to ${REPO_URL}:${IMAGE_TAG}"
   crane push result "${REPO_URL}:${IMAGE_TAG}"
 
-  echo "Image pushed to ${REPO_URL}:${IMAGE_TAG}"
+  echo "Successful push"
 
 # Update container image tags in Kubernetes configs
 bump-image IMAGE:
