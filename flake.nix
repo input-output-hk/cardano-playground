@@ -8,14 +8,6 @@
     cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-02-13";
     # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2026-02-13";
 
-    amis = {
-      url = "github:NixOS/amis";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        treefmt-nix.follows = "cardano-parts/treefmt-nix";
-      };
-    };
-
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
   };

@@ -33,30 +33,6 @@
         "type": "github"
       }
     },
-    "amis": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "treefmt-nix": [
-          "cardano-parts",
-          "treefmt-nix"
-        ]
-      },
-      "locked": {
-        "lastModified": 1771336564,
-        "narHash": "sha256-RT4xz1T29RaRMrFkL8+SLy7j/yb7GwUtyJV7iouQEIs=",
-        "owner": "NixOS",
-        "repo": "amis",
-        "rev": "e42d9385cd80e78e78ccf8707babcde0bb2685aa",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "amis",
-        "type": "github"
-      }
-    },
     "auth-keys-hub": {
       "inputs": {
         "flake-parts": [
@@ -1619,7 +1595,6 @@
     },
     "root": {
       "inputs": {
-        "amis": "amis",
         "cardano-node-pparams-api": "cardano-node-pparams-api",
         "cardano-parts": "cardano-parts",
         "flake-parts": [
