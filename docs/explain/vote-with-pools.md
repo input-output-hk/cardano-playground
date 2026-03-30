@@ -19,9 +19,9 @@ export ACTION_IDX=0
 If not already started, start node and wait until the chain is sync'd to tip.
 Then set up your shell environment variables.
 ```bash
-just start-node $ENV
-source <(just set-default-cardano-env $ENV)
-just query-tip $ENV
+just start-node "$ENV"
+source <(just set-default-cardano-env "$ENV")
+just query-tip "$ENV"
 ```
 
 Use the cardano-cli or cardano-cli-ng version of CLI as appropriate for your
@@ -49,21 +49,21 @@ cardano-cli-ng conway governance vote create \
     --yes \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
-    --cold-verification-key-file <(just sops-decrypt-binary secrets/groups/${ENV}1/deploy/${ENV}1-bp-a-1-cold.vkey) \
+    --cold-verification-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}1/deploy/${ENV}1-bp-a-1-cold.vkey") \
     --out-file "$ACTION_ID-${ENV}1.vote"
 
 cardano-cli-ng conway governance vote create \
     --yes \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
-    --cold-verification-key-file <(just sops-decrypt-binary secrets/groups/${ENV}2/deploy/${ENV}2-bp-b-1-cold.vkey) \
+    --cold-verification-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}2/deploy/${ENV}2-bp-b-1-cold.vkey") \
     --out-file "$ACTION_ID-${ENV}2.vote"
 
 cardano-cli-ng conway governance vote create \
     --yes \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
-    --cold-verification-key-file <(just sops-decrypt-binary secrets/groups/${ENV}3/deploy/${ENV}3-bp-c-1-cold.vkey) \
+    --cold-verification-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}3/deploy/${ENV}3-bp-c-1-cold.vkey") \
     --out-file "$ACTION_ID-${ENV}3.vote"
 ```
 
@@ -76,7 +76,7 @@ cardano-cli-ng conway governance vote view --vote-file "$ACTION_ID-${ENV}3.vote"
 
 Prepare to build a transaction:
 ```bash
-RICH_ADDR=$(just sops-decrypt-binary secrets/envs/${ENV}/utxo-keys/rich-utxo.addr)
+RICH_ADDR=$(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.addr")
 
 # View available UTxO inputs to fund a voting transaction
 # and set TXIN to this selected UTxO
@@ -109,10 +109,10 @@ Sign the transaction:
 ```bash
 cardano-cli-ng conway transaction sign \
   --tx-body-file vote-tx.raw \
-  --signing-key-file <(just sops-decrypt-binary secrets/envs/${ENV}/utxo-keys/rich-utxo.skey) \
-  --signing-key-file <(just sops-decrypt-binary secrets/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold.skey) \
-  --signing-key-file <(just sops-decrypt-binary secrets/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold.skey) \
-  --signing-key-file <(just sops-decrypt-binary secrets/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold.skey) \
+  --signing-key-file <(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.skey") \
+  --signing-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold.skey") \
+  --signing-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold.skey") \
+  --signing-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold.skey") \
   --testnet-magic "$TESTNET_MAGIC" \
   --out-file vote-tx.signed
 ```
