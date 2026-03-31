@@ -403,7 +403,7 @@
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v2026-03-30",
+        "ref": "next-2026-03-31",
         "repo": "cardano-parts",
         "type": "github"
       }
