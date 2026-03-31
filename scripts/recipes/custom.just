@@ -75,9 +75,7 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     exit 1
   fi
 
-  just set-default-cardano-env "$ENV" "$MAGIC" "$PPID"
-  export CARDANO_NODE_NETWORK_ID="$MAGIC"
-  export TESTNET_MAGIC="$MAGIC"
+  source <(just set-default-cardano-env "$ENV")
   echo
 
   [ -n "${DEBUG:-}" ] && set -x
@@ -126,7 +124,7 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   eval "$CARDANO_CLI" latest query utxo --address "$SEND_ADDR" | jq
   PROMPT
 
-  CHANGE_ADDR=$(just sops-decrypt-binary secrets/envs/$ENV/utxo-keys/rich-utxo.addr)
+  CHANGE_ADDR=$(just sops-decrypt-binary "secrets/envs/$ENV/utxo-keys/rich-utxo.addr")
   echo "For environment $ENV, the rich key address of $CHANGE_ADDR contains the following lovelace only UTxOs:"
   eval "$CARDANO_CLI" latest query utxo --address "$CHANGE_ADDR" | jq 'to_entries | map(select(.value.value | length == 1)) | sort_by(.value.value.lovelace) | from_entries'
   PROMPT
@@ -184,7 +182,7 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
 
   eval "$CARDANO_CLI" latest transaction sign \
     --tx-body-file "$BASENAME.raw" \
-    --signing-key-file <(just sops-decrypt-binary secrets/envs/${ENV}/utxo-keys/rich-utxo.skey) \
+    --signing-key-file <(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.skey") \
     --testnet-magic "$TESTNET_MAGIC" \
     --out-file "$BASENAME.signed"
 

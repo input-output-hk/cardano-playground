@@ -21,6 +21,7 @@
       "valency": 1
     }
   ],
+  "peerSnapshotFile": "peer-snapshot.json",
   "publicRoots": [
     {
       "accessPoints": [],
