@@ -5,23 +5,36 @@
   perSystem = {
     inputs',
     pkgs,
+    config,
     ...
   }: {
     cardano-parts = {
-      shell.global = {
-        defaultShell = "ops";
-        extraPkgs = with pkgs; [
-          inputs'.cardano-parts.packages.pre-push
-          inputs'.predictable-yaml.packages.default
-          amazon-ecr-credential-helper
-          crane
-          inplace-image-tag-updater
-          kfilt
-          kubectl
-          kustomize
-          kustomize-sops
-          yamlfmt
-        ];
+      shell = {
+        global = {
+          defaultShell = "ops";
+          extraPkgs = with pkgs; [
+            inputs'.cardano-parts.packages.pre-push
+            inputs'.predictable-yaml.packages.default
+            amazon-ecr-credential-helper
+            crane
+            inplace-image-tag-updater
+            kfilt
+            kubectl
+            kustomize
+            kustomize-sops
+            yamlfmt
+          ];
+        };
+
+        ops = {
+          enableHooks = true;
+          defaultHooks =
+            config.cardano-parts.shell.global.defaultHooks
+            + ''
+              # Alias kustomize to always enable exec and alpha plugins for KSOPS support
+              alias kustomize='kustomize --enable-exec --enable-alpha-plugins'
+            '';
+        };
       };
 
       # Note that these package config assignments impact not only the devShell which utilize

@@ -5,3 +5,9 @@ kind: Kustomization
 resources:
 - ../../../apps/argocd/base
 
+patches:
+- path: configmap.argocd-cm.yaml
+- path: configmap.argocd-rbac-cm.yaml
+
+generators:
+- ksops.generator.yaml

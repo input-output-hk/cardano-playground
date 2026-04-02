@@ -15,7 +15,7 @@ with lib; let
   repoToId = repoName: replaceStrings ["/"] ["_"] repoName;
 
   ecrConfig = {
-    region = "eu-central-1";
+    inherit (cluster) region;
     # To add a new container image repo: add to this list and run `just tofu ecr apply`
     repositories = [
       "argocd"
@@ -41,6 +41,8 @@ with lib; let
     tribe = "sre";
   };
 in {
+  flake.ecr.region = ecrConfig.region;
+
   flake.opentofu.ecr = inputs.cardano-parts.inputs.terranix.lib.terranixConfiguration {
     inherit system;
     modules = [

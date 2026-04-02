@@ -257,6 +257,7 @@ push-image IMAGE:
   fi
 
   IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
+  REGION=$(nix eval --raw .#ecr.region 2>/dev/null)
 
   echo "Getting AWS account ID..."
   if ! AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
@@ -265,7 +266,6 @@ push-image IMAGE:
   fi
 
   # Construct ECR repository URL
-  REGION="eu-central-1"
   REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/{{IMAGE}}"
 
   # Configure crane to use ECR credential helper

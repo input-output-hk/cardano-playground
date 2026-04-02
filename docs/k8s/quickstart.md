@@ -11,11 +11,11 @@ _HINT: Nearly all `kubectl` subcommands, flags, and even object names tab-comple
 * SDLC
     * [Pause ArgoCD auto delivery](#pause-argocd-auto-delivery)
     * First diff it to see what you'll be changing:
-        * `kustomize build --enable-alpha-plugins k8s/overlays/playground/<app> | kubectl diff -f -`
+        * `kustomize build k8s/overlays/playground/<app> | kubectl diff -f -`
     * Apply the changes:
-        * `kustomize build --enable-alpha-plugins k8s/overlays/playground/<app> | kubectl apply -f -`
+        * `kustomize build k8s/overlays/playground/<app> | kubectl apply -f -`
     * Commit/push your changes, merge to `main`
-    * Reenable ArgoCD auto delivery
+    * Reenable ArgoCD auto delivery - delivery should be a no-op (in this case, see [General Notes](#general-notes))
 
 ## Terminology
 * The persistent entities we manipulate in Kubernetes are called Objects. The YAML files we manipulate typically represent one object each.
@@ -52,9 +52,13 @@ _HINT: Nearly all `kubectl` subcommands, flags, and even object names tab-comple
     * Comment out the entire `syncPolicy` section in the `application.<name>.yaml` file and kubectl apply it.
 
 ## General notes
+* We do not use `kubectl -k k8s/overlays/<path>` because we cannot control the version of Kustomize built into kubectl.
+    * We need to control the version of Kustomize to ensure it's compatible with our configs and with ksops for Secrets.
+    * The ops devShell aliases `kustomize` to automatically include `--enable-exec --enable-alpha-plugins` for KSOPS support.
 * There exists an ArgoCD CLI but we have no use for it as we don't use ArgoCD imperatively.
-* Why use ArgoCD if in practice we first pause it, apply changes manually, then have it deliver nothing?
+* _Why use ArgoCD if in practice we first pause it, apply changes manually, then have it deliver nothing?_
     * We benefit from knowing applications are currently synced. A colleague could have deployed changes from their own unmerged branch.
         * It's a central point of coordination.
+        * We can monitor/alert on out-of-sync, failed delivery, etc.
     * We can fully automate delivery using CI for some applications, even though we don't have that yet.
         * Imagine: CI builds a new container image for something, then bumps the tags for it right in the `main` branch or in an auto merged PR. ArgoCD then delivers it.
