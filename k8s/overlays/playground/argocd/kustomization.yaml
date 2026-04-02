@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - ../../../apps/argocd/base
+- appProject.cardano-playground.yaml
 
 patches:
 - path: configmap.argocd-cm.yaml

@@ -1,3 +1,4 @@
+---
 keys:
   # SRE
   - &sre age1rj7vaq0rsarnum2fx6zq0k3l64f6mca9t9mlhqu4nfvpqhux6uts5zud2m
@@ -38,6 +39,9 @@ keys:
   - &buildkite1-sa-east-1-1 age1f8ljwl7pauzfqpqjnxvz9cp0ln4ptldvjlyp3p6882klcrtswp5s30qkz7
   - &buildkite-af-south-1-1 age1mznysjmhug030jh7sgvp4tueurzwzvvl07cpnx9lp5n25xvmdfgspyjzpv
 
+  # ArgoCD
+  - &argocd age1wzx3jh874ejvwljl33qepnmsxt64wd7fl4zr4y5t5v25nvqyyqmqlpa6t3
+
 creation_rules:
   # -------------------------------------------------------
   # Kubernetes secrets
@@ -46,6 +50,7 @@ creation_rules:
     key_groups:
     - age:
       - *sre
+      - *argocd
 
   # -------------------------------------------------------
   # General environment secrets are admin only

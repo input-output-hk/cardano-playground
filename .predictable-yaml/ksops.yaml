@@ -1,0 +1,6 @@
+---
+apiVersion: viaduct.ai/v1  # first, required
+kind: ksops  # required
+metadata:  # required
+  name: TODO  # first, required
+files: []  # required

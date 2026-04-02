@@ -286,6 +286,8 @@ spec:
           value: /helm-working-dir
         - name: HELM_DATA_HOME
           value: /helm-working-dir
+        - name: SOPS_AGE_KEY_FILE
+          value: /app/config/age/argocd-key.txt
         ports:
         - name: grpc
           containerPort: 8081
@@ -316,6 +318,9 @@ spec:
           mountPath: /app/config/gpg/keys
         - name: argocd-repo-server-tls
           mountPath: /app/config/reposerver/tls
+        - name: age-key
+          mountPath: /app/config/age
+          readOnly: true
         - name: tmp
           mountPath: /tmp
         - name: helm-working-dir
@@ -362,6 +367,13 @@ spec:
         emptyDir: {}
       - name: plugins
         emptyDir: {}
+      - name: age-key
+        secret:
+          secretName: argocd-age-key
+          defaultMode: 0400
+          items:
+          - key: argocd-key.txt
+            path: argocd-key.txt
       nodeSelector:
         kubernetes.io/os: linux
       affinity:

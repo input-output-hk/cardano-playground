@@ -8,4 +8,5 @@ metadata:
       exec:
         path: ksops
 files:
+- secret.argocd-age-key.yaml
 - secret.argocd-secret.yaml
