@@ -10,24 +10,45 @@
     kustomize-wrapped = pkgs.writeShellScriptBin "kustomize" ''
       exec ${pkgs.kustomize}/bin/kustomize --enable-exec --enable-alpha-plugins "$@"
     '';
+
+    # Override cardano-parts pre-push to include yamlfmt and predictable-yaml checks
+    pre-push = pkgs.writeShellApplication {
+      name = "pre-push";
+      runtimeInputs = with pkgs; [coreutils gitMinimal gnugrep];
+      meta.description = "A pre-push repo check for required secrets encryption, linting, formatting, and yaml validation";
+      text =
+        builtins.replaceStrings
+        ["for check in lint treefmt; do"]
+        ["for check in lint treefmt yamlfmt predictable-yaml; do"]
+        (builtins.readFile "${inputs'.cardano-parts.packages.pre-push}/bin/pre-push");
+    };
   in {
     cardano-parts = {
       shell = {
         global = {
           defaultShell = "ops";
-          extraPkgs = with pkgs; [
-            inputs'.cardano-parts.packages.pre-push
-            inputs'.predictable-yaml.packages.default
-            amazon-ecr-credential-helper
-            crane
-            inplace-image-tag-updater
-            kfilt
-            kubectl
-            kustomize-wrapped
-            kustomize-sops
-            stern
-            yamlfmt
-          ];
+          extraPkgs =
+            [
+              pre-push
+              inputs'.predictable-yaml.packages.default
+            ]
+            ++ (with pkgs; [
+              amazon-ecr-credential-helper
+              crane
+              inplace-image-tag-updater
+              kfilt
+              kubectl
+              kustomize-wrapped
+              kustomize-sops
+              stern
+              yamlfmt
+            ]);
+          # Override cardano-parts defaultHooks to install our custom pre-push
+          defaultHooks = ''
+            if [ -d .git/hooks ]; then
+              ln -sf ${pre-push}/bin/pre-push .git/hooks/pre-push
+            fi
+          '';
         };
       };
 

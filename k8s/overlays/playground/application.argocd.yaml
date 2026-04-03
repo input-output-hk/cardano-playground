@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/name: argocd
     app.kubernetes.io/part-of: argocd
 spec:
+  revisionHistoryLimit: 10
   project: cardano-playground
   source:
     repoURL: https://github.com/input-output-hk/cardano-playground
@@ -18,7 +19,6 @@ spec:
   destination:
     name: in-cluster
 
-  revisionHistoryLimit: 10
   syncPolicy:
     automated:
       prune: true

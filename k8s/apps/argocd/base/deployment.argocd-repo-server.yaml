@@ -336,6 +336,10 @@ spec:
           runAsNonRoot: true
           seccompProfile:
             type: RuntimeDefault
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
       volumes:
       - name: ssh-known-hosts
         configMap:
@@ -374,10 +378,6 @@ spec:
           items:
           - key: argocd-key.txt
             path: argocd-key.txt
-      securityContext:
-        fsGroup: 999
-        runAsUser: 999
-        runAsNonRoot: true
       nodeSelector:
         kubernetes.io/os: linux
       affinity:

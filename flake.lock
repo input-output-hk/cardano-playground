@@ -1643,11 +1643,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767732360,
-        "narHash": "sha256-JAhH80t3QQGxFQBR57FHtGi4gCl1T2jZSe4xvfXICJY=",
+        "lastModified": 1775233354,
+        "narHash": "sha256-0AuznogiOE4VMH3kB3hNb4cZKVFhaAlefRC3nbdfQm0=",
         "owner": "snarlysodboxer",
         "repo": "predictable-yaml",
-        "rev": "305c85595e9e8e8cd87867154368796599720861",
+        "rev": "3ef7fda259c308be22a43318c4230c1c6352cbd3",
         "type": "github"
       },
       "original": {

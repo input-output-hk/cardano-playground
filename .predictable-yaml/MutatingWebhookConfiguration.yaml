@@ -6,7 +6,7 @@ metadata:  # required
   labels:  # required
     app.kubernetes.io/name: TODO  # required
   annotations: {}
-webhooks:  # first, required
+webhooks:  # required
 - name: TODO  # first, required
   clientConfig:
     service:

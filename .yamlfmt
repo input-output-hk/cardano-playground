@@ -6,3 +6,7 @@ formatter:
   retain_line_breaks: true
   indentless_arrays: true
   pad_line_comments: 2
+
+match_type: doublestar
+exclude:
+- "k8s/**/secret.*.yaml"

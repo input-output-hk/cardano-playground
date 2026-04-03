@@ -15,7 +15,7 @@
             echo "ERROR: .yamlfmt config file not found in source!"
             exit 1
           fi
-          yamlfmt -lint k8s/
+          yamlfmt --lint "k8s/**/*.yaml"
           touch $out
         '';
     };

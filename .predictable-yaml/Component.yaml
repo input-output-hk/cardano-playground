@@ -1,0 +1,44 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1  # first, required
+kind: Component  # required
+
+namespace: example
+
+replicas:
+- name: TODO  # first, required
+  count: 1
+
+resources: []
+
+patches:
+- target:  # first
+    group: TODO  # preferred
+    version: TODO  # preferred
+    kind: TODO  # preferred
+    name: TODO  # preferred
+    namespace: TODO  # preferred
+  path: TODO
+  patch: TODO
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/name: TODO  # first
+  annotations: {}
+
+configMapGenerator:
+- name: TODO  # first, required
+  namespace: TODO  # preferred
+  behavior: TODO
+  files: []
+  options:
+    disableNameSuffixHash: false
+    labels:
+      app.kubernetes.io/name: TODO  # first
+
+images:
+- name: TODO  # first
+  newName: TODO
+  newTag: TODO
+
+transformers: []
