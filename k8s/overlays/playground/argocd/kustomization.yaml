@@ -6,6 +6,9 @@ resources:
 - ../../../apps/argocd/base
 - appProject.cardano-playground.yaml
 
+components:
+- ../../../components/spot-node-affinity
+
 patches:
 - path: configmap.argocd-cm.yaml
 - path: configmap.argocd-rbac-cm.yaml

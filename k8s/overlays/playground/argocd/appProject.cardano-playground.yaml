@@ -15,7 +15,7 @@ spec:
   - namespace: '*'
     server: https://kubernetes.default.svc
   sourceRepos:
-  - https://github.com/input-output-hk/cardano-playground
+  - ssh://git@github.com/input-output-hk/cardano-playground
   description: Cardano Playground infrastructure and applications
   namespaceResourceWhitelist:
   - group: '*'
