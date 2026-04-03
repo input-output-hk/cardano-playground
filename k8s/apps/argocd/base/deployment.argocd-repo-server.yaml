@@ -374,6 +374,10 @@ spec:
           items:
           - key: argocd-key.txt
             path: argocd-key.txt
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsNonRoot: true
       nodeSelector:
         kubernetes.io/os: linux
       affinity:

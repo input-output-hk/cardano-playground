@@ -25,6 +25,7 @@
             kubectl
             kustomize-wrapped
             kustomize-sops
+            stern
             yamlfmt
           ];
         };

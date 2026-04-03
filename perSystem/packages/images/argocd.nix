@@ -32,6 +32,7 @@
       '';
 
       config = {
+        User = "999";
         Env = [
           # This path is coupled to the mount point in the Deployment.
           "SOPS_AGE_KEY_FILE=/app/config/age/argocd-key.txt"

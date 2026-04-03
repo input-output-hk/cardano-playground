@@ -11,7 +11,8 @@ spec:
   project: cardano-playground
   source:
     repoURL: ssh://git@github.com/input-output-hk/cardano-playground
-    targetRevision: main
+    # targetRevision: main
+    targetRevision: prototype-webservices  # TODO
     path: k8s/overlays/playground/external-dns
 
   destination:
