@@ -22,6 +22,7 @@ with lib; let
       "cert-manager-cainjector"
       "cert-manager-controller"
       "cert-manager-webhook"
+      "external-dns"
       "redis"
     ];
   };

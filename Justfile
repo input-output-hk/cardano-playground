@@ -280,7 +280,17 @@ push-image IMAGE:
   EOF
 
   echo "Pushing {{IMAGE}}:${IMAGE_TAG} to ${REPO_URL}:${IMAGE_TAG}"
-  crane push result "${REPO_URL}:${IMAGE_TAG}"
+
+  # crane doesn't support .tar.gz format, so decompress if needed
+  # buildImage produces .tar.gz, pullImage produces .tar
+  if [[ "$(readlink result)" == *.tar.gz ]]; then
+    TEMP_TAR=$(mktemp --suffix=.tar)
+    trap "rm -f $TEMP_TAR" EXIT
+    gunzip -c result > "$TEMP_TAR"
+    crane push "$TEMP_TAR" "${REPO_URL}:${IMAGE_TAG}"
+  else
+    crane push result "${REPO_URL}:${IMAGE_TAG}"
+  fi
 
   echo "Image pushed"
 
