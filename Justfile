@@ -265,7 +265,6 @@ push-image IMAGE:
     exit 1
   fi
 
-  # Construct ECR repository URL
   REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/{{IMAGE}}"
 
   # Configure crane to use ECR credential helper
@@ -301,7 +300,15 @@ bump-image IMAGE:
 
   IMAGE_NAME=$(nix eval --raw .#{{IMAGE}}-image.imageName 2>/dev/null)
   IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
-  REPO_URL=$(just tofu ecr output -raw ${IMAGE_NAME/\//_}_url 2>/dev/null | tail -1)
+  REGION=$(nix eval --raw .#ecr.region 2>/dev/null)
+
+  echo "Getting AWS account ID..."
+  if ! AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
+    echo "Error: AWS credentials not working. Please authenticate first."
+    exit 1
+  fi
+
+  REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/{{IMAGE}}"
 
   echo "Updating image tag in Kubernetes configs..."
   git grep -l "image:.*${REPO_URL}" k8s/ | \
