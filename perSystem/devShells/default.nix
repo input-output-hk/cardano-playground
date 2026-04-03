@@ -5,9 +5,12 @@
   perSystem = {
     inputs',
     pkgs,
-    config,
     ...
-  }: {
+  }: let
+    kustomize-wrapped = pkgs.writeShellScriptBin "kustomize" ''
+      exec ${pkgs.kustomize}/bin/kustomize --enable-exec --enable-alpha-plugins "$@"
+    '';
+  in {
     cardano-parts = {
       shell = {
         global = {
@@ -20,20 +23,10 @@
             inplace-image-tag-updater
             kfilt
             kubectl
-            kustomize
+            kustomize-wrapped
             kustomize-sops
             yamlfmt
           ];
-        };
-
-        ops = {
-          enableHooks = true;
-          defaultHooks =
-            config.cardano-parts.shell.global.defaultHooks
-            + ''
-              # Alias kustomize to always enable exec and alpha plugins for KSOPS support
-              alias kustomize='kustomize --enable-exec --enable-alpha-plugins'
-            '';
         };
       };
 
