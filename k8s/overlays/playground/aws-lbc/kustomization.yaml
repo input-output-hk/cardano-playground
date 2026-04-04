@@ -1,0 +1,14 @@
+---
+# predictable-yaml: ignore-requireds
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../../apps/aws-lbc/base
+
+components:
+- ../../../components/spot-node-affinity
+
+patches:
+- path: deployment.aws-load-balancer-controller.yaml
+- path: serviceAccount.aws-load-balancer-controller.yaml

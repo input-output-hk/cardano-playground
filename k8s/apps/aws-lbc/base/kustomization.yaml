@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- certificate.aws-load-balancer-root-cert.yaml
+- certificate.aws-load-balancer-serving-cert.yaml
+- clusterRole.aws-load-balancer-controller-role.yaml
+- clusterRoleBinding.aws-load-balancer-controller-rolebinding.yaml
+- customResourceDefinition.albtargetcontrolconfigs.elbv2.k8s.aws.yaml
+- customResourceDefinition.globalaccelerators.aga.k8s.aws.yaml
+- customResourceDefinition.ingressclassparams.elbv2.k8s.aws.yaml
+- customResourceDefinition.targetgroupbindings.elbv2.k8s.aws.yaml
+- deployment.aws-load-balancer-controller.yaml
+- ingressClass.alb.yaml
+- ingressClassParams.alb.yaml
+- issuer.aws-load-balancer-root-issuer.yaml
+- issuer.aws-load-balancer-selfsigned-issuer.yaml
+- mutatingWebhookConfiguration.aws-load-balancer-webhook.yaml
+- namespace.aws-load-balancer-controller.yaml
+- role.aws-load-balancer-controller-leader-election-role.yaml
+- roleBinding.aws-load-balancer-controller-leader-election-rolebinding.yaml
+- service.aws-load-balancer-webhook-service.yaml
+- serviceAccount.aws-load-balancer-controller.yaml
+- validatingWebhookConfiguration.aws-load-balancer-webhook.yaml
+
+transformers:
+- labelTransformer.add-argocd-label.yaml

@@ -1,0 +1,16 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-load-balancer-controller
+  namespace: aws-load-balancer-controller
+spec:
+  template:
+    spec:
+      containers:
+      - name: aws-load-balancer-controller
+        args:
+        - --cluster-name=playground-1
+        - --ingress-class=alb
+        # Get VPC ID: aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query "Vpcs[0].VpcId" --output text
+        - --aws-vpc-id=vpc-0d1856b4d24f5b848

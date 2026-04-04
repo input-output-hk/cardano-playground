@@ -144,6 +144,38 @@ in {
 
         resource = {
           # ===========================================
+          # VPC AND SUBNET TAGS FOR AWS LOAD BALANCER CONTROLLER
+          # ===========================================
+          # The AWS Load Balancer Controller discovers VPC and subnets via tags.
+          # The VPC and subnets are managed by cluster.nix, but we tag them here for EKS-specific discovery.
+
+          aws_ec2_tag = {
+            # Tag the default VPC for EKS cluster discovery
+            vpc_cluster = {
+              resource_id = "\${data.aws_vpc.default.id}";
+              key = "kubernetes.io/cluster/${eksConfig.clusterName}";
+              value = "shared";
+            };
+
+            # Tag all subnets in the default VPC for ALB discovery
+            # Default VPC subnets are public, so we tag them for internet-facing load balancers
+            subnet_cluster = {
+              for_each = "\${toset(data.aws_subnets.default.ids)}";
+              resource_id = "\${each.value}";
+              key = "kubernetes.io/cluster/${eksConfig.clusterName}";
+              value = "shared";
+            };
+
+            # Tag subnets for public (internet-facing) load balancers
+            subnet_elb = {
+              for_each = "\${toset(data.aws_subnets.default.ids)}";
+              resource_id = "\${each.value}";
+              key = "kubernetes.io/role/elb";
+              value = "1";
+            };
+          };
+
+          # ===========================================
           # IAM ROLES
           # ===========================================
 

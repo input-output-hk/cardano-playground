@@ -23,11 +23,12 @@ spec:
       serviceAccountName: aws-load-balancer-controller
       containers:
       - name: aws-load-balancer-controller
-        image: public.ecr.aws/eks/aws-load-balancer-controller:v3.1.0
+        image: 362174735783.dkr.ecr.eu-central-1.amazonaws.com/aws-load-balancer-controller:v3.1.0
         imagePullPolicy: IfNotPresent
         args:
-        - --cluster-name=playground-1
+        - --cluster-name=CHANGEME
         - --ingress-class=alb
+        - --aws-vpc-id=CHANGEME
         ports:
         - name: webhook-server
           containerPort: 9443

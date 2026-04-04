@@ -19,6 +19,7 @@ with lib; let
     # To add a new container image repo: add to this list and run `just tofu ecr apply`
     repositories = [
       "argocd"
+      "aws-load-balancer-controller"
       "cert-manager-cainjector"
       "cert-manager-controller"
       "cert-manager-webhook"
