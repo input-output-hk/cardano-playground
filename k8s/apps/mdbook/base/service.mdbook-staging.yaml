@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mdbook-staging
+  namespace: mdbook
+  labels:
+    app.kubernetes.io/name: mdbook
+    app.kubernetes.io/part-of: mdbook
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mdbook-staging
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP

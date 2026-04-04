@@ -1,4 +1,5 @@
 ---
+# predictable-yaml: ignore-requireds
 apiVersion: apps/v1
 kind: Deployment
 metadata:

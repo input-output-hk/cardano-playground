@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1  # first, required
+kind: Ingress  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # preferred
+  labels:  # required
+    app: TODO  # first
+    app.kubernetes.io/name: TODO  # required
+  annotations: {}
+spec:  # required
+  tls:
+  - hosts:  # first, required
+    - TODO  # required
+    secretName: TODO
+  rules:  # preferred
+  - host: TODO  # first, required
+    http:  # preferred
+      paths:  # preferred
+      - path: /TODO  # required
+        pathType: Prefix  # preferred
+        backend:  # preferred
+          service:  # preferred
+            name: TODO  # first, required
+            port:  # preferred
+              name: TODO  # preferred

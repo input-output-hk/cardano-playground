@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - ../../../apps/cert-manager/base
+- clusterIssuer.letsencrypt-prod.yaml
 
 components:
 - ../../../components/spot-node-affinity

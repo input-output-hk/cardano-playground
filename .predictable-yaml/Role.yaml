@@ -6,7 +6,7 @@ metadata:  # required
   namespace: TODO  # preferred
   labels:  # required
     app: TODO  # first
-    app.kubernetes.io/name: TODO
+    app.kubernetes.io/name: TODO  # required
   annotations: {}
 rules:  # required
 - apiGroups: []  # first, preferred

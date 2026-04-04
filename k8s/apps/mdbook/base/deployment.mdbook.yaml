@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mdbook
+  namespace: mdbook
+  labels:
+    app.kubernetes.io/name: mdbook
+    app.kubernetes.io/part-of: mdbook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mdbook
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mdbook
+    spec:
+      containers:
+      - name: mdbook
+        image: 362174735783.dkr.ecr.eu-central-1.amazonaws.com/mdbook-production:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        livenessProbe:
+          periodSeconds: 30
+          initialDelaySeconds: 10
+          httpGet:
+            port: http
+            path: /
+        readinessProbe:
+          periodSeconds: 30
+          initialDelaySeconds: 5
+          httpGet:
+            port: http
+            path: /
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: mdbook

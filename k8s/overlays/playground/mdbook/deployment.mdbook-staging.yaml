@@ -1,0 +1,24 @@
+---
+# predictable-yaml: ignore-requireds
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mdbook-staging
+  namespace: mdbook
+spec:
+  template:
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: spot
+        operator: Equal
+        value: "true"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: capacity-type
+                operator: In
+                values:
+                - spot

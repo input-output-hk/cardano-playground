@@ -1,0 +1,18 @@
+---
+apiVersion: cert-manager.io/v1  # first, required
+kind: ClusterIssuer  # required
+metadata:  # required
+  name: TODO
+  labels:  # required
+    app: TODO  # first
+    app.kubernetes.io/name: TODO  # required
+spec:  # required
+  acme:
+    server: TODO
+    email: TODO
+    privateKeySecretRef:
+      name: TODO  # first
+    solvers:
+    - dns01:
+        route53:
+          region: TODO

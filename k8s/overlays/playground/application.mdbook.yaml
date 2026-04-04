@@ -2,10 +2,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: aws-lbc
+  name: mdbook
   namespace: argocd
   labels:
-    app.kubernetes.io/name: aws-lbc
+    app.kubernetes.io/name: mdbook
     app.kubernetes.io/part-of: argocd
 spec:
   revisionHistoryLimit: 10
@@ -14,7 +14,7 @@ spec:
     repoURL: https://github.com/input-output-hk/cardano-playground
     # targetRevision: main
     targetRevision: prototype-webservices  # TODO
-    path: k8s/overlays/playground/aws-lbc
+    path: k8s/overlays/playground/mdbook
 
   destination:
     name: in-cluster

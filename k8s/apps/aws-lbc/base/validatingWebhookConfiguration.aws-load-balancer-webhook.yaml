@@ -5,6 +5,8 @@ metadata:
   name: aws-load-balancer-webhook
   labels:
     app.kubernetes.io/name: aws-load-balancer-controller
+  annotations:
+    cert-manager.io/inject-ca-from: aws-load-balancer-controller/aws-load-balancer-serving-cert
 webhooks:
 - name: vingressclassparams.elbv2.k8s.aws
   clientConfig:

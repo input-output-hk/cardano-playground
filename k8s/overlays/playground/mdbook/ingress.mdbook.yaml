@@ -1,0 +1,9 @@
+---
+# predictable-yaml: ignore-requireds
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mdbook
+  namespace: mdbook
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: book-k8s.play.dev.cardano.org,book-staging-k8s.play.dev.cardano.org

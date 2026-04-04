@@ -24,6 +24,8 @@ with lib; let
       "cert-manager-controller"
       "cert-manager-webhook"
       "external-dns"
+      "mdbook-production"
+      "mdbook-staging"
       "redis"
     ];
   };
