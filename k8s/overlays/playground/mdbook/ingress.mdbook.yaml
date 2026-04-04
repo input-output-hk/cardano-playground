@@ -7,3 +7,4 @@ metadata:
   namespace: mdbook
   annotations:
     external-dns.alpha.kubernetes.io/hostname: book-k8s.play.dev.cardano.org,book-staging-k8s.play.dev.cardano.org
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-central-1:362174735783:certificate/21dc8b07-7c01-4c57-a96e-e5936cc1fce3

@@ -140,6 +140,12 @@ in {
             name = eksConfig.clusterName;
             depends_on = ["aws_eks_cluster.${clusterResourceId}"];
           };
+
+          # Route53 hosted zone for DNS validation
+          aws_route53_zone.play_dev = {
+            name = "play.dev.cardano.org";
+            private_zone = false;
+          };
         };
 
         resource = {
@@ -387,6 +393,7 @@ in {
                     "elasticloadbalancing:DescribeLoadBalancers"
                     "elasticloadbalancing:DescribeLoadBalancerAttributes"
                     "elasticloadbalancing:DescribeListeners"
+                    "elasticloadbalancing:DescribeListenerAttributes"
                     "elasticloadbalancing:DescribeListenerCertificates"
                     "elasticloadbalancing:DescribeSSLPolicies"
                     "elasticloadbalancing:DescribeRules"
@@ -495,6 +502,20 @@ in {
                     "elasticloadbalancing:ModifyListener"
                   ];
                   Resource = "*";
+                }
+                {
+                  Effect = "Allow";
+                  Action = ["elasticloadbalancing:AddTags"];
+                  Resource = [
+                    "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*"
+                    "arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*"
+                    "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
+                  ];
+                  Condition = {
+                    "Null" = {
+                      "aws:RequestTag/elbv2.k8s.aws/cluster" = "false";
+                    };
+                  };
                 }
                 {
                   Effect = "Allow";
@@ -944,6 +965,48 @@ in {
               depends_on = ["aws_eks_cluster.${clusterResourceId}"];
             };
           };
+
+          # ===========================================
+          # ACM CERTIFICATE FOR MDBOOK
+          # ===========================================
+
+          # ACM Certificate for mdbook (both production and staging)
+          aws_acm_certificate.mdbook = {
+            domain_name = "book-k8s.play.dev.cardano.org";
+            subject_alternative_names = ["book-staging-k8s.play.dev.cardano.org"];
+            validation_method = "DNS";
+
+            tags =
+              defaultTags
+              // {
+                Name = "mdbook-k8s-certificate";
+                Application = "mdbook";
+              };
+
+            lifecycle = [
+              {
+                create_before_destroy = true;
+              }
+            ];
+          };
+
+          # DNS validation records for ACM certificate
+          aws_route53_record.mdbook_cert_validation = {
+            for_each = "\${{\n              for dvo in aws_acm_certificate.mdbook.domain_validation_options : dvo.domain_name => {\n                name   = dvo.resource_record_name\n                record = dvo.resource_record_value\n                type   = dvo.resource_record_type\n              }\n            }}";
+
+            allow_overwrite = true;
+            name = "\${each.value.name}";
+            records = ["\${each.value.record}"];
+            ttl = 60;
+            type = "\${each.value.type}";
+            zone_id = "\${data.aws_route53_zone.play_dev.zone_id}";
+          };
+
+          # Wait for certificate validation to complete
+          aws_acm_certificate_validation.mdbook = {
+            certificate_arn = "\${aws_acm_certificate.mdbook.arn}";
+            validation_record_fqdns = "\${[for record in aws_route53_record.mdbook_cert_validation : record.fqdn]}";
+          };
         };
 
         # Outputs for connecting to cluster and using IRSA roles
@@ -973,6 +1036,11 @@ in {
           cert_manager_role_arn = {
             description = "IAM role ARN for cert-manager ServiceAccount (cert-manager/cert-manager)";
             value = "\${aws_iam_role.irsa_cert_manager.arn}";
+          };
+
+          mdbook_certificate_arn = {
+            description = "ARN of the ACM certificate for mdbook (use in Ingress annotation: alb.ingress.kubernetes.io/certificate-arn)";
+            value = "\${aws_acm_certificate.mdbook.arn}";
           };
 
           z_IMPORTANT_REMINDER_disable_aws_guardduty = {

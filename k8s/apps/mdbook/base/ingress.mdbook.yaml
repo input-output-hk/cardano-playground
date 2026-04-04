@@ -16,16 +16,8 @@ metadata:
     alb.ingress.kubernetes.io/backend-protocol: HTTP
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
     alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
-
-    # Cert Manager
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: alb
-  tls:
-  - hosts:
-    - book-k8s.play.dev.cardano.org
-    - book-staging-k8s.play.dev.cardano.org
-    secretName: mdbook-tls
   rules:
   - host: book-k8s.play.dev.cardano.org
     http:
