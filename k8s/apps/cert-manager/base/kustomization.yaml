@@ -1,0 +1,57 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- clusterRole.cert-manager-cainjector.yaml
+- clusterRole.cert-manager-cluster-view.yaml
+- clusterRole.cert-manager-controller-approve_cert-manager-io.yaml
+- clusterRole.cert-manager-controller-certificates.yaml
+- clusterRole.cert-manager-controller-certificatesigningrequests.yaml
+- clusterRole.cert-manager-controller-challenges.yaml
+- clusterRole.cert-manager-controller-clusterissuers.yaml
+- clusterRole.cert-manager-controller-ingress-shim.yaml
+- clusterRole.cert-manager-controller-issuers.yaml
+- clusterRole.cert-manager-controller-orders.yaml
+- clusterRole.cert-manager-edit.yaml
+- clusterRole.cert-manager-view.yaml
+- clusterRole.cert-manager-webhook_subjectaccessreviews.yaml
+- clusterRoleBinding.cert-manager-cainjector.yaml
+- clusterRoleBinding.cert-manager-controller-approve_cert-manager-io.yaml
+- clusterRoleBinding.cert-manager-controller-certificates.yaml
+- clusterRoleBinding.cert-manager-controller-certificatesigningrequests.yaml
+- clusterRoleBinding.cert-manager-controller-challenges.yaml
+- clusterRoleBinding.cert-manager-controller-clusterissuers.yaml
+- clusterRoleBinding.cert-manager-controller-ingress-shim.yaml
+- clusterRoleBinding.cert-manager-controller-issuers.yaml
+- clusterRoleBinding.cert-manager-controller-orders.yaml
+- clusterRoleBinding.cert-manager-webhook:subjectaccessreviews.yaml
+- customResourceDefinition.certificaterequests.cert-manager.io.yaml
+- customResourceDefinition.certificates.cert-manager.io.yaml
+- customResourceDefinition.challenges.acme.cert-manager.io.yaml
+- customResourceDefinition.clusterissuers.cert-manager.io.yaml
+- customResourceDefinition.issuers.cert-manager.io.yaml
+- customResourceDefinition.orders.acme.cert-manager.io.yaml
+- deployment.cert-manager-cainjector.yaml
+- deployment.cert-manager-webhook.yaml
+- deployment.cert-manager.yaml
+- mutatingWebhookConfiguration.cert-manager-webhook.yaml
+- namespace.cert-manager.yaml
+- role.cert-manager-cainjector_leaderelection.yaml
+- role.cert-manager-tokenrequest.yaml
+- role.cert-manager-webhook_dynamic-serving.yaml
+- role.cert-manager_leaderelection.yaml
+- roleBinding.cert-manager-cainjector_leaderelection.yaml
+- roleBinding.cert-manager-tokenrequest.yaml
+- roleBinding.cert-manager-webhook_dynamic-serving.yaml
+- roleBinding.cert-manager_leaderelection.yaml
+- service.cert-manager-cainjector.yaml
+- service.cert-manager-webhook.yaml
+- service.cert-manager.yaml
+- serviceAccount.cert-manager-cainjector.yaml
+- serviceAccount.cert-manager-webhook.yaml
+- serviceAccount.cert-manager.yaml
+- validatingWebhookConfiguration.cert-manager-webhook.yaml
+
+transformers:
+- labelTransformer.add-argocd-label.yaml
