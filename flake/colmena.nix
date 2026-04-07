@@ -27,7 +27,7 @@ in
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       # m5a-large.aws.instance.instance_type = "m5a.large";
-      m5ad-large.aws.instance.instance_type = "m5ad.large";
+      # m5ad-large.aws.instance.instance_type = "m5ad.large";
       m5ad-xlarge.aws.instance.instance_type = "m5ad.xlarge";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
@@ -793,7 +793,7 @@ in
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre smash];};
       mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable];};
 
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-large (ebs 400) (group "mainnet1") node lmdb (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lmdb ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib legacyT (openFwTcp 3001)];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
