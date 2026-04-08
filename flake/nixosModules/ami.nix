@@ -1,18 +1,22 @@
 {inputs, ...}: {
-  flake.nixosModules.ami = {
+  flake.nixosModules.ami = nixos @ {
     config,
     pkgs,
     lib,
-    nodeResources,
     ...
   }: let
     inherit (builtins) floor toString;
     inherit (lib) mkIf mkOption types;
     inherit (types) float ints nullOr oneOf;
-    inherit (nodeResources) memMiB;
+
+    # When building standalone AMI, nodeResources won't be in the module args
+    memMiB = nixos.nodeResources.memMiB or null;
 
     # Calculate ARC max in bytes from percentage
-    calcArcMaxBytes = zfsArcPct: floor (memMiB * 1024 * 1024 * zfsArcPct / 100.0);
+    calcArcMaxBytes = zfsArcPct:
+      if memMiB == null || zfsArcPct == null
+      then null
+      else floor (memMiB * 1024 * 1024 * zfsArcPct / 100.0);
   in {
     imports = [
       "${inputs.nixpkgs}/nixos/maintainers/scripts/ec2/amazon-image.nix"
@@ -106,7 +110,7 @@
           '';
         }
         {
-          assertion = config.boot.zfs.zfsArcPct == null || arcMaxBytes >= 67108864; # 64 MiB minimum
+          assertion = arcMaxBytes == null || arcMaxBytes >= 67108864; # 64 MiB minimum
           message = ''
             boot.zfs.zfsArcPct results in an ARC size that is too small.
             Minimum: 67108864 bytes (64 MiB)
