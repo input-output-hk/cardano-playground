@@ -495,14 +495,13 @@ in
 
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
 
-      bkCfg = queue: {
+      bkCfg = queue: count: {
         lib,
         config,
         ...
       }: let
         cfg = config.services.buildkite-containers;
         hostIdSuffix = "1";
-        count = 1;
         bkTags =
           {
             system = "x86_64-linux";
@@ -810,10 +809,13 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Buildkite temporary machines
       # Stopped machines until the `-eu` variant can run the jobs properly
-      buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-af") disableAlertCount];};
-      buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-ap") disableAlertCount];};
-      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-eu") disableAlertCount];};
-      buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-sa") disableAlertCount];};
+      buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-af" 1) disableAlertCount];};
+      buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-ap" 1) disableAlertCount];};
+      buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-sa" 1) disableAlertCount];};
+
+      # Temporary buildkite linux queue until migration completes -- re-use the QA tmp regional server in EU
+      # buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-eu" 1)];};
+      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "daedalus" 3)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
