@@ -342,8 +342,9 @@ flake @ {
                     find /tmp/* -maxdepth 0 -type f,d -user buildkite-agent-iohk -print0 | xargs -0 -r chmod -R +w || true
 
                     # Use print0 to handle special filenames and rm -rf to also unlink live and broken symlinks and other special file types.
+                    # Exclude the active hook wrapper directory to avoid deleting the wrapper script that sources hook-after-env after this hook exits.
                     echo "Removing buildkite agent owned /tmp/* directories..."
-                    find /tmp/* -maxdepth 0 -type d -user buildkite-agent-iohk -print0 | xargs -0 -r rm -rvf || true
+                    find /tmp/* -maxdepth 0 -type d -user buildkite-agent-iohk ! -iname "buildkite-agent-hook-wrapper*" -print0 | xargs -0 -r rm -rvf || true
 
                     echo "Removing buildkite agent owned /tmp top level files which are not buildkite agent job dependent..."
                     find /tmp/* -maxdepth 0 -type f \( ! -iname "buildkite-agent*" -and ! -iname "job-env-*" \) -user buildkite-agent-iohk -print0 | xargs -0 -r rm -vf || true
