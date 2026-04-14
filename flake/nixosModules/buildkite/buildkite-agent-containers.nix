@@ -399,7 +399,7 @@ flake @ {
             };
           };
         };
-      in {
+      in lib.mkMerge [{
         # Secrets target file naming is to be backwards compatible with the legacy deployment
         # and other scripts which may rely on the legacy naming.
         sops.secrets =
@@ -475,6 +475,24 @@ flake @ {
         };
 
         containers = builtins.listToAttrs (map createBuildkiteContainer cfg.containerList);
-      };
+      }
+
+      # Ensure each container starts only after sops-nix has decrypted secrets
+      # into /run/keys on the host, which is bind-mounted into the containers.
+      # Without this ordering, containers may start before secrets are available
+      # and the buildkite-agent-iohk pre-start will fail with "No such file".
+      # Kept in a separate mkMerge attrset to avoid a Nix-level conflict with
+      # the systemd.services.weekly-cache-purge sub-attribute defined above.
+      {
+        systemd.services = builtins.listToAttrs (
+          map (c: {
+            name = "container@${c.containerName}";
+            value = {
+              after = ["sops-secrets.service"];
+              requires = ["sops-secrets.service"];
+            };
+          }) cfg.containerList
+        );
+      }];
     });
 }
