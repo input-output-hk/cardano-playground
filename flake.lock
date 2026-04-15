@@ -693,6 +693,24 @@
         "type": "github"
       }
     },
+    "flake-utils_5": {
+      "inputs": {
+        "systems": "systems_5"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "ghc-8.6.5-iohk": {
       "flake": false,
       "locked": {
@@ -812,6 +830,27 @@
       "original": {
         "owner": "input-output-hk",
         "repo": "haskell.nix",
+        "type": "github"
+      }
+    },
+    "helm-to-kustomize": {
+      "inputs": {
+        "flake-utils": "flake-utils_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1776278718,
+        "narHash": "sha256-Ph6blZqX1ykidYCxAdlkvwc+0c8I0sYLGLzuEoHZupg=",
+        "owner": "snarlysodboxer",
+        "repo": "helm-to-kustomize",
+        "rev": "1a18909fd500ec730ad5590e89ebc29a511c4d2b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "snarlysodboxer",
+        "repo": "helm-to-kustomize",
         "type": "github"
       }
     },
@@ -1063,7 +1102,7 @@
     },
     "inplace-image-tag-updater": {
       "inputs": {
-        "flake-utils": "flake-utils_3",
+        "flake-utils": "flake-utils_4",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1637,7 +1676,7 @@
     },
     "predictable-yaml": {
       "inputs": {
-        "flake-utils": "flake-utils_4",
+        "flake-utils": "flake-utils_5",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1679,6 +1718,7 @@
           "cardano-parts",
           "flake-parts"
         ],
+        "helm-to-kustomize": "helm-to-kustomize",
         "inplace-image-tag-updater": "inplace-image-tag-updater",
         "nixpkgs": [
           "cardano-parts",
@@ -1922,6 +1962,21 @@
       }
     },
     "systems_4": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_5": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

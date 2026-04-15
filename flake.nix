@@ -20,6 +20,11 @@
       url = "github:snarlysodboxer/predictable-yaml";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    helm-to-kustomize = {
+      url = "github:snarlysodboxer/helm-to-kustomize";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs: let

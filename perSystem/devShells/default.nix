@@ -31,6 +31,7 @@
             [
               pre-push
               inputs'.predictable-yaml.packages.default
+              inputs'.helm-to-kustomize.packages.default
             ]
             ++ (with pkgs; [
               amazon-ecr-credential-helper
