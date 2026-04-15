@@ -713,13 +713,6 @@ in {
             filename = "\${path.module}/.ssh_config";
             file_permission = "0600";
             content = ''
-              Host *
-                User root
-                UserKnownHostsFile /dev/null
-                StrictHostKeyChecking no
-                ServerAliveCountMax 2
-                ServerAliveInterval 60
-
               ${
                 concatStringsSep "\n" (map (name: ''
                     Host ${name}
@@ -736,6 +729,12 @@ in {
                   '')
                   (attrNames nodes))
               }
+              Host *
+                User root
+                UserKnownHostsFile /dev/null
+                StrictHostKeyChecking no
+                ServerAliveCountMax 2
+                ServerAliveInterval 60
             '';
           };
         };
