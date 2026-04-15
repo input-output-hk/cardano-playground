@@ -342,8 +342,9 @@ flake @ {
                     find /tmp/* -maxdepth 0 -type f,d -user buildkite-agent-iohk -print0 | xargs -0 -r chmod -R +w || true
 
                     # Use print0 to handle special filenames and rm -rf to also unlink live and broken symlinks and other special file types.
+                    # Exclude the active hook wrapper directory to avoid deleting the wrapper script that sources hook-after-env after this hook exits.
                     echo "Removing buildkite agent owned /tmp/* directories..."
-                    find /tmp/* -maxdepth 0 -type d -user buildkite-agent-iohk -print0 | xargs -0 -r rm -rvf || true
+                    find /tmp/* -maxdepth 0 -type d -user buildkite-agent-iohk ! -iname "buildkite-agent-hook-wrapper*" -print0 | xargs -0 -r rm -rvf || true
 
                     echo "Removing buildkite agent owned /tmp top level files which are not buildkite agent job dependent..."
                     find /tmp/* -maxdepth 0 -type f \( ! -iname "buildkite-agent*" -and ! -iname "job-env-*" \) -user buildkite-agent-iohk -print0 | xargs -0 -r rm -vf || true
@@ -398,82 +399,104 @@ flake @ {
             };
           };
         };
-      in {
-        # Secrets target file naming is to be backwards compatible with the legacy deployment
-        # and other scripts which may rely on the legacy naming.
-        sops.secrets =
-          mkSopsSecret (mkSopsSecretParams "aws-creds" "buildkite-hook" "0550" "/var/lib/buildkite-agent/hooks")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-extra-creds" "buildkite-hook-extra-creds.sh" "0550" "/var/lib/buildkite-agent/hooks")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-ssh-private" "buildkite-ssh" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-ssh-public" "buildkite-ssh.pub" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-ssh-iohk-devops-private" "buildkite-iohk-devops-ssh" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-hackage-ssh-private" "buildkite-hackage-ssh" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-stackage-ssh-private" "buildkite-stackage-ssh" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-haskell-dot-nix-ssh-private" "buildkite-haskell-dot-nix-ssh" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-cardano-wallet-ssh-private" "buildkite-cardano-wallet-ssh" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "buildkite-token" "buildkite_token" "0400" "/run/keys")
-          // mkSopsSecret (mkSopsSecretParams "dockerhub-auth" "dockerhub-auth-config.json" "0400" "/run/keys");
+      in
+        lib.mkMerge [
+          {
+            # Secrets target file naming is to be backwards compatible with the legacy deployment
+            # and other scripts which may rely on the legacy naming.
+            sops.secrets =
+              mkSopsSecret (mkSopsSecretParams "aws-creds" "buildkite-hook" "0550" "/var/lib/buildkite-agent/hooks")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-extra-creds" "buildkite-hook-extra-creds.sh" "0550" "/var/lib/buildkite-agent/hooks")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-ssh-private" "buildkite-ssh" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-ssh-public" "buildkite-ssh.pub" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-ssh-iohk-devops-private" "buildkite-iohk-devops-ssh" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-hackage-ssh-private" "buildkite-hackage-ssh" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-stackage-ssh-private" "buildkite-stackage-ssh" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-haskell-dot-nix-ssh-private" "buildkite-haskell-dot-nix-ssh" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-cardano-wallet-ssh-private" "buildkite-cardano-wallet-ssh" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "buildkite-token" "buildkite_token" "0400" "/run/keys")
+              // mkSopsSecret (mkSopsSecretParams "dockerhub-auth" "dockerhub-auth-config.json" "0400" "/run/keys");
 
-        # The buildkite host machine will need to be deployed twice before
-        # the /cache directory will be properly owned since the first deployment
-        # will have the activation run before the buildkite-agent-iohk user
-        # exists.
-        system.activationScripts.cacheDir = {
-          text = ''
-            mkdir -p /cache
-            chown -R buildkite-agent-iohk:buildkite-agent-iohk /cache || true
-          '';
-          deps = [];
-        };
+            # The buildkite host machine will need to be deployed twice before
+            # the /cache directory will be properly owned since the first deployment
+            # will have the activation run before the buildkite-agent-iohk user
+            # exists.
+            system.activationScripts.cacheDir = {
+              text = ''
+                mkdir -p /cache
+                chown -R buildkite-agent-iohk:buildkite-agent-iohk /cache || true
+              '';
+              deps = [];
+            };
 
-        users.users.buildkite-agent-iohk = {
-          home = "/var/lib/buildkite-agent";
-          isSystemUser = true;
-          createHome = true;
-          group = "buildkite-agent-iohk";
+            users.users.buildkite-agent-iohk = {
+              home = "/var/lib/buildkite-agent";
+              isSystemUser = true;
+              createHome = true;
+              group = "buildkite-agent-iohk";
 
-          # To ensure buildkite-agent-iohk user sharing of keys in guests
-          uid = 10000;
-        };
+              # To ensure buildkite-agent-iohk user sharing of keys in guests
+              uid = 10000;
+            };
 
-        users.groups.buildkite-agent-iohk = {
-          gid = 10000;
-        };
+            users.groups.buildkite-agent-iohk = {
+              gid = 10000;
+            };
 
-        environment.etc."mdadm.conf".text = ''
-          MAILADDR root
-        '';
+            environment.etc."mdadm.conf".text = ''
+              MAILADDR root
+            '';
 
-        environment.systemPackages = [pkgs.nixos-container];
+            environment.systemPackages = [pkgs.nixos-container];
 
-        networking.nat = {
-          enable = true;
-          internalInterfaces = ["ve-+"];
-          externalInterface = "ens5";
-        };
+            networking.nat = {
+              enable = true;
+              internalInterfaces = ["ve-+"];
+              externalInterface = "ens5";
+            };
 
-        services.fstrim.enable = true;
-        services.fstrim.interval = "daily";
+            services.fstrim.enable = true;
+            services.fstrim.interval = "daily";
 
-        systemd.services.weekly-cache-purge = mkIf cfg.weeklyCachePurge {
-          script = ''
-            rm -rf /cache/* || true
+            systemd.services.weekly-cache-purge = mkIf cfg.weeklyCachePurge {
+              script = ''
+                rm -rf /cache/* || true
 
-            # There is no swap enabled on the std aws instances
-            # ${pkgs.utillinux}/bin/swapoff -a
-            # ${pkgs.utillinux}/bin/swapon -a
-          '';
-        };
+                # There is no swap enabled on the std aws instances
+                # ${pkgs.utillinux}/bin/swapoff -a
+                # ${pkgs.utillinux}/bin/swapon -a
+              '';
+            };
 
-        systemd.timers.weekly-cache-purge = mkIf cfg.weeklyCachePurge {
-          timerConfig = {
-            Unit = "weekly-cache-purge.service";
-            OnCalendar = cfg.weeklyCachePurgeOnCalendar;
-          };
-          wantedBy = ["timers.target"];
-        };
+            systemd.timers.weekly-cache-purge = mkIf cfg.weeklyCachePurge {
+              timerConfig = {
+                Unit = "weekly-cache-purge.service";
+                OnCalendar = cfg.weeklyCachePurgeOnCalendar;
+              };
+              wantedBy = ["timers.target"];
+            };
 
-        containers = builtins.listToAttrs (map createBuildkiteContainer cfg.containerList);
-      };
+            containers = builtins.listToAttrs (map createBuildkiteContainer cfg.containerList);
+          }
+
+          # Ensure each container starts only after sops-nix has decrypted secrets
+          # into /run/keys on the host, which is bind-mounted into the containers.
+          # Without this ordering, containers may start before secrets are available
+          # and the buildkite-agent-iohk pre-start will fail with "No such file".
+          # Kept in a separate mkMerge attrset to avoid a Nix-level conflict with
+          # the systemd.services.weekly-cache-purge sub-attribute defined above.
+          {
+            systemd.services = builtins.listToAttrs (
+              map (c: {
+                name = "container@${c.containerName}";
+                value = {
+                  after = ["sops-secrets.service"];
+                  requires = ["sops-secrets.service"];
+                };
+              })
+              cfg.containerList
+            );
+          }
+        ];
     });
 }
