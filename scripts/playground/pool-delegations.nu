@@ -268,6 +268,7 @@ def check-node-synced [environment: string, net_args: list<string>] {
     if $sync_pct < 100.0 {
         error make --unspanned { msg: $"Node is only ($sync_pct)% synced. Wait for it to reach 100% before proceeding." }
     }
+    print ""
 }
 
 # ─── Key derivation ───────────────────────────────────────────────────────────
@@ -682,7 +683,7 @@ def do-address [environment: string, index: int] {
     let mnemonic  = (read-mnemonic $environment)
     let acct_skey = (account-skey (root-key $mnemonic))
     let acct      = (derive-account $acct_skey $index)
-    print -n $acct.delegation_address
+    print $acct.delegation_address
 }
 
 # Derive account addresses and write them to the secrets tree (no node needed)
