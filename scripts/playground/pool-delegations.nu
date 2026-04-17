@@ -255,6 +255,21 @@ def net-args [] {
     ["--testnet-magic", $env.TESTNET_MAGIC]
 }
 
+# Verify node is reachable and fully synced
+def check-node-synced [environment: string, net_args: list<string>] {
+    print $"Checking node connectivity and sync status on environment ($environment)..."
+    let tip_json = try {
+        ^cardano-cli latest query tip ...$net_args | from json
+    } catch {
+        error make --unspanned { msg: "Cannot connect to cardano-node. Is the node running and CARDANO_NODE_SOCKET_PATH set correctly?" }
+    }
+    print ($tip_json | to json --indent 2)
+    let sync_pct = ($tip_json | get syncProgress | into float)
+    if $sync_pct < 100.0 {
+        error make --unspanned { msg: $"Node is only ($sync_pct)% synced. Wait for it to reach 100% before proceeding." }
+    }
+}
+
 # ─── Key derivation ───────────────────────────────────────────────────────────
 
 def root-key [mnemonic: string] {
@@ -706,6 +721,7 @@ def do-status [environment: string, num_accounts: int, dbsync_host?: string] {
     let mnemonic  = (read-mnemonic $environment)
     let acct_skey = (account-skey (root-key $mnemonic))
     let net       = (net-args)
+    check-node-synced $environment $net
 
     print $"(ansi green)Querying ($num_accounts) account\(s) on ($environment)...(ansi reset)\n"
 
@@ -801,6 +817,7 @@ def do-delegate [environment: string, index: int, pool_id, dry_run: bool, confir
 
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
+    check-node-synced $environment $net
     let acct_skey = (account-skey (root-key $mnemonic))
     let acct      = (derive-account $acct_skey $index)
     let si        = (query-stake-info $acct.stake_address $net)
@@ -840,6 +857,7 @@ def do-delegate [environment: string, index: int, pool_id, dry_run: bool, confir
 def do-dedelegate [environment: string, index: int, dry_run: bool, confirm: bool] {
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
+    check-node-synced $environment $net
     let acct_skey = (account-skey (root-key $mnemonic))
     let acct      = (derive-account $acct_skey $index)
     let si        = (query-stake-info $acct.stake_address $net)
@@ -880,6 +898,7 @@ def do-dedelegate [environment: string, index: int, dry_run: bool, confirm: bool
 def do-deregister [environment: string, index: int, dry_run: bool, confirm: bool] {
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
+    check-node-synced $environment $net
     let acct_skey = (account-skey (root-key $mnemonic))
     let acct      = (derive-account $acct_skey $index)
     let si        = (query-stake-info $acct.stake_address $net)
@@ -919,6 +938,7 @@ def do-defund [environment: string, index: int, dest_address, dry_run: bool, con
 
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
+    check-node-synced $environment $net
     let acct_skey = (account-skey (root-key $mnemonic))
     let acct      = (derive-account $acct_skey $index)
     let si        = (try { query-stake-info $acct.stake_address $net }
