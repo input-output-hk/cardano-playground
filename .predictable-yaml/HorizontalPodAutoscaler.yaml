@@ -1,0 +1,26 @@
+---
+apiVersion: autoscaling/v2  # first, required
+kind: HorizontalPodAutoscaler  # required
+metadata:  # required
+  name: TODO  # first, required
+  namespace: TODO  # required
+  labels:  # required
+    app: TODO  # first
+    app.kubernetes.io/name: TODO  # required
+    app.kubernetes.io/instance: TODO
+    app.kubernetes.io/part-of: TODO
+  annotations: {}
+spec:  # required
+  minReplicas: TODO
+  maxReplicas: TODO
+  scaleTargetRef:
+    apiVersion: TODO  # first, required
+    kind: TODO  # required
+    name: TODO  # required
+  metrics:  # required
+  - type: TODO  # first, required
+    resource:
+      name: TODO  # first, required
+      target:
+        type: TODO
+        averageUtilization: TODO
