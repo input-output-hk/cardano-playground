@@ -101,6 +101,38 @@ in
         ];
       };
 
+      node-set-iowait = mkCustomNodePre "cardano-node-set-iowait";
+
+      # mkCustomNode = flakeInput:
+      #   imports = [
+      #     node
+      #     {
+      #       cardano-parts.perNode = {
+      #         pkgs = {
+      #           cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
+      #           cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
+      #           cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
+      #         };
+      #       };
+      #     }
+      #   };
+
+      mkCustomNodePre = flakeInput: {
+        imports = [
+          node-pre
+          ({pkgs, ...}: {
+            boot.kernelPackages = pkgs.linuxPackages_latest;
+            cardano-parts.perNode = {
+              pkgs = {
+                cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
+                cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
+                cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
+              };
+            };
+          })
+        ];
+      };
+
       # Include blockPerf by default with no upstream push to CF -- only push prom metrics
       bperfNoPublish = {
         imports = [
@@ -154,12 +186,12 @@ in
       #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
       # };
 
-      lmdb = {
-        services.cardano-node = {
-          lmdbDatabasePath = "/ephemeral/cardano-node/";
-          withUtxoHdLmdb = true;
-        };
-      };
+      # lmdb = {
+      #   services.cardano-node = {
+      #     lmdbDatabasePath = "/ephemeral/cardano-node/";
+      #     withUtxoHdLmdb = true;
+      #   };
+      # };
 
       lsm = {
         services.cardano-node = {
@@ -747,7 +779,7 @@ in
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
 
       # Lsm, lmdb and in-mem pre-release backend testing
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lmdb noBPerf];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-set-iowait lsm noBPerf];};
       preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs];};
       preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf amiZfs];};
 
@@ -790,8 +822,8 @@ in
       # Tried, in order for low idle rc check:
       # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib legacyT (openFwTcp 3001)];};
       # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib legacyT (openFwTcp 3001) {services.blockperf.enable = false;}];};
-      # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib (openFwTcp 3001) {services.blockperf.enable = false;}];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm (openFwTcp 3001) {services.blockperf.enable = false;}];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-set-iowait lsm ram8gib (openFwTcp 3001)];};
+      # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm (openFwTcp 3001) {services.blockperf.enable = false;}];};
       mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
