@@ -122,8 +122,7 @@ in
       mkCustomNodePre = flakeInput: {
         imports = [
           node-pre
-          ({pkgs, ...}: {
-            boot.kernelPackages = pkgs.linuxPackages_latest;
+          {
             cardano-parts.perNode = {
               pkgs = {
                 cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
@@ -131,7 +130,7 @@ in
                 cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
               };
             };
-          })
+          }
         ];
       };
 
@@ -783,7 +782,7 @@ in
       # Lsm, lmdb and in-mem pre-release backend testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-set-iowait lsm noBPerf];};
       preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs];};
-      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf amiZfs];};
+      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-set-iowait lsm noBPerf amiZfs];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel legacyT];};
