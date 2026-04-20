@@ -257,15 +257,7 @@ push-image IMAGE:
   fi
 
   IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
-  REGION=$(nix eval --raw .#ecr.region 2>/dev/null)
-
-  echo "Getting AWS account ID..."
-  if ! AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
-    echo "Error: AWS credentials not working. Please authenticate first."
-    exit 1
-  fi
-
-  REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/{{IMAGE}}"
+  REPO_URL="015060878911.dkr.ecr.eu-central-1.amazonaws.com/{{IMAGE}}"
 
   # Configure crane to use ECR credential helper
   export DOCKER_CONFIG=$(mktemp -d)
@@ -273,7 +265,7 @@ push-image IMAGE:
   cat > $DOCKER_CONFIG/config.json <<EOF
   {
     "credHelpers": {
-      "${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com": "ecr-login"
+      "015060878911.dkr.ecr.eu-central-1.amazonaws.com": "ecr-login"
     }
   }
   EOF
@@ -300,15 +292,7 @@ bump-image IMAGE:
 
   IMAGE_NAME=$(nix eval --raw .#{{IMAGE}}-image.imageName 2>/dev/null)
   IMAGE_TAG=$(nix eval --raw .#{{IMAGE}}-image.imageTag 2>/dev/null)
-  REGION=$(nix eval --raw .#ecr.region 2>/dev/null)
-
-  echo "Getting AWS account ID..."
-  if ! AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
-    echo "Error: AWS credentials not working. Please authenticate first."
-    exit 1
-  fi
-
-  REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/{{IMAGE}}"
+  REPO_URL="015060878911.dkr.ecr.eu-central-1.amazonaws.com/{{IMAGE}}"
 
   echo "Updating image tag in Kubernetes configs..."
   git grep -l "image:.*${REPO_URL}" k8s/ | \

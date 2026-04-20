@@ -10,5 +10,7 @@ resources:
 - ../../../apps/mdbook/base
 
 patches:
+- path: certificate.mdbook.yaml
 - path: deployment.mdbook-staging.yaml
-- path: ingress.mdbook.yaml
+- path: httpRoute.mdbook-staging.yaml
+- path: httpRoute.mdbook.yaml

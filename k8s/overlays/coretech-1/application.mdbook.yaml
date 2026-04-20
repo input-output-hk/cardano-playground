@@ -14,7 +14,7 @@ spec:
     repoURL: https://github.com/input-output-hk/cardano-playground
     # targetRevision: main
     targetRevision: prototype-webservices  # TODO
-    path: k8s/overlays/playground/mdbook
+    path: k8s/overlays/coretech-1/mdbook
 
   destination:
     name: in-cluster

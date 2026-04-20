@@ -1,8 +1,0 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: mdbook
-  labels:
-    app.kubernetes.io/name: mdbook
-    app.kubernetes.io/part-of: mdbook

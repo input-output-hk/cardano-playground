@@ -1,0 +1,11 @@
+---
+# predictable-yaml: ignore-requireds
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mdbook
+  namespace: mdbook
+spec:
+  dnsNames:
+  - mdbook.k8s.iog.io
+  - mdbook-staging.k8s.iog.io

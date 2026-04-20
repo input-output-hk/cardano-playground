@@ -4,7 +4,7 @@ kind: LabelTransformer
 metadata:
   name: add-argocd-label
 labels:
-  argocd.argoproj.io/instance: mdbook
+  app.kubernetes.io/instance: mdbook
 fieldSpecs:
 - path: metadata/labels
   create: true

@@ -3,12 +3,15 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- namespace.mdbook.yaml
-- deployment.mdbook.yaml
+- authorizationPolicy.mdbook.yaml
+- certificate.mdbook.yaml
 - deployment.mdbook-staging.yaml
-- service.mdbook.yaml
+- deployment.mdbook.yaml
+- httpRoute.mdbook-staging.yaml
+- httpRoute.mdbook.yaml
+- referenceGrant.envoy-gateway.yaml
 - service.mdbook-staging.yaml
-- ingress.mdbook.yaml
+- service.mdbook.yaml
 
 transformers:
 - labelTransformer.add-argocd-label.yaml

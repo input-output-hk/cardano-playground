@@ -1,0 +1,17 @@
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: mdbook
+  namespace: mdbook
+  labels:
+    app.kubernetes.io/name: mdbook
+    app.kubernetes.io/part-of: mdbook
+spec:
+  action: ALLOW
+  rules:
+  # Allow ingress from Envoy proxy pods only
+  - from:
+    - source:
+        namespaces:
+        - envoy-gateway-system

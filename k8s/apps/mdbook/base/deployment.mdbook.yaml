@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: mdbook
-        image: 362174735783.dkr.ecr.eu-central-1.amazonaws.com/mdbook-production:v1.0.0
+        image: 015060878911.dkr.ecr.eu-central-1.amazonaws.com/mdbook-production:v1.0.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
