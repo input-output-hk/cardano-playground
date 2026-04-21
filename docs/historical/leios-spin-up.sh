@@ -13,8 +13,19 @@ alias cardano-node="$(nix build -Lv github:IntersectMBO/cardano-node/leios-proto
 alias cardano-node-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-node --no-link --print-out-paths)/bin/cardano-node"
 alias cardano-cli="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-cli --no-link --print-out-paths)/bin/cardano-cli"
 alias cardano-cli-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-cli --no-link --print-out-paths)/bin/cardano-cli"
+alias db-synthesizer="$(nix build -Lv github:IntersectMBO/cardano-node/jl/leios-synth#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
+alias db-synthesizer-ng="$(nix build -Lv github:IntersectMBO/cardano-node/jl/leios-synth#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
+
+# Expect leios at ~10.5.1
+cardano-node --version
+cardano-node-ng --version
+
+# Expect leios at ~10.11.0.0
+cardano-cli --version
+cardano-cli-ng --version
 
 export DEBUG="true"
+
 export ENV="leios"
 export UNSTABLE="false"
 export UNSTABLE_LIB="false"
@@ -25,10 +36,12 @@ export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-04-10T00:00:00Z"
+export START_TIME="2026-04-17T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
+export PROTOCOL_VERSION_MAJOR="10"
+export PROTOCOL_VERSION_MINOR="0"
 
 # Basic job directory setup vars:
 export GENESIS_DIR="workbench/custom"
@@ -62,6 +75,28 @@ export SCRIPT_FILE_URL="https://book.play.dev.cardano.org/environments/preview/g
 export CONSTITUTION_ANCHOR_DATAHASH="2a61e2f4b63442978140c77a70daab3961b22b12b63b13949a390c097214d1c5"
 export CONSTITUTION_ANCHOR_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvclu3oli7qdyz4uhhuvmy"
 export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
+
+# New Leios required env vars:
+# Required to match the proper GLIBC used by the 10.5.1 era build
+export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
+export LEIOS_DB_PATH="$DATA_DIR/leios.db"
+
+# 10.5.1 compatible iohk-nix
+export TEMPLATE_DIR1="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/f63aa2a49720526900fb5943db4123b5b8dcc534\"; in f.outPath")/cardano-lib/testnet-template"
+
+# Conway 251 parameter genesis template
+export TEMPLATE_DIR2="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/a704b93ea51ee1a8a7e456659e0b28ddba280a95\"; in f.outPath")/cardano-lib/testnet-template"
+
+# Dijkstra genesis template
+export TEMPLATE_DIR3="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix\"; in f.outPath")/cardano-lib/testnet-template"
+
+export TEMPLATE_DIR="$(pwd)/workspace/template"
+mkdir -p "$TEMPLATE_DIR"
+cp "$TEMPLATE_DIR1"/*.json "$TEMPLATE_DIR/"
+chmod -R +w "$TEMPLATE_DIR"
+cp "$TEMPLATE_DIR2"/conway.json "$TEMPLATE_DIR/"
+cp "$TEMPLATE_DIR3"/dijkstra.json "$TEMPLATE_DIR/"
+chmod -R +w "$TEMPLATE_DIR"
 
 # Create the basic cardano network config and secrets
 nix run .#job-gen-custom-node-config-data-ng
@@ -103,12 +138,58 @@ jq -S '. += {
   }
 }' < "$DATA_DIR/conway-genesis.json" | sponge "$DATA_DIR/conway-genesis.json"
 
-# Update the conway hash in node config after modifying the genesis file.
-HASH_CONWAY=$(cardano-cli-ng latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
+# Adjust shelley genesis to set minPoolCost and maxBlockBodySize closer to mainnet
+jq -S '.protocolParams += {
+  "minPoolCost": 170000000,
+  "maxBlockBodySize": 90112
+}' < "$DATA_DIR/shelley-genesis.json" | sponge "$DATA_DIR/shelley-genesis.json"
+
+# Adjust alonzo genesis to set execution unit limits and cost models closer to mainnet
+jq -S '. += {
+  "maxBlockExUnits": {
+    "exUnitsMem": 72000000,
+    "exUnitsSteps": 20000000000
+  },
+  "maxTxExUnits": {
+    "exUnitsMem": 16500000,
+    "exUnitsSteps": 10000000000
+  }
+}' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
+
+# NOTE:
+# Injecting the current mainnet PV10 cost model into alonzo does not seem to
+# get picked up it by it, so comment this genesis file replacement out and
+# continue to submit the cost model update via gov action.
+#
+# Replace alonzo genesis costModels with the Plomin prep cost model
+# jq -S --slurpfile costModels scripts/cost-models/mainnet-plutusv3-pv10-prep.json \
+#   '.costModels = $costModels[0]' \
+#   < "$DATA_DIR/alonzo-genesis.json" \
+#   | sponge "$DATA_DIR/alonzo-genesis.json"
+
+# NOTE: This old stakepool format in genesis should be forward compatible
+# Leios oriented 10.5.x stake pool genesis format reconfiguration:
+jq '.staking.pools
+  |= with_entries(.value += {publicKey: .key}
+  | .value.rewardAccount = .value.accountAddress
+  | del(.value.accountAddress, .value.poolId))' \
+"$DATA_DIR/shelley-genesis.json" | sponge "$DATA_DIR/shelley-genesis.json"
+
+jq '.UseTraceDispatcher = false' "$DATA_DIR/node-config.json" \
+  | sponge "$DATA_DIR/node-config.json"
+
+# Update genesis hashes in node config after modifying the genesis files.
+HASH_CONWAY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
+HASH_SHELLEY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/shelley-genesis.json")
+HASH_ALONZO=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/alonzo-genesis.json")
 jq --sort-keys \
   --arg hashConway "$HASH_CONWAY" \
+  --arg hashShelley "$HASH_SHELLEY" \
+  --arg hashAlonzo "$HASH_ALONZO" \
   '. += {
     ConwayGenesisHash: $hashConway,
+    ShelleyGenesisHash: $hashShelley,
+    AlonzoGenesisHash: $hashAlonzo,
   }' \
   < "$DATA_DIR/node-config.json" \
   | sponge "$DATA_DIR/node-config.json"
@@ -207,8 +288,13 @@ ACTION="create-protocol-parameters-update" \
   nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
 wait-for-mempool
 
-# Only the CC members need to approve the cost model, but both CCs and SPOs need to approve the HF.
-# Drep votes are disallowed during Conway bootstrapping.
+# NOTE:
+#   When in PV9, only the CC members need to approve the cost model, but both
+#   CCs and SPOs need to approve the HF.
+#
+#     - Drep votes are disallowed during Conway bootstrapping.
+#
+#   When in PV10, both CC members and drep need to approve the cost model.
 export ACTION_TX_ID=$(
   cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
     | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
@@ -224,10 +310,18 @@ for i in $(seq 1 "$NUM_CC_KEYS"); do
   echo
 done
 
+# REQUIRED if starting in PV10
+echo "Submitting the drep-0 vote for the parameter update..."
+  DECISION=yes \
+  ROLE=drep \
+  VOTE_KEY="$DREP_DIR/drep-0" \
+  nix run .#job-submit-vote
+wait-for-mempool
+
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((86400 - 595 - 180))
+synth-slots $((86400 - 533 - 180))
 run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
@@ -240,208 +334,16 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 #   "PlutusV3"
 # ]
 
-# In epoch 1, submit a Plomin hard fork
-echo "Submitting a Plomin hard fork action..."
-PROPOSAL_ARGS=("--protocol-major-version" "10" "--protocol-minor-version" "0")
-ACTION="create-hardfork" \
-  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
-  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-wait-for-mempool
-
-export ACTION_TX_ID=$(
-  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
-    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
-)
-
-for i in $(seq 1 "$NUM_CC_KEYS"); do
-  echo "Submitting the CC$i vote for the Plomin hard fork..."
-  DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-$i-hot" \
-    nix run .#job-submit-vote
-  wait-for-mempool
-  echo
-done
-
-echo "Submitting the pool 1 vote for the Plomin hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 2 vote for the Plomin hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 3 vote for the Plomin hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
+# NOTE:
+#   If starting in PV10, there is no need to submit the PV10 hard fork.
+#   See the historical dijkstra doc in playground for a PV10 HF example.
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 2
-echo "Synthesize blocks until just before the Plomin hard fork ratifies, epoch 2"
-synth-slots $((86053 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 2 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+echo "Synthesize blocks until realtime plus desired offset"
+# This brings us to epoch 1 + 1 = 2
+synth-slots 86218
+#
+# This brings us to epoch 2 + 3 = 5
+synth-epochs 3
 
-# After the epoch rollover into epcoh 2, verify the Plomin hard fork has ratified:
-cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
-
-# Example output:
-# {
-#   "major": 10,
-#   "minor": 0
-# }
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 3
-echo "Synthesize blocks until just before the Plomin hard fork enacts, epoch 3"
-synth-slots $((86300 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 3 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epcoh 3, verify the Plomin hard fork has enacted:
-cardano-cli query protocol-parameters | jq .protocolVersion
-
-# Example output:
-# {
-#   "major": 10,
-#   "minor": 0
-# }
-
-# Submit a parameter change action to adjust network parameters to better match other networks
-echo "Submitting a ParameterChange action..."
-PREV_GOV_ACTION=$(cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" | jq -r '.nextRatifyState.nextEnactState.prevGovActionIds.PParamUpdate')
-PREV_GOV_ACTION_TX_ID=$(jq '.txId' <<< "$PREV_GOV_ACTION")
-PREV_GOV_ACTION_INDEX=$(jq '.govActionIx' <<< "$PREV_GOV_ACTION")
-PROPOSAL_ARGS=(
-  "--prev-governance-action-tx-id" "$PREV_GOV_ACTION_TX_ID"
-  "--prev-governance-action-index" "$PREV_GOV_ACTION_INDEX"
-  "--max-block-body-size" "90112"
-  # The steps are expected to be declared first, followed by the memory in the tuple ordering
-  "--max-block-execution-units" "\(20000000000,72000000\)"
-  "--max-tx-execution-units" "\(10000000000,16500000\)"
-  "--min-pool-cost" "170000000"
-)
-ACTION="create-protocol-parameters-update" \
-  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
-  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-wait-for-mempool
-
-export ACTION_TX_ID=$(
-  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
-    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
-)
-
-for i in $(seq 1 "$NUM_CC_KEYS"); do
-  echo "Submitting the CC$i vote for the parameter update..."
-  DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-$i-hot" \
-    nix run .#job-submit-vote
-  wait-for-mempool
-  echo
-done
-
-echo "Submitting the pool 1 vote for the parameter update..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 2 vote for the parameter update..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 3 vote for the parameter update..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the drep-0 vote for the parameter update..."
-  DECISION=yes \
-  ROLE=drep \
-  VOTE_KEY="$DREP_DIR/drep-0" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 4
-echo "Synthesize blocks until just before the parameter change ratifies, epoch 4"
-synth-slots $((85987 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 4 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# Ensure the parameter change has ratified once epoch 4 is reached:
-cardano-cli latest query gov-state \
-  | jq '.futurePParams.contents | {maxBlockBodySize,maxBlockExecutionUnits,maxTxExecutionUnits,minPoolCost}'
-
-# Example
-# {
-#   "maxBlockBodySize": 90112,
-#   "maxBlockExecutionUnits": {
-#     "memory": 72000000,
-#     "steps": 20000000000
-#   },
-#   "maxTxExecutionUnits": {
-#     "memory": 16500000,
-#     "steps": 10000000000
-#   },
-#   "minPoolCost": 170000000
-# }
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 5
-echo "Synthesize blocks until just before the parameter change enacts, epoch 5"
-synth-slots $((86298 - 180))
 run-node-faketime "$(date -u -d "$START_TIME + 5 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# Ensure the parameter change has enacted once epoch 5 is reached:
-cardano-cli latest query protocol-parameters \
-  | jq '{maxBlockBodySize,maxBlockExecutionUnits,maxTxExecutionUnits,minPoolCost}'
-
-# Example
-# {
-#   "maxBlockBodySize": 90112,
-#   "maxBlockExecutionUnits": {
-#     "memory": 72000000,
-#     "steps": 20000000000
-#   },
-#   "maxTxExecutionUnits": {
-#     "memory": 16500000,
-#     "steps": 10000000000
-#   },
-#   "minPoolCost": 170000000
-# }
-
-# Synth to real time
-# First get to next epoch threshold (no 3 minute substraction back from the epoch boundary):
-synth-slots 86293
-
-# Then synth the number of epochs to get the current day, UTC
-synth-epochs 13
-
-# Finally, synth to slightly ahead of real time, using the number of hours in
-# the current day UTC to prepare for a push to the remote machines -- 3 hours in
-# this example.
-synth-slots $((3 * 3600))
-
-# Start the node for a moment at it's current near-future (shortly after now)
-# tip time in order to allow node to process all the volatile state into
-# immutable and ledger as required.  Once that is complete, node can be stopped
-# and the state can be tgz packaged or similar in prep for a push to the remote
-# backbone machines.
-run-node-faketime '2026-01-20 03:00:00Z'
-
-# See docs/explain/new-network.md for details on migrating this prepared chain
-# state from a local preparation environment to the full remote machine cluster.
