@@ -27,7 +27,7 @@ Informed: Cardano Core Tribe, COO, Director of Engineering
 
 #### Configuration files
 
-Compatible with cardano-node release [10.6.4](https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.4)
+Compatible with cardano-node release [10.7.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.7.1)
 
 ```
 NOTE:
