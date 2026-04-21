@@ -25,10 +25,10 @@
 #   pool-delegations.nu [env] generate-accounts [-n N]
 #   pool-delegations.nu [env] status            [-n N] [--dbsync HOST]
 #   pool-delegations.nu [env] address            -i I
-#   pool-delegations.nu [env] delegate           -p <pool1...> -i I [--dry-run] [--confirm]
-#   pool-delegations.nu [env] dedelegate         -i I [--dry-run] [--confirm]
-#   pool-delegations.nu [env] deregister         -i I [--dry-run] [--confirm]
-#   pool-delegations.nu [env] defund             -d <addr> -i I [--dry-run] [--confirm]
+#   pool-delegations.nu [env] delegate           -p <pool1...> -i I [--dry-run] [--skip-confirmation]
+#   pool-delegations.nu [env] dedelegate         -i I [--dry-run] [--skip-confirmation]
+#   pool-delegations.nu [env] deregister         -i I [--dry-run] [--skip-confirmation]
+#   pool-delegations.nu [env] defund             -d <addr> -i I [--dry-run] [--skip-confirmation]
 
 const ACCOUNT_PATH = "1852H/1815H/0H"
 
@@ -51,6 +51,17 @@ def count-accounts [environment: string] {
     let root = (secrets-root $environment)
     if not ($root | path exists) { return 0 }
     ls $root | where type == dir | where { |d| ($d.name | path basename) =~ '^\d+$' } | length
+}
+
+# Verify that an account index has been generated (address files exist on disk)
+def check-account-exists [environment: string, index: int] {
+    let n = (count-accounts $environment)
+    if $n == 0 {
+        error make --unspanned { msg: $"No accounts generated yet for ($environment). Run 'generate-accounts' first." }
+    }
+    if $index >= $n {
+        error make --unspanned { msg: $"Account index ($index) has not been generated. Only ($n) account\(s\) exist \(indices 0..($n - 1)\). Run 'generate-accounts -n ($index + 1)' to create it." }
+    }
 }
 
 # Resolve the environment: explicit arg > $ENV env var > error
@@ -456,8 +467,8 @@ def wait-for-tx [txid: string, net_args: list<string>] {
 
 # Show signed transaction, prompt for confirmation, and submit.
 # Returns txid on success, or null if the user declines.
-def confirm-and-submit [tx_file: string, net_args: list<string>, confirm: bool] {
-    if $confirm {
+def confirm-and-submit [tx_file: string, net_args: list<string>, skip_confirmation: bool] {
+    if not $skip_confirmation {
         print "\n  Transaction view:"
         print (^cardano-cli debug transaction view --tx-file $tx_file --output-json)
         print ""
@@ -480,7 +491,7 @@ def tx-delegate [
     pool_id: string
     net_args: list<string>
     registered: bool          # true = already on-chain, skip registration cert
-    confirm: bool
+    skip_confirmation: bool
 ] {
     let pay_skey_json   = (to-cli-skey $acct.pay_xsk   "shelley-payment-key")
     let stake_skey_json = (to-cli-skey $acct.stake_xsk "shelley-stake-key")
@@ -519,7 +530,7 @@ def tx-delegate [
     ^cardano-cli latest transaction build ...$build_args
 
     ^cardano-cli latest transaction sign --tx-body-file $f_tx_body --signing-key-file $f_pay_skey --signing-key-file $f_stake_skey --out-file $f_tx_signed
-    let txid = (confirm-and-submit $f_tx_signed $net_args $confirm)
+    let txid = (confirm-and-submit $f_tx_signed $net_args $skip_confirmation)
     rm --force $f_pay_skey $f_stake_skey $f_stake_vkey $f_reg_cert $f_deleg_cert $f_tx_body $f_tx_signed
     if $txid == null { return null }
     wait-for-tx $txid $net_args
@@ -528,7 +539,7 @@ def tx-delegate [
 
 # Remove pool delegation but keep the stake key registered.
 # Submits deregistration + re-registration in one tx (net zero deposit).
-def tx-dedelegate [acct: record, net_args: list<string>, confirm: bool] {
+def tx-dedelegate [acct: record, net_args: list<string>, skip_confirmation: bool] {
     let pay_skey_json   = (to-cli-skey $acct.pay_xsk   "shelley-payment-key")
     let stake_skey_json = (to-cli-skey $acct.stake_xsk "shelley-stake-key")
     let stake_vkey_json = (to-cli-vkey $stake_skey_json)
@@ -568,7 +579,7 @@ def tx-dedelegate [acct: record, net_args: list<string>, confirm: bool] {
     ^cardano-cli latest transaction build ...($tx_args | append $net_args)
 
     ^cardano-cli latest transaction sign --tx-body-file $f_tx_body --signing-key-file $f_pay_skey --signing-key-file $f_stake_skey --out-file $f_tx_signed
-    let txid = (confirm-and-submit $f_tx_signed $net_args $confirm)
+    let txid = (confirm-and-submit $f_tx_signed $net_args $skip_confirmation)
     rm --force $f_pay_skey $f_stake_skey $f_stake_vkey $f_dereg_cert $f_reg_cert $f_tx_body $f_tx_signed
     if $txid == null { return null }
     wait-for-tx $txid $net_args
@@ -576,7 +587,7 @@ def tx-dedelegate [acct: record, net_args: list<string>, confirm: bool] {
 }
 
 # Deregister stake key, withdraw pending rewards, reclaim 2 ADA deposit.
-def tx-deregister [acct: record, net_args: list<string>, confirm: bool] {
+def tx-deregister [acct: record, net_args: list<string>, skip_confirmation: bool] {
     let pay_skey_json   = (to-cli-skey $acct.pay_xsk   "shelley-payment-key")
     let stake_skey_json = (to-cli-skey $acct.stake_xsk "shelley-stake-key")
     let stake_vkey_json = (to-cli-vkey $stake_skey_json)
@@ -612,7 +623,7 @@ def tx-deregister [acct: record, net_args: list<string>, confirm: bool] {
     ^cardano-cli latest transaction build ...($tx_args | append $net_args)
 
     ^cardano-cli latest transaction sign --tx-body-file $f_tx_body --signing-key-file $f_pay_skey --signing-key-file $f_stake_skey --out-file $f_tx_signed
-    let txid = (confirm-and-submit $f_tx_signed $net_args $confirm)
+    let txid = (confirm-and-submit $f_tx_signed $net_args $skip_confirmation)
     rm --force $f_pay_skey $f_stake_skey $f_stake_vkey $f_dereg_cert $f_tx_body $f_tx_signed
     if $txid == null { return null }
     wait-for-tx $txid $net_args
@@ -620,7 +631,7 @@ def tx-deregister [acct: record, net_args: list<string>, confirm: bool] {
 }
 
 # Send all funds (and any pending rewards) from the delegation address to a destination.
-def tx-defund [acct: record, dest_address: string, net_args: list<string>, registered: bool, rewards: int, confirm: bool] {
+def tx-defund [acct: record, dest_address: string, net_args: list<string>, registered: bool, rewards: int, skip_confirmation: bool] {
     let pay_skey_json = (to-cli-skey $acct.pay_xsk "shelley-payment-key")
     let f_pay_skey  = (^mktemp --suffix .skey   | str trim)
     let f_tx_body   = (^mktemp --suffix .txbody | str trim)
@@ -651,7 +662,7 @@ def tx-defund [acct: record, dest_address: string, net_args: list<string>, regis
 
     ^cardano-cli latest transaction build ...($build_args | append $net_args)
     ^cardano-cli latest transaction sign --tx-body-file $f_tx_body --signing-key-file $f_pay_skey ...$extra_skey_args --out-file $f_tx_signed
-    let txid = (confirm-and-submit $f_tx_signed $net_args $confirm)
+    let txid = (confirm-and-submit $f_tx_signed $net_args $skip_confirmation)
     # Clean up all temp files
     if not ($extra_skey_args | is-empty) {
         rm --force ($extra_skey_args | last)
@@ -680,6 +691,7 @@ def do-generate-mnemonic [environment: string] {
 
 # Print the funding (delegation) address for a given account index
 def do-address [environment: string, index: int] {
+    check-account-exists $environment $index
     let mnemonic  = (read-mnemonic $environment)
     let acct_skey = (account-skey (root-key $mnemonic))
     let acct      = (derive-account $acct_skey $index)
@@ -811,10 +823,11 @@ def do-status [environment: string, num_accounts: int, dbsync_host?: string] {
 }
 
 # Register and delegate an account's stake to a pool
-def do-delegate [environment: string, index: int, pool_id, dry_run: bool, confirm: bool] {
+def do-delegate [environment: string, index: int, pool_id, dry_run: bool, skip_confirmation: bool] {
     if $pool_id == null {
         error make --unspanned { msg: "Must provide --pool-id (-p)" }
     }
+    check-account-exists $environment $index
 
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
@@ -849,13 +862,14 @@ def do-delegate [environment: string, index: int, pool_id, dry_run: bool, confir
     }
 
     print "Building delegation transaction..."
-    let txid = (tx-delegate $acct $pool_id $net $si.registered $confirm)
+    let txid = (tx-delegate $acct $pool_id $net $si.registered $skip_confirmation)
     if $txid == null { return }
     print $"(ansi green)Success! TxID: ($txid)(ansi reset)"
 }
 
 # Remove pool delegation but keep stake key registered
-def do-dedelegate [environment: string, index: int, dry_run: bool, confirm: bool] {
+def do-dedelegate [environment: string, index: int, dry_run: bool, skip_confirmation: bool] {
+    check-account-exists $environment $index
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
     check-node-synced $environment $net
@@ -889,14 +903,15 @@ def do-dedelegate [environment: string, index: int, dry_run: bool, confirm: bool
     }
 
     print "Building de-delegation transaction..."
-    let txid = (tx-dedelegate $acct $net $confirm)
+    let txid = (tx-dedelegate $acct $net $skip_confirmation)
     if $txid == null { return }
     print $"(ansi green)Success! TxID: ($txid)(ansi reset)"
     print "Stake key remains registered. Any pending rewards were withdrawn."
 }
 
 # Deregister stake key, withdraw pending rewards, and reclaim 2 ADA deposit
-def do-deregister [environment: string, index: int, dry_run: bool, confirm: bool] {
+def do-deregister [environment: string, index: int, dry_run: bool, skip_confirmation: bool] {
+    check-account-exists $environment $index
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
     check-node-synced $environment $net
@@ -925,17 +940,18 @@ def do-deregister [environment: string, index: int, dry_run: bool, confirm: bool
     }
 
     print "Building deregistration transaction..."
-    let txid = (tx-deregister $acct $net $confirm)
+    let txid = (tx-deregister $acct $net $skip_confirmation)
     if $txid == null { return }
     print $"(ansi green)Success! TxID: ($txid)(ansi reset)"
     print "Deposit (2 ADA) and any pending rewards returned to your delegation address."
 }
 
 # Send all funds (and rewards if registered) to a destination address
-def do-defund [environment: string, index: int, dest_address, dry_run: bool, confirm: bool] {
+def do-defund [environment: string, index: int, dest_address, dry_run: bool, skip_confirmation: bool] {
     if $dest_address == null {
         error make --unspanned { msg: "Must provide --dest-address (-d)" }
     }
+    check-account-exists $environment $index
 
     let mnemonic  = (read-mnemonic $environment)
     let net       = (net-args)
@@ -964,7 +980,7 @@ def do-defund [environment: string, index: int, dest_address, dry_run: bool, con
     }
 
     print "Building defund transaction..."
-    let txid = (tx-defund $acct $dest_address $net $si.registered $si.rewards $confirm)
+    let txid = (tx-defund $acct $dest_address $net $si.registered $si.rewards $skip_confirmation)
     if $txid == null { return }
     print $"(ansi green)Success! TxID: ($txid)(ansi reset)"
     print $"All funds sent to ($dest_address)."
@@ -996,10 +1012,10 @@ def show-help [] {
     ($c)pool-delegations.nu($r) [env] ($c)generate-accounts($r) [($f)-n($r) N]
     ($c)pool-delegations.nu($r) [env] ($c)status($r)     [($f)-n($r) N] [($f)--dbsync($r) HOST]
     ($c)pool-delegations.nu($r) [env] ($c)address($r)     ($f)-i($r) I
-    ($c)pool-delegations.nu($r) [env] ($c)delegate($r)   ($f)-p($r) <pool1...> ($f)-i($r) I [($f)--dry-run($r)] [($f)--confirm($r)]
-    ($c)pool-delegations.nu($r) [env] ($c)dedelegate($r) ($f)-i($r) I [($f)--dry-run($r)] [($f)--confirm($r)]
-    ($c)pool-delegations.nu($r) [env] ($c)deregister($r) ($f)-i($r) I [($f)--dry-run($r)] [($f)--confirm($r)]
-    ($c)pool-delegations.nu($r) [env] ($c)defund($r)     ($f)-d($r) <addr> ($f)-i($r) I [($f)--dry-run($r)] [($f)--confirm($r)]
+    ($c)pool-delegations.nu($r) [env] ($c)delegate($r)   ($f)-p($r) <pool1...> ($f)-i($r) I [($f)--dry-run($r)] [($f)--skip-confirmation($r)]
+    ($c)pool-delegations.nu($r) [env] ($c)dedelegate($r) ($f)-i($r) I [($f)--dry-run($r)] [($f)--skip-confirmation($r)]
+    ($c)pool-delegations.nu($r) [env] ($c)deregister($r) ($f)-i($r) I [($f)--dry-run($r)] [($f)--skip-confirmation($r)]
+    ($c)pool-delegations.nu($r) [env] ($c)defund($r)     ($f)-d($r) <addr> ($f)-i($r) I [($f)--dry-run($r)] [($f)--skip-confirmation($r)]
 
   ($h)Subcommands($r)
 
@@ -1025,7 +1041,7 @@ def show-help [] {
     ($f)-p($r), ($f)--pool-id($r)        Stake pool ID in bech32 \(pool1...\) or hex form
     ($f)-d($r), ($f)--dest-address($r)   Destination address for defund
     ($f)--dry-run($r)            Print details but do not submit any transaction
-    ($f)--confirm($r)            Review transaction JSON before submitting \(prompts y/N\)
+    ($f)--skip-confirmation($r)         Skip the confirmation prompt before submitting
     ($f)--dbsync($r) HOST        SSH hostname of dbsync instance; adds last-forged-block to status
 
   ($h)Environment Variables($r) ($d)\(set automatically by the devShell\)($r)
@@ -1049,7 +1065,11 @@ def show-help [] {
     ($n)1.($r) ($c)generate-mnemonic($r) — create and sops-encrypt a new BIP39 mnemonic
     ($n)2.($r) ($c)generate-accounts($r)    — derive and save account addresses
     ($n)3.($r) Fund                 — send ADA to each delegation address \(from faucet / wallet\)
+         ($d)# One at a time with just:($r)
          ($d)for i in {0..19}; do echo \"Funding account $i\"; just fund-transfer $ENV $\(scripts/playground/pool-delegations.nu address -i $i\) $LOVELACE; echo; done($r)
+         ($d)# Or all in one transaction with fund-transfer-bulk.nu:($r)
+         ($d)for i in {0..19}; do echo \"$\(scripts/playground/pool-delegations.nu address -i $i\) $LOVELACE\"; done | tee transfers.txt($r)
+         ($d)scripts/playground/fund-transfer-bulk.nu $ENV $KEY_PATH --file transfers.txt($r)
     ($n)4.($r) ($c)status($r)              — confirm balances arrived on-chain
     ($n)5.($r) ($c)delegate($r)            — register + delegate each account to chosen pools
     ($n)6.($r) ($c)status($r)              — verify delegation is active
@@ -1064,9 +1084,10 @@ def show-help [] {
     ($d)$($r) ($c)pool-delegations.nu preview generate-accounts($r) ($f)-n($r) 10
     ($d)$($r) ($c)pool-delegations.nu status($r)
     ($d)$($r) ($c)pool-delegations.nu preview status($r)
-    ($d)$($r) ($c)pool-delegations.nu status($r) ($f)--dbsync($r) preview1-dbsync-a-1  ($d)# with last-forged-block from dbsync($r)
-    ($d)$($r) ($c)pool-delegations.nu address($r) ($f)-i($r) 0             ($d)# prints funding address to stdout($r)
-    ($d)$($r) ($c)pool-delegations.nu delegate($r) ($f)-p($r) pool1abc... ($f)-i($r) 0
+    ($d)$($r) ($c)pool-delegations.nu status($r) ($f)--dbsync($r) preview1-dbsync-a-1               ($d)# with last-forged-block from dbsync($r)
+    ($d)$($r) ($c)pool-delegations.nu address($r) ($f)-i($r) 0                                      ($d)# prints funding address to stdout($r)
+    ($d)$($r) ($c)pool-delegations.nu delegate($r) ($f)-p($r) pool1abc... ($f)-i($r) 0                      ($d)# prompts for confirmation($r)
+    ($d)$($r) ($c)pool-delegations.nu delegate($r) ($f)-p($r) pool1abc... ($f)-i($r) 0 ($f)--skip-confirmation($r)  ($d)# skip prompt \(scripting\)($r)
     ($d)$($r) ($c)pool-delegations.nu preview delegate($r) ($f)-p($r) pool1abc... ($f)--dry-run($r)
     ($d)$($r) ($c)pool-delegations.nu dedelegate($r) ($f)-i($r) 2
     ($d)$($r) ($c)pool-delegations.nu preview dedelegate($r) ($f)-i($r) 2 ($f)--dry-run($r)
@@ -1095,7 +1116,7 @@ def main [
     --pool-id (-p): string        # Pool ID in bech32 or hex (delegate)
     --dest-address (-d): string   # Destination address (defund)
     --dry-run                     # Show details without submitting
-    --confirm                     # Review transaction before submitting
+    --skip-confirmation            # Skip confirmation prompt before submitting
     --dbsync: string              # Dbsync SSH hostname for last-forged-block enrichment (status only)
 ] {
     let known = ["generate-mnemonic", "generate-accounts", "status", "address", "delegate", "dedelegate", "deregister", "defund"]
@@ -1143,19 +1164,19 @@ def main [
         }
         "delegate"   => {
             if $index == null { error make --unspanned { msg: "Must provide --index (-i) for delegate" } }
-            do-delegate $resolved_env $index $pool_id $dry_run $confirm
+            do-delegate $resolved_env $index $pool_id $dry_run $skip_confirmation
         }
         "dedelegate" => {
             if $index == null { error make --unspanned { msg: "Must provide --index (-i) for dedelegate" } }
-            do-dedelegate $resolved_env $index $dry_run $confirm
+            do-dedelegate $resolved_env $index $dry_run $skip_confirmation
         }
         "deregister" => {
             if $index == null { error make --unspanned { msg: "Must provide --index (-i) for deregister" } }
-            do-deregister $resolved_env $index $dry_run $confirm
+            do-deregister $resolved_env $index $dry_run $skip_confirmation
         }
         "defund"     => {
             if $index == null { error make --unspanned { msg: "Must provide --index (-i) for defund" } }
-            do-defund $resolved_env $index $dest_address $dry_run $confirm
+            do-defund $resolved_env $index $dest_address $dry_run $skip_confirmation
         }
         _            => {
             print $"(ansi red)Unknown subcommand: ($resolved_cmd)(ansi reset)"
