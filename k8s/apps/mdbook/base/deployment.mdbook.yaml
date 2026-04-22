@@ -12,6 +12,11 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: mdbook
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:

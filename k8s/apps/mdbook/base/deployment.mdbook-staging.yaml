@@ -12,6 +12,8 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: mdbook-staging
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:

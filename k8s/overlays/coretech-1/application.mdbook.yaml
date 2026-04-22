@@ -5,7 +5,7 @@ metadata:
   name: mdbook
   namespace: argocd
   labels:
-    app.kubernetes.io/name: mdbook
+    app.kubernetes.io/name: argocd
     app.kubernetes.io/part-of: argocd
 spec:
   revisionHistoryLimit: 10
@@ -17,7 +17,8 @@ spec:
     path: k8s/overlays/coretech-1/mdbook
 
   destination:
-    name: in-cluster
+    server: https://kubernetes.default.svc
+    namespace: mdbook
 
   syncPolicy:
     automated:
