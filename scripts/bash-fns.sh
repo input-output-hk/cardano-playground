@@ -268,7 +268,7 @@ run-node-faketime() (
       "${ARGS[@]}" \
     | tee -a "$DATA_DIR"/node.log
   else
-    faketime "$1" "$CMD" run \
+    faketime \
       "${ARGS[@]}" \
     | tee -a "$DATA_DIR"/node.log
   fi
