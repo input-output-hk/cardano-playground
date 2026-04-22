@@ -2,23 +2,22 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: mdbook-staging
+  name: mdbook-redirect
   namespace: mdbook
   labels:
-    app.kubernetes.io/name: mdbook-staging
+    app.kubernetes.io/name: mdbook
     app.kubernetes.io/part-of: mdbook
 spec:
   parentRefs:
   - name: ingress-1
     namespace: envoy-gateway
-    sectionName: https
+    sectionName: http
   hostnames:
   - CHANGEME
+  - CHANGEME
   rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: mdbook-staging
-      port: 80
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301

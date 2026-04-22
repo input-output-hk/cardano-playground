@@ -149,12 +149,18 @@
 
         contents = [
           pkgs.cacert
-          pkgs.fakeNss
           staticServer
         ];
 
         extraCommands = ''
-          mkdir -p var/www/html tmp
+          mkdir -p var/www/html tmp etc
+
+          # Create passwd/group inline instead of fakeNss (avoids symlink escape issue)
+          echo "root:x:0:0:root:/root:/bin/sh" > etc/passwd
+          echo "nobody:x:65534:65534:nobody:/nonexistent:/bin/sh" >> etc/passwd
+          echo "root:x:0:" > etc/group
+          echo "nobody:x:65534:" >> etc/group
+
           cp -r ${mdbookContent environment}/* var/www/html/
 
           # Ensure nobody user has access

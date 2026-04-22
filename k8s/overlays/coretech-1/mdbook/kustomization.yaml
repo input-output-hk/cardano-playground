@@ -12,5 +12,6 @@ resources:
 patches:
 - path: certificate.mdbook.yaml
 - path: deployment.mdbook-staging.yaml
+- path: httpRoute.mdbook-redirect.yaml
 - path: httpRoute.mdbook-staging.yaml
 - path: httpRoute.mdbook.yaml

@@ -11,6 +11,7 @@ spec:
   parentRefs:
   - name: ingress-1
     namespace: envoy-gateway
+    sectionName: https
   hostnames:
   - CHANGEME
   rules:

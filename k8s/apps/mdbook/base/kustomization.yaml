@@ -7,6 +7,7 @@ resources:
 - certificate.mdbook.yaml
 - deployment.mdbook-staging.yaml
 - deployment.mdbook.yaml
+- httpRoute.mdbook-redirect.yaml
 - httpRoute.mdbook-staging.yaml
 - httpRoute.mdbook.yaml
 - referenceGrant.envoy-gateway.yaml
