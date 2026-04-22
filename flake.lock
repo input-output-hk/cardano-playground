@@ -1698,16 +1698,16 @@
     "predictable-yaml-configs": {
       "flake": false,
       "locked": {
-        "lastModified": 1776745909,
-        "narHash": "sha256-UjsXLWQ7/CL1Aj8yUhotQhhFmXiXa3TBmXED3qlcLX4=",
+        "lastModified": 1776880452,
+        "narHash": "sha256-apcX6hZZOqzJkZihGoyxQrcxMSHLtplv6rsEmX5IQI0=",
         "owner": "snarlysodboxer",
         "repo": "predictable-yaml-configs",
-        "rev": "703debce1f6c34f6b92cfb2f39b5d21c92b22d39",
+        "rev": "f491b1707330c3ace08f15d1ac84cce94ec356e7",
         "type": "github"
       },
       "original": {
         "owner": "snarlysodboxer",
-        "ref": "v1.0.0",
+        "ref": "v1.0.1",
         "repo": "predictable-yaml-configs",
         "type": "github"
       }

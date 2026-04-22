@@ -22,7 +22,7 @@
     };
 
     predictable-yaml-configs = {
-      url = "github:snarlysodboxer/predictable-yaml-configs/v1.0.0";
+      url = "github:snarlysodboxer/predictable-yaml-configs/v1.0.1";
       flake = false;
     };
 
