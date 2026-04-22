@@ -7,4 +7,4 @@ metadata:
   namespace: mdbook
 spec:
   hostnames:
-  - mdbook.k8s.iog.io
+  - book.k8s.iog.io

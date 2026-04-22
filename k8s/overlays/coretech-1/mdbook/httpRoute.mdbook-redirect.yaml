@@ -7,5 +7,5 @@ metadata:
   namespace: mdbook
 spec:
   hostnames:
-  - mdbook.k8s.iog.io
-  - mdbook-staging.k8s.iog.io
+  - book.k8s.iog.io
+  - book-staging.k8s.iog.io
