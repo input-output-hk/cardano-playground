@@ -20,7 +20,7 @@ spec:
         app.kubernetes.io/name: mdbook-staging
     spec:
       containers:
-      - name: mdbook-staging
+      - name: mdbook
         image: 015060878911.dkr.ecr.eu-central-1.amazonaws.com/mdbook-staging:v1.0.0
         imagePullPolicy: IfNotPresent
         ports:

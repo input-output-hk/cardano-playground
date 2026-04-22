@@ -5,7 +5,7 @@ metadata:
   name: mdbook-staging
   namespace: mdbook
   labels:
-    app.kubernetes.io/name: mdbook
+    app.kubernetes.io/name: mdbook-staging
     app.kubernetes.io/part-of: mdbook
 spec:
   type: ClusterIP

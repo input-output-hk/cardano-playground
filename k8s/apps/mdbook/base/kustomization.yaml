@@ -5,14 +5,14 @@ kind: Kustomization
 resources:
 - authorizationPolicy.mdbook.yaml
 - certificate.mdbook.yaml
+- deployment.mdbook-production.yaml
 - deployment.mdbook-staging.yaml
-- deployment.mdbook.yaml
+- httpRoute.mdbook-production.yaml
 - httpRoute.mdbook-redirect.yaml
 - httpRoute.mdbook-staging.yaml
-- httpRoute.mdbook.yaml
 - referenceGrant.envoy-gateway.yaml
+- service.mdbook-production.yaml
 - service.mdbook-staging.yaml
-- service.mdbook.yaml
 
 transformers:
 - labelTransformer.add-argocd-label.yaml

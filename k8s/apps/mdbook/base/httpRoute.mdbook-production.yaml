@@ -2,10 +2,10 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: mdbook
+  name: mdbook-production
   namespace: mdbook
   labels:
-    app.kubernetes.io/name: mdbook
+    app.kubernetes.io/name: mdbook-production
     app.kubernetes.io/part-of: mdbook
 spec:
   parentRefs:
@@ -20,5 +20,5 @@ spec:
         type: PathPrefix
         value: /
     backendRefs:
-    - name: mdbook
+    - name: mdbook-production
       port: 80
