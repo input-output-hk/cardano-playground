@@ -1682,16 +1682,33 @@
         ]
       },
       "locked": {
-        "lastModified": 1775233354,
-        "narHash": "sha256-0AuznogiOE4VMH3kB3hNb4cZKVFhaAlefRC3nbdfQm0=",
+        "lastModified": 1776752794,
+        "narHash": "sha256-bqafd20qpi5QSnK1GfgY9GRJDVk9UezwdkjhU/GGfU4=",
         "owner": "snarlysodboxer",
         "repo": "predictable-yaml",
-        "rev": "3ef7fda259c308be22a43318c4230c1c6352cbd3",
+        "rev": "fdbbe60f324a14f02d19b2df24f25add74e3ab30",
         "type": "github"
       },
       "original": {
         "owner": "snarlysodboxer",
         "repo": "predictable-yaml",
+        "type": "github"
+      }
+    },
+    "predictable-yaml-configs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776745909,
+        "narHash": "sha256-UjsXLWQ7/CL1Aj8yUhotQhhFmXiXa3TBmXED3qlcLX4=",
+        "owner": "snarlysodboxer",
+        "repo": "predictable-yaml-configs",
+        "rev": "703debce1f6c34f6b92cfb2f39b5d21c92b22d39",
+        "type": "github"
+      },
+      "original": {
+        "owner": "snarlysodboxer",
+        "ref": "v1.0.0",
+        "repo": "predictable-yaml-configs",
         "type": "github"
       }
     },
@@ -1728,7 +1745,8 @@
           "cardano-parts",
           "nixpkgs-unstable"
         ],
-        "predictable-yaml": "predictable-yaml"
+        "predictable-yaml": "predictable-yaml",
+        "predictable-yaml-configs": "predictable-yaml-configs"
       }
     },
     "secp256k1": {

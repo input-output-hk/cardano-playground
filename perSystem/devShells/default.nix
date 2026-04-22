@@ -1,4 +1,4 @@
-{
+{self, ...}: {
   # Uncomment for node service debugging
   # flake.config.cardano-parts.pkgs.special.cardano-node-service = "${flake.inputs.cardano-node-service.outPath}/nix/nixos";
 
@@ -10,6 +10,9 @@
     kustomize-wrapped = pkgs.writeShellScriptBin "kustomize" ''
       exec ${pkgs.kustomize}/bin/kustomize --enable-exec --enable-alpha-plugins "$@"
     '';
+
+    predictable-yaml-configs-version =
+      (builtins.fromJSON (builtins.readFile "${self}/flake.lock")).nodes.predictable-yaml-configs.original.ref;
 
     # Override cardano-parts pre-push to include yamlfmt and predictable-yaml checks
     pre-push = pkgs.writeShellApplication {
@@ -49,6 +52,8 @@
             if [ -d .git/hooks ]; then
               ln -sf ${pre-push}/bin/pre-push .git/hooks/pre-push
             fi
+            mkdir -p .predictable-yaml
+            echo "version: ${predictable-yaml-configs-version}" > .predictable-yaml/.remote
           '';
         };
       };

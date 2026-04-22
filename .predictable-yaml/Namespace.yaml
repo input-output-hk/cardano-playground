@@ -1,8 +1,0 @@
----
-apiVersion: v1  # first, required
-kind: Namespace  # required
-metadata:  # required
-  name: TODO  # first, required
-  labels:  # required
-    app: TODO  # first
-    app.kubernetes.io/name: TODO  # required

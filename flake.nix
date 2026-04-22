@@ -21,6 +21,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    predictable-yaml-configs = {
+      url = "github:snarlysodboxer/predictable-yaml-configs/v1.0.0";
+      flake = false;
+    };
+
     helm-to-kustomize = {
       url = "github:snarlysodboxer/helm-to-kustomize";
       inputs.nixpkgs.follows = "nixpkgs";
