@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cardano-book-staging
+  namespace: cardano-book
+  labels:
+    app.kubernetes.io/name: cardano-book-staging
+    app.kubernetes.io/part-of: cardano-book
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cardano-book-staging
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP

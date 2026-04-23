@@ -2,16 +2,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mdbook-production
-  namespace: mdbook
+  name: cardano-book-production
+  namespace: cardano-book
   labels:
-    app.kubernetes.io/name: mdbook-production
-    app.kubernetes.io/part-of: mdbook
+    app.kubernetes.io/name: cardano-book-production
+    app.kubernetes.io/part-of: cardano-book
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app.kubernetes.io/name: mdbook-production
+      app.kubernetes.io/name: cardano-book-production
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -20,11 +20,11 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: mdbook-production
+        app.kubernetes.io/name: cardano-book-production
     spec:
       containers:
-      - name: mdbook
-        image: 015060878911.dkr.ecr.eu-central-1.amazonaws.com/mdbook-production:v1.0.0
+      - name: cardano-book
+        image: 015060878911.dkr.ecr.eu-central-1.amazonaws.com/cardano-book-production:v1.0.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -66,4 +66,4 @@ spec:
           - topologyKey: kubernetes.io/hostname
             labelSelector:
               matchLabels:
-                app.kubernetes.io/name: mdbook-production
+                app.kubernetes.io/name: cardano-book-production

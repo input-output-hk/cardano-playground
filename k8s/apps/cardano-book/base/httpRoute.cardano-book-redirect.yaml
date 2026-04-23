@@ -2,11 +2,11 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: mdbook-redirect
-  namespace: mdbook
+  name: cardano-book-redirect
+  namespace: cardano-book
   labels:
-    app.kubernetes.io/name: mdbook
-    app.kubernetes.io/part-of: mdbook
+    app.kubernetes.io/name: cardano-book
+    app.kubernetes.io/part-of: cardano-book
 spec:
   parentRefs:
   - name: ingress-1

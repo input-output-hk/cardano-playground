@@ -2,11 +2,11 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: mdbook-production
-  namespace: mdbook
+  name: cardano-book-production
+  namespace: cardano-book
   labels:
-    app.kubernetes.io/name: mdbook-production
-    app.kubernetes.io/part-of: mdbook
+    app.kubernetes.io/name: cardano-book-production
+    app.kubernetes.io/part-of: cardano-book
 spec:
   parentRefs:
   - name: ingress-1
@@ -20,5 +20,5 @@ spec:
         type: PathPrefix
         value: /
     backendRefs:
-    - name: mdbook-production
+    - name: cardano-book-production
       port: 80

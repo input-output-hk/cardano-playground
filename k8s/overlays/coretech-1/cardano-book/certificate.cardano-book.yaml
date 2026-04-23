@@ -3,8 +3,8 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: mdbook
-  namespace: mdbook
+  name: cardano-book
+  namespace: cardano-book
 spec:
   dnsNames:
   - book.k8s.iog.io

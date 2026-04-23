@@ -1,6 +1,6 @@
-# mdbook Kubernetes Deployment
+# cardano-book Kubernetes Deployment
 
-This directory contains the Kubernetes manifests for deploying the Cardano Operations Book (mdbook) to the EKS cluster.
+This directory contains the Kubernetes manifests for deploying the Cardano Operations Book (cardano-book) to the EKS cluster.
 
 ## Architecture
 
@@ -32,22 +32,25 @@ Images are built using Nix and include:
 
 Edit files in the `mdbook/` directory as needed.
 
-Increment version in `perSystem/packages/images/mdbook.nix` (e.g., `v1.0.0` → `v1.0.1`)
+Increment version in `perSystem/packages/images/cardano-book.nix` (e.g., `v1.0.0` → `v1.0.1`)
 
 ### 2. Test on Staging
 
 Build, push, and update staging deployment tags:
 ```bash
-just release-image mdbook-staging
+just release-image cardano-book-staging
 
 # Disable ArgoCD auto-sync
-kubectl -n argocd patch application mdbook --type json -p='[{"op": "remove", "path": "/spec/syncPolicy/automated"}]'
+kubectl -n argocd patch application cardano-book --type json -p='[{"op": "remove", "path": "/spec/syncPolicy/automated"}]'
 
 # Scale up staging
-# Edit k8s/overlays/playground/mdbook/kustomization.yaml and change staging replicas from 0 to 1
+# Edit k8s/overlays/playground/cardano-book/kustomization.yaml and change staging replicas from 0 to 1
+
+# View the diff, make sure you're only changing what should be changed
+kustomize build k8s/overlays/playground/cardano-book | kubectl diff -f -
 
 # Deploy manually
-kustomize build k8s/overlays/playground/mdbook | kubectl apply -f -
+kustomize build k8s/overlays/playground/cardano-book | kubectl apply -f -
 
 # Wait ~60-90 seconds for ALB target registration
 # Then access: https://book-staging-k8s.play.dev.cardano.org
@@ -58,15 +61,15 @@ kustomize build k8s/overlays/playground/mdbook | kubectl apply -f -
 Once staging is approved:
 ```bash
 # Scale staging back down
-# Edit k8s/overlays/playground/mdbook/kustomization.yaml and change staging replicas back to 0
+# Edit k8s/overlays/playground/cardano-book/kustomization.yaml and change staging replicas back to 0
 
 # Build and push production image
-just release-image mdbook-production
+just release-image cardano-book-production
 
 # Commit all changes
 git add/commit/push.
 # usually use commit message like: "book: deploy for <reason>"
 
 # Re-enable ArgoCD auto-sync
-kubectl apply -f k8s/overlays/playground/application.mdbook.yaml
+kubectl apply -f k8s/overlays/playground/application.cardano-book.yaml
 ```

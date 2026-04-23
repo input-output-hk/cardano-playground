@@ -2,26 +2,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mdbook-staging
-  namespace: mdbook
+  name: cardano-book-staging
+  namespace: cardano-book
   labels:
-    app.kubernetes.io/name: mdbook-staging
-    app.kubernetes.io/part-of: mdbook
+    app.kubernetes.io/name: cardano-book-staging
+    app.kubernetes.io/part-of: cardano-book
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: mdbook-staging
+      app.kubernetes.io/name: cardano-book-staging
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: mdbook-staging
+        app.kubernetes.io/name: cardano-book-staging
     spec:
       containers:
-      - name: mdbook
-        image: 015060878911.dkr.ecr.eu-central-1.amazonaws.com/mdbook-staging:v1.0.0
+      - name: cardano-book
+        image: 015060878911.dkr.ecr.eu-central-1.amazonaws.com/cardano-book-staging:v1.0.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: http

@@ -4,15 +4,15 @@
     config,
     ...
   }: let
-    # Version for the mdbook image
+    # Version for the cardano-book image
     version = "v1.0.0";
 
     # Simple Go static file server
     staticServer = pkgs.buildGo125Module {
-      pname = "mdbook-server";
+      pname = "cardano-book-server";
       version = "1.0.0";
 
-      src = pkgs.runCommand "mdbook-server-src" {} ''
+      src = pkgs.runCommand "cardano-book-server-src" {} ''
         mkdir -p $out
         cat > $out/main.go <<'EOF'
         package main
@@ -67,7 +67,7 @@
         EOF
 
         cat > $out/go.mod <<EOF
-        module mdbook-server
+        module cardano-book-server
 
         go 1.25
         EOF
@@ -76,20 +76,20 @@
       vendorHash = null;
 
       meta = {
-        description = "Simple static file server for mdbook";
-        mainProgram = "mdbook-server";
+        description = "Simple static file server for cardano-book";
+        mainProgram = "cardano-book-server";
       };
     };
 
-    # Build mdbook content (production)
-    mdbookContent = environment: let
+    # Build cardano-book content (production)
+    cardanoBookContent = environment: let
       bookConfig =
         if environment == "staging"
         then "book-staging.toml"
         else "book-prod.toml";
     in
       pkgs.stdenv.mkDerivation {
-        pname = "mdbook-content-${environment}";
+        pname = "cardano-book-content-${environment}";
         version = "1.0.0";
 
         src = ../../..;
@@ -141,10 +141,10 @@
         '';
       };
 
-    # Create Docker image for mdbook
-    mkMdbookImage = environment:
+    # Create Docker image for cardano-book
+    mkCardanoBookImage = environment:
       pkgs.dockerTools.buildLayeredImage {
-        name = "mdbook-${environment}";
+        name = "cardano-book-${environment}";
         tag = version;
 
         contents = [
@@ -161,7 +161,7 @@
           echo "root:x:0:" > etc/group
           echo "nobody:x:65534:" >> etc/group
 
-          cp -r ${mdbookContent environment}/* var/www/html/
+          cp -r ${cardanoBookContent environment}/* var/www/html/
 
           # Ensure nobody user has access
           chmod -R 755 var/www/html
@@ -169,7 +169,7 @@
         '';
 
         config = {
-          Cmd = ["${staticServer}/bin/mdbook-server" "-port" "8080" "-dir" "/var/www/html"];
+          Cmd = ["${staticServer}/bin/cardano-book-server" "-port" "8080" "-dir" "/var/www/html"];
           ExposedPorts = {
             "8080/tcp" = {};
           };
@@ -179,8 +179,8 @@
       };
   in {
     packages = {
-      mdbook-production-image = mkMdbookImage "production";
-      mdbook-staging-image = mkMdbookImage "staging";
+      cardano-book-production-image = mkCardanoBookImage "production";
+      cardano-book-staging-image = mkCardanoBookImage "staging";
     };
   };
 }

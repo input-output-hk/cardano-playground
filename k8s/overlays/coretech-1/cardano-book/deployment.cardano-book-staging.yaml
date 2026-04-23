@@ -3,8 +3,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mdbook-staging
-  namespace: mdbook
+  name: cardano-book-staging
+  namespace: cardano-book
 spec:
   template:
     spec:

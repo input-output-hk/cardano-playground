@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mdbook
+  name: cardano-book
   namespace: argocd
   labels:
     app.kubernetes.io/name: argocd
@@ -14,11 +14,11 @@ spec:
     repoURL: https://github.com/input-output-hk/cardano-playground
     # targetRevision: main
     targetRevision: prototype-webservices  # TODO
-    path: k8s/overlays/coretech-1/mdbook
+    path: k8s/overlays/coretech-1/cardano-book
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: mdbook
+    namespace: cardano-book
 
   syncPolicy:
     automated:

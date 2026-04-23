@@ -1,0 +1,18 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- authorizationPolicy.cardano-book.yaml
+- certificate.cardano-book.yaml
+- deployment.cardano-book-production.yaml
+- deployment.cardano-book-staging.yaml
+- httpRoute.cardano-book-production.yaml
+- httpRoute.cardano-book-redirect.yaml
+- httpRoute.cardano-book-staging.yaml
+- referenceGrant.envoy-gateway.yaml
+- service.cardano-book-production.yaml
+- service.cardano-book-staging.yaml
+
+transformers:
+- labelTransformer.add-argocd-label.yaml
