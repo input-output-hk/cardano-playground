@@ -5,6 +5,8 @@ kind: Kustomization
 replicas:
 - name: cardano-book-staging
   count: 0
+- name: cardano-book-production  # temporarily scale down until ready for testing and cutover
+  count: 0
 
 resources:
 - ../../../apps/cardano-book/base
