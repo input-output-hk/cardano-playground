@@ -13,14 +13,14 @@ alias cardano-node="$(nix build -Lv github:IntersectMBO/cardano-node/leios-proto
 alias cardano-node-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-node --no-link --print-out-paths)/bin/cardano-node"
 alias cardano-cli="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-cli --no-link --print-out-paths)/bin/cardano-cli"
 alias cardano-cli-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-cli --no-link --print-out-paths)/bin/cardano-cli"
-alias db-synthesizer="$(nix build -Lv github:IntersectMBO/cardano-node/jl/leios-synth#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
-alias db-synthesizer-ng="$(nix build -Lv github:IntersectMBO/cardano-node/jl/leios-synth#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
+alias db-synthesizer="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
+alias db-synthesizer-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
 
-# Expect leios at ~10.5.1
+# Expect leios currently at ~10.5.1
 cardano-node --version
 cardano-node-ng --version
 
-# Expect leios at ~10.11.0.0
+# Expect leios currently at ~10.11.0.0
 cardano-cli --version
 cardano-cli-ng --version
 
@@ -81,25 +81,20 @@ export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d
 export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
 export LEIOS_DB_PATH="$DATA_DIR/leios.db"
 
-# 10.5.1 compatible iohk-nix
-export TEMPLATE_DIR1="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/f63aa2a49720526900fb5943db4123b5b8dcc534\"; in f.outPath")/cardano-lib/testnet-template"
+# Leios is currently based on a dated 10.5.1 node branch, but will eventually
+# be rebased on master. Lets take the approach of using the latest config
+# template and node binary to generate genesis config, and then patch for
+# backwards compatible changes that are needed until the leios rebase to master
+# happens.
+export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix\"; in f.outPath")/cardano-lib/testnet-template"
 
-# Conway 251 parameter genesis template
-export TEMPLATE_DIR2="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/a704b93ea51ee1a8a7e456659e0b28ddba280a95\"; in f.outPath")/cardano-lib/testnet-template"
-
-# Dijkstra genesis template
-export TEMPLATE_DIR3="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix\"; in f.outPath")/cardano-lib/testnet-template"
-
-export TEMPLATE_DIR="$(pwd)/workspace/template"
-mkdir -p "$TEMPLATE_DIR"
-cp "$TEMPLATE_DIR1"/*.json "$TEMPLATE_DIR/"
-chmod -R +w "$TEMPLATE_DIR"
-cp "$TEMPLATE_DIR2"/conway.json "$TEMPLATE_DIR/"
-cp "$TEMPLATE_DIR3"/dijkstra.json "$TEMPLATE_DIR/"
-chmod -R +w "$TEMPLATE_DIR"
-
-# Create the basic cardano network config and secrets
-nix run .#job-gen-custom-node-config-data-ng
+# Per the comment above, we'll use the pre-release node binary to generate
+# genesis config, and then use the leios node version for the remainder of the
+# commands.
+USE_SHELL_BINS="" \
+  UNSTABLE="true" \
+  UNSTABLE_LIBS="true" \
+  nix run .#job-gen-custom-node-config-data-ng
 
 # Create the network backbone pools
 POOL_NAMES="${ENV}1-bp-a-1" \
@@ -175,7 +170,20 @@ jq '.staking.pools
   | del(.value.accountAddress, .value.poolId))' \
 "$DATA_DIR/shelley-genesis.json" | sponge "$DATA_DIR/shelley-genesis.json"
 
-jq '.UseTraceDispatcher = false' "$DATA_DIR/node-config.json" \
+# Shim the 10.7.x node config to be compatible back to 10.5.x until leios rebases to master.
+# This will require:
+#   - Add relay role config of the following which has been handled dynamically since 10.6.0:
+#     - PeerSharing = true (should be false for a bp)
+#     - TargetNumberOfKnownPeers = 150  (should be 100 for a bp)
+#     - TargetNumberOfRootPeers = 60 (should be 100 for a bp)
+#     - EnableP2P (removed legacy networking in 10.6.0)
+jq -S '.EnableP2P = true
+  | .PeerSharing = true
+  | .TargetNumberOfKnownPeers = 150
+  | .TargetNumberOfRootPeers = 60
+  | .LedgerDB.SnapshotInterval = 864
+  | .MempoolCapacityBytesOverride = 25000000' \
+  "$DATA_DIR/node-config.json" \
   | sponge "$DATA_DIR/node-config.json"
 
 # Update genesis hashes in node config after modifying the genesis files.
@@ -321,7 +329,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((86400 - 533 - 180))
+synth-slots $((86400 - 623 - 180))
 run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
@@ -341,9 +349,9 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 echo "Synthesize blocks until realtime plus desired offset"
 # This brings us to epoch 1 + 1 = 2
-synth-slots 86218
+synth-slots 86299
 #
-# This brings us to epoch 2 + 3 = 5
-synth-epochs 3
+# This brings us to epoch 2 + 4 = 6
+synth-epochs 4
 
-run-node-faketime "$(date -u -d "$START_TIME + 5 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+run-node-faketime "$(date -u -d "$START_TIME + 6 day - 30 minute" "+%Y-%m-%dT%H:%M:%SZ")"

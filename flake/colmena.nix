@@ -58,6 +58,7 @@ in
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
+          ++ optionals (hasPrefix "leios" name) [noBPerf amiZfs]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
           ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
@@ -101,9 +102,35 @@ in
         ];
       };
 
-      # node-leios = (mkCustomNode "cardano-node-leios") // pre;
+      node-leios =
+        mkCustomNodePre "cardano-node-leios"
+        // {
+          services.cardano-node.extraNodeConfig = {
+            ConsensusMode = "PraosMode";
+            MinNodeVersion = "10.5.1-leios-custom-setup";
+          };
+          systemd.services.cardano-node.environment."LEIOS_DB_PATH" = "/var/lib/cardano-node/db-leios/leios.db";
+        };
 
       node-set-iowait = mkCustomNodePre "cardano-node-set-iowait";
+
+      leiosBp = {
+        imports = [
+          bp
+          {
+            services.cardano-node.extraNodeConfig = {
+              # This differs from the relay default of true;
+              # prior to node 10.6.0 this needs to be set explicitly.
+              PeerSharing = false;
+
+              # This differs from the relay default of 150 / 60
+              # prior to node 10.6.0 this needs to be set explicitly.
+              TargetNumberOfKnownPeers = 100;
+              TargetNumberOfRootPeers = 100;
+            };
+          }
+        ];
+      };
 
       # mkCustomNode = flakeInput:
       #   imports = [
@@ -653,7 +680,26 @@ in
       #       });
       # };
       #
-      # maxVerbosity = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
+      # maxVerbosity = nixos: {
+      #   services.cardano-node.nodeConfig = let
+      #     nodeCfg = nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.leios.nodeConfig;
+      #   in mkOverride 10 (nodeCfg // {
+      #     TraceOptions = {
+      #       "" = {
+      #         backends = [
+      #           "EKGBackend"
+      #           "Forwarder"
+      #           "PrometheusSimple suffix 127.0.0.1 12798"
+      #           "Stdout HumanFormatColoured"
+      #         ];
+      #         detail = "DDetailed";
+      #         severity = "Debug";
+      #       };
+      #     };
+      #   });
+      # };
+      #
+      # maxVerbosityLegacy = {services.cardano-node.extraNodeConfig.TracingVerbosity = "MaximalVerbosity";};
       #
       # praosMode = {
       #   services.cardano-node = {
@@ -789,7 +835,7 @@ in
       preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel tcpTxOpt];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp lsm mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-bp-c-1 = {imports = [us-east-2 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview3") node-set-iowait bp lsm mithrilRelease (declMRel "preview3-rel-c-1")];};
       preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel];};
       preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel];};
       preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
@@ -811,26 +857,18 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
-      # leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios bp];};
-      # leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel];};
+      leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosBp];};
+      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel];};
       # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") dbsync-leios smash];};
+      leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios];};
       # leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
+      leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios];};
 
-      # leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios bp];};
-      # leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel];};
+      leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
+      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel];};
 
-      # leios3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios bp];};
-      # leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios rel];};
-      leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1")];};
-      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1")];};
-      leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1")];};
-      leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1")];};
-
-      leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2")];};
-      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2")];};
-
-      leios3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3")];};
-      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3")];};
+      leios3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios leiosBp];};
+      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios rel];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
