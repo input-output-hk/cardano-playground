@@ -305,14 +305,16 @@ in
         ];
       };
 
-      # dbsync-leios = dbsync-pre //
-      # {
+      # dbsync-leios = {
       #   imports = [
+      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
+      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
       #     {
-      #       cardano-parts.perNode = {
-      #         # lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-custom "x86_64-linux";
-      #         pkgs = {inherit (inputs.cardano-node-leios.packages.x86_64-linux) cardano-cli cardano-node cardano-submit-api;};
-      #       };
+      #       services.cardano-node.shareNodeSocket = true;
+      #       services.cardano-postgres.enablePsqlrc = true;
       #     }
       #   ];
       # };
@@ -420,6 +422,7 @@ in
       preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
       dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
+      leiosFaucet = {services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];};
 
       metadata = {
         imports = [
@@ -859,10 +862,9 @@ in
       # Leios, all on custom leios prototype version
       leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosBp];};
       leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel];};
-      # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") dbsync-leios smash];};
+      # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios];};
-      # leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
-      leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios];};
+      leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
       leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel];};
