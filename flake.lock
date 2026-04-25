@@ -204,12 +204,12 @@
         "narHash": "sha256-IlbNMLBjs/dvGogcdbWQIL+3qwy7EXJbIDpo4xBd4bY=",
         "owner": "supranational",
         "repo": "blst",
-        "rev": "8c7db7fe8d2ce6e76dc398ebd4d475c0ec564355",
+        "rev": "6d960cd05d6fe2b5bc9ba161edf0c1a131b87c4c",
         "type": "github"
       },
       "original": {
         "owner": "supranational",
-        "ref": "v0.3.14",
+        "ref": "v0.3.15",
         "repo": "blst",
         "type": "github"
       }
@@ -716,11 +716,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1777060021,
-        "narHash": "sha256-fYJ6K9LyIRo/83b6GLXlCg/vWWefT661vYSE3vpZ76Y=",
+        "lastModified": 1777079904,
+        "narHash": "sha256-AVCyvDiBrmTSW7sbTHWXrqlB8lunF2x4XEiqjWWHJ3o=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "39af8ff3095b17d7eaccf7de30d69a22b7fbc333",
+        "rev": "ecb52b4ada91c40c2d1e5d39530568ebd54db737",
         "type": "github"
       },
       "original": {
@@ -2300,15 +2300,16 @@
         "sodium": "sodium_4"
       },
       "locked": {
-        "lastModified": 1774280402,
-        "narHash": "sha256-bHp3Ji7c0T0RCor9FVo6yvjSPT0bVQE5EFw5JxvqZDM=",
+        "lastModified": 1777079841,
+        "narHash": "sha256-yjYY1bn3n6ehfgnoS3chrw9Aiatqzx8s0nZpKpQ8gWI=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "f444d972c301ddd9f23eac4325ffcc8b5766eee9",
+        "rev": "ed347a6368f265587013e3241fd5f7f282f1921a",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "leios",
         "repo": "iohk-nix",
         "type": "github"
       }
@@ -2321,11 +2322,11 @@
         "sodium": "sodium_5"
       },
       "locked": {
-        "lastModified": 1777059663,
-        "narHash": "sha256-eQAt4yPFkKJJ+80Wvr8WBIEMhOoxyHlvvg7YVJwUphg=",
+        "lastModified": 1777079841,
+        "narHash": "sha256-yjYY1bn3n6ehfgnoS3chrw9Aiatqzx8s0nZpKpQ8gWI=",
         "owner": "input-output-hk",
         "repo": "iohk-nix",
-        "rev": "0c900d8ec6c266a946192c5cad739bb3229110ee",
+        "rev": "ed347a6368f265587013e3241fd5f7f282f1921a",
         "type": "github"
       },
       "original": {
