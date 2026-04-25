@@ -21,7 +21,7 @@
     "SnapshotInterval": 864
   },
   "MempoolCapacityBytesOverride": 25000000,
-  "MinNodeVersion": "10.7.0",
+  "MinNodeVersion": "10.5.1-leios-prototype",
   "PeerSharing": true,
   "Protocol": "Cardano",
   "RequiresNetworkMagic": "RequiresMagic",

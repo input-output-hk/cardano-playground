@@ -103,11 +103,11 @@ in
       };
 
       node-leios =
-        mkCustomNodePre "cardano-node-leios"
+        mkCustomNode "cardano-node-leios"
         // {
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
-            MinNodeVersion = "10.5.1-leios-custom-setup";
+            MinNodeVersion = "10.5.1-leios-prototype";
           };
           systemd.services.cardano-node.environment."LEIOS_DB_PATH" = "/var/lib/cardano-node/db-leios/leios.db";
         };
@@ -132,19 +132,20 @@ in
         ];
       };
 
-      # mkCustomNode = flakeInput:
-      #   imports = [
-      #     node
-      #     {
-      #       cardano-parts.perNode = {
-      #         pkgs = {
-      #           cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
-      #           cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
-      #           cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
-      #         };
-      #       };
-      #     }
-      #   };
+      mkCustomNode = flakeInput: {
+        imports = [
+          node
+          {
+            cardano-parts.perNode = {
+              pkgs = {
+                cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
+                cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
+                cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
+              };
+            };
+          }
+        ];
+      };
 
       mkCustomNodePre = flakeInput: {
         imports = [
@@ -305,19 +306,19 @@ in
         ];
       };
 
-      # dbsync-leios = {
-      #   imports = [
-      #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
-      #     inputs.cardano-parts.nixosModules.profile-cardano-db-sync
-      #     inputs.cardano-parts.nixosModules.profile-cardano-node-group
-      #     inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
-      #     inputs.cardano-parts.nixosModules.profile-cardano-postgres
-      #     {
-      #       services.cardano-node.shareNodeSocket = true;
-      #       services.cardano-postgres.enablePsqlrc = true;
-      #     }
-      #   ];
-      # };
+      dbsync-leios = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          {
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+          }
+        ];
+      };
 
       # ogmios = {
       #   imports = [
@@ -862,8 +863,8 @@ in
       # Leios, all on custom leios prototype version
       leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosBp];};
       leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel];};
-      # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash];};
-      leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios];};
+      leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash];};
+      # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios];};
       leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
