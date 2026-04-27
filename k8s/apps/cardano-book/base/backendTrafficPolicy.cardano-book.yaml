@@ -1,0 +1,37 @@
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: cardano-book
+  namespace: cardano-book
+  labels:
+    app.kubernetes.io/name: cardano-book
+    app.kubernetes.io/part-of: cardano-book
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: cardano-book-production
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: cardano-book-staging
+  retry:
+    numRetries: 3
+    perRetry:
+      timeout: 3s
+      backOff:
+        baseInterval: 50ms
+        maxInterval: 500ms
+    retryOn:
+      triggers:
+      - connect-failure
+      - retriable-status-codes
+      httpStatusCodes:
+      - 500
+      - 502
+      - 503
+      - 504
+  timeout:
+    http:
+      connectionIdleTimeout: 60s
+      requestTimeout: 15s

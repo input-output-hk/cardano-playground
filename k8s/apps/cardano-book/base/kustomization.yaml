@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - authorizationPolicy.cardano-book.yaml
+- backendTrafficPolicy.cardano-book.yaml
 - certificate.cardano-book.yaml
 - deployment.cardano-book-production.yaml
 - deployment.cardano-book-staging.yaml
