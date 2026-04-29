@@ -58,7 +58,7 @@ in
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
-          ++ optionals (hasPrefix "leios" name) [noBPerf amiZfs]
+          ++ optionals (hasPrefix "leios" name) [noBPerf amiZfs jsonLogging]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
           ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
@@ -529,33 +529,34 @@ in
         };
       };
 
-      # jsonLogging = {config, ...}: {
-      #   services = {
-      #     cardano-node.extraNodeConfig = {
-      #       TraceOptions = {
-      #         "" = {
-      #           severity = "Notice";
-      #           backends = [
-      #             "EKGBackend"
-      #             "Forwarder"
-      #             "Stdout MachineFormat"
-      #             "PrometheusSimple suffix 127.0.0.1 12798"
-      #           ];
-      #         };
-      #       };
-      #     };
+      jsonLogging = {config, ...}: {
+        services = {
+          cardano-node.extraNodeConfig = {
+            TraceOptions = {
+              "" = {
+                backends = [
+                  "EKGBackend"
+                  "Forwarder"
+                  "PrometheusSimple suffix 127.0.0.1 12798"
+                  "Stdout MachineFormat"
+                ];
+                detail = "DNormal";
+                severity = "Notice";
+              };
+            };
+          };
 
-      #     cardano-tracer = mkIf (!config.services.cardano-node.useLegacyTracing) {
-      #       logging = [
-      #         {
-      #           logFormat = "ForMachine";
-      #           logMode = "FileMode";
-      #           logRoot = "/var/lib/cardano-tracer";
-      #         }
-      #       ];
-      #     };
-      #   };
-      # };
+          cardano-tracer = mkIf (!config.services.cardano-node.useLegacyTracing) {
+            logging = [
+              {
+                logFormat = "ForMachine";
+                logMode = "JournalMode";
+                logRoot = "/var/lib/cardano-tracer";
+              }
+            ];
+          };
+        };
+      };
 
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
 
