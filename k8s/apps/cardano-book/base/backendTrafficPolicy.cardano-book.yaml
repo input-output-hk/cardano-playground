@@ -15,6 +15,10 @@ spec:
   - group: gateway.networking.k8s.io
     kind: HTTPRoute
     name: cardano-book-staging
+  timeout:
+    http:
+      connectionIdleTimeout: 60s
+      requestTimeout: 15s
   retry:
     numRetries: 3
     perRetry:
@@ -31,7 +35,6 @@ spec:
       - 502
       - 503
       - 504
-  timeout:
-    http:
-      connectionIdleTimeout: 60s
-      requestTimeout: 15s
+  # mergeType: StrategicMerge merges with the Gateway-wide default rather
+  # than replacing it entirely.
+  mergeType: StrategicMerge
