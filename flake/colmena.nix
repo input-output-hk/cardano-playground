@@ -58,7 +58,7 @@ in
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
-          ++ optionals (hasPrefix "leios" name) [noBPerf amiZfs jsonLogging]
+          ++ optionals (hasPrefix "leios" name) [noBPerf amiZfs leiosLogging]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
           ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
@@ -529,7 +529,7 @@ in
         };
       };
 
-      jsonLogging = {
+      leiosLogging = {
         imports = [
           (nixos: {
             services = {
@@ -544,6 +544,26 @@ in
                     ];
                     detail = "DNormal";
                     severity = "Notice";
+                  };
+
+                  "LeiosNotify.Remote" = {
+                    severity = "Debug";
+                    maxFrequency = 0;
+                  };
+
+                  "LeiosFetch.Remote" = {
+                    severity = "Debug";
+                    maxFrequency = 0;
+                  };
+
+                  "Consensus.LeiosKernel" = {
+                    severity = "Debug";
+                    maxFrequency = 0;
+                  };
+
+                  "Consensus.LeiosPeer" = {
+                    severity = "Debug";
+                    maxFrequency = 0;
                   };
                 };
               };
