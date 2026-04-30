@@ -177,14 +177,21 @@ jq '.staking.pools
 #     - TargetNumberOfKnownPeers = 150  (should be 100 for a bp)
 #     - TargetNumberOfRootPeers = 60 (should be 100 for a bp)
 #     - EnableP2P (removed legacy networking in 10.6.0)
+#     - Add leios specific log tracing options
 jq -S '.EnableP2P = true
-  | .PeerSharing = true
-  | .TargetNumberOfKnownPeers = 150
-  | .TargetNumberOfRootPeers = 60
-  | .LedgerDB.SnapshotInterval = 864
-  | .MempoolCapacityBytesOverride = 25000000' \
-  "$DATA_DIR/node-config.json" \
-  | sponge "$DATA_DIR/node-config.json"
+    | .PeerSharing = true
+    | .TargetNumberOfKnownPeers = 150
+    | .TargetNumberOfRootPeers = 60
+    | .LedgerDB.SnapshotInterval = 864
+    | .MempoolCapacityBytesOverride = 25000000
+    | .TraceOptions *= {
+        "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
+        "Consensus.LeiosPeer": {"maxFrequency": 0, "severity": "Debug"},
+        "LeiosFetch.Remote": {"maxFrequency": 0, "severity": "Debug"},
+        "LeiosNotify.Remote": {"maxFrequency": 0, "severity": "Debug"}
+      }' \
+    "$DATA_DIR/node-config.json" \
+    | sponge "$DATA_DIR/node-config.json"
 
 # Update genesis hashes in node config after modifying the genesis files.
 HASH_CONWAY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
