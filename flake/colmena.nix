@@ -529,33 +529,50 @@ in
         };
       };
 
-      jsonLogging = {config, ...}: {
-        services = {
-          cardano-node.extraNodeConfig = {
-            TraceOptions = {
-              "" = {
-                backends = [
-                  "EKGBackend"
-                  "Forwarder"
-                  "PrometheusSimple suffix 127.0.0.1 12798"
-                  "Stdout MachineFormat"
+      jsonLogging = {
+        imports = [
+          (nixos: {
+            services = {
+              cardano-node.extraNodeConfig = {
+                TraceOptions = {
+                  "" = {
+                    backends = [
+                      "EKGBackend"
+                      "Forwarder"
+                      "PrometheusSimple suffix 127.0.0.1 12798"
+                      "Stdout MachineFormat"
+                    ];
+                    detail = "DNormal";
+                    severity = "Notice";
+                  };
+                };
+              };
+
+              cardano-tracer = mkIf (!nixos.config.services.cardano-node.useLegacyTracing) {
+                logging = [
+                  {
+                    logFormat = "ForMachine";
+                    logMode = "JournalMode";
+                    logRoot = "/var/lib/cardano-tracer";
+                  }
                 ];
-                detail = "DNormal";
-                severity = "Notice";
+              };
+
+              alloy = {
+                extraAlloyConfig =
+                  ''
+                    // Leios custom alloy config follows
+
+                  ''
+                  + (import ./nixosModules/leios/config-alloy.nix-import nixos).leiosAlloyConfig;
+
+                extraJournalReceivers = [
+                  "loki.process.leios_journal_router.receiver"
+                ];
               };
             };
-          };
-
-          cardano-tracer = mkIf (!config.services.cardano-node.useLegacyTracing) {
-            logging = [
-              {
-                logFormat = "ForMachine";
-                logMode = "JournalMode";
-                logRoot = "/var/lib/cardano-tracer";
-              }
-            ];
-          };
-        };
+          })
+        ];
       };
 
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
