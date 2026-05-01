@@ -26,6 +26,12 @@ keys:
   - &dijkstra2-bp-b-1 age18effywervp368ygfyxsywvcs89nnkrs7lm3s3z09kzcy758n29astfnrpx
   - &dijkstra3-bp-c-1 age1aflfe3ufz6vun3kwxy4ht83g8thu30dsmzpv3va6epeqcnffkfzqzeapgy
 
+  # Leios
+  - &leios1-bp-a-1 age154hm2nsnpv794q6md6k96gx8r422v2gu74wuyzl4ehkg62ajldkst9lmc6
+  - &leios1-faucet-a-1 age1dwepnrvk2ysjkh5uqj7sshyp20yck5kjpvlzfra6rh2rj9ps8eeqzjgw4c
+  - &leios2-bp-b-1 age1lt8a78g53sgpspgtnce3w5v2fswdhhr7cnkl3eg4gkepd7gdd9lqcpy95c
+  - &leios3-bp-c-1 age1pn8tx5ehm7hejphk6ewlvlmpmg4ujq4gc92mtudhsqpapj3q4apscyjwcy
+
   # Sanchonet
   - &sanchonet1-bp-a-1 age1sxhjqwnuf5duczjv5fwle492jpm7fhwunkwhp6agle6y75yqdeas586aaj
 
@@ -135,6 +141,31 @@ creation_rules:
     - age:
       - *sre
       - *dijkstra3-bp-c-1
+
+  # Leios specific
+  - path_regex: secrets/groups/leios1/deploy/leios1-bp-a-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leios1-bp-a-1
+
+  - path_regex: secrets/groups/leios1/deploy/.*faucet.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leios1-faucet-a-1
+
+  - path_regex: secrets/groups/leios2/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leios2-bp-b-1
+
+  - path_regex: secrets/groups/leios3/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leios3-bp-c-1
 
   # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*$

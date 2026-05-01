@@ -54,6 +54,18 @@
     nix run github:input-output-hk/cardano-playground/node-10.7.0-pre-config#job-gen-env-config
     ```
 
+* Node `10.6.4`
+  * Environment configs can be found in `result/environments/config/` after running:
+    ```bash
+    nix run github:input-output-hk/cardano-playground/node-10.6.4-config#job-gen-env-config
+    ```
+
+* Node `10.6.3`
+  * Environment configs can be found in `result/environments/config/` after running:
+    ```bash
+    nix run github:input-output-hk/cardano-playground/node-10.6.3-config#job-gen-env-config
+    ```
+
 * Node `10.6.2`
   * Environment configs can be found in `result/environments/config/` after running:
     ```bash

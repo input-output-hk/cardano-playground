@@ -35,6 +35,7 @@ in {
   cname_faucet_preprod = mkCname {name = "faucet.preprod.${domain}"; records = ["preprod1-faucet-a-1.${domain}"];};
   cname_faucet_preview = mkCname {name = "faucet.preview.${domain}"; records = ["preview1-faucet-a-1.${domain}"];};
   cname_faucet_dijkstra = mkCname {name = "faucet.dijkstra.${domain}"; records = ["dijkstra1-faucet-a-1.${domain}"];};
+  cname_faucet_leios = mkCname {name = "faucet.leios.${domain}"; records = ["leios1-faucet-a-1.${domain}"];};
 
   # Govtool
 

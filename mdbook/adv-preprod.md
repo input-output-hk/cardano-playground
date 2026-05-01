@@ -1,13 +1,12 @@
 ## Advanced Configuration: Pre-Production Testnet
 
-Users wanting to test a cardano-node pre-release version on the pre-production
-environment may obtain compatible configuration files below.
+There is currently no pre-release version available for the pre-production environment.
 
-The latest version available is cardano-node release `10.7.0`.
+The latest version available is cardano-node release `10.7.1`.
 
 #### Configuration files
 
-Compatible with cardano-node release [10.7.0](https://github.com/IntersectMBO/cardano-node/releases/tag/10.7.0)
+Compatible with cardano-node release [10.7.1](https://github.com/IntersectMBO/cardano-node/releases/tag/10.7.1)
 
 ```
 NOTE:
