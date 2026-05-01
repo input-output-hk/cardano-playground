@@ -8,17 +8,21 @@ metadata:
     app.kubernetes.io/name: cardano-book-production
     app.kubernetes.io/part-of: cardano-book
 spec:
-  parentRefs:
-  - name: ingress-1
-    namespace: envoy-gateway
-    sectionName: https
   hostnames:
   - CHANGEME
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: ingress-1
+    namespace: envoy-gateway
+    sectionName: https
   rules:
   - matches:
     - path:
         type: PathPrefix
         value: /
     backendRefs:
-    - name: cardano-book-production
+    - group: ""
+      kind: Service
+      name: cardano-book-production
       port: 80
