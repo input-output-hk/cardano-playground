@@ -54,7 +54,7 @@ checkEnvWithoutOverride := '''
   elif [ "$ENV" = "dijkstra" ]; then
     MAGIC="6"
   elif [ "$ENV" = "leios" ]; then
-    MAGIC="7"
+    MAGIC="164"
   elif [ "$ENV" = "demo" ]; then
     MAGIC="42"
   fi
@@ -257,7 +257,7 @@ apply-bootstrap *ARGS:
 
   [ -f .ssh_key ] || just save-bootstrap-ssh-key
 
-  sed '2i \ \ IdentityFile .ssh_key' .ssh_config > .ssh_config_bootstrap
+  sed '/^Host /a\  IdentityFile .ssh_key\n  IdentitiesOnly yes' .ssh_config > .ssh_config_bootstrap
   SSH_CONFIG_FILE=".ssh_config_bootstrap" just apply {{ARGS}}
   rm .ssh_config_bootstrap
 
@@ -528,40 +528,25 @@ list-machines:
       | each { |r| { index: ($r.index + 1) } | merge $r.item }
   }
 
-# Check mimir required config
-mimir-alertmanager-bootstrap:
+# Copy a nix store path to a machine and pin it with a gc root
+nix-copy-to-machine MACHINE STORE_PATH:
   #!/usr/bin/env bash
   set -euo pipefail
-  echo "Enter the mimir admin username: "
-  read -s MIMIR_USER
-  echo
+  echo "Copying {{STORE_PATH}} to {{MACHINE}}..."
+  NIX_SSHOPTS="-F $(pwd)/.ssh_config" nix copy --to "ssh://{{MACHINE}}" "{{STORE_PATH}}"
+  echo "Creating GC root on {{MACHINE}}..."
+  just ssh {{MACHINE}} "nix-store --add-root /nix/var/nix/gcroots/$(basename {{STORE_PATH}}) --realise {{STORE_PATH}}"
+  echo "Done. Store path pinned on {{MACHINE}}."
 
-  echo "Enter the mimir admin token: "
-  read -s MIMIR_TOKEN
-  echo
-
-  echo "Enter the mimir base monitoring fqdn without the HTTPS:// scheme: "
-  read URL
-  echo
-
-  echo "Obtaining current mimir alertmanager config:"
-  echo "-----------"
-  mimirtool alertmanager get --address "https://$MIMIR_USER:$MIMIR_TOKEN@$URL/mimir" --id 1
-  echo "-----------"
-
-  echo
-  echo "If the output between the dashed lines above is blank, you may need to preload an initial alertmanager ruleset"
-  echo "for the mimir TF plugin to succeed, where the command to preload alertmanager is:"
-  echo
-  echo "mimirtool alertmanager load --address \"https://\$MIMIR_USER:\$MIMIR_TOKEN@$URL/mimir\" --id 1 alertmanager-bootstrap-config.yaml"
-  echo
-  echo "The contents of alertmanager-bootstrap-config.yaml can be:"
-  echo
-  echo "route:"
-  echo "  group_wait: 0s"
-  echo "  receiver: empty-receiver"
-  echo "receivers:"
-  echo "  - name: 'empty-receiver'"
+# Pin a path to the local nix store
+nix-store-pin PATH:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  echo "Adding {{PATH}} to the nix store..."
+  STORE_PATH=$(nix store add "{{PATH}}")
+  echo "Creating GC root..."
+  sudo nix-store --add-root "/nix/var/nix/gcroots/$(basename "$STORE_PATH")" --realise "$STORE_PATH"
+  echo "Done. Stored and pinned at: $STORE_PATH"
 
 # Query the tip of all running envs
 query-tip-all:
@@ -777,7 +762,7 @@ ssh-bootstrap HOSTNAME *ARGS:
   #!/usr/bin/env nu
   {{checkSshConfig}}
   {{checkSshKey}}
-  ssh -o LogLevel=ERROR -F .ssh_config -i .ssh_key "{{HOSTNAME}}" {{ARGS}}
+  ssh -o LogLevel=ERROR -o IdentitiesOnly=yes -F .ssh_config -i .ssh_key "{{HOSTNAME}}" {{ARGS}}
 
 # Ssh to all
 ssh-for-all *ARGS:
