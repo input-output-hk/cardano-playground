@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # shellcheck disable=SC2031,SC2317,SC2155,SC2139
 
 # This script is meant more as a guide than an actual straight executable.
@@ -29,14 +29,14 @@ export DEBUG="true"
 export ENV="leios"
 export UNSTABLE="false"
 export UNSTABLE_LIB="false"
-export CARDANO_NODE_NETWORK_ID="7"
-export TESTNET_MAGIC="7"
+export CARDANO_NODE_NETWORK_ID="164"
+export TESTNET_MAGIC="164"
 export USE_NODE_CONFIG_BP="false"
 export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-04-17T00:00:00Z"
+export START_TIME="2026-04-25T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -336,7 +336,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((86400 - 623 - 180))
+synth-slots $((86400 - 257 - 180))
 run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
@@ -353,10 +353,13 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 #   If starting in PV10, there is no need to submit the PV10 hard fork.
 #   See the historical dijkstra doc in playground for a PV10 HF example.
 
+# Potentially setup faucet here. If reusing existing faucet secrets, move the
+# new node secrets over the old ones first, and encrypt them of course.
+
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 echo "Synthesize blocks until realtime plus desired offset"
 # This brings us to epoch 1 + 1 = 2
-synth-slots 86299
+synth-slots 86334
 #
 # This brings us to epoch 2 + 4 = 6
 synth-epochs 4
