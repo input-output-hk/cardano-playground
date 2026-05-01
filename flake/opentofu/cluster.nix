@@ -642,16 +642,6 @@ in {
                     to_port = 30000;
                   })
                   (mkRule {
-                    description = "Allow preview world relay migration";
-                    from_port = 30002;
-                    to_port = 30002;
-                  })
-                  (mkRule {
-                    description = "Allow sanchonet world relay migration";
-                    from_port = 30004;
-                    to_port = 30004;
-                  })
-                  (mkRule {
                     description = "Allow Wireguard";
                     from_port = 51820;
                     to_port = 51820;
