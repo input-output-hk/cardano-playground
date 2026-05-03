@@ -9,7 +9,6 @@ resources:
 - deployment.cardano-book-production.yaml
 - deployment.cardano-book-staging.yaml
 - httpRoute.cardano-book-production.yaml
-- httpRoute.cardano-book-redirect.yaml
 - httpRoute.cardano-book-staging.yaml
 - referenceGrant.envoy-gateway.yaml
 - service.cardano-book-production.yaml

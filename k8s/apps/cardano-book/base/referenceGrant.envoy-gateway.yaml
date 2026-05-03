@@ -15,3 +15,4 @@ spec:
   to:
   - group: ""
     kind: Secret
+    name: cardano-book-tls

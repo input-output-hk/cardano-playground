@@ -15,5 +15,4 @@ patches:
 - path: certificate.cardano-book.yaml
 - path: deployment.cardano-book-staging.yaml
 - path: httpRoute.cardano-book-production.yaml
-- path: httpRoute.cardano-book-redirect.yaml
 - path: httpRoute.cardano-book-staging.yaml
