@@ -8,7 +8,7 @@
   "ConwayGenesisHash": "1882545753507dc03566b98b4c67752980797cd7e196323eef9baa0d474cbbb6",
   "DijkstraGenesisFile": "dijkstra-genesis.json",
   "DijkstraGenesisHash": "c6afe2641a407ee17f3625ed304571c3762e3123d38f4d8ae663f765f6c2bcb6",
-  "ExperimentalHardForksEnabled": true,
+  "ExperimentalHardForksEnabled": false,
   "ExperimentalProtocolsEnabled": true,
   "LastKnownBlockVersion-Alt": 0,
   "LastKnownBlockVersion-Major": 3,
