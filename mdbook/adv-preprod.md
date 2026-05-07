@@ -1,7 +1,6 @@
 ## Advanced Configuration: Pre-Production Testnet
 
-Users wanting to test a cardano-node pre-release version on the preprod
-environment may obtain compatible configuration files below.
+There is currently no pre-release version available for the pre-production environment.
 
 The latest version available is cardano-node release `11.0.1`.
 
