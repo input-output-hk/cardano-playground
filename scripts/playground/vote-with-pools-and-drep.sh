@@ -8,7 +8,7 @@ set -euo pipefail
 [ -z "${ACTION_ID:-}" ] && { echo "ACTION_ID var must be set"; exit 1; }
 [ -z "${ACTION_IDX:-}" ] && { echo "ACTION_IDX var must be set"; exit 1; }
 
-[ -z "${VOTE_TYPE:-}" ] && { echo "VOTE_TYPE var must be set"; exit 1; }
+[ -z "${VOTE:-}" ] && { echo "VOTE var must be set"; exit 1; }
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
@@ -22,21 +22,21 @@ WITNESS_OVERRIDE="1"
 
 if [ -z "${DISABLE_POOL_VOTE:-}" ]; then
   cardano-cli latest governance vote create \
-    "--$VOTE_TYPE" \
+    "--$VOTE" \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
     --cold-verification-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}1/deploy/${ENV}1-bp-a-1-cold.vkey") \
     --out-file "$ACTION_ID-${ENV}-pool-1.vote"
 
   cardano-cli latest governance vote create \
-    "--$VOTE_TYPE" \
+    "--$VOTE" \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
     --cold-verification-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}2/deploy/${ENV}2-bp-b-1-cold.vkey") \
     --out-file "$ACTION_ID-${ENV}-pool-2.vote"
 
   cardano-cli latest governance vote create \
-    "--$VOTE_TYPE" \
+    "--$VOTE" \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
     --cold-verification-key-file <(just sops-decrypt-binary "secrets/groups/${ENV}3/deploy/${ENV}3-bp-c-1-cold.vkey") \
@@ -59,7 +59,7 @@ fi
 
 if [ -z "${DISABLE_DREP_VOTE:-}" ]; then
   cardano-cli latest governance vote create \
-    "--$VOTE_TYPE" \
+    "--$VOTE" \
     --governance-action-tx-id "$ACTION_ID" \
     --governance-action-index "$ACTION_IDX" \
     --drep-verification-key-file <(just sops-decrypt-binary "secrets/envs/${ENV}/drep/drep-0.vkey") \
