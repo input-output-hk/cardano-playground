@@ -132,6 +132,22 @@ in
         ];
       };
 
+      node-10-7-1 = let
+        caPkgs = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux;
+        pkg = name: caPkgs."${name}-input-output-hk-cardano-node-10-7-1-045bc18";
+      in {
+        imports = [
+          node
+          {
+            cardano-parts.perNode.pkgs = {
+              cardano-cli = mkForce (pkg "cardano-cli");
+              cardano-node = mkForce ((pkg "cardano-node") // {version = "10.7.1";});
+              cardano-submit-api = mkForce (pkg "cardano-submit-api");
+            };
+          }
+        ];
+      };
+
       mkCustomNode = flakeInput: {
         imports = [
           node
@@ -838,7 +854,7 @@ in
       preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp mithrilRelease (declMRel "preprod3-rel-c-1")];};
       preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig];};
       preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
+      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-10-7-1 rel preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -912,7 +928,7 @@ in
       # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib legacyT (openFwTcp 3001) {services.blockperf.enable = false;}];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib (openFwTcp 3001)];};
       # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm (openFwTcp 3001) {services.blockperf.enable = false;}];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-10-7-1 (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
