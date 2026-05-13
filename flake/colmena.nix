@@ -132,6 +132,11 @@ in
         ];
       };
 
+      leiosCentrifuge.imports = [
+        nixosModules.cardano-tx-centrifuge
+        nixosModules.profile-leios-tx-centrifuge
+      ];
+
       node-10-7-1 = let
         caPkgs = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux;
         pkg = name: caPkgs."${name}-input-output-hk-cardano-node-10-7-1-045bc18";
@@ -904,6 +909,7 @@ in
       leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash];};
       # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios];};
       leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
+      leios1-centrifuge-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
       leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel];};

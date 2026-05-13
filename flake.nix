@@ -13,6 +13,7 @@
 
     # Extra pins
     cardano-node-leios.url = "github:IntersectMBO/cardano-node/leios-prototype";
+    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/bench/leios";
     cardano-node-set-iowait.url = "github:IntersectMBO/cardano-node/jl/set-iowait";
   };
 
