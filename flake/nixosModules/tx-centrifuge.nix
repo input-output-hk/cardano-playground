@@ -32,7 +32,7 @@
         type = lib.types.path;
         description = ''
           Path to JSON file that contains the mapping of UTxOs to their lovelace amount.
-          Can be imported from output of `scripts/fund-centrifuge.nu get-funds --json`,
+          Can be imported from output of `scripts/playground/fund-centrifuge.nu get-funds --json`,
         '';
       };
 
