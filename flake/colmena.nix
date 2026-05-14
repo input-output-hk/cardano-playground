@@ -183,6 +183,33 @@ in
       #   ];
       # };
 
+      submit-api = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-submit-api-service-ng
+          (nixos: let
+            inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
+            inherit (nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.${environmentName}) submitApiConfig;
+            inherit (nixos.config.cardano-parts.perNode.pkgs) cardano-node-pkgs cardano-submit-api;
+            inherit (nixos.config.services.cardano-node) socketPath;
+          in {
+            services = {
+              cardano-node.shareNodeSocket = true;
+
+              cardano-submit-api = {
+                enable = true;
+                cardanoNodePackages = cardano-node-pkgs;
+                # config = submitApiConfig;
+                config = {inherit (submitApiConfig) TraceOptions;};
+                network = environmentName;
+                package = cardano-submit-api;
+                socketPath = socketPath 0;
+              };
+            };
+            systemd.services.cardano-submit-api.serviceConfig.SupplementaryGroups = "cardano-node";
+          })
+        ];
+      };
+
       # Include blockPerf by default with no upstream push to CF -- only push prom metrics
       bperfNoPublish = {
         imports = [
@@ -874,7 +901,7 @@ in
 
       # Lsm, lmdb and in-mem pre-release backend testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf];};
-      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs];};
+      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs submit-api];};
       preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf amiZfs];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
