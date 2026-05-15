@@ -1,6 +1,0 @@
-{
-  "network": "leios",
-  "network_magic": 164,
-  "run_interval": 60000,
-  "store_retention_limit": 5
-}
