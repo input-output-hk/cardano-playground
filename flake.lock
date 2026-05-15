@@ -877,16 +877,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1778782999,
-        "narHash": "sha256-ElUX1XXaD2qEJKvOeLkiFKRIMW5cKpGIyP85K5whIiA=",
+        "lastModified": 1778803509,
+        "narHash": "sha256-cS8Gc7bYaZvLPFZ6iwxdF7ZgrMgT1y4vdvb+xXlc/4o=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "d943d9f0ee89a8b0f402eea04c63cd62ed0696e3",
+        "rev": "5fe2b539117b3c6aff38979ec26c5639ea0a3509",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "next-2026-05-04",
+        "ref": "v2026-05-14",
         "repo": "cardano-parts",
         "type": "github"
       }
