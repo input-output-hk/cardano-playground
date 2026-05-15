@@ -43,7 +43,7 @@ def 'main send-funds' [
 
 	try {
 		log info 'Building transactions'
-		sops decrypt $'($starting_dir)/($funding_signing_key_secret)' | (
+		sops decrypt $funding_signing_key_secret | (
 			^$'($starting_dir)/scripts/distribute.py'
 			--testnet-magic $testnet_magic
 			--signing-key-file /dev/stdin
