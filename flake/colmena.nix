@@ -701,7 +701,21 @@ in
       #   cardano-parts.perNode.meta.hostsList =
       #     filter (name: hasPrefix prefix name) (attrNames nixosConfigurations);
       # };
-      #
+
+      logGc = {
+        services = {
+          cardano-node.extraNodeConfig = {
+            TraceOptions = {
+              "Resources" = {
+                severity = "Debug";
+                detail = "DDetailed";
+                maxFrequency = 1;
+              };
+            };
+          };
+        };
+      };
+
       # logRejected = {
       #   services = {
       #     cardano-node.extraNodeConfig = {
@@ -903,7 +917,7 @@ in
 
       # Lsm, lmdb and in-mem pre-release backend testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf];};
-      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs submit-api];};
+      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs logGc submit-api];};
       preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf amiZfs];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
@@ -955,7 +969,7 @@ in
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre smash];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre bp mithrilSignerDisable ccMon];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre bp mithrilSignerDisable ccMon logGc];};
 
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib (openFwTcp 3001)];};
       # Tried, in order for low idle rc check:
@@ -963,7 +977,7 @@ in
       # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib legacyT (openFwTcp 3001) {services.blockperf.enable = false;}];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib (openFwTcp 3001)];};
       # mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm (openFwTcp 3001) {services.blockperf.enable = false;}];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-10-7-1 (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-10-7-1 logGc (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
