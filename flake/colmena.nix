@@ -788,7 +788,8 @@ in
       #
       # maxVerbosity = nixos: {
       #   services.cardano-node.nodeConfig = let
-      #     nodeCfg = nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.leios.nodeConfig;
+      #     inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
+      #     nodeCfg = nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.${environmentName}.nodeConfig;
       #   in mkOverride 10 (nodeCfg // {
       #     TraceOptions = {
       #       "" = {
