@@ -848,7 +848,8 @@ start-node ENV:
     UNSTABLE_MITHRIL=false
     USE_NODE_CONFIG_BP=false
   elif [[ "{{ENV}}" == leios ]]; then
-    export CARDANO_NODE_SHELL_BIN="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-node --no-link --print-out-paths)/bin/cardano-node"
+    LEIOS_PIN=$(jq -r '.nodes."cardano-node-leios".locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+    export CARDANO_NODE_SHELL_BIN="$(nix build -Lv "$LEIOS_PIN#cardano-node" --no-link --print-out-paths)/bin/cardano-node"
     export USE_SHELL_BINS=true
     export LEIOS_DB_PATH="$STATEDIR/db-leios/node/leios.db"
     UNSTABLE=false
