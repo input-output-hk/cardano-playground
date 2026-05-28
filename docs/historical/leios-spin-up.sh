@@ -7,20 +7,23 @@
 # Source bash helper functions
 source scripts/bash-fns.sh
 
-# Basic cardano environment setup vars:
+# Basic cardano environment setup vars and bins:
 export USE_SHELL_BINS="true"
-alias cardano-node="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-node --no-link --print-out-paths)/bin/cardano-node"
-alias cardano-node-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-node --no-link --print-out-paths)/bin/cardano-node"
-alias cardano-cli="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-cli --no-link --print-out-paths)/bin/cardano-cli"
-alias cardano-cli-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#cardano-cli --no-link --print-out-paths)/bin/cardano-cli"
-alias db-synthesizer="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
-alias db-synthesizer-ng="$(nix build -Lv github:IntersectMBO/cardano-node/leios-prototype#db-synthesizer --no-link --print-out-paths)/bin/db-synthesizer"
+LEIOS_PIN=$(jq -r '.nodes."cardano-node-leios".locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+alias cardano-node="$(nix build -Lv "$LEIOS_PIN#cardano-node" --no-link --print-out-paths)/bin/cardano-node"
+alias cardano-cli="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
+alias db-synthesizer="$(nix build -Lv "$LEIOS_PIN#db-synthesizer" --no-link --print-out-paths)/bin/db-synthesizer"
 
-# Expect leios currently at ~10.5.1
+# Alias the pre-release bins as well to ensure consistent bin usage
+alias cardano-node-ng=cardano-node
+alias cardano-cli-ng=cardano-cli
+alias db-synthesizer-ng=db-synthesizer
+
+# Expect leios currently at ~11.0.1
 cardano-node --version
 cardano-node-ng --version
 
-# Expect leios currently at ~10.11.0.0
+# Expect leios currently at ~11.0.0.0
 cardano-cli --version
 cardano-cli-ng --version
 
@@ -36,11 +39,15 @@ export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-04-25T00:00:00Z"
+export START_TIME="2026-05-26T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
-export PROTOCOL_VERSION_MAJOR="10"
+
+# The node config *must* reflect this PV with appropriate
+# `"Test${ERA}HardForkAtEpoch": 0,` up to and including the era's protocol
+# version declared here.
+export PROTOCOL_VERSION_MAJOR="12"
 export PROTOCOL_VERSION_MINOR="0"
 
 # Basic job directory setup vars:
@@ -54,6 +61,7 @@ export CURRENT_KES_PERIOD="0"
 export POOL_MARGIN="1.0"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
+# Pool pledge of 10M ADA
 export POOL_PLEDGE="10000000000000"
 
 # Basic secrets setup vars:
@@ -77,15 +85,15 @@ export CONSTITUTION_ANCHOR_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvcl
 export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
 
 # New Leios required env vars:
-# Required to match the proper GLIBC used by the 10.5.1 era build
-export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
+# The old leios at 10.5.1 glibc required faketime adjustment.
+# The new leios remake at 11.0.1 does not require faketime glibc adjustment.
+# export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
 export LEIOS_DB_PATH="$DATA_DIR/leios.db"
 
-# Leios is currently based on a dated 10.5.1 node branch, but will eventually
-# be rebased on master. Lets take the approach of using the latest config
-# template and node binary to generate genesis config, and then patch for
-# backwards compatible changes that are needed until the leios rebase to master
-# happens.
+# Leios is now rebased on 11.0.1 so taking the latest testnet-template is
+# ideal. Even when previously using the old 10.5.1 Leios, taking the latest
+# testnet template and patching back for older versions was still the easiest
+# approach to a working deployment.
 export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix\"; in f.outPath")/cardano-lib/testnet-template"
 
 # Per the comment above, we'll use the pre-release node binary to generate
@@ -133,14 +141,16 @@ jq -S '. += {
   }
 }' < "$DATA_DIR/conway-genesis.json" | sponge "$DATA_DIR/conway-genesis.json"
 
-# Adjust shelley genesis to set minPoolCost and maxBlockBodySize closer to mainnet
+# Adjust shelley genesis to set minPoolCost and maxBlockBodySize to current
+# network standards.
 jq -S '.protocolParams += {
   "minPoolCost": 170000000,
   "maxBlockBodySize": 90112
 }' < "$DATA_DIR/shelley-genesis.json" | sponge "$DATA_DIR/shelley-genesis.json"
 
-# Adjust alonzo genesis to set execution unit limits and cost models closer to mainnet
-jq -S '. += {
+# Adjust alonzo genesis to include to set execution unit limits and cost models
+# to van Rossem network standard.
+jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
   "maxBlockExUnits": {
     "exUnitsMem": 72000000,
     "exUnitsSteps": 20000000000
@@ -149,49 +159,26 @@ jq -S '. += {
     "exUnitsMem": 16500000,
     "exUnitsSteps": 10000000000
   }
-}' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
+}
+| .extraConfig.costModels = $costModels[0]' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
 
-# NOTE:
-# Injecting the current mainnet PV10 cost model into alonzo does not seem to
-# get picked up it by it, so comment this genesis file replacement out and
-# continue to submit the cost model update via gov action.
-#
-# Replace alonzo genesis costModels with the Plomin prep cost model
-# jq -S --slurpfile costModels scripts/cost-models/mainnet-plutusv3-pv10-prep.json \
-#   '.costModels = $costModels[0]' \
-#   < "$DATA_DIR/alonzo-genesis.json" \
-#   | sponge "$DATA_DIR/alonzo-genesis.json"
-
-# NOTE: This old stakepool format in genesis should be forward compatible
-# Leios oriented 10.5.x stake pool genesis format reconfiguration:
-jq '.staking.pools
-  |= with_entries(.value += {publicKey: .key}
-  | .value.rewardAccount = .value.accountAddress
-  | del(.value.accountAddress, .value.poolId))' \
-"$DATA_DIR/shelley-genesis.json" | sponge "$DATA_DIR/shelley-genesis.json"
-
-# Shim the 10.7.x node config to be compatible back to 10.5.x until leios rebases to master.
+# Shim the node config as needed.
 # This will require:
-#   - Add relay role config of the following which has been handled dynamically since 10.6.0:
-#     - PeerSharing = true (should be false for a bp)
-#     - TargetNumberOfKnownPeers = 150  (should be 100 for a bp)
-#     - TargetNumberOfRootPeers = 60 (should be 100 for a bp)
-#     - EnableP2P (removed legacy networking in 10.6.0)
-#     - Add leios specific log tracing options
-jq -S '.EnableP2P = true
-    | .PeerSharing = true
-    | .TargetNumberOfKnownPeers = 150
-    | .TargetNumberOfRootPeers = 60
-    | .LedgerDB.SnapshotInterval = 864
-    | .MempoolCapacityBytesOverride = 25000000
-    | .TraceOptions *= {
-        "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
-        "Consensus.LeiosPeer": {"maxFrequency": 0, "severity": "Debug"},
-        "LeiosFetch.Remote": {"maxFrequency": 0, "severity": "Debug"},
-        "LeiosNotify.Remote": {"maxFrequency": 0, "severity": "Debug"}
-      }' \
-    "$DATA_DIR/node-config.json" \
-    | sponge "$DATA_DIR/node-config.json"
+#   - Add leios specific config and tracing options
+jq -S '.ExperimentalHardForksEnabled = true
+  | .MempoolCapacityBytesOverride = 25000000
+  | .LedgerDB *= {
+      SnapshotInterval: 17280
+    }
+  | .TestDijkstraHardForkAtEpoch = 0
+  | .TraceOptions *= {
+      "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
+      "Consensus.LeiosPeer": {"maxFrequency": 0, "severity": "Debug"},
+      "LeiosFetch.Remote": {"maxFrequency": 0, "severity": "Debug"},
+      "LeiosNotify.Remote": {"maxFrequency": 0, "severity": "Debug"}
+    }' \
+  "$DATA_DIR/node-config.json" \
+  | sponge "$DATA_DIR/node-config.json"
 
 # Update genesis hashes in node config after modifying the genesis files.
 HASH_CONWAY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
@@ -216,10 +203,7 @@ exit 0
 
 # Start the node 30 seconds before the chain is scheduled to start forging.
 # Note that if you run older versions of node, the libfaketime will need to
-# match the glibc version.  In this case, the run-node-faketime fn can be
-# modified to use an older libfaketime package with the appropriate glibc build
-# using somthing like:
-#   nix run github:nixos/nixpkgs/nixos-23.05#libfaketime -- "$1" "$CMD" run ...
+# match the glibc version.
 run-node-faketime "$(date -u -d "$START_TIME - 30 seconds" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # Continue operations in another shell window.
