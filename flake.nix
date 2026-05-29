@@ -6,7 +6,7 @@
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-05-15";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/next-2026-05-15";
+    # cardano-parts.url = "path:/home/jlotoski/work/input-output-hk/cardano-parts-wt/next-2026-05-15";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
