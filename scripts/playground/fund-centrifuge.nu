@@ -1,5 +1,14 @@
 #! /usr/bin/env nu
 use std/log
+# Decrypt only if the file is sops-encrypted; otherwise read as plaintext.
+def maybe-decrypt [file: path]: nothing -> string {
+  let raw = open --raw $file
+  if ($raw | str contains '"sops":') or ($raw | str contains 'sops:') {
+    sops decrypt $file | str trim
+  } else {
+    $raw | str trim
+  }
+}
 def main []: nothing -> nothing { }
 def 'main send-funds' [
   --funding-address-secret: path
@@ -19,8 +28,17 @@ def 'main send-funds' [
   ] | any {is-empty}) {
     error make {msg: 'Missing CLI parameter.'}
   }
-  let funding_address = sops decrypt $funding_address_secret
-  let destination_address = sops decrypt $destination_address_secret
+  # Resolve paths to absolute before the later `cd $tmp`, so relative paths
+  # and bash process substitutions (/dev/fd/N) keep working.
+  let funding_address_secret = $funding_address_secret | path expand
+  let funding_signing_key_secret = $funding_signing_key_secret | path expand
+  let destination_address_secret = $destination_address_secret | path expand
+  if 'CARDANO_NODE_SOCKET_PATH' in $env {
+    # --no-symlink: keep short symlinks intact for the AF_UNIX 108-byte limit.
+    $env.CARDANO_NODE_SOCKET_PATH = ($env.CARDANO_NODE_SOCKET_PATH | path expand --no-symlink)
+  }
+  let funding_address = maybe-decrypt $funding_address_secret
+  let destination_address = maybe-decrypt $destination_address_secret
   let payments = 1..$utxo_count | each {
 		{$destination_address: $utxo_lovelace}
 	}
@@ -34,7 +52,7 @@ def 'main send-funds' [
   $payments | save $'($tmp)/payments.json'
   try {
     log info 'Building transactions'
-    sops decrypt $funding_signing_key_secret | (^$'($starting_dir)/scripts/distribute.py' --testnet-magic $testnet_magic --signing-key-file /dev/stdin --address $funding_address --payments-json $'($tmp)/payments.json')
+    maybe-decrypt $funding_signing_key_secret | (^$'($starting_dir)/scripts/distribute.py' --testnet-magic $testnet_magic --signing-key-file /dev/stdin --address $funding_address --payments-json $'($tmp)/payments.json')
     log info $'Transactions built are in ($tmp)'
     if (input 'Submit transactions? (y/N) ') != y {
       do --env $cleanup
@@ -54,7 +72,8 @@ def 'main send-funds' [
   log info $'Done. Use (ansi green)get-funds(ansi reset) next.'
 }
 def 'main get-funds' [--address-secret: path, --testnet-magic: int, --json]: nothing -> record {
-  let result = cardano-cli query utxo --address (sops decrypt $address_secret) --testnet-magic $testnet_magic | from json | items {|k v| {
+  let address_secret = $address_secret | path expand
+  let result = cardano-cli query utxo --address (maybe-decrypt $address_secret) --testnet-magic $testnet_magic | from json | items {|k v| {
 		($k): $v.value.lovelace
 	}} | into record
   if $json {
