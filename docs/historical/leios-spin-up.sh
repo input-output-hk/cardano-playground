@@ -47,7 +47,7 @@ export NUM_CC_KEYS="3"
 #    32 for 2 hr epoch
 export SECURITY_PARAM="36"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-05-27T00:00:00Z"
+export START_TIME="2026-05-29T01:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -72,7 +72,7 @@ export POOL_RELAY_PORT="3001"
 # For now, faucet will be:
 #   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
 #   1000000000000 (1M ADA) Pool delegation,
-#   10000000 (10 ADA) delegation UTxO @ 500 count
+#   10000000 (10 ADA) delegation UTxO @ 100 count
 # For stability, our pool pledge will be 10M ADA
 export POOL_PLEDGE="10000000000000"
 
@@ -404,7 +404,7 @@ done
 
 rm ./*.txsigned
 
-UTXO_NUM="500"
+UTXO_NUM="100"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
   '[range($n) | { ($addr): 10000000 }]'  | jq '.' > delegation.json
 
@@ -429,7 +429,7 @@ NOMENU=true scripts/setup-delegation-accounts.py \
   --testnet-magic "$TESTNET_MAGIC" \
   --signing-key-file "$PAYMENT_KEY.skey" \
   --wallet-mnemonic <(echo "$FAUCET_MNEMONIC") \
-  --num-accounts 500
+  --num-accounts 100
 
 rm ./*.txsigned
 
@@ -505,11 +505,11 @@ wait-for-mempool
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 2
-echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 2"
+echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 3"
 synth-slots $((6604 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
-# After the epoch rollover into epcoh 2, verify the Dijkstra hard fork has ratified:
+# After the epoch rollover into epcoh 3, verify the Dijkstra hard fork has ratified:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
 
 # Example output:
@@ -520,11 +520,11 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 3
-echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 3"
+echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 4"
 synth-slots $((6991 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 8 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
-# After the epoch rollover into epcoh 3, verify the Dijkstra hard fork has enacted:
+# After the epoch rollover into epoch 4, verify the Dijkstra hard fork has enacted:
 cardano-cli query protocol-parameters | jq .protocolVersion
 
 # Example output:
@@ -533,7 +533,6 @@ cardano-cli query protocol-parameters | jq .protocolVersion
 #   "minor": 0
 # }
 
-# Synth to realtime
-# This brings us to epoch 2 + 4 = 6
-synth-epochs 4
-run-node-faketime "$(date -u -d "$START_TIME + 6 day - 30 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+# If the start time was selected slightly less than 8 hours behind realtime,
+# the network will fork to Dijkstra a little ahead of realtime to allow for
+# seamless transfer.
