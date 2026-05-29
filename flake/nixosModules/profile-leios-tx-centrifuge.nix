@@ -42,7 +42,7 @@ flake: {
       settings = {
         initial_inputs.params.network_magic = 164;
 
-        rate_limit.params.tps = 10;
+        rate_limit.params.tps = 100;
 
         workloads.synthetic-chain.targets =
           lib.mapAttrs

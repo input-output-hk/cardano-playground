@@ -107,7 +107,6 @@ in
         // {
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
-            MinNodeVersion = "10.5.1-leios-prototype";
           };
           systemd.services.cardano-node.environment."LEIOS_DB_PATH" = "/var/lib/cardano-node/db-leios/leios.db";
         };
@@ -133,8 +132,8 @@ in
       };
 
       leiosCentrifuge.imports = [
-        nixosModules.cardano-tx-centrifuge
-        nixosModules.profile-leios-tx-centrifuge
+        # nixosModules.cardano-tx-centrifuge
+        # nixosModules.profile-leios-tx-centrifuge
       ];
 
       node-10-7-1 = let
