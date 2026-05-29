@@ -69,7 +69,11 @@ export CURRENT_KES_PERIOD="0"
 export POOL_MARGIN="1.0"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
-# Pool pledge of 10M ADA
+# For now, faucet will be:
+#   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
+#   1000000000000 (1M ADA) Pool delegation,
+#   10000000 (10 ADA) delegation UTxO @ 500 count
+# For stability, our pool pledge will be 10M ADA
 export POOL_PLEDGE="10000000000000"
 
 # Basic secrets setup vars:
@@ -377,11 +381,76 @@ icdiff \
 #
 # Faucet:
 #
+FAUCET_MNEMONIC=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.mnemonic)
+FAUCET_ADDR=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.addr)
+UTXO_NUM="5000"
+jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
+  '[range($n) | { ($addr): 10000200000 }]'  | jq '.' > rewards.json
 
+NOMENU=true scripts/distribute.py \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --signing-key-file "$PAYMENT_KEY.skey" \
+  --address "$(cat "$PAYMENT_KEY.addr")" \
+  --payments-json rewards.json
+
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned
+
+# shellcheck disable=SC2045
+for i in $(ls -tr1 tx-payments*.txsigned); do
+  echo "Submitting: $i"
+  cardano-cli latest transaction submit --tx-file "$i"
+  echo
+done
+
+rm ./*.txsigned
+
+UTXO_NUM="500"
+jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
+  '[range($n) | { ($addr): 10000000 }]'  | jq '.' > delegation.json
+
+NOMENU=true scripts/distribute.py \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --signing-key-file "$PAYMENT_KEY.skey" \
+  --address "$(cat "$PAYMENT_KEY.addr")" \
+  --payments-json delegation.json
+
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned
+
+# shellcheck disable=SC2045
+for i in $(ls -tr1 tx-payments*.txsigned); do
+  echo "Submitting: $i"
+  cardano-cli latest transaction submit --tx-file "$i"
+  echo
+done
+
+rm ./*.txsigned
+
+NOMENU=true scripts/setup-delegation-accounts.py \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --signing-key-file "$PAYMENT_KEY.skey" \
+  --wallet-mnemonic <(echo "$FAUCET_MNEMONIC") \
+  --num-accounts 500
+
+rm ./*.txsigned
 
 # Centrifuge
 #
+CENTRIFUGE_ADDR=$(just sops-decrypt-binary secrets/groups/leios1/deploy/leios1-centrifuge-a-1-fund.addr)
+ln -sf "$(realpath workbench/custom/rundir/node.socket)" /tmp/cardano-node.sock
+export CARDANO_NODE_SOCKET_PATH="/tmp/cardano-node.sock"
+NOMENU=true scripts/playground/fund-centrifuge.nu send-funds \
+  --funding-address-secret "$PAYMENT_KEY.addr" \
+  --funding-signing-key-secret "$PAYMENT_KEY.skey" \
+  --destination-address-secret <(echo "$CENTRIFUGE_ADDR") \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --utxo-count 10000 \
+  --utxo-lovelace 10000000000
 
+NOMENU=1 scripts/playground/fund-centrifuge.nu get-funds \
+  --address-secret <(echo "$CENTRIFUGE_ADDR") \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --json \
+> leios1-centrifuge-a-1-fund.json
 
 # In epoch 2, submit a Dijkstra hard fork
 echo "Submitting a Dijkstra hard fork action..."
@@ -445,7 +514,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion
 
 # Example output:
 # {
-#   "major": 10,
+#   "major": 12,
 #   "minor": 0
 # }
 
@@ -460,15 +529,11 @@ cardano-cli query protocol-parameters | jq .protocolVersion
 
 # Example output:
 # {
-#   "major": 10,
+#   "major": 12,
 #   "minor": 0
 # }
 
-# NOTE:
-#   If starting in PV10, there is no need to submit the PV10 hard fork.
-#   See the historical dijkstra doc in playground for a PV10 HF example.
-
+# Synth to realtime
 # This brings us to epoch 2 + 4 = 6
 synth-epochs 4
-
 run-node-faketime "$(date -u -d "$START_TIME + 6 day - 30 minute" "+%Y-%m-%dT%H:%M:%SZ")"
