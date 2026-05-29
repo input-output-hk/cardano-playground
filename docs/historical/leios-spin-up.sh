@@ -14,6 +14,11 @@ alias cardano-node="$(nix build -Lv "$LEIOS_PIN#cardano-node" --no-link --print-
 alias cardano-cli="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
 alias db-synthesizer="$(nix build -Lv "$LEIOS_PIN#db-synthesizer" --no-link --print-out-paths)/bin/db-synthesizer"
 
+# So that the custom cardano-cli passes through to the nix jobs when USE_SHELL_BINS is in use -- aliases won't resolve
+# mkdir -p ~/.local/bin
+# ln -sf "$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli" ~/.local/bin/cardano-cli
+# export PATH="$HOME/.local/bin:$PATH"
+
 # Alias the pre-release bins as well to ensure consistent bin usage
 alias cardano-node-ng=cardano-node
 alias cardano-cli-ng=cardano-cli
@@ -37,9 +42,12 @@ export TESTNET_MAGIC="164"
 export USE_NODE_CONFIG_BP="false"
 export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
-export SECURITY_PARAM="432"
+# Security param:
+#   432 for 1 day epoch
+#    32 for 2 hr epoch
+export SECURITY_PARAM="36"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-05-26T00:00:00Z"
+export START_TIME="2026-05-27T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -47,7 +55,7 @@ export ERA_CMD=conway
 # The node config *must* reflect this PV with appropriate
 # `"Test${ERA}HardForkAtEpoch": 0,` up to and including the era's protocol
 # version declared here.
-export PROTOCOL_VERSION_MAJOR="12"
+export PROTOCOL_VERSION_MAJOR="11"
 export PROTOCOL_VERSION_MINOR="0"
 
 # Basic job directory setup vars:
@@ -150,27 +158,46 @@ jq -S '.protocolParams += {
 
 # Adjust alonzo genesis to include to set execution unit limits and cost models
 # to van Rossem network standard.
-jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
-  "maxBlockExUnits": {
-    "exUnitsMem": 72000000,
-    "exUnitsSteps": 20000000000
-  },
-  "maxTxExUnits": {
-    "exUnitsMem": 16500000,
-    "exUnitsSteps": 10000000000
-  }
-}
-| .extraConfig.costModels = $costModels[0]' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
+#
+# TODO: Investigate this -- it should create a cost model the way we want directly, ie: van Rossem, but it doesn't
+# jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
+#   "maxBlockExUnits": {
+#     "exUnitsMem": 72000000,
+#     "exUnitsSteps": 20000000000
+#   },
+#   "maxTxExUnits": {
+#     "exUnitsMem": 16500000,
+#     "exUnitsSteps": 10000000000
+#   }
+# }
+# | .extraConfig.costModels = $costModels[0]' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
+
+# The old fashioned way -- don't worry about the cost model until we submit on-chain gov action
+# Adjust alonzo genesis to set execution unit limits and cost models closer to mainnet
+jq -S '. += {
+   "maxBlockExUnits": {
+     "exUnitsMem": 72000000,
+     "exUnitsSteps": 20000000000
+   },
+   "maxTxExUnits": {
+     "exUnitsMem": 16500000,
+     "exUnitsSteps": 10000000000
+   }
+}' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
 
 # Shim the node config as needed.
 # This will require:
 #   - Add leios specific config and tracing options
+#   - Snapshot interval is generally good at 40*k
+#
+# If forking directly to Dijkstra, the following will need to be added:
+#   - | .TestDijkstraHardForkAtEpoch = 0
+#
 jq -S '.ExperimentalHardForksEnabled = true
   | .MempoolCapacityBytesOverride = 25000000
   | .LedgerDB *= {
-      SnapshotInterval: 17280
+      SnapshotInterval: 1440
     }
-  | .TestDijkstraHardForkAtEpoch = 0
   | .TraceOptions *= {
       "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
       "Consensus.LeiosPeer": {"maxFrequency": 0, "severity": "Debug"},
@@ -276,12 +303,12 @@ INDEX="0" \
   nix run .#job-register-drep
 wait-for-mempool
 
-# If both cost model and Plomin hard fork proposal are submitted in the same
-# epoch, the cost model will fail to take effect and PlutusV2 will be
-# missing.  We'll delay submission of Plutus HF proposal by one epoch to
-# allow for ratification of the cost model first.
-echo "Submitting a Plomin prep cost model action..."
-PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/mainnet-plutusv3-pv10-prep.json")
+# If both cost model and hard fork proposal are submitted in the same
+# epoch, the cost model will fail to take effect.  We'll delay submission of
+# any HF proposal by one epoch to allow for ratification of the cost model
+# first.
+echo "Submitting a cost model governance action..."
+PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/vanrossem-parameters-pv11-prep.json")
 ACTION="create-protocol-parameters-update" \
   STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
   nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
@@ -293,7 +320,7 @@ wait-for-mempool
 #
 #     - Drep votes are disallowed during Conway bootstrapping.
 #
-#   When in PV10, both CC members and drep need to approve the cost model.
+#   When at PV10 or later, both CC members and drep need to approve the cost model.
 export ACTION_TX_ID=$(
   cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
     | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
@@ -309,7 +336,7 @@ for i in $(seq 1 "$NUM_CC_KEYS"); do
   echo
 done
 
-# REQUIRED if starting in PV10
+# REQUIRED if starting in PV10 or later
 echo "Submitting the drep-0 vote for the parameter update..."
   DECISION=yes \
   ROLE=drep \
@@ -320,8 +347,8 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((86400 - 257 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+synth-slots $((6456 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 2 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
@@ -333,18 +360,114 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 #   "PlutusV3"
 # ]
 
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
+echo "Synthesize blocks until realtime plus desired offset"
+# This brings us to epoch 1 + 1 = 2
+synth-slots $((6873 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 4 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+
+# After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
+icdiff \
+  <(jq -S < scripts/cost-models/vanrossem-parameters-pv11-prep.json) \
+  <(cardano-cli query protocol-parameters | jq .costModels)
+
+# Fill the faucet and centrifuge while still in van Rossem as once in Dijkstra
+# Tx construction and submission tools are not yet available, and if Leios
+# activates, db-synthesizer will cease to function.
+#
+# Faucet:
+#
+
+
+# Centrifuge
+#
+
+
+# In epoch 2, submit a Dijkstra hard fork
+echo "Submitting a Dijkstra hard fork action..."
+PROPOSAL_ARGS=("--protocol-major-version" "12" "--protocol-minor-version" "0")
+ACTION="create-hardfork" \
+  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
+  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+wait-for-mempool
+
+export ACTION_TX_ID=$(
+  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
+    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
+)
+
+for i in $(seq 1 "$NUM_CC_KEYS"); do
+  echo "Submitting the CC$i vote for the Dijkstra hard fork..."
+  DECISION=yes \
+    ROLE=cc \
+    VOTE_KEY="$CC_DIR/cc-$i-hot" \
+    nix run .#job-submit-vote
+  wait-for-mempool
+  echo
+done
+
+echo "Submitting the drep-0 vote for the Dijkstra hard fork..."
+  DECISION=yes \
+  ROLE=drep \
+  VOTE_KEY="$DREP_DIR/drep-0" \
+  nix run .#job-submit-vote
+wait-for-mempool
+
+echo "Submitting the pool 1 vote for the Dijkstra hard fork..."
+DECISION=yes \
+  ROLE=spo \
+  VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
+  nix run .#job-submit-vote
+wait-for-mempool
+
+echo "Submitting the pool 2 vote for the Dijkstra hard fork..."
+DECISION=yes \
+  ROLE=spo \
+  VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
+  nix run .#job-submit-vote
+wait-for-mempool
+
+echo "Submitting the pool 3 vote for the Dijkstra hard fork..."
+DECISION=yes \
+  ROLE=spo \
+  VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
+  nix run .#job-submit-vote
+wait-for-mempool
+
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
+# Start 1m before epoch 2
+echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 2"
+synth-slots $((6604 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+
+# After the epoch rollover into epcoh 2, verify the Dijkstra hard fork has ratified:
+cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
+
+# Example output:
+# {
+#   "major": 10,
+#   "minor": 0
+# }
+
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
+# Start 1m before epoch 3
+echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 3"
+synth-slots $((6991 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 8 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+
+# After the epoch rollover into epcoh 3, verify the Dijkstra hard fork has enacted:
+cardano-cli query protocol-parameters | jq .protocolVersion
+
+# Example output:
+# {
+#   "major": 10,
+#   "minor": 0
+# }
+
 # NOTE:
 #   If starting in PV10, there is no need to submit the PV10 hard fork.
 #   See the historical dijkstra doc in playground for a PV10 HF example.
 
-# Potentially setup faucet here. If reusing existing faucet secrets, move the
-# new node secrets over the old ones first, and encrypt them of course.
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-echo "Synthesize blocks until realtime plus desired offset"
-# This brings us to epoch 1 + 1 = 2
-synth-slots 86334
-#
 # This brings us to epoch 2 + 4 = 6
 synth-epochs 4
 
