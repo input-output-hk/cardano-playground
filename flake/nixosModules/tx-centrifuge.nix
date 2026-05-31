@@ -5,6 +5,8 @@
     lib,
     ...
   }: let
+    inherit (lib) mkDefault;
+
     serviceName = "cardano-tx-centrifuge";
     settingsFormat = pkgs.formats.json {};
     cfg = config.services.cardano-tx-centrifuge;
@@ -16,30 +18,52 @@
 
       useLocalCardanoNode = {
         nodeConfig =
-          lib.mkEnableOption "using the local cardano-node's config"
+          lib.mkEnableOption ''
+            using the local cardano-node's config and its N2C socket as a
+            'nodetoclient' observer. The observer is REQUIRED for initial
+            UTxO discovery on every startup; if you disable this flag you
+            must add an observer via 'settings.observers' yourself.
+          ''
           // {
             default = config.services.cardano-node.enable;
           };
 
         recycling =
-          lib.mkEnableOption "using the local cardano-node for recycling"
+          lib.mkEnableOption ''
+            using on_confirm recycling via the local observer (depth 2).
+            Independent of the discovery use; you can have the observer for
+            discovery only and still pick a different recycle strategy
+            (on_pull / on_build) via settings.builder.recycle.
+          ''
           // {
             default = config.services.cardano-node.enable;
           };
       };
 
-      fundsFile = lib.mkOption {
+      signingKeyFile = lib.mkOption {
         type = lib.types.path;
         description = ''
-          Path to JSON file that contains the mapping of UTxOs to their lovelace amount.
-          Can be imported from output of `scripts/playground/fund-centrifuge.nu get-funds --json`,
+          Path at runtime to the recycle signing key for tx-centrifuge. This
+          key derives every recycle address (the supplied key is workload
+          0's; subsequent workloads derive from it). The operator must fund
+          at least workload 0's bech32 address before starting the service.
+
+          Initial UTxOs are discovered on-chain at every startup via a
+          QueryUTxOByAddress against the local node — there is no separate
+          funds.json. Restarts are stateless.
         '';
       };
 
-      fundsSigningKeyFile = lib.mkOption {
-        type = lib.types.path;
+      cooldownSeconds = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 0;
         description = ''
-          Path at runtime to the signing key for the funds.
+          Seconds tx-centrifuge waits after the builder has begun filling
+          the payload queue and before workers connect to their target
+          nodes. Use a non-zero value for multi-node benchmark clusters
+          where you want the cluster to stabilise before traffic begins
+          (so transmission ramps to the target TPS instantly). Leave at 0
+          for ops / single-node deployments.
         '';
       };
 
@@ -53,10 +77,11 @@
     config = lib.mkIf cfg.enable (lib.mkMerge [
       {
         services.${serviceName}.settings = {
-          initial_inputs = {
-            type = "genesis_utxo_keys";
-            params.signing_keys_file = "/run/${serviceName}/funds.json";
-          };
+          # Resolved by systemd's LoadCredential below. Keep in sync with
+          # the unit name (serviceName) and credential name (funds.skey).
+          signing_key_file = "/run/credentials/${serviceName}.service/funds.skey";
+
+          cooldown_seconds = cfg.cooldownSeconds;
 
           builder = {
             type = "value";
@@ -79,19 +104,15 @@
         systemd.services.${serviceName} = {
           wantedBy = ["multi-user.target"];
 
-          preStart = let
-            filter = ''
-              to_entries | map({
-                tx_in: .key,
-                value: .value,
-                signing_key: "\(env.CREDENTIALS_DIRECTORY)/funds.skey",
-              })
-            '';
-          in ''
-            ${lib.getExe pkgs.jaq} ${lib.escapeShellArg filter} "$CREDENTIALS_DIRECTORY"/funds.json > "$RUNTIME_DIRECTORY"/funds.json
-          '';
-
           enableStrictShellChecks = true;
+
+          # Restart on failure: up to 3 retries, 1 minute apart. After 3
+          # failed retries within the 10-minute window the unit stays in
+          # 'failed' state until a manual `systemctl reset-failed` /
+          # `start`. Initial start counts toward the burst, so 4 total
+          # start attempts (initial + 3 retries) are permitted.
+          startLimitBurst = 4;
+          startLimitIntervalSec = 600;
 
           serviceConfig = {
             ExecStart = toString [
@@ -102,40 +123,44 @@
             DynamicUser = true;
 
             LoadCredential = [
-              "funds.json:${cfg.fundsFile}"
-              "funds.skey:${cfg.fundsSigningKeyFile}"
+              "funds.skey:${cfg.signingKeyFile}"
             ];
 
-            RuntimeDirectory = serviceName;
+            Restart = "on-failure";
+            RestartSec = 60;
+
+            # Disable journald rate-limiting on this unit. At high TPS the
+            # trace-dispatcher emits thousands of lines per second; the
+            # systemd default (10000 in 30s) would silently drop most of
+            # them after the first 30 seconds of a run.
+            LogRateLimitIntervalSec = 0;
+            LogRateLimitBurst = 0;
           };
         };
       }
 
       (lib.mkIf cfg.useLocalCardanoNode.nodeConfig {
-        services.${serviceName}.settings.nodeConfig = with config.services.cardano-node;
-          if nodeConfigFile != null
-          then nodeConfigFile
-          else pkgs.writers.writeJSON "node-config.json" nodeConfig;
-      })
-
-      (lib.mkIf cfg.useLocalCardanoNode.recycling {
         services = {
           ${serviceName}.settings = {
-            builder.recycle = {
-              type = "on_confirm";
-              params = "local-follower";
-            };
+            nodeConfig = with config.services.cardano-node;
+              mkDefault (if nodeConfigFile != null
+              then nodeConfigFile
+              else pkgs.writers.writeJSON "node-config.json" nodeConfig);
 
+            # The local nodetoclient observer is used for initial UTxO
+            # discovery on every startup, regardless of the recycle
+            # strategy chosen below. Always present when the local node is
+            # configured.
             observers.local-follower = {
-              type = "nodetoclient";
+              type = mkDefault "nodetoclient";
               params = {
-                confirmation_depth = 2;
-                socket_path = config.services.cardano-node.socketPath 0;
+                confirmation_depth = mkDefault 2;
+                socket_path = mkDefault (config.services.cardano-node.socketPath 0);
               };
             };
           };
 
-          cardano-node.shareNodeSocket = true;
+          cardano-node.shareNodeSocket = mkDefault true;
         };
 
         systemd.services.${serviceName} = rec {
@@ -146,6 +171,13 @@
           after = requisite;
 
           serviceConfig.SupplementaryGroups = lib.singleton config.services.cardano-node.socketGroup;
+        };
+      })
+
+      (lib.mkIf cfg.useLocalCardanoNode.recycling {
+        services.${serviceName}.settings.builder.recycle = {
+          type = mkDefault "on_confirm";
+          params = mkDefault "local-follower";
         };
       })
     ]);
