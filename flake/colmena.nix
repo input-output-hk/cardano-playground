@@ -3,6 +3,8 @@
   config,
   lib,
   self,
+  moduleWithSystem,
+  withSystem,
   ...
 }: let
   inherit (config.flake) nixosModules nixosConfigurations;
@@ -107,6 +109,7 @@ in
         // {
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
+            MempoolCapacityBytesOverride = 500000;
           };
           systemd.services.cardano-node.environment."LEIOS_DB_PATH" = "/var/lib/cardano-node/db-leios/leios.db";
         };
@@ -132,8 +135,14 @@ in
       };
 
       leiosCentrifuge.imports = [
-        # nixosModules.cardano-tx-centrifuge
-        # nixosModules.profile-leios-tx-centrifuge
+        nixosModules.cardano-tx-centrifuge
+        nixosModules.profile-leios-tx-centrifuge
+        {
+          services.cardano-tx-centrifuge.settings = {
+            rate_limit.params.tps = 25;
+            observers.local-follower.params.confirmation_depth = 3;
+          };
+        }
       ];
 
       node-10-7-1 = let
@@ -362,10 +371,24 @@ in
           inputs.cardano-parts.nixosModules.profile-cardano-node-group
           inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
           inputs.cardano-parts.nixosModules.profile-cardano-postgres
-          {
+          (nixos: {
             services.cardano-node.shareNodeSocket = true;
             services.cardano-postgres.enablePsqlrc = true;
-          }
+
+            cardano-parts.perNode = {
+              pkgs = {
+                inherit (inputs.cardano-node-leios.packages.x86_64-linux) cardano-cli cardano-node;
+                cardano-db-sync = inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
+                cardano-db-tool = inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-tool:exe:cardano-db-tool";
+                cardano-db-sync-pkgs = {
+                  inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+                  cardanoDbSyncHaskellPackages.cardano-db-tool.components.exes.cardano-db-tool = nixos.config.cardano-parts.perNode.pkgs.cardano-db-tool;
+                  # This pin remains the same and doesn't need to be updated
+                  schema = "${inputs.cardano-db-sync-leios}/schema";
+                };
+              };
+            };
+          })
         ];
       };
 
@@ -472,7 +495,10 @@ in
       preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
       dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
-      leiosFaucet = {services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];};
+      leiosFaucet = moduleWithSystem ({system}: _: {
+        cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
+        services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
+      });
 
       metadata = {
         imports = [
@@ -892,7 +918,7 @@ in
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre rel preprodRelMig tcpTxOpt];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre faucet preprodFaucet];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node faucet preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node-pre bp legacyT mithrilRelease (declMRel "preprod2-rel-b-1")];};
       preprod2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node-pre rel legacyT preprodRelMig];};
@@ -913,7 +939,7 @@ in
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre rel];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre rel tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
       # Lsm, lmdb and in-mem pre-release backend testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf];};
