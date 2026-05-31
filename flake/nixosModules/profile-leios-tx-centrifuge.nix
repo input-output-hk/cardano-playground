@@ -16,15 +16,14 @@ flake: {
     groupCfg = config.cardano-parts.cluster.group;
     opsLib = flake.config.flake.cardano-parts.lib.opsLib pkgs;
   in {
-    sops.secrets =
-      mkSopsSecret {
-        secretName = "tx-centrifuge-fund-key";
-        keyName = "${name}-fund.skey";
-        inherit groupOutPath groupName name;
-        fileOwner = "root";
-        fileGroup = "root";
-        restartUnits = [config.systemd.services.cardano-tx-centrifuge.name];
-      };
+    sops.secrets = mkSopsSecret {
+      secretName = "tx-centrifuge-fund-key";
+      keyName = "${name}-fund.skey";
+      inherit groupOutPath groupName name;
+      fileOwner = "root";
+      fileGroup = "root";
+      restartUnits = [config.systemd.services.cardano-tx-centrifuge.name];
+    };
 
     services.cardano-tx-centrifuge = {
       enable = true;
@@ -47,7 +46,8 @@ flake: {
             lib.filterAttrs
             (name: _: lib.hasPrefix "leios" name && lib.hasInfix "-rel-" name)
             nodes
-          ));
+          )
+        );
       };
     };
   };

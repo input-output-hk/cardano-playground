@@ -143,9 +143,11 @@
         services = {
           ${serviceName}.settings = {
             nodeConfig = with config.services.cardano-node;
-              mkDefault (if nodeConfigFile != null
-              then nodeConfigFile
-              else pkgs.writers.writeJSON "node-config.json" nodeConfig);
+              mkDefault (
+                if nodeConfigFile != null
+                then nodeConfigFile
+                else pkgs.writers.writeJSON "node-config.json" nodeConfig
+              );
 
             # The local nodetoclient observer is used for initial UTxO
             # discovery on every startup, regardless of the recycle
