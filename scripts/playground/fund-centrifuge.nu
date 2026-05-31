@@ -55,7 +55,27 @@ def 'main send-funds' [
     maybe-decrypt $funding_signing_key_secret | (^$'($starting_dir)/scripts/distribute.py' --testnet-magic $testnet_magic --signing-key-file /dev/stdin --address $funding_address --payments-json $'($tmp)/payments.json')
     log info $'Transactions built are in ($tmp)'
     if (input 'Submit transactions? (y/N) ') != y {
-      do --env $cleanup
+      # Move built txs to a persistent recovery location so they can be
+      # submitted later via:
+      #   for tx in (glob $RECOVERY_DIR/*.txsigned | sort --natural) {
+      #     cardano-cli latest transaction submit --tx-file $tx
+      #   }
+      let recovery = $'($starting_dir)/fund-centrifuge-unsent-(date now | format date "%Y%m%dT%H%M%SZ")'
+      mkdir $recovery
+      cd $starting_dir
+      mv $'($tmp)/payments.json' $recovery
+      let signed_files = (glob $'($tmp)/*.txsigned')
+      if ($signed_files | length) > 0 {
+        $signed_files | each { |f| mv $f $recovery }
+      }
+      let body_files = (glob $'($tmp)/*.txbody')
+      if ($body_files | length) > 0 {
+        $body_files | each { |f| mv $f $recovery }
+      }
+      log info $'Unsent transactions preserved in (ansi yellow)($recovery)(ansi reset)'
+      log info 'Submit them later with a one-liner like:'
+      log info $'  ls ($recovery)/*.txsigned | sort | each { |f| cardano-cli latest transaction submit --tx-file $f }'
+      rm --recursive --permanent $tmp
       return
     }
     log info 'Submitting transactions'
