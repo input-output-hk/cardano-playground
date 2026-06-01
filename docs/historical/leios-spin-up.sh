@@ -17,6 +17,7 @@ alias db-synthesizer="$(nix build -Lv "$LEIOS_PIN#db-synthesizer" --no-link --pr
 # So that the custom cardano-cli passes through to the nix jobs when USE_SHELL_BINS is in use -- aliases won't resolve
 # mkdir -p ~/.local/bin
 # ln -sf "$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli" ~/.local/bin/cardano-cli
+# export PATH_BACKUP="$PATH"
 # export PATH="$HOME/.local/bin:$PATH"
 
 # Alias the pre-release bins as well to ensure consistent bin usage
