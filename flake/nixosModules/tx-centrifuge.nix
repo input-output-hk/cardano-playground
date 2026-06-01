@@ -69,7 +69,7 @@
 
       recycleTimeoutBlocks = lib.mkOption {
         type = lib.types.ints.unsigned;
-        default = 60;
+        default = 0;
         description = ''
           Block-depth threshold for the timeout sweeper. A pending-recycle
           entry whose submission tip block is more than this many blocks
@@ -104,7 +104,7 @@
 
       maxRuntimeSeconds = lib.mkOption {
         type = lib.types.ints.unsigned;
-        default = 6 * 3600;
+        default = 2 * 3600;
         description = ''
           Maximum wall-clock seconds a single tx-centrifuge invocation is
           allowed to run before systemd terminates it (SIGTERM → SIGKILL

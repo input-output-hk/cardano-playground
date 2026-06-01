@@ -139,7 +139,7 @@ in
         nixosModules.profile-leios-tx-centrifuge
         {
           services.cardano-tx-centrifuge.settings = {
-            rate_limit.params.tps = 25;
+            rate_limit.params.tps = 10;
             # observers.local-follower.params.confirmation_depth = 3;
             workloads.synthetic-chain.targets.leios1-rel-a-1 = {
               addr = "leios1-rel-a-1.play.dev.cardano.org";
