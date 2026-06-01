@@ -70,8 +70,8 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   set -euo pipefail
   {{checkEnvWithoutOverride}}
 
-  if ! [[ "$ENV" =~ ^preprod$|^preview$|^dijkstra$|^demo$ ]]; then
-    echo "Error: only node environments for preprod, preview, dijkstra and demo are supported"
+  if ! [[ "$ENV" =~ ^preprod$|^preview$|^dijkstra$|^demo$|^leios$ ]]; then
+    echo "Error: only node environments for preprod, preview, dijkstra, demo and leios are supported"
     exit 1
   fi
 
@@ -97,7 +97,12 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     exit 1
   fi
 
-  if [ "${USE_SHELL_BINS:-}" = "true" ]; then
+  if [[ "$ENV" == "leios" ]]; then
+    # leios uses the cardano-cli bundled with the leios prototype shell;
+    # never the -ng variant.
+    LEIOS_PIN=$(jq -r '.nodes."cardano-node-leios".locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+    CARDANO_CLI="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
+  elif [ "${USE_SHELL_BINS:-}" = "true" ]; then
     CARDANO_CLI="cardano-cli"
   elif [ -n "${UNSTABLE:-}" ] && [ "${UNSTABLE:-}" != "true" ]; then
     CARDANO_CLI="cardano-cli"
@@ -107,6 +112,12 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     CARDANO_CLI="cardano-cli"
   else
     CARDANO_CLI="cardano-cli-ng"
+  fi
+
+  if [[ "$ENV" == "leios" ]]; then
+    ERA="dijkstra"
+  else
+    ERA="latest"
   fi
 
   PROMPT() {
@@ -173,14 +184,14 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   echo "  Funding UTxO value: $TXIN_VALUE lovelace"
   PROMPT
 
-  eval "$CARDANO_CLI" latest transaction build \
+  eval "$CARDANO_CLI" "$ERA" transaction build \
     --tx-in "$TXIN" \
     --tx-out "$SEND_ADDR+$LOVELACE" \
     --change-address "$CHANGE_ADDR" \
     --testnet-magic "$TESTNET_MAGIC" \
     --out-file "$BASENAME.raw"
 
-  eval "$CARDANO_CLI" latest transaction sign \
+  eval "$CARDANO_CLI" "$ERA" transaction sign \
     --tx-body-file "$BASENAME.raw" \
     --signing-key-file <(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.skey") \
     --testnet-magic "$TESTNET_MAGIC" \
@@ -194,10 +205,10 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   PROMPT
 
   echo "Submitting the transaction to the network:"
-  eval "$CARDANO_CLI" latest transaction submit --tx-file "$BASENAME.signed"
+  eval "$CARDANO_CLI" "$ERA" transaction submit --tx-file "$BASENAME.signed"
   echo
 
-  TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file "$BASENAME.signed" | jq -re .txhash)
+  TXID=$(eval "$CARDANO_CLI" "$ERA" transaction txid --tx-file "$BASENAME.signed" | jq -re .txhash)
   EXISTS="true"
 
   while [ "$EXISTS" = "true" ]; do
