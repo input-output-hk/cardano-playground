@@ -25,7 +25,7 @@ in {
 
     loki.process "leios_journal_router" {
       stage.match {
-        selector = `{systemd_unit!~"cardano-node.service|tx-centrifuge.service"}`
+        selector = `{systemd_unit!~"cardano-node.service|cardano-tx-centrifuge.service"}`
         action   = "drop"
       }
 
@@ -39,7 +39,7 @@ in {
       }
 
       stage.match {
-        selector = `{systemd_unit="tx-centrifuge.service"}`
+        selector = `{systemd_unit="cardano-tx-centrifuge.service"}`
         stage.static_labels {
           values = {
             process = "TxCentrifuge",
