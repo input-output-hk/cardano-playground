@@ -140,9 +140,18 @@ in
         {
           services.cardano-tx-centrifuge.settings = {
             rate_limit.params.tps = 25;
-            observers.local-follower.params.confirmation_depth = 3;
+            # observers.local-follower.params.confirmation_depth = 3;
+            workloads.synthetic-chain.targets.leios1-rel-a-1 = {
+              addr = "leios1-rel-a-1.play.dev.cardano.org";
+              port = 3001;
+            };
           };
         }
+      ];
+
+      leiosFilesNginx.imports = [
+        nixosModules.leios-files-nginx
+        {services.leios-files-nginx.acmeEmail = "devops@iohk.io";}
       ];
 
       node-10-7-1 = let
@@ -974,17 +983,17 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
       leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel];};
+      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel leiosFilesNginx];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash];};
       # leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios];};
       leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
-      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel];};
+      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel leiosFilesNginx];};
 
       leios3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios leiosBp];};
-      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios rel];};
+      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios rel leiosFilesNginx];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
