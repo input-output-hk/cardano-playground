@@ -99,6 +99,22 @@ in {
         }
       }
 
+      // Normalize the 'data' object's key ordering. Aeson (the Haskell
+      // JSON lib used by cardano-tracer / centrifuge) emits object keys
+      // in HashMap iteration order, which is unstable across runs and
+      // produces inconsistent JSON shapes in log lines. Round-tripping
+      // through Sprig's fromJson | toJson re-marshals via Go's
+      // encoding/json, which sorts map keys alphabetically and
+      // recursively. The hasPrefix guard skips the round-trip when
+      // 'data' isn't object-shaped (strings, arrays, null) so we don't
+      // accidentally rewrite those. Note: number precision is float64
+      // after round-trip — fine for the counters here, but be aware if
+      // a future namespace emits integers > 2^53.
+      stage.template {
+        source = "data"
+        template = `{{ if hasPrefix "{" .Value }}{{ .Value | fromJson | toJson }}{{ else }}{{ .Value }}{{ end }}`
+      }
+
       stage.output {
         source = "data"
       }
