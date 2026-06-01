@@ -104,7 +104,7 @@
 
       maxRuntimeSeconds = lib.mkOption {
         type = lib.types.ints.unsigned;
-        default = 2 * 3600;
+        default = 3600;
         description = ''
           Maximum wall-clock seconds a single tx-centrifuge invocation is
           allowed to run before systemd terminates it (SIGTERM → SIGKILL
