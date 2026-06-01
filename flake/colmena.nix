@@ -110,6 +110,16 @@ in
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
             MempoolCapacityBytesOverride = 500000;
+            LeiosDbConfig = {
+              Backend = "SQLite";
+              # Ideally we probably want this saved in the chainDB state dir:
+              # Filepath = "/var/lib/cardano-node/db-leios/leios.db";
+              #
+              # But since this is already deployed to the systemd cwd as a
+              # default, let's leave it where it is until after the diversity
+              # workshop:
+              Filepath = "/var/lib/cardano-node/leios.db";
+            };
           };
           systemd.services.cardano-node.environment."LEIOS_DB_PATH" = "/var/lib/cardano-node/db-leios/leios.db";
         };

@@ -101,7 +101,9 @@ export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d
 # The old leios at 10.5.1 glibc required faketime adjustment.
 # The new leios remake at 11.0.1 does not require faketime glibc adjustment.
 # export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
-export LEIOS_DB_PATH="$DATA_DIR/leios.db"
+#
+# TODO: Add this to the node cfg file -- this is now a noop
+# export LEIOS_DB_PATH="$DATA_DIR/leios.db"
 
 # Leios is now rebased on 11.0.1 so taking the latest testnet-template is
 # ideal. Even when previously using the old 10.5.1 Leios, taking the latest
