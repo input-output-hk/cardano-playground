@@ -27,6 +27,7 @@ in
       # c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
+      c8a-xlarge.aws.instance.instance_type = "c8a.xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       # m5a-large.aws.instance.instance_type = "m5a.large";
       # m5ad-large.aws.instance.instance_type = "m5ad.large";
@@ -996,7 +997,7 @@ in
       leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel leiosFilesNginx];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
       leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
-      leios1-centrifuge-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
+      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8a-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
       leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel leiosFilesNginx];};
