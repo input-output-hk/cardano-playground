@@ -46,9 +46,9 @@ export NUM_CC_KEYS="3"
 # Security param:
 #   432 for 1 day epoch
 #    32 for 2 hr epoch
-export SECURITY_PARAM="36"
+export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-05-29T01:00:00Z"
+export START_TIME="2026-05-29T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -71,7 +71,7 @@ export POOL_MARGIN="1.0"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
 # For now, faucet will be:
-#   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
+#   10000200000 lovelace (10k ADA) funding utxos @ 1000 count,
 #   1000000000000 (1M ADA) Pool delegation,
 #   10000000 (10 ADA) delegation UTxO @ 100 count
 # For stability, our pool pledge will be 10M ADA
@@ -203,7 +203,7 @@ jq -S '. += {
 jq -S '.ExperimentalHardForksEnabled = true
   | .MempoolCapacityBytesOverride = 25000000
   | .LedgerDB *= {
-      SnapshotInterval: 1440
+      SnapshotInterval: 864
     }
   | .TraceOptions *= {
       "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
@@ -354,8 +354,8 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((6456 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 2 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+synth-slots $((85823 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
@@ -370,8 +370,8 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 echo "Synthesize blocks until realtime plus desired offset"
 # This brings us to epoch 1 + 1 = 2
-synth-slots $((6873 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 4 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+synth-slots $((86363 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 2 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
 icdiff \
@@ -386,7 +386,7 @@ icdiff \
 #
 FAUCET_MNEMONIC=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.mnemonic)
 FAUCET_ADDR=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.addr)
-UTXO_NUM="5000"
+UTXO_NUM="1000"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
   '[range($n) | { ($addr): 10000200000 }]'  | jq '.' > rewards.json
 
@@ -446,14 +446,8 @@ NOMENU=true scripts/playground/fund-centrifuge.nu send-funds \
   --funding-signing-key-secret "$PAYMENT_KEY.skey" \
   --destination-address-secret <(echo "$CENTRIFUGE_ADDR") \
   --testnet-magic "$TESTNET_MAGIC" \
-  --utxo-count 10000 \
+  --utxo-count 50000 \
   --utxo-lovelace 10000000000
-
-NOMENU=1 scripts/playground/fund-centrifuge.nu get-funds \
-  --address-secret <(echo "$CENTRIFUGE_ADDR") \
-  --testnet-magic "$TESTNET_MAGIC" \
-  --json \
-> leios1-centrifuge-a-1-fund.json
 
 # In epoch 2, submit a Dijkstra hard fork
 echo "Submitting a Dijkstra hard fork action..."
@@ -509,8 +503,8 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 2
 echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 3"
-synth-slots $((6604 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+synth-slots $((84803 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 3 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epcoh 3, verify the Dijkstra hard fork has ratified:
 cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
@@ -524,8 +518,8 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 3
 echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 4"
-synth-slots $((6991 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 8 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+synth-slots $((86339 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 4 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 4, verify the Dijkstra hard fork has enacted:
 cardano-cli query protocol-parameters | jq .protocolVersion
@@ -536,6 +530,22 @@ cardano-cli query protocol-parameters | jq .protocolVersion
 #   "minor": 0
 # }
 
-# If the start time was selected slightly less than 8 hours behind realtime,
-# the network will fork to Dijkstra a little ahead of realtime to allow for
-# seamless transfer.
+# Note the current point of the chain; take a backup if desired.
+# ❯ cardano-cli query tip
+# {
+#     "block": 17202,
+#     "epoch": 4,
+#     "era": "Dijkstra",
+#     "hash": "d2f4899ad317b2a1a68e1e276fbad65d2f4fd9f57d94378b78418ad535f2e254",
+#     "slot": 345726,
+#     "slotInEpoch": 126,
+#     "slotsToEpochEnd": 86274,
+#     "syncProgress": "93.34"
+# }
+
+# Continuing playing the chain at an accelerated rate (100x in this example)
+# until the chain is a bit ahead of realtime to allow for seamless transfer.
+#
+# The datetime provided in the command is the timepoint your want to start
+# accelerated forging.
+faketime-fast-at "2026-06-01T23:55:00Z" "100"
