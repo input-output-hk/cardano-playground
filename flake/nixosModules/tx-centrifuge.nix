@@ -122,6 +122,37 @@
         '';
       };
 
+      postStopDelaySeconds = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 3600;
+        description = ''
+          Seconds the unit idles in its ExecStopPost hook after a clean
+          runtime-cap exit, before transitioning to inactive and being
+          restarted. Combined with 'maxRuntimeSeconds', this gives an
+          on/off load cycle: the service runs for maxRuntimeSeconds,
+          systemd terminates it via RuntimeMaxSec (SERVICE_RESULT=
+          timeout), the ExecStopPost hook sleeps for
+          postStopDelaySeconds, then RestartSec governs the next start.
+          The default 3600 paired with maxRuntimeSeconds=3600 yields a
+          ~50% duty cycle (1 hr on, 1 hr off). Set to 0 to disable the
+          wait entirely.
+
+          The wait is only applied when SERVICE_RESULT=timeout — i.e.
+          when systemd terminated the service due to the runtime cap.
+          Genuine crashes (SERVICE_RESULT=exit-code/signal/core-dump/
+          oom-kill) bypass the wait and respect RestartSec directly, so
+          fail-fast behaviour and the startLimitBurst guard above
+          remain effective. A manual `systemctl stop`
+          (SERVICE_RESULT=success) also bypasses, since Restart=
+          on-failure won't fire in that case.
+
+          Implementation note: ExecStopPost time is bounded by
+          TimeoutStopSec, which this module sets to
+          postStopDelaySeconds + 90s to leave a buffer for the main
+          process to handle SIGTERM before the wait begins.
+        '';
+      };
+
       settings = lib.mkOption {
         inherit (settingsFormat) type;
         default = {};
@@ -167,7 +198,10 @@
           # failed retries within the 10-minute window the unit stays in
           # 'failed' state until a manual `systemctl reset-failed` /
           # `start`. Initial start counts toward the burst, so 4 total
-          # start attempts (initial + 3 retries) are permitted.
+          # start attempts (initial + 3 retries) are permitted. The
+          # cycle wait (postStopDelaySeconds) runs in ExecStopPost and
+          # is not counted by the start-limit window — only true crash
+          # restarts feed the burst.
           startLimitBurst = 4;
           startLimitIntervalSec = 600;
 
@@ -176,6 +210,32 @@
               (lib.getExe cfg.package)
               (settingsFormat.generate "centrifuge.json" cfg.settings)
             ];
+
+            # Load-cycle gate. After a runtime-cap exit
+            # (SERVICE_RESULT=timeout) sleep postStopDelaySeconds before
+            # the unit becomes inactive — this defers Restart=on-failure
+            # so the next cycle starts late. Crash exits skip the sleep
+            # so RestartSec governs alone and the startLimitBurst guard
+            # still works. writeShellApplication gives us shellcheck and
+            # set -euo pipefail at build time.
+            ExecStopPost = lib.getExe (pkgs.writeShellApplication {
+              name = "${serviceName}-post-stop";
+              runtimeInputs = [pkgs.coreutils];
+              text =
+                if cfg.postStopDelaySeconds == 0
+                then ''
+                  # Cycle wait disabled (postStopDelaySeconds = 0). The
+                  # hook is a no-op so the unit deactivates immediately
+                  # and RestartSec governs the restart gap.
+                  :
+                ''
+                else ''
+                  if [ "''${SERVICE_RESULT:-}" = "timeout" ]; then
+                    echo "${serviceName}: runtime cap reached, sleeping ${toString cfg.postStopDelaySeconds}s before next cycle"
+                    sleep ${toString cfg.postStopDelaySeconds}
+                  fi
+                '';
+            });
 
             DynamicUser = true;
 
@@ -188,14 +248,23 @@
 
             # Forced restart to bound state accumulation across long runs. On
             # expiry, systemd terminates the process and marks the unit as
-            # 'failed', which Restart=on-failure above then handles.
-            # RestartSec=60 governs the post-expiry gap. Set
+            # 'failed', which Restart=on-failure above then handles. The
+            # post-expiry idle is implemented in ExecStopPost
+            # ('postStopDelaySeconds'); RestartSec only governs the
+            # post-deactivate -> next-start gap (60s here). Set
             # cfg.maxRuntimeSeconds = 0 to disable — systemd's disable value is
             # "infinity", not 0 (0 would terminate the service immediately).
             RuntimeMaxSec =
               if cfg.maxRuntimeSeconds == 0
               then "infinity"
               else cfg.maxRuntimeSeconds;
+
+            # ExecStopPost runs within the TimeoutStopSec budget. Default is
+            # 90s, which is too short for a long cycle wait — extend it to
+            # postStopDelaySeconds + 90s so the sleep fits and the main
+            # process still has its usual 90s to handle SIGTERM before the
+            # wait starts running.
+            TimeoutStopSec = cfg.postStopDelaySeconds + 90;
 
             # Disable journald rate-limiting on this unit. At high TPS the
             # trace-dispatcher emits thousands of lines per second; the
