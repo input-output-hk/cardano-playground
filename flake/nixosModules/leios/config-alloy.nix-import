@@ -1,8 +1,12 @@
-{lib, name, ...}: let
+{config, lib, name, ...}: let
   inherit (builtins) stringLength substring;
   inherit (lib) toUpper;
 
   capitalize = s: toUpper (substring 0 1 s) + substring 1 (stringLength s - 1) s;
+
+  groupCfg = config.cardano-parts.cluster.group;
+  environmentName = groupCfg.meta.environmentName;
+  groupName = groupCfg.groupName;
 in {
   leiosAlloyConfig = ''
     prometheus.scrape "cardano_node_exporter" {
@@ -13,6 +17,8 @@ in {
           instance    = "${name}",
           alias       = "${name}",
           process     = "${capitalize name}",
+          environment = "${environmentName}",
+          group       = "${groupName}",
       }]
 
       metrics_path = "/metrics"
