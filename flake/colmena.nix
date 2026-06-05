@@ -672,19 +672,6 @@ in
                   }
                 ];
               };
-
-              alloy = {
-                extraAlloyConfig =
-                  ''
-                    // Leios custom alloy config follows
-
-                  ''
-                  + (import ./nixosModules/leios/config-alloy.nix-import nixos).leiosAlloyConfig;
-
-                extraJournalReceivers = [
-                  "loki.process.leios_journal_router.receiver"
-                ];
-              };
             };
           })
         ];
