@@ -911,11 +911,11 @@
         "utils": "utils_2"
       },
       "locked": {
-        "lastModified": 1780244571,
-        "narHash": "sha256-8N7r1yJAO01f5Y3QktQ7+y7ebCI9Pn1kucHIFq7AGHs=",
+        "lastModified": 1780681319,
+        "narHash": "sha256-Iqmiubs6913KNaXYojhaDTxH8dLaeZVPtbbWHAxihZE=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "8c75866f991b24aa5ccb66576c66db4f2c833ab7",
+        "rev": "863d8c9f55b17f0ca59cb05891934bf8b0aaf0b8",
         "type": "github"
       },
       "original": {
