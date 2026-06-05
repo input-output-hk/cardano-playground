@@ -5,9 +5,9 @@
   rule = [
     {
       alert = "cardano_node_mempool_hard_timeouts_detected_loki";
-      # Alert on greater than 2 hard mempool timeout log entries over a 1-hour lookback window.
+      # Alert on greater than 4 hard mempool timeout log entries over a 1-hour lookback window.
       # This is a log-based equivalent of the metrics alert.
-      expr = ''sum by (instance) (count_over_time({systemd_unit="cardano-node.service"} |= "terminated with exception ExnMempoolTimeout" [1h])) > 2'';
+      expr = ''sum by (instance) (count_over_time({systemd_unit="cardano-node.service"} |= "terminated with exception ExnMempoolTimeout" [1h])) > 4'';
       for = "1m";
       labels = {severity = "page";};
       annotations = {
