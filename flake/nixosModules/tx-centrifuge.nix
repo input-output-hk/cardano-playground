@@ -67,41 +67,6 @@
         '';
       };
 
-      recycleTimeoutBlocks = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 0;
-        description = ''
-          Block-depth threshold for the timeout sweeper. A pending-recycle
-          entry whose submission tip block is more than this many blocks
-          behind the current tip is timed out: the runtime calls
-          'onTimeout', which either recycles the original inputs back to
-          the input queue or drops them based on the per-input retry cap.
-
-          0 disables the sweeper entirely (the upstream default). The
-          default 60 is ~20 minutes at average block production, well
-          within the ~1 hr window before input exhaustion if the sweeper
-          is off. Increase or decrease to trade recovery latency against
-          the spend-race hazard: a tx that lands on-chain *after* its
-          inputs are recycled will produce a follow-up tx that the node
-          rejects, and that input also re-times out until
-          'recycleMaxRetries' gives up on it.
-        '';
-      };
-
-      recycleMaxRetries = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 3;
-        description = ''
-          Per-input cap on consecutive timeouts. The runtime drops the
-          input on the Nth timeout (counting from 1), so values 1+ are
-          meaningful. The default 3 means each UTxO is allowed two
-          recycles via the timeout path before being given up on
-          permanently.
-
-          Has no effect when 'recycleTimeoutBlocks' is 0.
-        '';
-      };
-
       maxRuntimeSeconds = lib.mkOption {
         type = lib.types.ints.unsigned;
         default = 3600;
@@ -168,8 +133,6 @@
           signing_key_file = "/run/credentials/${serviceName}.service/funds.skey";
 
           cooldown_seconds = cfg.cooldownSeconds;
-          recycle_timeout_blocks = cfg.recycleTimeoutBlocks;
-          recycle_max_retries = cfg.recycleMaxRetries;
 
           builder = {
             type = "value";
