@@ -911,16 +911,16 @@
         "utils": "utils_2"
       },
       "locked": {
-        "lastModified": 1780681319,
-        "narHash": "sha256-Iqmiubs6913KNaXYojhaDTxH8dLaeZVPtbbWHAxihZE=",
+        "lastModified": 1781057654,
+        "narHash": "sha256-l7gGC3IkpfgZ7+0+zGBwqt/Eo9JxhPQX2/nX0H5jgHc=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "863d8c9f55b17f0ca59cb05891934bf8b0aaf0b8",
+        "rev": "0382b505ce6d73e774461fa77e52958fcf6e2e1b",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "jl/leios-prototype-remake",
+        "ref": "jl/leios-prototype",
         "repo": "cardano-node",
         "type": "github"
       }

@@ -12,7 +12,7 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-remake";
+    cardano-node-leios.url = "github:IntersectMBO/cardano-node/jl/leios-prototype";
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/bench/leios-11.0.1";
     cardano-node-set-iowait.url = "github:IntersectMBO/cardano-node/jl/set-iowait";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-prototype-remake";
