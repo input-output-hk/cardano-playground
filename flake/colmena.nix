@@ -420,7 +420,7 @@ in
 
             cardano-parts.perNode = {
               pkgs = {
-                inherit (inputs.cardano-node-leios.packages.x86_64-linux) cardano-cli cardano-node;
+                inherit (inputs.cardano-node-leios.inputs.cardano-node-leios.packages.x86_64-linux) cardano-cli cardano-node;
                 cardano-db-sync = inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
                 cardano-db-tool = inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-tool:exe:cardano-db-tool";
                 cardano-db-sync-pkgs = {
