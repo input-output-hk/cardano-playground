@@ -2,6 +2,9 @@ keys:
   # SRE
   - &sre age1rj7vaq0rsarnum2fx6zq0k3l64f6mca9t9mlhqu4nfvpqhux6uts5zud2m
 
+  # AI
+  - &ai age18t54l645q8p8s5m2l5hs7pck9rfvv0pfzlppec6f6aj3j8zh5e6qwcea47
+
   # Misc
   - &misc1-metadata-a-1 age187hd0pffv549vfcmnw5u9yg3fck9e4psesz2xchrklqjqepccd7s6vlkcv
   - &misc1-wg-a-1 age1ryvlcaajedpnkdyugnre6yysht5ahkn3yrwz48wvywpn2sxwfqtqrc8qmn
@@ -59,6 +62,14 @@ creation_rules:
     key_groups:
     - age:
       - *sre
+
+  # -------------------------------------------------------
+  # AI secrets
+  - path_regex: secrets/ai/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *ai
 
   # -------------------------------------------------------
   # Group producer and other secrets
