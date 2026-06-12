@@ -106,7 +106,8 @@ in
       };
 
       node-leios =
-        mkCustomNode "cardano-node-leios"
+        # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
+        mkCustomNode "cardano-node-leios.inputs.cardano-node-leios"
         // {
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
