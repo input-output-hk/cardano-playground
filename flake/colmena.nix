@@ -201,15 +201,17 @@ in
         ];
       };
 
-      mkCustomNode = flakeInput: {
+      mkCustomNode = flakeInput: let
+        input = getAttrFromPath (splitString "." flakeInput) inputs;
+      in {
         imports = [
           node
           {
             cardano-parts.perNode = {
               pkgs = {
-                cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
-                cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
-                cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
+                cardano-cli = mkForce input.packages.x86_64-linux.cardano-cli;
+                cardano-node = mkForce input.packages.x86_64-linux.cardano-node;
+                cardano-submit-api = mkForce input.packages.x86_64-linux.cardano-submit-api;
               };
             };
           }
