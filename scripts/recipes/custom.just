@@ -100,7 +100,7 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   if [[ "$ENV" == "leios" ]]; then
     # leios uses the cardano-cli bundled with the leios prototype shell;
     # never the -ng variant.
-    LEIOS_PIN=$(jq -r '.nodes."cardano-node-leios".locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+    LEIOS_PIN=$(jq -r '.nodes[.nodes."cardano-node-leios".inputs."cardano-node-leios"].locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
     CARDANO_CLI="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
   elif [ "${USE_SHELL_BINS:-}" = "true" ]; then
     CARDANO_CLI="cardano-cli"

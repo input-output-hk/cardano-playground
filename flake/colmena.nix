@@ -114,14 +114,9 @@ in
 
             LeiosDbConfig = {
               Backend = "SQLite";
-              # Ideally we probably want this saved in the chainDB state dir:
-              # Filepath = "/var/lib/cardano-node/db-leios/leios.db";
-              #
-              # But since this is already deployed to the systemd cwd as a
-              # default, let's leave it where it is until after the diversity
-              # workshop:
-              # Filepath = "db-leios/leios.db";
-              Filepath = "/var/lib/cardano-node/leios.db";
+              # Ideally we probably want this saved in the chainDB state dir.
+              # Relative dirs to the process cwd should also work.
+              Filepath = "db-leios/leios.db";
             };
 
             MempoolCapacityBytesOverride = 500000;
