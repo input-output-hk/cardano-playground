@@ -9,21 +9,28 @@ source scripts/bash-fns.sh
 
 # Basic cardano environment setup vars and bins:
 export USE_SHELL_BINS="true"
-LEIOS_PIN=$(jq -r '.nodes."cardano-node-leios".locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+LEIOS_PIN=$(jq -r '.nodes[.nodes."cardano-node-leios".inputs."cardano-node-leios"].locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
 alias cardano-node="$(nix build -Lv "$LEIOS_PIN#cardano-node" --no-link --print-out-paths)/bin/cardano-node"
 alias cardano-cli="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
+alias db-analyser="$(nix build -Lv "$LEIOS_PIN#db-analyser" --no-link --print-out-paths)/bin/db-analyser"
+alias db-immutaliser="$(nix build -Lv "$LEIOS_PIN#project.x86_64-linux.hsPkgs.ouroboros-consensus.components.exes.db-immutaliser" --no-link --print-out-paths)/bin/db-immutaliser"
 alias db-synthesizer="$(nix build -Lv "$LEIOS_PIN#db-synthesizer" --no-link --print-out-paths)/bin/db-synthesizer"
+alias db-truncater="$(nix build -Lv "$LEIOS_PIN#db-truncater" --no-link --print-out-paths)/bin/db-truncater"
 
 # So that the custom cardano-cli passes through to the nix jobs when USE_SHELL_BINS is in use -- aliases won't resolve
-# mkdir -p ~/.local/bin
-# ln -sf "$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli" ~/.local/bin/cardano-cli
-# export PATH_BACKUP="$PATH"
-# export PATH="$HOME/.local/bin:$PATH"
+# Note that the path export must be re-done if direnv is reloaded
+mkdir -p ~/.local/bin
+ln -sf "$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli" ~/.local/bin/cardano-cli
+export PATH_BACKUP="$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # Alias the pre-release bins as well to ensure consistent bin usage
 alias cardano-node-ng=cardano-node
 alias cardano-cli-ng=cardano-cli
+alias db-analyser-ng=db-analyser
+alias db-analyser-ng=db-immutaliser
 alias db-synthesizer-ng=db-synthesizer
+alias db-truncater-ng=db-truncater
 
 # Expect leios currently at ~11.0.1
 cardano-node --version
@@ -51,7 +58,7 @@ export SLOT_LENGTH="1000"
 export START_TIME="2026-05-29T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
-export ERA_CMD=conway
+export ERA_CMD=dijkstra
 
 # The node config *must* reflect this PV with appropriate
 # `"Test${ERA}HardForkAtEpoch": 0,` up to and including the era's protocol
@@ -71,7 +78,7 @@ export POOL_MARGIN="1.0"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
 # For now, faucet will be:
-#   10000200000 lovelace (10k ADA) funding utxos @ 1000 count,
+#   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
 #   1000000000000 (1M ADA) Pool delegation,
 #   10000000 (10 ADA) delegation UTxO @ 100 count
 # For stability, our pool pledge will be 10M ADA
@@ -117,6 +124,7 @@ export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake
 USE_SHELL_BINS="" \
   UNSTABLE="true" \
   UNSTABLE_LIBS="true" \
+  ERA_CMD="conway" \
   nix run .#job-gen-custom-node-config-data-ng
 
 # Create the network backbone pools
@@ -249,37 +257,31 @@ run-node-faketime "$(date -u -d "$START_TIME - 30 seconds" "+%Y-%m-%dT%H:%M:%SZ"
 echo "Registering stake pools..."
 POOL_NAMES="${ENV}1-bp-a-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}1" \
-  ERA_CMD="alonzo" \
   nix run .#job-register-stake-pools
 wait-for-mempool
 
 POOL_NAMES="${ENV}1-bp-a-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}1" \
-  ERA_CMD="alonzo" \
   nix run .#job-delegate-rewards-stake-key
 wait-for-mempool
 
 POOL_NAMES="${ENV}2-bp-b-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}2" \
-  ERA_CMD="alonzo" \
   nix run .#job-register-stake-pools
 wait-for-mempool
 
 POOL_NAMES="${ENV}2-bp-b-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}2" \
-  ERA_CMD="alonzo" \
   nix run .#job-delegate-rewards-stake-key
 wait-for-mempool
 
 POOL_NAMES="${ENV}3-bp-c-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}3" \
-  ERA_CMD="alonzo" \
   nix run .#job-register-stake-pools
 wait-for-mempool
 
 POOL_NAMES="${ENV}3-bp-c-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}3" \
-  ERA_CMD="alonzo" \
   nix run .#job-delegate-rewards-stake-key
 wait-for-mempool
 
@@ -387,7 +389,7 @@ icdiff \
 #
 FAUCET_MNEMONIC=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.mnemonic)
 FAUCET_ADDR=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.addr)
-UTXO_NUM="1000"
+UTXO_NUM="5000"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
   '[range($n) | { ($addr): 10000200000 }]'  | jq '.' > rewards.json
 
