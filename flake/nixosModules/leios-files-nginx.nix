@@ -37,7 +37,7 @@ _: {
 
       dataDir = lib.mkOption {
         type = lib.types.path;
-        default = "/var/lib/cardano-node";
+        default = "/var/lib/cardano-node/db-leios";
         description = "Directory containing leios.* files to serve.";
       };
 

@@ -138,26 +138,54 @@ in
               "ChainDB.AddBlockEvent.AddBlockValidation".severity = "Info";
             };
           };
-          systemd.services.cardano-node.environment."LEIOS_DB_PATH" = "/var/lib/cardano-node/db-leios/leios.db";
         };
 
-      # node-set-iowait = mkCustomNodePre "cardano-node-set-iowait";
+      leiosAntiChurn = {
+        imports = [
+          inputs.cardano-parts.nixosModules.profile-cardano-node-topology
+          (nixos: {
+            services.cardano-node-topology = {
+              role = mkDefault "edge";
+              extraNodeListProducers = filter (r: nixos.name != r.name) [
+                {
+                  name = "leios1-rel-a-1";
+                  trustable = true;
+                  addressType = "fqdn";
+                }
+                {
+                  name = "leios2-rel-b-1";
+                  trustable = true;
+                  addressType = "fqdn";
+                }
+                {
+                  name = "leios3-rel-c-1";
+                  trustable = true;
+                  addressType = "fqdn";
+                }
+              ];
+            };
+          })
+        ];
+      };
 
       leiosBp = {
         imports = [
           bp
           {
             services.cardano-node.extraNodeConfig = {
-              # This differs from the relay default of true;
-              # prior to node 10.6.0 this needs to be set explicitly.
-              PeerSharing = false;
-
-              # This differs from the relay default of 150 / 60
-              # prior to node 10.6.0 this needs to be set explicitly.
-              TargetNumberOfKnownPeers = 100;
-              TargetNumberOfRootPeers = 100;
+              # With high Tx TPS keep snapshot interval at 2*k for more reasonable startup time.
+              # For leios a 1 day snapshot interval results in minute(s) of wait time on restart.
+              LedgerDB.SnapshotInterval = 864;
             };
           }
+        ];
+      };
+
+      leiosRel = {
+        imports = [
+          rel
+          leiosFilesNginx
+          leiosAntiChurn
         ];
       };
 
@@ -174,6 +202,7 @@ in
             };
           };
         }
+        leiosAntiChurn
       ];
 
       leiosFilesNginx.imports = [
@@ -360,6 +389,7 @@ in
           }
         ];
       };
+
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
       dbsync = {
@@ -427,6 +457,7 @@ in
               };
             };
           })
+          leiosAntiChurn
         ];
       };
 
@@ -534,8 +565,13 @@ in
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
       dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
       leiosFaucet = moduleWithSystem ({system}: _: {
-        cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
-        services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
+        imports = [
+          {
+            cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
+            services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
+          }
+          leiosAntiChurn
+        ];
       });
 
       metadata = {
@@ -999,16 +1035,16 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
       leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios rel leiosFilesNginx];};
+      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosRel];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
       leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8a-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
-      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios rel leiosFilesNginx];};
+      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosRel];};
 
       leios3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios leiosBp];};
-      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios rel leiosFilesNginx];};
+      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios leiosRel];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
