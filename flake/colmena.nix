@@ -226,6 +226,35 @@ in
         ];
       };
 
+      node-11-1-0-rc = {
+        imports = [
+          # Base cardano-node and tracer service
+          "${inputs.cardano-node-11-1-0-rc}/nix/nixos/cardano-node-service.nix"
+          "${inputs.cardano-node-11-1-0-rc}/nix/nixos/cardano-tracer-service.nix"
+
+          # Config for cardano-node group deployments
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          bperfNoPublish
+
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
+          # Config for cardano-node group deployments
+          {
+            cardano-parts.perNode = {
+              lib.cardanoLib = config.flake.cardano-parts.pkgs.special.cardanoLibCustom inputs.iohk-nix-11-1-0-rc "x86_64-linux";
+              pkgs = {
+                inherit
+                  (inputs.cardano-node-11-1-0-rc.packages.x86_64-linux)
+                  cardano-cli
+                  cardano-node
+                  cardano-submit-api
+                  ;
+              };
+            };
+          }
+        ];
+      };
+
       mkCustomNode = flakeInput: let
         input = getAttrFromPath (splitString "." flakeInput) inputs;
       in {
@@ -326,13 +355,6 @@ in
       #   # On an 4 GiB machine, 3.5 GiB is reported as available in free -h; 74%
       #   services.cardano-node.totalMaxHeapSizeMiB = 2652;
       #   systemd.services.cardano-node.serviceConfig.MemoryMax = nixos.lib.mkForce "3G";
-      # };
-
-      # lmdb = {
-      #   services.cardano-node = {
-      #     lmdbDatabasePath = "/ephemeral/cardano-node/";
-      #     withUtxoHdLmdb = true;
-      #   };
       # };
 
       lsm = {
@@ -1006,10 +1028,10 @@ in
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet previewFaucet];};
 
-      # Lsm, lmdb and in-mem pre-release backend testing
+      # Lsm and in-mem pre-release backend testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf];};
       preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs logGc submit-api];};
-      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf amiZfs];};
+      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-11-1-0-rc submit-api lsm noBPerf amiZfs];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel legacyT];};
@@ -1054,7 +1076,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Mainnet
       # Rel-a-1 is set up as a fake block producer for gc latency testing during ledger snapshots
-      # Rel-a-{2,3} lmdb and mdb fault tests
+      # Rel-a-{2,3} lsm and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnetSmash dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
