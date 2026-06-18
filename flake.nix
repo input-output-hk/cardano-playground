@@ -6,7 +6,7 @@
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-05-15";
-    # cardano-parts.url = "path:/home/jlotoski/work/input-output-hk/cardano-parts-wt/next-2026-05-15";
+    # cardano-parts.url = "path:/home/jlotoski/ai/share/input-output-hk/cardano-parts-wt/next-2026-05-15";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
@@ -16,6 +16,8 @@
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/bench/leios-11.0.1";
     cardano-node-set-iowait.url = "github:IntersectMBO/cardano-node/jl/set-iowait";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-prototype-remake";
+    cardano-node-11-1-0-rc.url = "github:IntersectMBO/cardano-node/jl/11.1.0-sre";
+    iohk-nix-11-1-0-rc.url = "github:input-output-hk/iohk-nix/node-11.1";
   };
 
   outputs = inputs: let
