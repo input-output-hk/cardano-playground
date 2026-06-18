@@ -11,6 +11,7 @@ __pycache__
 /*.skey
 /*.socket
 /.consistency-check-ts
+/.ssh-ai/
 /.ssh_config
 /.ssh_config_bootstrap
 /.ssh_key
