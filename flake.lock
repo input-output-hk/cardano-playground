@@ -1495,15 +1495,16 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1781823606,
-        "narHash": "sha256-U4egb7/+UyaIAR/wL39IdVhaLSCMqM8QVERrXn2iKnc=",
+        "lastModified": 1781847351,
+        "narHash": "sha256-YFLxQyApiYeSiifhIe066lp2CdYb5gvGDGJfYYj7E0g=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "124a11a535db70bc26902ba7933cfd9a2a76b063",
+        "rev": "1c38c637256ea5e74335c5183585bdee3b1eaaac",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "refs/tags/prototype-2026w25",
         "repo": "ouroboros-leios",
         "type": "github"
       }
