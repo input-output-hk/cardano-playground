@@ -27,7 +27,8 @@ in
       # c5ad-large.aws.instance.instance_type = "c5ad.large";
       # c6i-xlarge.aws.instance.instance_type = "c6i.xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
-      c8a-xlarge.aws.instance.instance_type = "c8a.xlarge";
+      c8i-large.aws.instance.instance_type = "c8i.large";
+      c8i-xlarge.aws.instance.instance_type = "c8i.xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       # m5a-large.aws.instance.instance_type = "m5a.large";
       # m5ad-large.aws.instance.instance_type = "m5ad.large";
@@ -140,31 +141,21 @@ in
           };
         };
 
-      leiosAntiChurn = {
+      eRel = relList: {
         imports = [
           inputs.cardano-parts.nixosModules.profile-cardano-node-topology
-          (nixos: {
+          {
             services.cardano-node-topology = {
               role = mkDefault "edge";
-              extraNodeListProducers = filter (r: nixos.name != r.name) [
-                {
-                  name = "leios1-rel-a-1";
+              extraNodeListProducers =
+                map (name: {
+                  inherit name;
                   trustable = true;
                   addressType = "fqdn";
-                }
-                {
-                  name = "leios2-rel-b-1";
-                  trustable = true;
-                  addressType = "fqdn";
-                }
-                {
-                  name = "leios3-rel-c-1";
-                  trustable = true;
-                  addressType = "fqdn";
-                }
-              ];
+                })
+                relList;
             };
-          })
+          }
         ];
       };
 
@@ -185,7 +176,6 @@ in
         imports = [
           rel
           leiosFilesNginx
-          leiosAntiChurn
         ];
       };
 
@@ -202,7 +192,7 @@ in
             };
           };
         }
-        leiosAntiChurn
+        (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
       ];
 
       leiosFilesNginx.imports = [
@@ -479,7 +469,7 @@ in
               };
             };
           })
-          leiosAntiChurn
+          (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
         ];
       };
 
@@ -596,7 +586,7 @@ in
             cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
             services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
           }
-          leiosAntiChurn
+          (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
         ];
       });
 
@@ -1060,17 +1050,23 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
-      leios1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios leiosRel];};
-      leios1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
-      leios1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
-      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8a-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8i-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
+      leios1-rel-a-1 = {imports = [eu-central-1 c8i-large (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+      leios1-rel-a-2 = {imports = [eu-central-1 c8i-large (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
+      leios1-rel-a-3 = {imports = [eu-central-1 c8i-large (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
+      leios1-dbsync-a-1 = {imports = [eu-central-1 c8i-large (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
+      leios1-faucet-a-1 = {imports = [eu-central-1 c8i-large (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
+      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8i-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
-      leios2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosBp];};
-      leios2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "leios2") node-leios leiosRel];};
+      leios2-bp-b-1 = {imports = [eu-west-1 c8i-large (ebs 80) (group "leios2") node-leios leiosBp];};
+      leios2-rel-b-1 = {imports = [eu-west-1 c8i-large (ebs 80) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c8i-large (ebs 80) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-3 = {imports = [eu-west-1 c8i-large (ebs 80) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
-      leios3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios leiosBp];};
-      leios3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "leios3") node-leios leiosRel];};
+      leios3-bp-c-1 = {imports = [us-east-2 c8i-large (ebs 80) (group "leios3") node-leios leiosBp];};
+      leios3-rel-c-1 = {imports = [us-east-2 c8i-large (ebs 80) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
+      leios3-rel-c-2 = {imports = [us-east-2 c8i-large (ebs 80) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8i-large (ebs 80) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
