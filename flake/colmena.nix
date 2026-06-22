@@ -281,27 +281,13 @@ in
 
       submit-api = {
         imports = [
-          config.flake.cardano-parts.cluster.groups.default.meta.cardano-submit-api-service-ng
-          (nixos: let
-            inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
-            inherit (nixos.config.cardano-parts.perNode.lib.cardanoLib.environments.${environmentName}) submitApiConfig;
-            inherit (nixos.config.cardano-parts.perNode.pkgs) cardano-node-pkgs cardano-submit-api;
-            inherit (nixos.config.services.cardano-node) socketPath;
-          in {
-            services = {
-              cardano-node.shareNodeSocket = true;
-
-              cardano-submit-api = {
-                enable = true;
-                cardanoNodePackages = cardano-node-pkgs;
-                # config = submitApiConfig;
-                config = {inherit (submitApiConfig) TraceOptions;};
-                network = environmentName;
-                package = cardano-submit-api;
-                socketPath = socketPath 0;
-              };
-            };
-            systemd.services.cardano-submit-api.serviceConfig.SupplementaryGroups = "cardano-node";
+          # Once node 11.1 is released this can be uncommented and the rc pin and config declaration dropped.
+          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-submit-api-service-ng
+          "${inputs.cardano-node-11-1-0-rc}/nix/nixos/cardano-submit-api-service.nix"
+          inputs.cardano-parts.nixosModules.profile-cardano-submit-api
+          (nixos: {
+            services.cardano-submit-api.config =
+              nixos.config.cardano-parts.perNode.lib.cardanoLib.defaultSubmitApiConfig;
           })
         ];
       };
