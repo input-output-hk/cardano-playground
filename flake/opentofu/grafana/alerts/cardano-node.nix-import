@@ -27,7 +27,7 @@
     }
     {
       alert = "cardano_node_mempool_high";
-      expr = "cardano_node_metrics_txsInMempool_int > 200";
+      expr = ''cardano_node_metrics_txsInMempool_int{environment!~"leios"} > 200'';
       for = "10m";
       labels.severity = "page";
       annotations = {
