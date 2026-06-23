@@ -1038,7 +1038,9 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
+      # Remove `ccMon` until governance works in Dijkstra era
+      # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp];};
       leios1-rel-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
