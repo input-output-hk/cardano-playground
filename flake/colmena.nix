@@ -30,6 +30,7 @@ in
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       c8id-large.aws.instance.instance_type = "c8id.large";
       c8id-xlarge.aws.instance.instance_type = "c8id.xlarge";
+      c8id-2xlarge.aws.instance.instance_type = "c8id.2xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
       # m5a-large.aws.instance.instance_type = "m5a.large";
       # m5ad-large.aws.instance.instance_type = "m5ad.large";
@@ -506,6 +507,9 @@ in
           # sudo -iu postgres -- psql
           #   create user <USER> login password '<PASSWORD>';
           #   grant pg_read_all_data to <USER>;
+          #
+          # Access:
+          # psql "host=$HOST port=$PORT user=$USER dbname=$DB sslmode=require"
           settings = {
             password_encryption = "scram-sha-256";
             ssl = "on";
@@ -1044,7 +1048,7 @@ in
       leios1-rel-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
-      leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
+      leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
