@@ -78,6 +78,23 @@ _: {
         src=${lib.escapeShellArg csCfg.sourcePath}
         servedDir=${lib.escapeShellArg cfg.servedDir}
 
+        # Stamp every archive member as root (uid/gid 0). These tarballs are a
+        # public bootstrap artifact: third-party consumers don't have our
+        # `cardano-node` system user, and its uid/gid is dynamically allocated
+        # (isSystemUser) so it isn't even stable across our own hosts. uid/gid 0
+        # is the one ownership every system recognizes, so it extracts cleanly
+        # everywhere. tar otherwise preserves each file's on-disk ownership
+        # (e.g. cardano-node for the chain files) regardless of the publisher
+        # running as root, so we set 0 explicitly. Our own cardano-parts
+        # consumers re-own the data dir on extract (tmpfiles/service context),
+        # so losing the node ownership here costs them nothing. To land
+        # node-owned files directly, extract as the node user instead of root:
+        # non-root tar ignores the archived (root) ownership and uses the
+        # extracting user, so the files come out cardano-node:cardano-node, e.g.
+        #   sudo -u cardano-node -- tar -C /var/lib/cardano-node -xpf leios.full.tar.zst
+        # (-p preserves the archived modes; the dest must be writable by the node user).
+        ownerArgs=(--owner=0 --group=0)
+
         # Newest snapshot of the form <dataset>@<prefix>-* (from cardano-zfs-snapshots).
         snap=$(${zfs} list -H -t snapshot -o name -s creation 2>/dev/null \
                  | { grep -F "$dataset@$prefix-" || true; } | tail -n1)
@@ -153,7 +170,7 @@ _: {
           tmp=$(mktemp "$servedDir/.$art.XXXXXX")
           trap 'rm -f "$tmp"' EXIT
           # Throttled so publishing doesn't starve the node's IO/CPU.
-          nice -n 19 ionice -c3 tar -cf - "$@" | ${csCfg.compressor} > "$tmp"
+          nice -n 19 ionice -c3 tar -cf - "''${ownerArgs[@]}" "$@" | ${csCfg.compressor} > "$tmp"
           sum=$(sha256sum "$tmp" | cut -d' ' -f1)
           size=$(stat -c %s "$tmp")
           chmod 0644 "$tmp"
@@ -525,33 +542,36 @@ _: {
               # no descent into any subdir, e.g. the staging dir).
               "~ ^/(leios\\.[^/]+)$" = {
                 root = cfg.servedDir;
-                extraConfig = ''
-                  # Artifact URLs are mutable (republished on each snapshot), and
-                  # a client must pair an artifact with the *matching* sha256/meta.
-                  # `no-cache` forces revalidation on every use, so a stale cached
-                  # copy is never paired with a fresh checksum. nginx answers an
-                  # unchanged file with 304 (ETag/Last-Modified), so unchanged
-                  # multi-GB tarballs are not re-downloaded — only re-validated.
-                  add_header Cache-Control "no-cache";
+                extraConfig =
+                  ''
+                    # Artifact URLs are mutable (republished on each snapshot), and
+                    # a client must pair an artifact with the *matching* sha256/meta.
+                    # `no-cache` forces revalidation on every use, so a stale cached
+                    # copy is never paired with a fresh checksum. nginx answers an
+                    # unchanged file with 304 (ETag/Last-Modified), so unchanged
+                    # multi-GB tarballs are not re-downloaded — only re-validated.
+                    add_header Cache-Control "no-cache";
 
-                  # recommendedOptimisation enables open_file_cache http-wide; turn
-                  # it off here so a just-swapped artifact is never served from a
-                  # cached fd pointing at the old inode. (In-flight downloads always
-                  # complete from their open fd regardless; this closes the ~30s
-                  # window where a *new* request could pair an old tarball with a
-                  # freshly-published sha256/meta.) The index/other paths keep it.
-                  open_file_cache off;
+                    # recommendedOptimisation enables open_file_cache http-wide; turn
+                    # it off here so a just-swapped artifact is never served from a
+                    # cached fd pointing at the old inode. (In-flight downloads always
+                    # complete from their open fd regardless; this closes the ~30s
+                    # window where a *new* request could pair an old tarball with a
+                    # freshly-published sha256/meta.) The index/other paths keep it.
+                    open_file_cache off;
 
-                  # Don't reveal nginx version on 404 / error pages.
-                  server_tokens off;
-                '' + lib.optionalString cfg.limits.enable (''
+                    # Don't reveal nginx version on 404 / error pages.
+                    server_tokens off;
+                  ''
+                  + lib.optionalString cfg.limits.enable (''
 
-                  # Bound artifact-serving impact on the host's uplink.
-                  limit_conn ${zoneName} ${toString cfg.limits.connPerIp};
-                '' + lib.optionalString (cfg.limits.rate != "0") ''
-                  limit_rate ${cfg.limits.rate};
-                  limit_rate_after ${cfg.limits.rateAfter};
-                '');
+                      # Bound artifact-serving impact on the host's uplink.
+                      limit_conn ${zoneName} ${toString cfg.limits.connPerIp};
+                    ''
+                    + lib.optionalString (cfg.limits.rate != "0") ''
+                      limit_rate ${cfg.limits.rate};
+                      limit_rate_after ${cfg.limits.rateAfter};
+                    '');
               };
 
               # Strict 404 for anything not matched above. When enableIndex is
