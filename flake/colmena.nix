@@ -113,6 +113,12 @@ in
         ];
       };
 
+      # Opt a leios node OUT of the daily recycle below.
+      nodeNoRecycle.systemd.services.cardano-node.serviceConfig = {
+        RuntimeMaxSec = mkForce "infinity";
+        RuntimeRandomizedExtraSec = mkForce 0;
+      };
+
       node-leios =
         # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         mkCustomNode "cardano-node-leios.inputs.cardano-node-leios"
@@ -147,7 +153,85 @@ in
               "ChainDB.AddBlockEvent.AddBlockValidation".severity = "Info";
             };
           };
+
+          # Temporary mitigation for the under-investigation leios cardano-node
+          # heap leak: recycle the service ~daily so memory can't grow unbounded
+          # between deploys. RuntimeMaxSec caps runtime; RuntimeRandomizedExtraSec
+          # adds 0..N jitter so the fleet doesn't restart in lockstep (thundering
+          # herd). Window 20-24h (<= 1 day). Restart=always (cardano-parts) brings
+          # the node back; TimeoutStopSec=600 leaves room for a clean shutdown.
+          # Analysis/observer nodes opt out via nodeNoRecycle. Remove once the
+          # leak is fixed.
+          systemd.services.cardano-node.serviceConfig = {
+            RuntimeMaxSec = 20 * 3600;
+            RuntimeRandomizedExtraSec = 4 * 3600;
+          };
         };
+
+      # Same as node-leios, but the cardano-node binary is rebuilt with
+      # info-table-provenance (IPE) flags for low-overhead `+RTS -hi` profiling.
+      # node-leios-ipe = {
+      #   imports = [
+      #     node-leios
+      #     nodeNoRecycle # profiling build: let the heap grow for leak analysis
+      #     {
+      #       cardano-parts.perNode.pkgs.cardano-node = lib.mkOverride 40 (
+      #         (inputs.cardano-node-leios.inputs.cardano-node-leios.project.x86_64-linux.appendModule {
+      #           modules = [{
+      #             ghcOptions = ["-finfo-table-map" "-fdistinct-constructor-tables"];
+      #             packages.plutus-core.components.library.ghcOptions = ["-finfo-table-map" "-fdistinct-constructor-tables"];
+      #           }];
+      #         }).exes.cardano-node
+      #       );
+      #     }
+      #   ];
+      # };
+
+      # Same as node-leios-ipe, but the node is ALSO built with the ghc-debug
+      # stub, so its live heap can be snapshotted on demand for offline retainer
+      # analysis (to find what retains the growing ARR_WORDS / STACK closures the
+      # -hi profile can only name, not attribute).
+      #
+      # `+RTS -hi` heap profiling comes along for free and is enabled below:
+      # one node run yields BOTH the continuous -hi eventlog and on-demand
+      # ghc-debug snapshots.
+      node-leios-ghc-debug = {
+        imports = [
+          node-leios
+          nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
+          {
+            cardano-parts.perNode.pkgs.cardano-node = lib.mkOverride 40
+              inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-node-ghc-debug;
+
+            # The ghc-debug stub serves here; the snapshot client reads the same
+            # path. /run/cardano-node is the node's RuntimeDirectory -- writable
+            # by the cardano-node user and ephemeral across restarts.
+            systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET =
+              "/run/cardano-node/ghc-debug.socket";
+
+            # IPE "free extra": continuous low-overhead info-table (-hi) heap
+            # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
+            # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
+            # default would be far too aggressive. rts_flags_override appends, so
+            # the compiled-in -N2/-A16m/etc. are preserved.
+            services.cardano-node = {
+              eventlog = true;
+              profiling = "space-info";
+              rts_flags_override = ["-i30"];
+            };
+
+            # Headless snapshot client on the host PATH. Capture EARLY (moderate
+            # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
+            # pauses the node for its duration:
+            #   cardano-ghc-debug-snapshot \
+            #     heap.snapshot \
+            #     "$GHC_DEBUG_SOCKET"
+            environment.systemPackages = [
+              inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-ghc-debug-snapshot
+            ];
+          }
+        ];
+      };
 
       eRel = relList: {
         imports = [
@@ -183,6 +267,7 @@ in
       leiosRel = {imports = [rel];};
 
       leiosCentrifuge.imports = [
+        nodeNoRecycle
         nixosModules.cardano-tx-centrifuge
         nixosModules.profile-leios-tx-centrifuge
         {
@@ -1045,7 +1130,8 @@ in
       # Remove `ccMon` until governance works in Dijkstra era
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
       leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp];};
-      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+      # nodeNoRecycle: centrifuge load target — stays up to receive load; recycle manually when load is off.
+      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx nodeNoRecycle (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
@@ -1060,7 +1146,7 @@ in
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 80) (group "leios3") node-leios leiosBp];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
-      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
