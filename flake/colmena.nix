@@ -74,15 +74,16 @@ in
         cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
 
         # Since all machines are assigned a group, this is a good place to include default aws instance tags
-        aws.instance.tags = {
-          # This group environment name will override the
-          # flake.cluster.infra.generic environment name for aws instances.
-          environment = config.flake.cardano-parts.cluster.groups.${name}.meta.environmentName;
-          group = name;
-        }
-        // optionalAttrs (hasPrefix "leios" name) {
-          costCenter = "\${var.tag_costCenterLeios}";
-        };
+        aws.instance.tags =
+          {
+            # This group environment name will override the
+            # flake.cluster.infra.generic environment name for aws instances.
+            environment = config.flake.cardano-parts.cluster.groups.${name}.meta.environmentName;
+            group = name;
+          }
+          // optionalAttrs (hasPrefix "leios" name) {
+            costCenter = "\${var.tag_costCenterLeios}";
+          };
       };
 
       # Cardano-node modules for group deployment
@@ -200,14 +201,14 @@ in
           node-leios
           nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
           {
-            cardano-parts.perNode.pkgs.cardano-node = lib.mkOverride 40
+            cardano-parts.perNode.pkgs.cardano-node =
+              lib.mkOverride 40
               inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-node-ghc-debug;
 
             # The ghc-debug stub serves here; the snapshot client reads the same
             # path. /run/cardano-node is the node's RuntimeDirectory -- writable
             # by the cardano-node user and ephemeral across restarts.
-            systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET =
-              "/run/cardano-node/ghc-debug.socket";
+            systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
 
             # IPE "free extra": continuous low-overhead info-table (-hi) heap
             # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
