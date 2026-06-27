@@ -185,6 +185,9 @@ in {
         variable = {
           # costCenter tag should remain secret in public repos
           "${infra.generic.costCenter}" = sensitiveString;
+          # Separate (secret) cost center for leios resources; applied as a
+          # per-instance tag override in flake/colmena.nix (group helper).
+          tag_costCenterLeios = sensitiveString;
         };
 
         provider.aws = forEach (attrNames cluster.regions) (region: {

@@ -79,6 +79,9 @@ in
           # flake.cluster.infra.generic environment name for aws instances.
           environment = config.flake.cardano-parts.cluster.groups.${name}.meta.environmentName;
           group = name;
+        }
+        // optionalAttrs (hasPrefix "leios" name) {
+          costCenter = "\${var.tag_costCenterLeios}";
         };
       };
 
