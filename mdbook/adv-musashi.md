@@ -1,0 +1,43 @@
+## Advanced Configuration: Musashi Testnet
+
+The Musashi Testnet (MusashiNet) is a prototype environment for evaluating
+the Ouroboros Leios protocol extension.  It is an advanced environment intended
+for testing and not for production use.
+
+The latest version available is the `ouroboros-leios` prototype build
+[`prototype-2026w26`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w26).
+
+Network magic: `164`
+
+#### Configuration files
+
+Compatible with the `ouroboros-leios` prototype build [`prototype-2026w26`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w26)
+
+```
+NOTE:
+* The new tracing system is now default.  See additional notes below.
+```
+
+- [Node Config](environments-pre/leios/config.json)
+- [Node Config Legacy](environments-pre/leios/config-legacy.json)
+- [Tracer Config](environments-pre/leios/tracer-config.json)
+- [DB Sync Config](environments-pre/leios/db-sync-config.json)
+- [Submit API Config](environments-pre/leios/submit-api-config.json)
+- [Node Topology](environments-pre/leios/topology.json)
+- [Peer Snapshot](environments-pre/leios/peer-snapshot.json)
+- [Byron Genesis](environments-pre/leios/byron-genesis.json)
+- [Shelley Genesis](environments-pre/leios/shelley-genesis.json)
+- [Alonzo Genesis](environments-pre/leios/alonzo-genesis.json)
+- [Conway Genesis](environments-pre/leios/conway-genesis.json)
+- [Dijkstra Genesis](environments-pre/leios/dijkstra-genesis.json)
+
+#### Consensus Mode
+
+The Musashi Testnet currently runs in Praos consensus mode.  The node config's
+`ConsensusMode` option is set to `PraosMode`.
+
+#### Additional Information
+
+- [Musashi Network](https://www.musashi.network/)
+- [Ouroboros Leios — Cardano Scaling](https://leios.cardano-scaling.org/)
+- [MusashiNet testnet — getting started](https://leios.cardano-scaling.org/docs/testnet/getting-started/)
