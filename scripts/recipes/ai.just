@@ -17,6 +17,10 @@ aiSshPersist := env_var_or_default("AI_SSH_PERSIST", "2h")
 ai-ssh +HOSTNAMES:
   #!/usr/bin/env bash
   set -euo pipefail
+  # Args are regexes (may contain '*'), iterated via unquoted word-splitting
+  # below. Disable globbing so a pattern like 'leios.*' is not pathname-expanded
+  # against the cwd (e.g. matching local leios.db / leios.full.tar.zst files).
+  set -f
 
   if [ ! -f .ssh_config ]; then
     echo "No .ssh_config found — run \`just save-ssh-config\` first." >&2
