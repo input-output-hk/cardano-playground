@@ -66,7 +66,7 @@ in
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
-          ++ optionals (hasPrefix "leios" name) [noBPerf amiZfs leiosLogging nixosModules.cardano-zfs-snapshots]
+          ++ optionals (hasPrefix "leios" name) [bperfNoPublish amiZfs leiosLogging nixosModules.cardano-zfs-snapshots]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
           ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
@@ -824,6 +824,39 @@ in
           })
         ];
       };
+
+      # leiosMinLogging = {
+      #   imports = [
+      #     (nixos: {
+      #       services = {
+      #         cardano-node.extraNodeInstanceConfig = _: {
+      #           TraceOptions = {
+      #             "" = {
+      #               backends = [
+      #                 "EKGBackend"
+      #                 "PrometheusSimple suffix 127.0.0.1 12798"
+      #                 "Stdout MachineFormat"
+      #               ];
+      #               detail = "DNormal";
+      #               severity = "Notice";
+      #             };
+
+      #             "BlockFetch.Decision".severity = "Notice";
+      #             "ChainDB.AddBlockEvent".severity = "Notice";
+      #             "ChainSync.Client".severity = "Notice";
+      #             "Consensus.LeiosKernel".severity = "Silence";
+      #             "Consensus.LeiosPeer".severity = "Silence";
+      #             "LeiosFetch.Remote".severity = "Silence";
+      #             "LeiosNotify.Remote".severity = "Silence";
+      #             "Mempool".severity = "Silence";
+      #           };
+      #         };
+
+      #         cardano-tracer.enable = false;
+      #       };
+      #     })
+      #   ];
+      # };
 
       buildkite = {imports = [nixosModules.buildkite-agent-containers];};
 
