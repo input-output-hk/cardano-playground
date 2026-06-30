@@ -193,7 +193,7 @@ It is the first blockchain platform to evolve out of a scientific philosophy and
 <br />
 <hr />
 <br />
-<center><sub><sup><span style="color:lightgray; font-style:italic">cf68b1e5747564fa25d5ea945b49fa900b4f7824</span></sup></sub></center>
+<center><sub><sup><span style="color:lightgray; font-style:italic">79372d3ae0d18533669e00c14404d2f6bcd1f927</span></sup></sub></center>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="environments"><a class="header" href="#environments">Environments</a></h1>
 <p>The official Cardano Environment configuration files.</p>
 <p>Environment description and configuration files available are:</p>
@@ -409,6 +409,7 @@ Guardrails script UTxO: <code>dc06746a898fd230f164f47a3d749348b65655b8fb388ff275
 <ul>
 <li><a href="adv-preview.html">Preview Testnet</a></li>
 <li><a href="adv-preprod.html">Pre-production Testnet</a></li>
+<li><a href="adv-musashi.html">Musashi Testnet</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="advanced-configuration-preview-testnet"><a class="header" href="#advanced-configuration-preview-testnet">Advanced Configuration: Preview Testnet</a></h2>
 <p>There is currently no pre-release version available for the preview environment.</p>
@@ -521,6 +522,41 @@ genesis can be avoided.</p>
 Treasury Withdrawal and Update Protocol Parameter proposals.</p>
 <p>Guardrails script address: <code>addr_test1wrazf7es2yngqh8jzexpv8v99g88xvx0nz83le2cea755eqf68ll6</code>
 Guardrails script UTxO: <code>9aabbac24d1e39cb3e677981c84998a4210bae8d56b0f60908eedb9f59efffc8#0</code></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="advanced-configuration-musashi-testnet"><a class="header" href="#advanced-configuration-musashi-testnet">Advanced Configuration: Musashi Testnet</a></h2>
+<p>The Musashi Testnet (MusashiNet) is a prototype environment for evaluating
+the Ouroboros Leios protocol extension.  It is an advanced environment intended
+for testing and not for production use.</p>
+<p>The latest version available is the <code>ouroboros-leios</code> prototype build
+<a href="https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w26"><code>prototype-2026w26</code></a>.</p>
+<p>Network magic: <code>164</code></p>
+<h4 id="configuration-files-5"><a class="header" href="#configuration-files-5">Configuration files</a></h4>
+<p>Compatible with the <code>ouroboros-leios</code> prototype build <a href="https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w26"><code>prototype-2026w26</code></a></p>
+<pre><code>NOTE:
+* The new tracing system is now default.  See additional notes below.
+</code></pre>
+<ul>
+<li><a href="environments-pre/leios/config.json">Node Config</a></li>
+<li><a href="environments-pre/leios/config-legacy.json">Node Config Legacy</a></li>
+<li><a href="environments-pre/leios/tracer-config.json">Tracer Config</a></li>
+<li><a href="environments-pre/leios/db-sync-config.json">DB Sync Config</a></li>
+<li><a href="environments-pre/leios/submit-api-config.json">Submit API Config</a></li>
+<li><a href="environments-pre/leios/topology.json">Node Topology</a></li>
+<li><a href="environments-pre/leios/peer-snapshot.json">Peer Snapshot</a></li>
+<li><a href="environments-pre/leios/byron-genesis.json">Byron Genesis</a></li>
+<li><a href="environments-pre/leios/shelley-genesis.json">Shelley Genesis</a></li>
+<li><a href="environments-pre/leios/alonzo-genesis.json">Alonzo Genesis</a></li>
+<li><a href="environments-pre/leios/conway-genesis.json">Conway Genesis</a></li>
+<li><a href="environments-pre/leios/dijkstra-genesis.json">Dijkstra Genesis</a></li>
+</ul>
+<h4 id="consensus-mode"><a class="header" href="#consensus-mode">Consensus Mode</a></h4>
+<p>The Musashi Testnet currently runs in Praos consensus mode.  The node config's
+<code>ConsensusMode</code> option is set to <code>PraosMode</code>.</p>
+<h4 id="additional-information"><a class="header" href="#additional-information">Additional Information</a></h4>
+<ul>
+<li><a href="https://www.musashi.network/">Musashi Network</a></li>
+<li><a href="https://leios.cardano-scaling.org/">Ouroboros Leios — Cardano Scaling</a></li>
+<li><a href="https://leios.cardano-scaling.org/docs/testnet/getting-started/">MusashiNet testnet — getting started</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="plutus-cost-model"><a class="header" href="#plutus-cost-model">Plutus Cost Model</a></h1>
 <p>Plutus cost model updates available are:</p>
 <ul>
