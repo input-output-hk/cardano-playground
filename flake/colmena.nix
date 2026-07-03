@@ -1180,7 +1180,7 @@ in
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 80) (group "leios3") node-leios leiosBp];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
-      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
