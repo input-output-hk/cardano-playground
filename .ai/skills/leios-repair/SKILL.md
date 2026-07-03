@@ -18,7 +18,7 @@ time**. This skill is the diagnose→fix playbook.
   (see *Mutation policy*).
 
 > **Status & maintenance** (this skill tracks a moving target — keep it current):
-> - *Last verified:* 2026-07-01, against the current Leios playground deploy.
+> - *Last verified:* 2026-07-03, against the current Leios playground deploy.
 > - *Reseed still required:* YES — forks are non-self-healing pre ouroboros-leios #890 / PR #2073.
 >   When that fix + pin bump lands, re-test whether forks self-heal and **downgrade/retire the reseed
 >   loop** here accordingly.
@@ -65,6 +65,13 @@ yet stop forging **endorser blocks**. Compare the counter across BPs (Mimir / mo
 — a flat line while peers climb (~3 EB/hr/pool) = EB stall. **Do NOT reseed for this** (the RB chain
 is fine); investigate the EB-forge path / restart as a last resort.
 
+**d) Wedged *behind* (BP _or_ relay).** A node — including a **relay** — can stall *behind* the main
+chain instead of forking ahead: frozen tip well below the relays, `LeiosBlockPointMissing` present,
+and **0** `AddedToCurrentChain` / `CompletedBlockFetch` / `DownloadedHeader` (it isn't even pulling
+headers). That's the EB-closure wedge (§4), not a competing branch — the fix is still a reseed. A
+wedged *relay* may leave its group's BP healthy (the BP sources blocks from other relays), but it
+does disqualify that relay as a reseed donor (§3).
+
 ## 2. Storage layout (what gets reseeded)
 
 Leios nodes use split storage:
@@ -81,7 +88,11 @@ artifact** (check per group); it's an **hourly** ZFS snapshot.
 verify sha → swap DBs (old → `*.fork-bak`, non-destructive) → restart. Works for BPs **and** dbsync
 hosts (db-sync auto-reconnects and rolls forward; no Postgres reseed needed).
 
-**Pick a donor** = a same-group relay on the main chain with a **fresh** artifact:
+**Pick a donor** = *any* relay **on the main chain** with a **fresh** artifact — normally the
+target's own group relay, but **cross-group is fine** (the artifact is main-chain state, a coherent
+same-relay `db-leios`+`leios.db` pair). **Never use a wedged relay as donor:** a relay stalled behind
+(§1d) keeps publishing, so its artifact is stale/behind — reseed *it* from a healthy relay in another
+group instead (e.g. leios3-rel-c-1 → leios2-rel-b-1, done 2026-07-03):
 ```sh
 for r in leios1-rel-a-1 leios2-rel-b-1 leios3-rel-c-1; do printf "%-16s " "$r"; \
   bash /tmp/sshw "$r" 'ls --time-style=+%H:%M:%SZ -l /ephemeral/nginx-artifacts/leios.full.tar.zst 2>/dev/null | awk "{print \$6}"; \
@@ -111,7 +122,9 @@ All share the end-state (solo fork, non-self-healing, reseed required) but diffe
 the trigger in the incident:
 - **EB-closure / data-availability wedge** — `LeiosBlockPointMissing` in the journal; RB selection
   blocked on a missing EB body (`StoreButDontChange` *caused by* the missing point). Triggers seen:
-  size-0 EB offer, EB slot-identity mismatch, tx-closure never requested.
+  size-0 EB offer, EB slot-identity mismatch, tx-closure never requested. **Hits relays too**, not
+  just BPs (2026-07-03: leios2-rel-b-1 wedged 20 behind, 0 header/fetch/adopt) — a relay wedges
+  *behind* rather than forking ahead (§1d).
 - **RB chain-selection non-convergence** (2026-07-01) — **zero** `LeiosBlockPointMissing`,
   `weightBoost`=0 everywhere; competing same-height blocks + each BP forges ahead on its own branch +
   self-favoring VRF tiebreak → `StoreButDontChange` on the main-chain blocks and never re-converges.
