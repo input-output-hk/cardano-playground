@@ -3,13 +3,32 @@
   name = "cardano-node-generic";
   rule = [
     {
+      # Leios is excluded here (see the leios-specific variant below): its chain
+      # density is much lower/variable, so normal inter-block gaps reach ~10 min
+      # and would false-fire this 7-minute trigger.
       alert = "cardano_node_blockheight_unchanged";
-      expr = "rate(cardano_node_metrics_blockNum_int[5m]) == 0";
+      expr = ''rate(cardano_node_metrics_blockNum_int{environment!~"leios"}[5m]) == 0'';
       for = "2m";
       labels.severity = "page";
       annotations = {
         summary = "{{$labels.instance}}: cardano-node blockheight unchanged for more than 7 minutes.";
         description = "{{$labels.instance}}: cardano-node blockheight unchanged for more than 7 minutes.";
+      };
+    }
+    {
+      # Leios-only block-stall alert with a substantially longer trigger. Leios
+      # runs at reduced, bursty chain density (many 3rd-party pools wedged), so
+      # normal gaps between blocks reach ~10 min (observed max ~587s). A ~20-minute
+      # trigger sits above that normal gap while still catching a genuine node
+      # wedge, which freezes for tens of minutes to hours (i.e. needs an operator
+      # reseed). 10m rate window + 10m `for` => pages after ~20 min of no new block.
+      alert = "cardano_node_blockheight_unchanged_leios";
+      expr = ''rate(cardano_node_metrics_blockNum_int{environment=~"leios"}[10m]) == 0'';
+      for = "10m";
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: cardano-node (leios) blockheight unchanged for more than 20 minutes.";
+        description = "{{$labels.instance}}: cardano-node (leios) blockheight unchanged for more than 20 minutes.";
       };
     }
     {
