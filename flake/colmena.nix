@@ -115,14 +115,14 @@ in
       };
 
       # Opt a leios node OUT of the daily recycle below.
-      nodeNoRecycle.systemd.services.cardano-node.serviceConfig = {
-        RuntimeMaxSec = mkForce "infinity";
-        RuntimeRandomizedExtraSec = mkForce 0;
-      };
+      # nodeNoRecycle.systemd.services.cardano-node.serviceConfig = {
+      #   RuntimeMaxSec = mkForce "infinity";
+      #   RuntimeRandomizedExtraSec = mkForce 0;
+      # };
 
       node-leios =
         # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
-        mkCustomNode "cardano-node-leios.inputs.cardano-node-leios"
+        mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
         // {
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
@@ -134,8 +134,6 @@ in
               # Filepath = "db-leios/leios.db";
               Filepath = "/ephemeral/cardano-node/leios.db";
             };
-
-            MempoolCapacityBytesOverride = 500000;
 
             # Additional cfg to debug network issues
             TraceOptions = {
@@ -163,10 +161,10 @@ in
           # the node back; TimeoutStopSec=600 leaves room for a clean shutdown.
           # Analysis/observer nodes opt out via nodeNoRecycle. Remove once the
           # leak is fixed.
-          systemd.services.cardano-node.serviceConfig = {
-            RuntimeMaxSec = 20 * 3600;
-            RuntimeRandomizedExtraSec = 4 * 3600;
-          };
+          # systemd.services.cardano-node.serviceConfig = {
+          #   RuntimeMaxSec = 20 * 3600;
+          #   RuntimeRandomizedExtraSec = 4 * 3600;
+          # };
         };
 
       # Same as node-leios, but the cardano-node binary is rebuilt with
@@ -196,43 +194,43 @@ in
       # `+RTS -hi` heap profiling comes along for free and is enabled below:
       # one node run yields BOTH the continuous -hi eventlog and on-demand
       # ghc-debug snapshots.
-      node-leios-ghc-debug = {
-        imports = [
-          node-leios
-          nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
-          {
-            cardano-parts.perNode.pkgs.cardano-node =
-              lib.mkOverride 40
-              inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-node-ghc-debug;
+      # node-leios-ghc-debug = {
+      #   imports = [
+      #     node-leios
+      #     nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
+      #     {
+      #       cardano-parts.perNode.pkgs.cardano-node =
+      #         lib.mkOverride 40
+      #         inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-node-ghc-debug;
 
-            # The ghc-debug stub serves here; the snapshot client reads the same
-            # path. /run/cardano-node is the node's RuntimeDirectory -- writable
-            # by the cardano-node user and ephemeral across restarts.
-            systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
+      #       # The ghc-debug stub serves here; the snapshot client reads the same
+      #       # path. /run/cardano-node is the node's RuntimeDirectory -- writable
+      #       # by the cardano-node user and ephemeral across restarts.
+      #       systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
 
-            # IPE "free extra": continuous low-overhead info-table (-hi) heap
-            # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
-            # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
-            # default would be far too aggressive. rts_flags_override appends, so
-            # the compiled-in -N2/-A16m/etc. are preserved.
-            services.cardano-node = {
-              eventlog = true;
-              profiling = "space-info";
-              rts_flags_override = ["-i30"];
-            };
+      #       # IPE "free extra": continuous low-overhead info-table (-hi) heap
+      #       # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
+      #       # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
+      #       # default would be far too aggressive. rts_flags_override appends, so
+      #       # the compiled-in -N2/-A16m/etc. are preserved.
+      #       services.cardano-node = {
+      #         eventlog = true;
+      #         profiling = "space-info";
+      #         rts_flags_override = ["-i30"];
+      #       };
 
-            # Headless snapshot client on the host PATH. Capture EARLY (moderate
-            # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
-            # pauses the node for its duration:
-            #   cardano-ghc-debug-snapshot \
-            #     heap.snapshot \
-            #     "$GHC_DEBUG_SOCKET"
-            environment.systemPackages = [
-              inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-ghc-debug-snapshot
-            ];
-          }
-        ];
-      };
+      #       # Headless snapshot client on the host PATH. Capture EARLY (moderate
+      #       # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
+      #       # pauses the node for its duration:
+      #       #   cardano-ghc-debug-snapshot \
+      #       #     heap.snapshot \
+      #       #     "$GHC_DEBUG_SOCKET"
+      #       environment.systemPackages = [
+      #         inputs.cardano-node-leios-ghc-debug.packages.x86_64-linux.cardano-ghc-debug-snapshot
+      #       ];
+      #     }
+      #   ];
+      # };
 
       eRel = relList: {
         imports = [
@@ -268,16 +266,18 @@ in
       leiosRel = {imports = [rel];};
 
       leiosCentrifuge.imports = [
-        nodeNoRecycle
+        # nodeNoRecycle
         nixosModules.cardano-tx-centrifuge
         nixosModules.profile-leios-tx-centrifuge
         {
-          services.cardano-tx-centrifuge.settings = {
-            rate_limit.params.tps = 25;
-            # observers.local-follower.params.confirmation_depth = 3;
-            workloads.synthetic-chain.targets.leios1-rel-a-1 = {
-              addr = "leios1-rel-a-1.play.dev.cardano.org";
-              port = 3001;
+          services = {
+            cardano-tx-centrifuge.settings = {
+              rate_limit.params.tps = 25;
+              # observers.local-follower.params.confirmation_depth = 3;
+              workloads.synthetic-chain.targets.leios1-rel-a-1 = {
+                addr = "leios1-rel-a-1.play.dev.cardano.org";
+                port = 3001;
+              };
             };
           };
         }
@@ -334,11 +334,28 @@ in
         ];
       };
 
-      mkCustomNode = flakeInput: let
+      # mkCustomNode = flakeInput: let
+      #   input = getAttrFromPath (splitString "." flakeInput) inputs;
+      # in {
+      #   imports = [
+      #     node
+      #     {
+      #       cardano-parts.perNode = {
+      #         pkgs = {
+      #           cardano-cli = mkForce input.packages.x86_64-linux.cardano-cli;
+      #           cardano-node = mkForce input.packages.x86_64-linux.cardano-node;
+      #           cardano-submit-api = mkForce input.packages.x86_64-linux.cardano-submit-api;
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
+
+      mkCustomNodePre = flakeInput: let
         input = getAttrFromPath (splitString "." flakeInput) inputs;
       in {
         imports = [
-          node
+          node-pre
           {
             cardano-parts.perNode = {
               pkgs = {
@@ -350,21 +367,6 @@ in
           }
         ];
       };
-
-      # mkCustomNodePre = flakeInput: {
-      #   imports = [
-      #     node-pre
-      #     {
-      #       cardano-parts.perNode = {
-      #         pkgs = {
-      #           cardano-cli = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-cli;
-      #           cardano-node = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-node;
-      #           cardano-submit-api = mkForce inputs.${flakeInput}.packages.x86_64-linux.cardano-submit-api;
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
 
       submit-api = {
         imports = [
@@ -533,9 +535,9 @@ in
             cardano-parts.perNode = {
               pkgs = {
                 inherit (inputs.cardano-node-leios.inputs.cardano-node-leios.packages.x86_64-linux) cardano-cli cardano-node;
-                cardano-db-sync = inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
-                cardano-db-tool = inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-tool:exe:cardano-db-tool";
-                cardano-db-sync-pkgs = {
+                cardano-db-sync = mkForce inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
+                cardano-db-tool = mkForce inputs.cardano-db-sync-leios.packages.x86_64-linux."cardano-db-tool:exe:cardano-db-tool";
+                cardano-db-sync-pkgs = mkForce {
                   inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
                   cardanoDbSyncHaskellPackages.cardano-db-tool.components.exes.cardano-db-tool = nixos.config.cardano-parts.perNode.pkgs.cardano-db-tool;
                   # This pin remains the same and doesn't need to be updated
@@ -661,7 +663,7 @@ in
       leiosFaucet = moduleWithSystem ({system}: _: {
         imports = [
           {
-            cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: config.cardano-parts.pkgs.cardano-faucet-ng);
+            cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: mkForce config.cardano-parts.pkgs.cardano-faucet-ng);
             services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
           }
           (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
@@ -1165,7 +1167,7 @@ in
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
       leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp];};
       # nodeNoRecycle: centrifuge load target — stays up to receive load; recycle manually when load is off.
-      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx nodeNoRecycle (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
