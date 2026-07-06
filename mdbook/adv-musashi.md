@@ -5,21 +5,20 @@ the Ouroboros Leios protocol extension.  It is an advanced environment intended
 for testing and not for production use.
 
 The latest version available is the `ouroboros-leios` prototype build
-[`prototype-2026w26`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w26).
+[`prototype-2026w27`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w27).
 
 Network magic: `164`
 
 #### Configuration files
 
-Compatible with the `ouroboros-leios` prototype build [`prototype-2026w26`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w26)
+Compatible with the `ouroboros-leios` prototype build [`prototype-2026w27`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w27)
 
 ```
 NOTE:
-* The new tracing system is now default.  See additional notes below.
+* Legacy tracing system is no longer available.  See additional notes below.
 ```
 
 - [Node Config](environments-pre/leios/config.json)
-- [Node Config Legacy](environments-pre/leios/config-legacy.json)
 - [Tracer Config](environments-pre/leios/tracer-config.json)
 - [DB Sync Config](environments-pre/leios/db-sync-config.json)
 - [Submit API Config](environments-pre/leios/submit-api-config.json)
