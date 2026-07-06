@@ -55,7 +55,7 @@ export NUM_CC_KEYS="3"
 #    32 for 2 hr epoch
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-05-29T00:00:00Z"
+export START_TIME="2026-07-01T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -80,9 +80,9 @@ export POOL_RELAY_PORT="3001"
 # For now, faucet will be:
 #   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
 #   1000000000000 (1M ADA) Pool delegation,
-#   10000000 (10 ADA) delegation UTxO @ 100 count
-# For stability, our pool pledge will be 10M ADA
-export POOL_PLEDGE="10000000000000"
+#   10000000 (10 ADA) delegation UTxO @ 500 count
+# For stability, our pool pledge will be 1M ADA
+export POOL_PLEDGE="1000000000000"
 
 # Basic secrets setup vars:
 export BULK_CREDS="$GENESIS_DIR/bulk.creds.all.json"
@@ -173,7 +173,7 @@ jq -S '.protocolParams += {
 # Adjust alonzo genesis to include to set execution unit limits and cost models
 # to van Rossem network standard.
 #
-# TODO: Investigate this -- it should create a cost model the way we want directly, ie: van Rossem, but it doesn't
+# This will become available once https://github.com/IntersectMBO/cardano-ledger/pull/5899 is merged and in use
 # jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
 #   "maxBlockExUnits": {
 #     "exUnitsMem": 72000000,
@@ -208,7 +208,7 @@ jq -S '. += {
 #   - | .TestDijkstraHardForkAtEpoch = 0
 #
 jq -S '.ExperimentalHardForksEnabled = true
-  | .MempoolCapacityBytesOverride = 25000000
+  | .MempoolCapacityBytesOverride = 500000
   | .LedgerDB *= {
       SnapshotInterval: 864
     }
@@ -361,7 +361,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((85823 - 60))
+synth-slots $((85629 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
@@ -377,7 +377,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 echo "Synthesize blocks until realtime plus desired offset"
 # This brings us to epoch 1 + 1 = 2
-synth-slots $((86363 - 60))
+synth-slots $((86236 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 2 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
@@ -414,7 +414,7 @@ done
 
 rm ./*.txsigned
 
-UTXO_NUM="100"
+UTXO_NUM="500"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
   '[range($n) | { ($addr): 10000000 }]'  | jq '.' > delegation.json
 
@@ -435,11 +435,13 @@ done
 
 rm ./*.txsigned
 
+# 1M default faucet stakepool delegation
 NOMENU=true scripts/setup-delegation-accounts.py \
   --testnet-magic "$TESTNET_MAGIC" \
   --signing-key-file "$PAYMENT_KEY.skey" \
   --wallet-mnemonic <(echo "$FAUCET_MNEMONIC") \
-  --num-accounts 100
+  --num-accounts 500 \
+  --delegation-amount 1000000000000
 
 rm ./*.txsigned
 
