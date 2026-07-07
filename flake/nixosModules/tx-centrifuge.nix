@@ -246,8 +246,7 @@
               mkDefault (
                 if nodeConfigFile != null
                 then nodeConfigFile
-                # Until the centrifuge branch is ported to 11.1, log metrics is required:
-                else pkgs.writers.writeJSON "node-config.json" (nodeConfig // {TurnOnLogMetrics = true;})
+                else pkgs.writers.writeJSON "node-config.json" nodeConfig
               );
 
             # The local nodetoclient observer is used for initial UTxO

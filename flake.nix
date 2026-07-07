@@ -14,7 +14,7 @@
     # Extra pins
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w27";
     cardano-node-leios-ghc-debug.url = "github:IntersectMBO/cardano-node/jl/leios-ipe";
-    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/bench/leios-11.0.1";
+    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/jl/leios-prototype";
     cardano-node-11-1-0-rc.url = "github:IntersectMBO/cardano-node/jl/11.1.0-sre";
     iohk-nix-11-1-0-rc.url = "github:input-output-hk/iohk-nix/node-11.1";
