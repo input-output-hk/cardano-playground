@@ -51,11 +51,15 @@ _: {
     # they are captured with SQLite's online backup (`.backup`), which yields a
     # consistent copy of a live DB without a node stop — and that consistent copy
     # is what gets served, never the live (mid-write) files. Only files matching
-    # `leiosDbGlob` whose header is `SQLite format 3` are backed up, so WAL/SHM
-    # companions and the published artifacts themselves are skipped.
+    # `leiosDbGlob` whose header is `SQLite format 3` are backed up, so live WAL/SHM
+    # companions and the published artifacts themselves are never backup sources.
+    # Each backed-up DB is shipped with 0-byte `-wal`/`-shm` members so extraction
+    # truncates any stale journal files in the destination (see the staging loop).
     # Artifacts are named `leios.*` (served + indexed) and extract into a
-    # cardano-node data dir (chain → `db-leios/`, plus the `leios.db*` files for
-    # `full`/`leiosDb`). Runs as root.
+    # cardano-node data dir as a single `<artifactDirName>/` tree (default
+    # `db/`): the chain dir is renamed in-archive from its on-disk basename
+    # (e.g. `db-leios`), and the `leios.db*` files are placed inside it
+    # (e.g. `db/leios.db`) for `full`/`leiosDb`. Runs as root.
     snapshotPublishScript = pkgs.writeShellApplication {
       name = "leios-chain-snapshot-publish";
       runtimeInputs = [
@@ -134,6 +138,13 @@ _: {
         chainName=$(basename "$src")
         chainmembers=${chainMembersArr}
 
+        # In-archive name for the node state dir: the on-disk chain dir (e.g.
+        # `db-leios`) is renamed to this in every artifact so consumers extract
+        # the directory name most node setups already use (default `db`). Two
+        # transforms cover the bare dir member and any `tarPaths` submembers.
+        artDir=${lib.escapeShellArg csCfg.artifactDirName}
+        xformArgs=(--transform "s,^$chainName/,$artDir/," --transform "s,^$chainName$,$artDir,")
+
         mkdir -p "$servedDir"
         created=$(${zfs} get -H -o value creation "$snap")
         now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -141,9 +152,12 @@ _: {
         leiosfiles=()
         ${lib.optionalString needLeios ''
           # Consistent online copies of the live leios SQLite DB(s) — no node stop.
+          # Staged under `$artDir/` so their in-archive paths land inside the
+          # renamed chain dir (e.g. `db/leios.db`) and `full` extracts one tree.
           leiosDbDir=${lib.escapeShellArg csCfg.leiosDbDir}
           stage=$(mktemp -d "$servedDir/.leiosdb-stage.XXXXXX")
           trap 'rm -rf "$stage"' EXIT
+          mkdir -p "$stage/$artDir"
           shopt -s nullglob
           for f in "$leiosDbDir"/${csCfg.leiosDbGlob}; do
             [ -f "$f" ] || continue
@@ -152,15 +166,25 @@ _: {
             # "ignored null byte" warnings from command substitution.
             [ "$(head -c 16 "$f" 2>/dev/null | od -An -tx1 | tr -d ' \n')" = "53514c69746520666f726d6174203300" ] || continue
             bn=$(basename "$f")
-            if nice -n 19 ionice -c3 sqlite3 "$f" ".backup '$stage/$bn'" 2>/dev/null; then
+            if nice -n 19 ionice -c3 sqlite3 "$f" ".backup '$stage/$artDir/$bn'" 2>/dev/null; then
               echo "leios-chain-snapshot: online-backed-up $bn"
+              # Ship 0-byte -wal/-shm companions alongside each backed-up DB.
+              # The .backup output is complete standalone; but if a consumer
+              # extracts over a data dir that still has a stale journal from a
+              # previous run, SQLite pairs the fresh main file with the old
+              # mismatched -wal and fails open with "database disk image is
+              # malformed". Extraction of these empty members truncates any
+              # such leftovers (SQLite treats empty companions as absent and
+              # reinitializes them), so no manual rm is needed on restore.
+              : > "$stage/$artDir/$bn-wal"
+              : > "$stage/$artDir/$bn-shm"
             else
               echo "leios-chain-snapshot: WARNING sqlite online backup of $bn failed, omitting" >&2
-              rm -f "$stage/$bn"
+              rm -f "$stage/$artDir/$bn" "$stage/$artDir/$bn-wal" "$stage/$artDir/$bn-shm"
             fi
           done
           shopt -u nullglob
-          mapfile -t leiosfiles < <(cd "$stage" && find . -maxdepth 1 -type f -printf '%f\n' | sort)
+          mapfile -t leiosfiles < <(cd "$stage" && find "$artDir" -maxdepth 1 -type f | sort)
         ''}
 
         # publish <artifact> <tar-args...>  (atomic; world-readable).
@@ -191,14 +215,14 @@ _: {
         )
 
         ${lib.optionalString csCfg.artifacts.chain.enable ''
-          publish ${lib.escapeShellArg csCfg.artifacts.chain.name} -C "$snapParent" "''${chainmembers[@]}"
+          publish ${lib.escapeShellArg csCfg.artifacts.chain.name} "''${xformArgs[@]}" -C "$snapParent" "''${chainmembers[@]}"
         ''}
         ${lib.optionalString csCfg.artifacts.full.enable ''
           if [ ''${#leiosfiles[@]} -gt 0 ]; then
-            publish ${lib.escapeShellArg csCfg.artifacts.full.name} -C "$snapParent" "''${chainmembers[@]}" -C "$stage" "''${leiosfiles[@]}"
+            publish ${lib.escapeShellArg csCfg.artifacts.full.name} "''${xformArgs[@]}" -C "$snapParent" "''${chainmembers[@]}" -C "$stage" "''${leiosfiles[@]}"
           else
             echo "leios-chain-snapshot: WARNING no leios SQLite DB captured; '${csCfg.artifacts.full.name}' will contain the chain only" >&2
-            publish ${lib.escapeShellArg csCfg.artifacts.full.name} -C "$snapParent" "''${chainmembers[@]}"
+            publish ${lib.escapeShellArg csCfg.artifacts.full.name} "''${xformArgs[@]}" -C "$snapParent" "''${chainmembers[@]}"
           fi
         ''}
         ${lib.optionalString csCfg.artifacts.leiosDb.enable ''
@@ -395,7 +419,21 @@ _: {
           description = ''
             Absolute path of the chain DB directory on the live filesystem, on
             the ZFS `dataset`. Each artifact tars the chain relative to this
-            directory's parent so it extracts as e.g. `db-leios/`.
+            directory's parent; in-archive the directory is renamed to
+            `artifactDirName` (default `db`), regardless of its on-disk name.
+          '';
+        };
+
+        artifactDirName = lib.mkOption {
+          type = lib.types.str;
+          default = "db";
+          description = ''
+            Directory name the node state extracts into, inside every artifact.
+            The chain DB dir is renamed in-archive from its on-disk basename
+            (e.g. `db-leios`) to this name, and the leios SQLite DB(s) are
+            placed inside it (e.g. `db/leios.db`) for the `full` and `leiosDb`
+            artifacts, so consumers unpack a single directory tree matching
+            the common cardano-node database-directory default (`db`).
           '';
         };
 
