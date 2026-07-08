@@ -159,6 +159,7 @@ _: {
           trap 'rm -rf "$stage"' EXIT
           mkdir -p "$stage/$artDir"
           shopt -s nullglob
+          # shellcheck disable=SC2043 # leiosDbGlob is an exact filename by default but may be a glob
           for f in "$leiosDbDir"/${csCfg.leiosDbGlob}; do
             [ -f "$f" ] || continue
             # Only genuine SQLite main DBs (skips -wal/-shm and our own artifacts).
@@ -480,12 +481,16 @@ _: {
 
         leiosDbGlob = lib.mkOption {
           type = lib.types.str;
-          default = "leios.*";
+          default = "leios.db";
           description = ''
             Glob (matched in `leiosDbDir`) of candidate leios DB files for the
-            `full`/`leiosDb` artifacts. Only matches whose header is
-            `SQLite format 3` are backed up, so WAL/SHM companions and any
-            published `leios.*` artifacts are automatically skipped.
+            `full`/`leiosDb` artifacts. Deliberately an exact name by default:
+            a wildcard like `leios.*` also matches operator backup/debris
+            copies beside the live DB (e.g. `leios.db.genesis-bak`), which are
+            genuine SQLite files and would pass the header check and ship in
+            the artifacts. Widen only if this node really runs multiple leios
+            DBs. Non-SQLite matches (WAL/SHM companions) are still skipped by
+            the `SQLite format 3` header check.
           '';
         };
 
