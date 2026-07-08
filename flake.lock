@@ -1467,16 +1467,16 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1783387005,
-        "narHash": "sha256-nozb0jIHunbkEGuAFtOVcbjCPBuxyjEKZWvemuEu788=",
+        "lastModified": 1783545322,
+        "narHash": "sha256-iXZ8Q4k4t2AkVScIaEsLSiVB9A/p2yNONV6nPw7yV3Q=",
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "08f48dac98caffc625da6c5674e2bc0d2aa92f48",
+        "rev": "356f1891163727ea9174617dfe14c20ddd777cad",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "jl/leios-prototype",
+        "ref": "leios-prototype-2026w27",
         "repo": "cardano-db-sync",
         "type": "github"
       }
@@ -3800,11 +3800,11 @@
     "hackageNix": {
       "flake": false,
       "locked": {
-        "lastModified": 1783373144,
-        "narHash": "sha256-KoHLKxz+/5iZ4BXQ0iidv9DG1v9l93Dv2I5NRkdRsns=",
+        "lastModified": 1783408277,
+        "narHash": "sha256-PkZ6wbDZXZQG6hqNFHbqGCHSuuZN7dMi3kxHDbGxQbI=",
         "owner": "input-output-hk",
         "repo": "hackage.nix",
-        "rev": "abacd8da3b533a3c87e0de0515f2480d54cb755c",
+        "rev": "c944e2bc7bed38788e39ecb63362b8f11fed1ac6",
         "type": "github"
       },
       "original": {
