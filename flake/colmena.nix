@@ -1210,7 +1210,7 @@ in
       misc1-webserver-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") webserver (varnishRamPct 50)];};
       misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel disableAlertCount];};
       misc1-wg-b-1 = {imports = [eu-north-1 t3-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel disableAlertCount];};
-      misc1-matomo-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.matomo];};
+      misc1-matomo-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.matomo disableAlertCount];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
