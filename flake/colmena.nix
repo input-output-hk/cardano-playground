@@ -302,22 +302,6 @@ in
         {services.leios-files-nginx.acmeEmail = "devops@iohk.io";}
       ];
 
-      node-10-7-1 = let
-        caPkgs = inputs.cardano-parts.inputs.capkgs.packages.x86_64-linux;
-        pkg = name: caPkgs."${name}-input-output-hk-cardano-node-10-7-1-045bc18";
-      in {
-        imports = [
-          node
-          {
-            cardano-parts.perNode.pkgs = {
-              cardano-cli = mkForce (pkg "cardano-cli");
-              cardano-node = mkForce ((pkg "cardano-node") // {version = "10.7.1";});
-              cardano-submit-api = mkForce (pkg "cardano-submit-api");
-            };
-          }
-        ];
-      };
-
       node-11-1-0-rc = {
         imports = [
           # Base cardano-node and tracer service
@@ -1208,7 +1192,7 @@ in
 
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001)];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-10-7-1 logGc (openFwTcp 3001)];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node logGc (openFwTcp 3001)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
