@@ -622,7 +622,7 @@ query-gov-action-status ENV ACTION_ID ACTION_IDX:
         .[2] // {}
           | to_entries as \$entries
           | if (\$entries | length) > 0
-            then []
+            then \$entries[]
               | \"Adding $GREEN\(.key)-\(.value)\"
               | split(\"-\")
               | \"\(.[0])$OFF ► $BLUE\(.[1])$OFF (max term epoch \(.[2]))\"

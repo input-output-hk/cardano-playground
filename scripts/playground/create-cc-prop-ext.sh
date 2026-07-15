@@ -38,10 +38,12 @@ PROPOSAL_ARGS=(
   "--prev-governance-action-index" "$PREV_GOV_ACTION_INDEX"
   "--check-anchor-data"
   "--threshold" "$THRESHOLD"
+  "--add-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc/init-cold/credential.plutus.hash")"
+  "--epoch" "1720"
   "--add-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc2/init-cold/credential.plutus.hash")"
-  "--epoch" "1356"
+  "--epoch" "1720"
   "--add-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc3/init-cold/credential.plutus.hash")"
-  "--epoch" "1356"
+  "--epoch" "1720"
 )
 
 ACTION="update-committee" \

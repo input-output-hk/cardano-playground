@@ -74,7 +74,7 @@ def 'main sign' [
     print -e $"Signing ($file) for env ($node_env)..."
     # `| ignore` keeps cardano-signer's stdout from polluting `prepare`'s JSON
     # output; the signed doc is written to --out-file regardless.
-    (^cardano-signer sign --cip100 --data-file $file --secret-key $skey_file --author-name $"IOG CBU Node SRE for ($node_env | str capitalize)" --replace --out-file $signed) | ignore
+    (^cardano-signer sign --cip100 --data-file $file --secret-key $skey_file --author-name $"IO Labs Node SRE for ($node_env | str capitalize)" --replace --out-file $signed) | ignore
     # Verify the produced witness before trusting it.
     ^cardano-signer verify --cip100 --data-file $signed --json | from json | ignore
     print -e $"Signed + verified -> ($signed)"
