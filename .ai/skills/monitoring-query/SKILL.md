@@ -1,6 +1,6 @@
 ---
 name: monitoring-query
-description: Query a cardano-parts cluster's Grafana Loki (logs) and Mimir (metrics) datasources directly via the Grafana datasource-proxy API for cluster log/metric analysis. Use when investigating node behavior, forks, log events, or metrics on a monitored environment instead of asking the user for manual Grafana exports.
+description: Query a cardano-parts cluster's Grafana Loki (logs) and Mimir (metrics) datasources directly via the Grafana datasource-proxy API for cluster log/metric analysis. Use when investigating node behavior, cardano network forks, log events, or metrics on a monitored environment instead of asking the user for manual Grafana exports.
 ---
 
 # Querying cardano-parts monitoring (Loki logs + Mimir metrics) from the CLI

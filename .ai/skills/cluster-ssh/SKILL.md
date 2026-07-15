@@ -18,11 +18,11 @@ shared sockets. The agent never needs AWS creds: the master process holds the SS
 This is the escalation path from the `monitoring-query` skill: use telemetry first; come here when
 you need to read units/files/DB state on the box. **Default to read-only commands** (`journalctl`,
 `systemctl status`, `zfs list`, `jq`, `cat`, `ls`, `db-analyser --help`). Anything that mutates
-state (restart, edit, destroy, write) must be confirmed with the SRE first.
+state (restart, edit, destroy, write) MUST be confirmed with the SRE first.
 
 ## 1. SRE opens the masters (their side)
 
-From the repo root the SRE runs the `ai-ssh` recipe with the host(s) to expose:
+From the repo root the SRE runs the `just ai-ssh` recipe with the host(s) to expose:
 
 ```sh
 just ai-ssh <host> [<host> ...]      # e.g. just ai-ssh group1-role-a-1
@@ -93,7 +93,7 @@ Naming: `<env><n>-<role>-<az>-1`, e.g. `leios1-rel-a-1`, `preprod2-bp-b-1`. Bloc
 ## Moving bulk data between hosts (`wush`)
 
 The agent reaches hosts only through the SRE's SSM/ControlMaster path, and cluster hosts generally
-**cannot SSH each other directly** (SSM-only; inter-host port 22 is typically closed). So relaying a
+**cannot SSH to each other directly** (SSM-only; inter-host port 22 is typically closed). So relaying a
 large file host→agent→host is slow and fragile — it crosses the SSM tunnel twice and dies if a master
 flaps. When you need to move bulk state between two machines — e.g. transplanting a node's database /
 state directory from a healthy donor onto a broken one — use **`wush`** if it's installed
@@ -123,7 +123,7 @@ key from the output, then run the `wush rsync` client on the other host. One run
 handles multiple parallel clients, so a single donor can fan its data out to several recipients at once.
 
 **Transplanting live state safely:**
-- Briefly **stop the service on the source** for an on-disk-consistent copy, then restart — never copy
+- Briefly **stop the service on the source** for an on-disk-consistent copy, then restart — NEVER copy
   a database that's being written. To shorten the source's downtime, stage a scratch copy while it's
   stopped and serve the transfer from that. A plain `cp` of the state dir *may* be near-instant on ZFS
   (a `copy_file_range` block-clone) — but only with OpenZFS ≥ 2.2, the `block_cloning` pool feature,
