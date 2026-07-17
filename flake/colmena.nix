@@ -1131,7 +1131,7 @@ in
       preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node noBPerf amiZfs logGc submit-api];};
       preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-11-1-0-rc submit-api lsm noBPerf amiZfs];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node bp legacyT mithrilRelease (declMRel "preview2-rel-b-1")];};
+      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node bp legacyT mithrilRelease (declMRel "preview2-rel-b-1") ccMon];};
       preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node rel legacyT];};
       preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node rel mithrilRelay (declMSigner "preview2-bp-b-1")];};
       preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node rel tcpTxOpt];};
@@ -1219,7 +1219,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node bp];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync smash sanchonetSmash];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync smash sanchonetSmash ccMon];};
       sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node rel sanchoPeers];};
       # ---------------------------------------------------------------------------------------------------------
     };
