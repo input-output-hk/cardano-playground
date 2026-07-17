@@ -45,7 +45,8 @@ _: {
     #   - full    : the chain DB subdir + the leios.db* files (one download)
     #   - leiosDb : the leios.db* files only
     # The chain DB is read from the newest rolling ZFS snapshot that
-    # `cardano-zfs-snapshots` produces (<dataset>@<prefix>-*) — atomic and
+    # the cardano-parts `profile-zfs-snapshots` module produces
+    # (<dataset>@<prefix>-*) — atomic and
     # crash-consistent without stopping the node. The leios SQLite DB(s) live on
     # separate fast storage (e.g. ext2 on instance store, NOT the ZFS pool), so
     # they are captured with SQLite's online backup (`.backup`), which yields a
@@ -99,11 +100,11 @@ _: {
         # (-p preserves the archived modes; the dest must be writable by the node user).
         ownerArgs=(--owner=0 --group=0)
 
-        # Newest snapshot of the form <dataset>@<prefix>-* (from cardano-zfs-snapshots).
+        # Newest snapshot of the form <dataset>@<prefix>-* (from profile-zfs-snapshots).
         snap=$(${zfs} list -H -t snapshot -o name -s creation 2>/dev/null \
                  | { grep -F "$dataset@$prefix-" || true; } | tail -n1)
         if [ -z "$snap" ]; then
-          echo "leios-chain-snapshot: no $dataset@$prefix-* snapshot found (is cardano-zfs-snapshots running here?), skipping" >&2
+          echo "leios-chain-snapshot: no $dataset@$prefix-* snapshot found (is zfs-snapshots running here?), skipping" >&2
           exit 0
         fi
         snapname=''${snap#*@}
@@ -244,7 +245,7 @@ _: {
     #
     # When chainSnapshot.enable is on, a timer publishes compressed tarball(s)
     # into servedDir: the chain DB cut from the rolling ZFS snapshots that the
-    # `cardano-zfs-snapshots` module produces, and/or a CONSISTENT online backup
+    # `profile-zfs-snapshots` module produces, and/or a CONSISTENT online backup
     # of the live leios SQLite DB(s). Choose any of: chain-only, chain+leios.db
     # (full), or leios.db-only — letting nodes bootstrap from a recent snapshot
     # instead of syncing from genesis. Only the consistent published artifacts
@@ -406,7 +407,7 @@ _: {
             Whether to periodically publish compressed tarball(s) of cardano-node
             state into servedDir. The chain DB is cut from the newest rolling ZFS
             snapshot named `<dataset>@<snapshotPrefix>-*` (as produced by the
-            `cardano-zfs-snapshots` module); the leios SQLite DB(s) are captured
+            `profile-zfs-snapshots` module); the leios SQLite DB(s) are captured
             via online backup from `leiosDbDir`. Both are consistent without
             stopping the node. When enabled, `sourcePath` must be set; enable the
             artifacts you want under `artifacts`.
@@ -443,7 +444,7 @@ _: {
           default = "tank/root";
           description = ''
             ZFS dataset whose rolling snapshots provide the chain DB. Set to
-            match `services.cardano-zfs-snapshots.dataset`, and to be the
+            match `services.zfs-snapshots.dataset`, and to be the
             dataset that actually holds `sourcePath`.
           '';
         };
@@ -451,7 +452,7 @@ _: {
         snapshotPrefix = lib.mkOption {
           type = lib.types.str;
           default = "autosnap";
-          description = "Snapshot name prefix to consume. Set to match `services.cardano-zfs-snapshots.prefix`.";
+          description = "Snapshot name prefix to consume. Set to match `services.zfs-snapshots.prefix`.";
         };
 
         tarPaths = lib.mkOption {

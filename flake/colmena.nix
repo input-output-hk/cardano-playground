@@ -66,7 +66,7 @@ in
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
-          ++ optionals (hasPrefix "leios" name) [bperfNoPublish amiZfs leiosLogging nixosModules.cardano-zfs-snapshots]
+          ++ optionals (hasPrefix "leios" name) [bperfNoPublish amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
           ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
