@@ -114,7 +114,7 @@ in
         ];
       };
 
-      # Opt a leios node OUT of the daily recycle below.
+      # Opt a leios node OUT of the 2-day recycle below.
       # nodeNoRecycle.systemd.services.cardano-node.serviceConfig = {
       #   RuntimeMaxSec = mkForce "infinity";
       #   RuntimeRandomizedExtraSec = mkForce 0;
@@ -154,17 +154,18 @@ in
           };
 
           # Temporary mitigation for the under-investigation leios cardano-node
-          # heap leak: recycle the service ~daily so memory can't grow unbounded
-          # between deploys. RuntimeMaxSec caps runtime; RuntimeRandomizedExtraSec
-          # adds 0..N jitter so the fleet doesn't restart in lockstep (thundering
-          # herd). Window 20-24h (<= 1 day). Restart=always (cardano-parts) brings
-          # the node back; TimeoutStopSec=600 leaves room for a clean shutdown.
-          # Analysis/observer nodes opt out via nodeNoRecycle. Remove once the
-          # leak is fixed.
-          # systemd.services.cardano-node.serviceConfig = {
-          #   RuntimeMaxSec = 20 * 3600;
-          #   RuntimeRandomizedExtraSec = 4 * 3600;
-          # };
+          # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
+          # host RAM in ~3 days): recycle the service every ~2 days so memory
+          # can't grow unbounded. RuntimeMaxSec caps runtime;
+          # RuntimeRandomizedExtraSec adds 0..N jitter so the fleet doesn't
+          # restart in lockstep (thundering herd). Window 44-48h (<= 2 days).
+          # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
+          # leaves room for a clean shutdown. Analysis/observer nodes opt out via
+          # nodeNoRecycle. Remove once the leak is fixed.
+          systemd.services.cardano-node.serviceConfig = {
+            RuntimeMaxSec = 44 * 3600;
+            RuntimeRandomizedExtraSec = 4 * 3600;
+          };
         };
 
       # Same as node-leios, but the cardano-node binary is rebuilt with
@@ -194,56 +195,56 @@ in
       # `+RTS -hi` heap profiling comes along for free and is enabled below:
       # one node run yields BOTH the continuous -hi eventlog and on-demand
       # ghc-debug snapshots.
-      node-leios-ghc-debug = {
-        imports = [
-          node-leios
-          # nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
-          {
-            cardano-parts.perNode.pkgs.cardano-node =
-              lib.mkOverride 40
-              inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-node-debug;
+      # node-leios-ghc-debug = {
+      #   imports = [
+      #     node-leios
+      #     nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
+      #     {
+      #       cardano-parts.perNode.pkgs.cardano-node =
+      #         lib.mkOverride 40
+      #         inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-node-debug;
 
-            # The ghc-debug stub serves here; the snapshot client reads the same
-            # path. /run/cardano-node is the node's RuntimeDirectory -- writable
-            # by the cardano-node user and ephemeral across restarts.
-            systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
+      #       # The ghc-debug stub serves here; the snapshot client reads the same
+      #       # path. /run/cardano-node is the node's RuntimeDirectory -- writable
+      #       # by the cardano-node user and ephemeral across restarts.
+      #       systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
 
-            # IPE "free extra": continuous low-overhead info-table (-hi) heap
-            # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
-            # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
-            # default would be far too aggressive. rts_flags_override appends, so
-            # the compiled-in -N2/-A16m/etc. are preserved.
-            #
-            # `-l-agu` trims the eventlog to what eventlog2html needs: it comes
-            # after the service's `-l`, and its class mods apply cumulatively --
-            # `-a` disables every event class, then `g`/`u` re-enable GC/heap
-            # and user events (heap-profile samples + IPE map still included).
-            # Without it, scheduler events dominate and a multi-day -hi run
-            # produces a multi-GB eventlog (6.4GB in 14h observed).
-            #
-            # The flush interval forces buffered events to disk periodically:
-            # eventlog writes sit in ~2MB per-capability buffers that only
-            # flush when full, and with the slim -l-agu classes that can take
-            # tens of minutes -- without it the on-disk log lags far behind and
-            # a mid-run copy is missing the newest samples.
-            services.cardano-node = {
-              eventlog = true;
-              profiling = "space-info";
-              rts_flags_override = ["-i30" "-l-agu" "--eventlog-flush-interval=300"];
-            };
+      #       # IPE "free extra": continuous low-overhead info-table (-hi) heap
+      #       # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
+      #       # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
+      #       # default would be far too aggressive. rts_flags_override appends, so
+      #       # the compiled-in -N2/-A16m/etc. are preserved.
+      #       #
+      #       # `-l-agu` trims the eventlog to what eventlog2html needs: it comes
+      #       # after the service's `-l`, and its class mods apply cumulatively --
+      #       # `-a` disables every event class, then `g`/`u` re-enable GC/heap
+      #       # and user events (heap-profile samples + IPE map still included).
+      #       # Without it, scheduler events dominate and a multi-day -hi run
+      #       # produces a multi-GB eventlog (6.4GB in 14h observed).
+      #       #
+      #       # The flush interval forces buffered events to disk periodically:
+      #       # eventlog writes sit in ~2MB per-capability buffers that only
+      #       # flush when full, and with the slim -l-agu classes that can take
+      #       # tens of minutes -- without it the on-disk log lags far behind and
+      #       # a mid-run copy is missing the newest samples.
+      #       services.cardano-node = {
+      #         eventlog = true;
+      #         profiling = "space-info";
+      #         rts_flags_override = ["-i30" "-l-agu" "--eventlog-flush-interval=300"];
+      #       };
 
-            # Headless snapshot client on the host PATH. Capture EARLY (moderate
-            # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
-            # pauses the node for its duration:
-            #   cardano-ghc-debug-snapshot \
-            #     heap.snapshot \
-            #     "$GHC_DEBUG_SOCKET"
-            environment.systemPackages = [
-              inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-debug
-            ];
-          }
-        ];
-      };
+      #       # Headless snapshot client on the host PATH. Capture EARLY (moderate
+      #       # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
+      #       # pauses the node for its duration:
+      #       #   cardano-ghc-debug-snapshot \
+      #       #     heap.snapshot \
+      #       #     "$GHC_DEBUG_SOCKET"
+      #       environment.systemPackages = [
+      #         inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-debug
+      #       ];
+      #     }
+      #   ];
+      # };
 
       eRel = relList: {
         imports = [
@@ -1161,7 +1162,6 @@ in
       # Remove `ccMon` until governance works in Dijkstra era
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
       leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp];};
-      # nodeNoRecycle: centrifuge load target — stays up to receive load; recycle manually when load is off.
       leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
@@ -1177,7 +1177,7 @@ in
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 80) (group "leios3") node-leios leiosBp];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
-      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
