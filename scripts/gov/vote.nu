@@ -27,17 +27,19 @@
 #   # Source the node env first so the socket + magic are available:
 #   source <(just set-default-cardano-env preview)
 #
-#   scripts/playground/vote.nu preview <action-tx-id> <action-idx>
-#   scripts/playground/vote.nu preview <action-tx-id> 0 --decision yes
-#   scripts/playground/vote.nu preview <action-tx-id> 0 --anchor-url ipfs://...
-#   scripts/playground/vote.nu leios  <action-tx-id> 0 --dry-run
+#   scripts/gov/vote.nu preview <action-tx-id> <action-idx>
+#   scripts/gov/vote.nu preview <action-tx-id> 0 --decision yes
+#   scripts/gov/vote.nu preview <action-tx-id> 0 --anchor-url ipfs://...
+#   scripts/gov/vote.nu leios  <action-tx-id> 0 --dry-run
 #
 # The --decision flag sets the default offered at each per-voter prompt
 # (still overridable inline). --anchor-url supplies the CC voting rationale
 # anchor (required for orchestrator-CC votes; optional otherwise) — or instead
-# pass --rationale-file <doc> + --ipfs-creds-secret <sops-path> to have the tool
-# sign + upload the rationale to IPFS (via rationale.nu) and use the resulting
-# anchor automatically.
+# pass --rationale-file <doc> (with --blockfrost-project-id / $env.BLOCKFROST_IPFS_PROJECT_ID)
+# to have the tool sign (CIP-100 author = $env.CC_RATIONALE_AUTHOR, default
+# "CC member") + upload the rationale to IPFS (via rationale.nu) and use the
+# resulting anchor automatically. When --anchor-hash is omitted, the hash is fetched from
+# the anchor URL via $env.IPFS_GATEWAY_URI (defaults to https://ipfs.io).
 #
 # Submission is opt-in: by default the tool builds + signs and writes the signed
 # tx(s) to the working dir WITHOUT submitting. Pass --submit to submit (still
@@ -55,18 +57,13 @@
 #
 # DEPENDENCIES: just (sops-decrypt-binary), cardano-cli (or cardano-cli-ng),
 # jq, and for orchestrator-CC: orchestrator-cli. All provided by the devShell.
-const allowed_envs = [
-  mainnet
-  preprod
-  preview
-  sanchonet
-  dijkstra
-  leios
-  demo
-]
-# Env -> testnet magic, matching checkEnvWithoutOverride in the Justfile. Used to
-# verify the sourced node env actually matches the env being voted on.
-const env_magic = {
+# Baked-in Cardano network magics: the public networks, the iohk-nix testnets
+# (dijkstra, leios), and the default local cluster (demo). These are standard
+# enough to live here (dijkstra/leios come from iohk-nix and are heading into
+# the cardano book). Additional downstream-only envs are supplied via the
+# EXTRA_ENV_MAGIC env var (a JSON object of "<env>: <magic>" pairs), typically
+# exported from custom.just, e.g.: export EXTRA_ENV_MAGIC := '{"myenv":"999"}'
+const std_env_magic = {
   mainnet: "764824073"
   preprod: "1"
   preview: "2"
@@ -74,6 +71,16 @@ const env_magic = {
   dijkstra: "6"
   leios: "164"
   demo: "42"
+}
+# Env -> testnet magic, merging the standard networks with any downstream extras.
+# Used to verify the sourced node env matches the env being voted on, and (via
+# its keys) as the accepted-env allow-list. Matches checkEnvWithoutOverride in
+# the Justfile.
+def env-magic []: nothing -> record {
+  let extra = ($env.EXTRA_ENV_MAGIC? | default "" | str trim)
+  if ($extra | is-empty) { $std_env_magic } else {
+    $std_env_magic | merge ($extra | from json)
+  }
 }
 # ─── small helpers ──────────────────────────────────────────────────────────
 # Pick the cardano-cli binary the rest of the repo would pick for this env.
@@ -88,7 +95,7 @@ def select-cli [nenv: string, override: string] {
     "cardano-cli"
   } else if $unstable == "true" {
     "cardano-cli-ng"
-  } else if ($nenv =~ '^(mainnet|preprod|preview|leios)$') {
+  } else if ($nenv in (["mainnet", "preprod", "preview", "leios"] | append ($env.STABLE_CLI_ENVS? | default "" | split row " " | where {|e| $e != ""}))) {
     "cardano-cli"
   } else {
     "cardano-cli-ng"
@@ -474,7 +481,7 @@ def resolve-orch-anchor [run: record] {
   }
   if ($run.rationale_file | is-not-empty) {
     print $"(ansi blue)Preparing rationale anchor from ($run.rationale_file)...(ansi reset)"
-    let out = (^$"($env.FILE_PWD)/rationale.nu" prepare $run.env --creds-secret $run.ipfs_creds_secret --file $run.rationale_file --cid-version $run.cid_version --cli $run.cli | from json)
+    let out = (^$"($env.FILE_PWD)/rationale.nu" prepare $run.env --project-id $run.blockfrost_project_id --file $run.rationale_file --cli $run.cli | from json)
     print $"  anchor: (ansi green)($out.anchorUrl)(ansi reset)"
     return {
       url: $out.anchorUrl
@@ -518,19 +525,18 @@ def assemble-orch-cc [
   }
   if ($anchor | is-empty) {
     error make --unspanned {
-      msg: $"Orchestrator CC vote for ($cc) needs a rationale anchor. Pass --anchor-url, or --rationale-file + --ipfs-creds-secret."
+      msg: $"Orchestrator CC vote for ($cc) needs a rationale anchor. Pass --anchor-url, or --rationale-file (with --blockfrost-project-id / $env.BLOCKFROST_IPFS_PROJECT_ID)."
     }
   }
   let workdir = ($run.tmp | path join $"orch-($cc)")
   mkdir $workdir
   # Anchor hash: use the precomputed (local) hash if provided, else hash the
-  # content fetched from the anchor URL via a public gateway.
+  # content fetched from the anchor URL via the gateway (IPFS_GATEWAY_URI is set
+  # for the whole run in `main`, defaulting to ipfs.io).
   let anchor_hash = (if ($anchor_hash | is-not-empty) {
     $anchor_hash
   } else {
-    with-env {IPFS_GATEWAY_URI: "https://ipfs.io"} {
-      ^$cli hash anchor-data --url $anchor | into string | str trim
-    }
+    ^$cli hash anchor-data --url $anchor | into string | str trim
   })
   # Locate the hot NFT UTxO (single token of the member's minting policy).
   let nft_addr = (secret-str $"($inithot)/nft.addr")
@@ -593,10 +599,9 @@ def main [
   action_idx: int             # Governance action index
   --decision: string = "yes"  # Default decision offered per voter: yes|no|abstain
   --anchor-url: string = ""   # CC rationale anchor (required for orchestrator-CC votes)
-  --anchor-hash: string = ""  # Precomputed anchor-data hash (skips the gateway fetch; pair with --anchor-url)
-  --rationale-file: path = "" # Instead of --anchor-url: sign+upload this rationale doc to IPFS and use the resulting anchor (orchestrator-CC)
-  --ipfs-creds-secret: path = "secrets/groups/misc1/no-deploy/misc1-metadata-a-1-ipfs-client" # sops file with a user:password line for the IPFS node (used with --rationale-file)
-  --cid-version: int = 0      # IPFS CID version for --rationale-file uploads (v0 to fit the anchor-URL field)
+  --anchor-hash: string = ""  # Precomputed anchor-data hash; if omitted, fetched from --anchor-url via $env.IPFS_GATEWAY_URI (default https://ipfs.io)
+  --rationale-file: path = "" # Sign + upload this rationale doc to IPFS, use as anchor (orchestrator-CC; alt to --anchor-url)
+  --blockfrost-project-id: string = "" # Blockfrost IPFS project id for --rationale-file uploads; defaults to $env.BLOCKFROST_IPFS_PROJECT_ID
   --cli: string = ""          # Override the cardano-cli binary (default: auto)
   --orch-warn-ada: int = 10   # Warn when an orchestrator-CC payment address balance is below this many ADA
   --include-inactive-cc       # Offer CC members even if their hot credential is not currently active on-chain
@@ -604,6 +609,7 @@ def main [
   --yes                       # Auto-confirm submit prompts (only meaningful with --submit)
   --dry-run                   # Discover, prompt and report the plan; build nothing
 ]: nothing -> nothing {
+  let allowed_envs = (env-magic | columns)
   if $node_env not-in $allowed_envs {
     error make --unspanned {
       msg: $"Unsupported env '($node_env)'. One of: ($allowed_envs | str join ', ')"
@@ -614,7 +620,11 @@ def main [
       msg: $"--decision must be yes, no or abstain \(got '($decision)'\)"
     }
   }
-  let expected_magic = ($env_magic | get $node_env)
+  # Default the IPFS gateway for the whole run so cardano-cli can resolve ipfs://
+  # anchors — both the anchor-hash computation and `transaction build`, which
+  # re-validates the anchor — without requiring IPFS_GATEWAY_URI; respect it when set.
+  $env.IPFS_GATEWAY_URI = ($env.IPFS_GATEWAY_URI? | default "https://ipfs.io")
+  let expected_magic = (env-magic | get $node_env)
   let magic = (require-node-env $node_env $expected_magic)
   let run = {
     env: $node_env
@@ -624,8 +634,9 @@ def main [
     anchor_url: $anchor_url
     anchor_hash: $anchor_hash
     rationale_file: $rationale_file
-    ipfs_creds_secret: $ipfs_creds_secret
-    cid_version: $cid_version
+    blockfrost_project_id: (if ($blockfrost_project_id | is-empty) {
+      $env.BLOCKFROST_IPFS_PROJECT_ID? | default ""
+    } else { $blockfrost_project_id })
     cli: (select-cli $node_env $cli)
     orch_warn_ada: $orch_warn_ada
     include_inactive_cc: $include_inactive_cc
