@@ -1,6 +1,19 @@
 # Include any repo customized justfile recipes in this file.
 # Doing so will make diffing and patching the main repo Justfile easier.
 
+# Deployment-specific config for the generic governance tools in scripts/gov/.
+# These stay downstream (this file is excluded from upstream porting); the
+# scripts/gov/ tools read them from the environment so they carry no
+# playground-specific literals. Exported here so `just vote` / `just rationale`
+# (and the scripts they exec) inherit them.
+# EXTRA_ENV_MAGIC / STABLE_CLI_ENVS are available for extra downstream envs;
+# Uncomment and extend to add downstream-only envs, e.g.:
+# export EXTRA_ENV_MAGIC := '{"myenv":"999","othernet":"1234"}'            # extra env -> testnet magic (merged over the baked-in set)
+# export STABLE_CLI_ENVS := "myenv othernet"                               # extra envs that use the stable `cardano-cli` (not -ng), space-separated
+export CC_RATIONALE_AUTHOR := "IO Labs Node SRE"                           # CIP-100 author name prefix
+# Rationale IPFS uploads use Blockfrost. Supply the project id at runtime.
+#   export BLOCKFROST_IPFS_PROJECT_ID=ipfs<your-blockfrost-ipfs-project-id>
+
 # Build the prod cardano book
 build-book-prod:
   #!/usr/bin/env bash
