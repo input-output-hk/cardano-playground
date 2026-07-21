@@ -2149,16 +2149,16 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1784311400,
-        "narHash": "sha256-bliDCV78jaSmedu2aYJ9KQ50G5hmKSQgVWmto1lWUtk=",
+        "lastModified": 1784581596,
+        "narHash": "sha256-hRzlaBRNsQC8bijiTNhF6ecXDiD3gSb6pfU1RyCZFwk=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "355da093b8ef215095d55a4c9eec54b79b261f46",
+        "rev": "35cb6d98a3f26bccbfaa2dfa0098ace885b94882",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "refs/tags/prototype-2026w29",
+        "ref": "jl/prototype-debug",
         "repo": "ouroboros-leios",
         "type": "github"
       }
@@ -2246,16 +2246,16 @@
         "utils": "utils_3"
       },
       "locked": {
-        "lastModified": 1784310443,
-        "narHash": "sha256-hr1EydBt3NVR0hctQaDF54IizzcanQ5Q/6oQaerAIuI=",
+        "lastModified": 1784580244,
+        "narHash": "sha256-ozbuT3CjCST79lVquUn0AAojs14XuGOKOAD4hg0AhDg=",
         "owner": "intersectmbo",
         "repo": "cardano-node",
-        "rev": "f7ec3592e75f0652100c7d05b8932a3a7e05e010",
+        "rev": "4482e0509a91a6d2c82473da9e39fb207e8e5855",
         "type": "github"
       },
       "original": {
         "owner": "intersectmbo",
-        "ref": "leios-prototype",
+        "ref": "nfrisby/ledger-issue-5937-quickfix",
         "repo": "cardano-node",
         "type": "github"
       }
