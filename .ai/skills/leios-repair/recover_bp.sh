@@ -9,12 +9,16 @@
 # to *.fork-bak (not deleted) so you can inspect or roll back.
 #
 # Assumes (verify per deployment — see SKILL.md §"Storage layout"):
-#   - target & donor share the Leios split-storage layout:
+#   - target & donor share the Leios split-storage layout (LIVE, on disk):
 #       /var/lib/cardano-node/db-leios      (RB/ledger chain DB, on EBS)
 #       /ephemeral/cardano-node/leios.db    (Leios EB/vote DB, on ephemeral)
 #   - donor relay publishes a fresh full artifact at
 #       /ephemeral/nginx-artifacts/leios.full.tar.zst (+ .sha256)
-#     containing top-level `db-leios/` and `leios.db` (typically only -rel-*-1 relays).
+#     which (packaging as of 2026-07-20, expected going forward) extracts to a
+#     SINGLE top-level `db/` dir bundling BOTH DBs: the RB/ledger chain DB
+#     (immutable/ledger/volatile/gsm/protocolMagicId/lock) with leios.db* nested
+#     inside it. The emplace step below splits it back into the live split layout
+#     above. (Typically only -rel-*-1 relays carry the artifact.)
 #   - `wush` is on both hosts; the agent drives both via /tmp/sshw (cluster-ssh skill).
 #   - the cardano-node systemd unit is `cardano-node`.
 #
@@ -49,13 +53,21 @@ $S "$BP" '
   set -e
   cd /ephemeral/art-in
   zstd -dc leios.full.tar.zst | tar -xf -
+  # New packaging (2026-07-20+): a single top-level db/ dir holds the RB/ledger
+  # chain DB with leios.db* nested inside. The live deployment keeps the split
+  # layout, so split the artifact back out on emplace:
+  #   db/leios.db*  -> /ephemeral/cardano-node/       (ephemeral, same fs = instant)
+  #   remaining db/ -> /var/lib/cardano-node/db-leios (EBS, cross-fs copy)
+  test -d db || { echo "FAILED: artifact has no top-level db/ dir (packaging changed?)"; exit 1; }
   rm -rf /var/lib/cardano-node/db-leios.fork-bak /ephemeral/cardano-node/leios.db.fork-bak
   mv /var/lib/cardano-node/db-leios /var/lib/cardano-node/db-leios.fork-bak
   mv /ephemeral/cardano-node/leios.db /ephemeral/cardano-node/leios.db.fork-bak 2>/dev/null || true
   rm -f /ephemeral/cardano-node/leios.db-wal /ephemeral/cardano-node/leios.db-shm
-  cp -a /ephemeral/art-in/db-leios /var/lib/cardano-node/db-leios
-  mv /ephemeral/art-in/leios.db /ephemeral/cardano-node/leios.db
-  chown -R cardano-node:cardano-node /var/lib/cardano-node/db-leios /ephemeral/cardano-node/leios.db
+  mv db/leios.db     /ephemeral/cardano-node/leios.db
+  mv db/leios.db-shm /ephemeral/cardano-node/leios.db-shm 2>/dev/null || true
+  mv db/leios.db-wal /ephemeral/cardano-node/leios.db-wal 2>/dev/null || true
+  mv db /var/lib/cardano-node/db-leios
+  chown -R cardano-node:cardano-node /var/lib/cardano-node/db-leios /ephemeral/cardano-node/leios.db*
   rm -rf /ephemeral/art-in
   systemctl reset-failed cardano-node 2>/dev/null || true
   systemctl start cardano-node
