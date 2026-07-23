@@ -21,22 +21,70 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
-      "id": 1,
-      "type": "stat",
-      "title": "Committee members",
       "description": "cardano_cc_member_count. 0 pages via cardano_cc_no_members.",
-      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 4,
         "w": 4,
         "x": 0,
         "y": 0
       },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})",
+          "legendFormat": "{{environment}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Committee members",
+      "type": "stat"
+    },
+    {
+      "description": "Members in ledger state Active (currently serving / able to vote), per environment (0/red when an environment has none). Active + Expired + Unrecognized = cardano_cc_member_count.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -47,8 +95,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "green",
@@ -60,11 +107,19 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 13,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -72,31 +127,24 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
-          "expr": "max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})",
-          "refId": "A",
+          "expr": "sum by (environment) (max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\",state=\"Active\"})) or (sum by (environment) (max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})) * 0)",
+          "legendFormat": "{{environment}}",
           "range": true,
-          "legendFormat": "{{environment}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Active members",
+      "type": "stat"
     },
     {
-      "id": 2,
-      "type": "stat",
-      "title": "Current epoch",
-      "description": "cardano_cc_current_epoch (epoch the committee-state query was computed against).",
-      "datasource": null,
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 12,
-        "y": 0
-      },
+      "description": "Members in ledger state Expired, per environment (0/green when none). Pages via cardano_cc_member_expired (excl. its allow-list).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -107,8 +155,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
-                "value": null
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 1
               }
             ]
           },
@@ -116,43 +167,44 @@
         },
         "overrides": []
       },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "max without (instance, job) (cardano_cc_current_epoch{environment=~\"$environment\"})",
-          "refId": "A",
-          "range": true,
-          "legendFormat": "{{environment}}"
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "type": "stat",
-      "title": "Expired members",
-      "description": "Members in ledger state Expired, per environment (0/green when none). Pages via cardano_cc_member_expired (excl. its allow-list).",
-      "datasource": null,
       "gridPos": {
         "h": 4,
         "w": 4,
         "x": 8,
         "y": 0
       },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (environment) (max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\",state=\"Expired\"})) or (sum by (environment) (max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})) * 0)",
+          "legendFormat": "{{environment}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Expired members",
+      "type": "stat"
+    },
+    {
+      "description": "cardano_cc_current_epoch (epoch the committee-state query was computed against).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -163,8 +215,63 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "blue"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "max without (instance, job) (cardano_cc_current_epoch{environment=~\"$environment\"})",
+          "legendFormat": "{{environment}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Current epoch",
+      "type": "stat"
+    },
+    {
+      "description": "Members whose hot key is NotAuthorized or Resigned (cannot vote), per environment (0/green when none).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
               },
               {
                 "color": "red",
@@ -176,71 +283,19 @@
         },
         "overrides": []
       },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "sum by (environment) (max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\",state=\"Expired\"})) or (sum by (environment) (max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})) * 0)",
-          "refId": "A",
-          "range": true,
-          "legendFormat": "{{environment}}"
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "type": "stat",
-      "title": "Hot-key problems",
-      "description": "Members whose hot key is NotAuthorized or Resigned (cannot vote), per environment (0/green when none).",
-      "datasource": null,
       "gridPos": {
         "h": 4,
         "w": 3,
         "x": 15,
         "y": 0
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
+      "id": 4,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -248,31 +303,24 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "sum by (environment) (max without (instance, job) (cardano_cc_member_hot_cred_status{environment=~\"$environment\",status=~\"MemberNotAuthorized|MemberResigned\"})) or (sum by (environment) (max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})) * 0)",
-          "refId": "A",
+          "legendFormat": "{{environment}}",
           "range": true,
-          "legendFormat": "{{environment}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Hot-key problems",
+      "type": "stat"
     },
     {
-      "id": 5,
-      "type": "stat",
-      "title": "Expiring \u2264 30d",
-      "description": "Members in the warn band (7d < term \u2264 30d), per environment (0/green when none). Mirrors cardano_cc_term_expiring.",
-      "datasource": null,
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 18,
-        "y": 0
-      },
+      "description": "Members in the warn band (7d < term ≤ 30d), per environment (0/green when none). Mirrors cardano_cc_term_expiring.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -283,8 +331,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -296,11 +343,19 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 0
+      },
+      "id": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -308,31 +363,24 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "count by (environment) (max without (instance, job) (cardano_cc_member_seconds_until_expiration{environment=~\"$environment\"}) > 604800 <= 2592000) or (sum by (environment) (max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})) * 0)",
-          "refId": "A",
+          "legendFormat": "{{environment}}",
           "range": true,
-          "legendFormat": "{{environment}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Expiring ≤ 30d",
+      "type": "stat"
     },
     {
-      "id": 6,
-      "type": "stat",
-      "title": "Collector age (max)",
       "description": "Max age of cardano-committee.prom per environment (environment joined from cardano_cc_* by instance, since the mtime series has none). >5400s pages via cardano_cc_metrics_stale.",
-      "datasource": null,
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 21,
-        "y": 0
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -343,8 +391,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -356,11 +403,19 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "id": 6,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -368,31 +423,24 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "max by (environment) ((time() - node_textfile_mtime_seconds{file=~\".*/cardano-committee.prom\",instance=~\"$instance\"}) * on (instance) group_left (environment) group by (instance, environment) (cardano_cc_member_count{environment=~\"$environment\"}))",
-          "refId": "A",
+          "legendFormat": "{{environment}}",
           "range": true,
-          "legendFormat": "{{environment}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Collector age (max)",
+      "type": "stat"
     },
     {
-      "id": 7,
-      "type": "table",
-      "title": "Committee members",
       "description": "One row per constitutional-committee member (select a single environment). Time to expiry, ledger state, hot-key authorisation status and next-epoch change. Colours mirror alerts/cardano-committee.nix-import (page/warn conditions).",
-      "datasource": null,
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 4
-      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -408,8 +456,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           }
@@ -428,8 +475,8 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "color-background",
-                  "mode": "gradient"
+                  "mode": "gradient",
+                  "type": "color-background"
                 }
               },
               {
@@ -438,8 +485,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "red",
-                      "value": null
+                      "color": "red"
                     },
                     {
                       "color": "yellow",
@@ -468,7 +514,6 @@
                 "id": "mappings",
                 "value": [
                   {
-                    "type": "value",
                     "options": {
                       "Active": {
                         "color": "green",
@@ -485,15 +530,16 @@
                         "index": 2,
                         "text": "Unrecognized"
                       }
-                    }
+                    },
+                    "type": "value"
                   }
                 ]
               },
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "color-background",
-                  "mode": "gradient"
+                  "mode": "gradient",
+                  "type": "color-background"
                 }
               },
               {
@@ -512,7 +558,6 @@
                 "id": "mappings",
                 "value": [
                   {
-                    "type": "value",
                     "options": {
                       "MemberAuthorized": {
                         "color": "green",
@@ -529,15 +574,16 @@
                         "index": 2,
                         "text": "Resigned"
                       }
-                    }
+                    },
+                    "type": "value"
                   }
                 ]
               },
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "color-background",
-                  "mode": "gradient"
+                  "mode": "gradient",
+                  "type": "color-background"
                 }
               },
               {
@@ -556,12 +602,16 @@
                 "id": "mappings",
                 "value": [
                   {
-                    "type": "value",
                     "options": {
                       "NoChangeExpected": {
                         "color": "green",
                         "index": 0,
                         "text": "No change"
+                      },
+                      "TermAdjusted": {
+                        "color": "yellow",
+                        "index": 3,
+                        "text": "Term adjusted"
                       },
                       "ToBeExpired": {
                         "color": "red",
@@ -572,21 +622,17 @@
                         "color": "red",
                         "index": 2,
                         "text": "To be removed"
-                      },
-                      "TermAdjusted": {
-                        "color": "yellow",
-                        "index": 3,
-                        "text": "Term adjusted"
                       }
-                    }
+                    },
+                    "type": "value"
                   }
                 ]
               },
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "color-background",
-                  "mode": "gradient"
+                  "mode": "gradient",
+                  "type": "color-background"
                 }
               },
               {
@@ -597,6 +643,13 @@
           }
         ]
       },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 7,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -615,6 +668,41 @@
           }
         ]
       },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "max without (instance, job) (cardano_cc_member_seconds_until_expiration{environment=~\"$environment\"})",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "EXPIRY"
+        },
+        {
+          "editorMode": "code",
+          "expr": "max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\"}) == 1",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "STATE"
+        },
+        {
+          "editorMode": "code",
+          "expr": "max without (instance, job) (cardano_cc_member_hot_cred_status{environment=~\"$environment\"}) == 1",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "HOTKEY"
+        },
+        {
+          "editorMode": "code",
+          "expr": "max without (instance, job) (cardano_cc_member_next_epoch_change{environment=~\"$environment\"}) == 1",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "CHANGE"
+        }
+      ],
+      "title": "Committee members",
       "transformations": [
         {
           "id": "joinByField",
@@ -636,73 +724,26 @@
           "options": {
             "excludeByName": {},
             "indexByName": {
+              "Value #EXPIRY": 4,
+              "change": 3,
               "cold_credential": 0,
               "state": 1,
-              "status": 2,
-              "change": 3,
-              "Value #EXPIRY": 4
+              "status": 2
             },
             "renameByName": {
+              "Value #EXPIRY": "Time to expiry",
+              "change": "Next epoch change",
               "cold_credential": "CC cold credential",
               "state": "State",
-              "status": "Hot key auth status",
-              "change": "Next epoch change",
-              "Value #EXPIRY": "Time to expiry"
+              "status": "Hot key auth status"
             }
           }
         }
       ],
-      "targets": [
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "max without (instance, job) (cardano_cc_member_seconds_until_expiration{environment=~\"$environment\"})",
-          "refId": "EXPIRY",
-          "format": "table",
-          "instant": true,
-          "range": false
-        },
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\"}) == 1",
-          "refId": "STATE",
-          "format": "table",
-          "instant": true,
-          "range": false
-        },
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "max without (instance, job) (cardano_cc_member_hot_cred_status{environment=~\"$environment\"}) == 1",
-          "refId": "HOTKEY",
-          "format": "table",
-          "instant": true,
-          "range": false
-        },
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "max without (instance, job) (cardano_cc_member_next_epoch_change{environment=~\"$environment\"}) == 1",
-          "refId": "CHANGE",
-          "format": "table",
-          "instant": true,
-          "range": false
-        }
-      ]
+      "type": "table"
     },
     {
-      "id": 8,
-      "type": "timeseries",
-      "title": "Time until term expiration (per member)",
       "description": "Reference lines at 7d (page) and 30d (warn). Negative = already expired.",
-      "datasource": null,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -715,6 +756,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -745,8 +787,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "yellow",
@@ -762,6 +803,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "id": 8,
       "options": {
         "legend": {
           "calcs": [
@@ -773,33 +821,25 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "max without (instance, job) (cardano_cc_member_seconds_until_expiration{environment=~\"$environment\"})",
-          "refId": "A",
+          "legendFormat": "{{environment}} / {{cold_credential}}",
           "range": true,
-          "legendFormat": "{{environment}} / {{cold_credential}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Time until term expiration (per member)",
+      "type": "timeseries"
     },
     {
-      "id": 9,
-      "type": "timeseries",
-      "title": "Committee size",
       "description": "cardano_cc_member_count over time.",
-      "datasource": null,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -812,6 +852,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -838,20 +879,26 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           },
-          "unit": "none",
-          "min": 0
+          "unit": "none"
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 9,
       "options": {
         "legend": {
           "calcs": [
@@ -863,33 +910,25 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})",
-          "refId": "A",
+          "legendFormat": "{{environment}}",
           "range": true,
-          "legendFormat": "{{environment}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Committee size",
+      "type": "timeseries"
     },
     {
-      "id": 10,
-      "type": "timeseries",
-      "title": "Collector freshness (per publishing host)",
       "description": "Seconds since each host last refreshed cardano-committee.prom. Line at 5400s (cardano_cc_metrics_stale).",
-      "datasource": null,
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 22
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -902,6 +941,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -932,8 +972,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -945,6 +984,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "id": 10,
       "options": {
         "legend": {
           "calcs": [
@@ -956,33 +1002,25 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "time() - node_textfile_mtime_seconds{file=~\".*/cardano-committee.prom\",instance=~\"$instance\"}",
-          "refId": "A",
+          "legendFormat": "{{instance}}",
           "range": true,
-          "legendFormat": "{{instance}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Collector freshness (per publishing host)",
+      "type": "timeseries"
     },
     {
-      "id": 11,
-      "type": "timeseries",
-      "title": "Member state composition",
       "description": "Count of members by ledger state (Active / Expired / Unrecognized).",
-      "datasource": null,
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 22
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -995,6 +1033,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 40,
             "gradientMode": "none",
@@ -1021,20 +1060,26 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           },
-          "unit": "none",
-          "min": 0
+          "unit": "none"
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 11,
       "options": {
         "legend": {
           "calcs": [
@@ -1046,33 +1091,25 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "sum by (state) (max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\"}))",
-          "refId": "A",
+          "legendFormat": "{{state}}",
           "range": true,
-          "legendFormat": "{{state}}"
+          "refId": "A"
         }
-      ]
+      ],
+      "title": "Member state composition",
+      "type": "timeseries"
     },
     {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Epochs until term expiration (per member)",
       "description": "cardano_cc_member_epochs_until_expiration. Line at 0 = term boundary; negative = already expired. Absent for newly-enacted members (null expiration).",
-      "datasource": null,
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 29
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1115,8 +1152,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1128,6 +1164,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 12,
       "options": {
         "legend": {
           "calcs": [
@@ -1145,78 +1188,20 @@
       },
       "targets": [
         {
-          "datasource": null,
           "editorMode": "code",
           "expr": "max without (instance, job) (cardano_cc_member_epochs_until_expiration{environment=~\"$environment\"})",
-          "refId": "A",
+          "legendFormat": "{{environment}} / {{cold_credential}}",
           "range": true,
-          "legendFormat": "{{environment}} / {{cold_credential}}"
+          "refId": "A"
         }
-      ]
-    },
-    {
-      "id": 13,
-      "type": "stat",
-      "title": "Active members",
-      "description": "Members in ledger state Active (currently serving / able to vote), per environment (0/red when an environment has none). Active + Expired + Unrecognized = cardano_cc_member_count.",
-      "datasource": null,
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 4,
-        "y": 0
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": null,
-          "editorMode": "code",
-          "expr": "sum by (environment) (max without (instance, job) (cardano_cc_member_state{environment=~\"$environment\",state=\"Active\"})) or (sum by (environment) (max without (instance, job) (cardano_cc_member_count{environment=~\"$environment\"})) * 0)",
-          "refId": "A",
-          "range": true,
-          "legendFormat": "{{environment}}"
-        }
-      ]
+      ],
+      "title": "Epochs until term expiration (per member)",
+      "type": "timeseries"
     }
   ],
+  "preload": false,
   "refresh": "1m",
-  "schemaVersion": 38,
+  "schemaVersion": 41,
   "tags": [
     "cardano",
     "committee",
@@ -1226,10 +1211,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
+          "text": "All",
           "value": [
             "$__all"
           ]
@@ -1238,9 +1220,7 @@
           "type": "prometheus"
         },
         "definition": "label_values(cardano_cc_member_count, environment)",
-        "hide": 0,
         "includeAll": true,
-        "label": "",
         "multi": true,
         "name": "environment",
         "options": [],
@@ -1250,16 +1230,12 @@
         },
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       },
       {
         "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
+          "text": "All",
           "value": [
             "$__all"
           ]
@@ -1268,9 +1244,7 @@
           "type": "prometheus"
         },
         "definition": "label_values(cardano_cc_member_count{environment=~\"$environment\"}, instance)",
-        "hide": 0,
         "includeAll": true,
-        "label": "",
         "multi": true,
         "name": "instance",
         "options": [],
@@ -1280,7 +1254,6 @@
         },
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       }
@@ -1291,9 +1264,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "",
+  "timezone": "utc",
   "title": "Cardano Committee: Constitutional-Committee State",
-  "uid": "cardano-committee",
-  "version": 1,
-  "weekStart": ""
+  "uid": "cardano-committee"
 }
+
