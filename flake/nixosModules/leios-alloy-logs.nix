@@ -34,8 +34,8 @@ _: {
     ...
   }: let
     groupCfg = config.cardano-parts.cluster.group;
-    environmentName = groupCfg.meta.environmentName;
-    groupName = groupCfg.groupName;
+    inherit (groupCfg.meta) environmentName;
+    inherit (groupCfg) groupName;
   in {
     services.alloy = {
       extraJournalReceivers = ["loki.process.leios_extract_logs.receiver"];
