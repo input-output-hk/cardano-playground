@@ -885,8 +885,6 @@ start-node ENV:
     fi
     export CARDANO_NODE_SHELL_BIN="$(nix build -Lv "$NODE_REF" --no-link --print-out-paths)/bin/cardano-node"
     export USE_SHELL_BINS=true
-    # TODO: Add this to the node cfg file -- this is now a noop
-    # export LEIOS_DB_PATH="$STATEDIR/db-leios/node/leios.db"
     UNSTABLE=false
     UNSTABLE_LIB=true
     UNSTABLE_MITHRIL=false
