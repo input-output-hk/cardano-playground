@@ -36,11 +36,11 @@ PROPOSAL_ARGS=(
   "--prev-governance-action-index" "$PREV_GOV_ACTION_INDEX"
   "--check-anchor-data"
   "--threshold" "$THRESHOLD"
-  "--remove-cc-cold-verification-key-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc4/init-cold/credential.plutus.hash")"
-  "--remove-cc-cold-verification-key-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc5/init-cold/credential.plutus.hash")"
-  "--remove-cc-cold-verification-key-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc6/init-cold/credential.plutus.hash")"
-  "--remove-cc-cold-verification-key-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc7/init-cold/credential.plutus.hash")"
-  "--remove-cc-cold-verification-key-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/icc-keys/init-cold/credential.plutus.hash")"
+  "--remove-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc4/init-cold/credential.plutus.hash")"
+  "--remove-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc5/init-cold/credential.plutus.hash")"
+  "--remove-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc6/init-cold/credential.plutus.hash")"
+  "--remove-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc7/init-cold/credential.plutus.hash")"
+  "--remove-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/icc-keys/init-cold/credential.plutus.hash")"
 )
 
 ACTION="update-committee" \
