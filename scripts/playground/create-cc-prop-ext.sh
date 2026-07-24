@@ -5,7 +5,7 @@ set -euo pipefail
 [ -n "${DEBUG:-}" ] && set -x
 [ -z "${ENV:-}" ] && { echo "ENV var must be set"; exit 1; }
 
-[ -z "${ANCHOR_URL:-}" ] && { echo "ANCHOR_URL var must be set and should point to an ipfs://\$CIDv1 address"; exit 1; }
+[ -z "${ANCHOR_URL:-}" ] && { echo "ANCHOR_URL var must be set and should point to an ipfs://\$CIDv0 address"; exit 1; }
 [ -z "${DREP_INDEX:-}" ] && { echo "DREP_INDEX var must be set"; exit 1; }
 [ -z "${TESTNET_MAGIC:-}" ] && { echo "TESTNET_MAGIC var must be set"; exit 1; }
 [ -z "${THRESHOLD:-}" ] && { echo "THRESHOLD var must be set and most likely should remain the same as the existing threshold"; exit 1; }
