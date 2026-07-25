@@ -12,7 +12,7 @@ with lib; let
 
   alertFileList = parseDir ./grafana/alerts ".nix-import";
   dashboardFileList = parseDir ./grafana/dashboards ".json";
-  lokiAlertFileList = parseDir ./grafana/loki-alerts ".nix-import";
+  lokiAlertFileList = parseDir ./grafana/alerts-loki ".nix-import";
   recordingRulesFileList = parseDir ./grafana/recording-rules ".nix-import";
 
   extractFileName = file:
@@ -61,6 +61,7 @@ in {
 
         variable = {
           deadmanssnitch_api_url = sensitiveString;
+          deadmanssnitch_loki_api_url = sensitiveString;
           grafana_token = sensitiveString;
           grafana_url = sensitiveString;
           pagerduty_api_key = sensitiveString;
@@ -145,6 +146,17 @@ in {
                     group_interval = "1m";
                     repeat_interval = "5m";
                   }
+                  # Exception route for the always-firing Loki ruler heartbeat
+                  # (alerts-loki/deadmanssnitch-loki.nix-import): deliver to
+                  # its own snitch so either ruler dying is detected
+                  # independently.
+                  {
+                    receiver = "deadmanssnitch-loki";
+                    matchers = [''alertname="DeadMansSnitchLoki"''];
+                    group_wait = "30s";
+                    group_interval = "1m";
+                    repeat_interval = "5m";
+                  }
                 ];
               }
             ];
@@ -159,6 +171,13 @@ in {
                 webhook_configs = {
                   send_resolved = false;
                   url = "\${var.deadmanssnitch_api_url}";
+                };
+              }
+              {
+                name = "deadmanssnitch-loki";
+                webhook_configs = {
+                  send_resolved = false;
+                  url = "\${var.deadmanssnitch_loki_api_url}";
                 };
               }
             ];
