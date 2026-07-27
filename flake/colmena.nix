@@ -931,6 +931,22 @@ in
         };
       };
 
+      # Mempool tracing for nodes whose environment silences it by default (the
+      # mainnet env config ships Mempool = "Silence"; preview/preprod default to
+      # "Info"). New tracing ignores the legacy `TraceMempool` key, so set the
+      # namespace severity directly. Emits per-tx events (AddedTx/RemoveTxs/
+      # RejectedTx); the high-frequency sub-namespaces stay silenced. For rejection
+      # reasons at full detail, bump to severity = "Debug", detail = "DDetailed".
+      traceMp = {
+        # RejectedTx at DDetailed captures the rejection reason (ApplyTxErr), not just the txid.
+        services.cardano-node.extraNodeConfig.TraceOptions = {
+          "Mempool".severity = "Info";
+          "Mempool.RejectedTx".detail = "DDetailed";
+          "Mempool.AttemptAdd".severity = "Silence";
+          "Mempool.SyncNotNeeded".severity = "Silence";
+        };
+      };
+
       # logRejected = {
       #   services = {
       #     cardano-node.extraNodeConfig = {
@@ -1189,13 +1205,13 @@ in
       # Rel-a-{2,3} lsm and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnetSmash dbsyncPub (openFwTcp 5432) {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnet2Smash];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable ccMon logGc];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnetSmash dbsyncPub (openFwTcp 5432) traceMp {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnet2Smash traceMp];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable ccMon logGc traceMp];};
 
-      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001)];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node logGc (openFwTcp 3001)];};
+      mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001) traceMp];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001) traceMp];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node logGc (openFwTcp 3001) traceMp];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
