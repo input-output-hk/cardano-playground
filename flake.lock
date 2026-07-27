@@ -1831,16 +1831,16 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1783715494,
-        "narHash": "sha256-pfN/TOuKG8RalsI2SMUO3Ce3zlNrPOD9ENyVcuaiZ0M=",
+        "lastModified": 1785139768,
+        "narHash": "sha256-mrVDWO4e+t/VY2YlMeU79rniEr7a2CYW+HjqA4oer7Q=",
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "abe0b02409ff6e1ab1989f6989f176aab367ba56",
+        "rev": "c47c310519e8bd4f61019a9c668c18c1cef62308",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "leios-prototype-2026w28",
+        "ref": "leios-prototype-2026w30",
         "repo": "cardano-db-sync",
         "type": "github"
       }

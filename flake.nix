@@ -15,7 +15,7 @@
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w30";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype";
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype";
-    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-prototype-2026w28";
+    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-prototype-2026w30";
     cardano-node-11-1-0-rc.url = "github:IntersectMBO/cardano-node/jl/11.1.0-sre";
     iohk-nix-11-1-0-rc.url = "github:input-output-hk/iohk-nix/node-11.1";
 
