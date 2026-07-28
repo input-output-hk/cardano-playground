@@ -272,6 +272,13 @@ in
               # With high Tx TPS keep snapshot interval at 2*k for more reasonable startup time.
               # For leios a 1 day snapshot interval results in minute(s) of wait time on restart.
               LedgerDB.SnapshotInterval = 864;
+
+              # Enable the Forge.Loop.Call call-trace spans (kind="Call",
+              # sev=Debug) that feed the leios call-trace Grafana dashboard.
+              # Only forgers run the forge loop, so this lives on the BPs only;
+              # parent Forge.Loop stays at Info (base config), and this
+              # more-specific child override turns on just the call-trace.
+              TraceOptions."Forge.Loop.Call".severity = "Debug";
             };
           }
         ];
