@@ -52,6 +52,9 @@ export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 # Security param:
 #   432 for 1 day epoch
+#   216 for 12 hr epoch
+#   108 for 6 hr epoch
+#    54 for 3 hr epoch
 #    32 for 2 hr epoch
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
