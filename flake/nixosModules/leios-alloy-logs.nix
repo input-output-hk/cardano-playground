@@ -147,7 +147,7 @@ _: {
 
             stage.static_labels {
               values = {
-                service = "leios-voting",
+                service = "cardano-node/leios-voting",
                 type    = "leios-voting",
               }
             }
@@ -213,7 +213,7 @@ _: {
 
             stage.static_labels {
               values = {
-                service = "leios-call-trace",
+                service = "cardano-node/call-trace",
                 type    = "leios-call-trace",
               }
             }
