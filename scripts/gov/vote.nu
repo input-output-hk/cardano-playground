@@ -41,6 +41,10 @@
 # resulting anchor automatically. When --anchor-hash is omitted, the hash is fetched from
 # the anchor URL via $env.IPFS_GATEWAY_URI (defaults to https://ipfs.io).
 #
+# Whatever is passed via --anchor-url / --rationale-file is type-checked up
+# front: a CIP-108 PROPOSAL rationale doc aborts the run (votes need a CIP-136
+# vote rationale); an unclassifiable/unfetchable doc only warns.
+#
 # Submission is opt-in: by default the tool builds + signs and writes the signed
 # tx(s) to the working dir WITHOUT submitting. Pass --submit to submit (still
 # prompts per tx unless --yes is also given). --dry-run discovers + prompts +
@@ -397,6 +401,84 @@ def collect-selections [
   }
   $sel
 }
+# ─── anchor document type check ───────────────────────────────────────────────
+# Keys of a record value, or [] when the value is not a record.
+def record-keys [val]: nothing -> list<any> {
+  if ($val | describe | str starts-with "record") {
+    $val | columns
+  } else { [] }
+}
+# Classify a governance metadata document: "vote" (CIP-136 CC vote rationale),
+# "proposal" (CIP-108 proposal rationale) or "unknown". The JSON-LD @context
+# keys are authoritative; body field names are the fallback for docs with a
+# stripped/nonstandard context.
+def classify-anchor-doc [doc]: nothing -> string {
+  if not ($doc | describe | str starts-with "record") { return "unknown" }
+  let ctx_keys = (record-keys ($doc | get -o "@context"))
+  if "CIP136" in $ctx_keys { return "vote" }
+  if "CIP108" in $ctx_keys { return "proposal" }
+  let body_keys = (record-keys ($doc | get -o body))
+  if ($body_keys | any {|k| $k in [summary rationaleStatement precedentDiscussion counterargumentDiscussion conclusion internalVote] }) {
+    "vote"
+  } else if ($body_keys | any {|k| $k in [title abstract motivation] }) {
+    "proposal"
+  } else {
+    "unknown"
+  }
+}
+# Fetch and JSON-parse an anchor URL (ipfs:// resolved via $env.IPFS_GATEWAY_URI,
+# which main defaults before this runs). Returns null when the content cannot
+# be fetched or parsed.
+def fetch-anchor-doc [url: string]: nothing -> any {
+  let http_url = (if ($url | str starts-with "ipfs://") {
+    $"($env.IPFS_GATEWAY_URI)/ipfs/($url | str replace 'ipfs://' '')"
+  } else { $url })
+  try {
+    http get --raw --max-time 30sec $http_url | from json
+  } catch { null }
+}
+# Shared verdict handling for the anchor type check: a definite proposal doc
+# aborts; a confirmed vote doc is announced; anything else only warns.
+def check-anchor-kind [kind: string, what: string]: nothing -> nothing {
+  if $kind == "proposal" {
+    error make --unspanned {
+      msg: $"($what) is a CIP-108 PROPOSAL rationale document, not a CIP-136 CC vote rationale. Pass the vote rationale doc instead \(see scripts/gov/template-rationale-vote-cc-cip-136.json\)."
+    }
+  } else if $kind == "vote" {
+    print $"(ansi green)Verified ($what) is a CIP-136 vote rationale document.(ansi reset)"
+  } else {
+    print $"(ansi yellow)Warning: could not classify ($what) as CIP-136 vote or CIP-108 proposal; make sure it is a vote rationale before submitting.(ansi reset)"
+  }
+}
+# Fail fast when --rationale-file / --anchor-url points at a CIP-108 proposal
+# document instead of a CIP-136 CC vote rationale (an easy mix-up: both live as
+# sibling JSON-LD docs). Runs before any prompting so a wrong doc costs nothing.
+def verify-anchor-doc-types [run: record]: nothing -> nothing {
+  if ($run.rationale_file | is-not-empty) {
+    if not ($run.rationale_file | path exists) {
+      error make --unspanned {
+        msg: $"Rationale file not found: ($run.rationale_file)"
+      }
+    }
+    let doc = (try {
+      open --raw $run.rationale_file | from json
+    } catch { null })
+    if ($doc | is-empty) {
+      error make --unspanned {
+        msg: $"Rationale file ($run.rationale_file) is not valid JSON."
+      }
+    }
+    check-anchor-kind (classify-anchor-doc $doc) $"--rationale-file ($run.rationale_file)"
+  }
+  if ($run.anchor_url | is-not-empty) {
+    let doc = (fetch-anchor-doc $run.anchor_url)
+    if ($doc | is-empty) {
+      print $"(ansi yellow)Warning: could not fetch/parse --anchor-url ($run.anchor_url) to verify its document type \(gateway lag?\); make sure it is a CIP-136 vote rationale, not a CIP-108 proposal doc.(ansi reset)"
+    } else {
+      check-anchor-kind (classify-anchor-doc $doc) $"--anchor-url ($run.anchor_url)"
+    }
+  }
+}
 # ─── transaction assembly ─────────────────────────────────────────────────────
 # Select the smallest pure-lovelace UTxO > 5 ADA at an address (matches the
 # selection used by the existing pool/drep voting script).
@@ -649,6 +731,7 @@ def main [
   chmod 0700 $run.tmp
   try {
     print $"(ansi attr_bold)Voting tool(ansi reset) — env ($run.env), cli ($run.cli), action ($run.action_id)#($run.action_idx)"
+    verify-anchor-doc-types $run
     require-synced $run
     let action = (gov-action-state $run)
     if ($action | is-empty) {
