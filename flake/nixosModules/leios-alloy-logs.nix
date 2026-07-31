@@ -20,7 +20,7 @@
 #
 # Cardinality budget (measured on the live 15-node fleet), all deliberately
 # indexed for Explore performance:
-#   service/type ~4, ns ~56 (stable), sev ~5, kind ~50-150, voterId ~3,
+#   service ~4, ns ~56 (stable), sev ~5, kind ~50-150, voterId ~3,
 #   event 2, name ~tens, thread ~few (named threads)  -- all bounded.
 #   host: NOT labelled (== base instance); rbHash/stack NEVER labelled -- they
 #   stay in the line for query-time `| json`, which keeps them off the counters.
