@@ -1976,7 +1976,7 @@
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/prototype",
+        "ref": "jl/prototype-debug",
         "repo": "ouroboros-leios",
         "type": "github"
       }
@@ -9795,6 +9795,23 @@
         "type": "github"
       }
     },
+    "leios-observability": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785474857,
+        "narHash": "sha256-9ca6nixEhnUGP9xGh8v8CfBGZx8QLa4toVYFW+4f1qE=",
+        "owner": "input-output-hk",
+        "repo": "ouroboros-leios",
+        "rev": "15fb574df850b5a1ce086b78dd1b97f058ab8f9d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "ref": "jl/dashboard-alignment2",
+        "repo": "ouroboros-leios",
+        "type": "github"
+      }
+    },
     "leios-spec": {
       "inputs": {
         "agda-nix": "agda-nix",
@@ -13450,6 +13467,7 @@
           "flake-parts"
         ],
         "iohk-nix-11-1-0-rc": "iohk-nix-11-1-0-rc",
+        "leios-observability": "leios-observability",
         "nixpkgs": [
           "cardano-parts",
           "nixpkgs"
