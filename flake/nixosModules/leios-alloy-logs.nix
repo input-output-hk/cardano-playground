@@ -10,7 +10,7 @@
 # (ouroboros-leios demo/proto-devnet/config/alloy-modules/*.alloy) -- the SAME files the
 # ouroboros-leios proto-devnet stack uses. Only the FRONT-END below differs per
 # environment: here it routes the cardano-parts journald source by `systemd_unit`
-# and stamps a normalized `stream` label; proto-devnet tails process-compose
+# and stamps the routing `service` label; proto-devnet tails process-compose
 # files and routes by `process`. Everything downstream is shared.
 #
 # The base cardano-parts profile-grafana-alloy journal pipeline already ships one
@@ -101,12 +101,12 @@
         }
 
         // FRONT-END (environment-specific): route the journald source by
-        // systemd_unit and stamp a normalized `stream` label, then fan to the
+        // systemd_unit and stamp the routing `service` label, then fan to the
         // shared modules. cardano-tracer.service is excluded (double-journals
-        // forwarded traces); multi-instance cardano-node-N is matched. Units with
-        // no `stream` are dropped by every module. No raw write / no unwrap -- the
-        // base journal pipeline handles the raw copy and the journal message is
-        // already the trace JSON.
+        // forwarded traces); multi-instance cardano-node-N is matched. Non-node/tx
+        // units are dropped up front, so every forwarded line carries a `service`.
+        // No raw write / no unwrap -- the base journal pipeline handles the raw
+        // copy and the journal message is already the trace JSON.
         loki.process "leios_route" {
           stage.match {
             selector = `{systemd_unit!~"cardano-node(-[0-9]+)?\\.service|cardano-tx-centrifuge\\.service|cardano-tx-firehose\\.service"}`
@@ -116,28 +116,28 @@
           stage.match {
             selector = `{systemd_unit=~"cardano-node(-[0-9]+)?\\.service"}`
             stage.static_labels {
-              values = {stream = "node"}
+              values = {service = "cardano-node"}
             }
           }
 
           stage.match {
             selector = `{systemd_unit="cardano-tx-centrifuge.service"}`
             stage.static_labels {
-              values = {stream = "tx-centrifuge"}
+              values = {service = "tx-centrifuge"}
             }
           }
 
           stage.match {
             selector = `{systemd_unit="cardano-tx-firehose.service"}`
             stage.static_labels {
-              values = {stream = "tx-firehose"}
+              values = {service = "tx-firehose"}
             }
           }
 
           forward_to = [
-            mod.node_enrich.node.receiver,
-            mod.tx_firehose_enrich.firehose.receiver,
-            mod.tx_centrifuge_enrich.centrifuge.receiver,
+            mod.cardano_node_process.node.receiver,
+            mod.tx_firehose_process.firehose.receiver,
+            mod.tx_centrifuge_process.centrifuge.receiver,
           ]
         }
 
@@ -151,23 +151,23 @@
 
         // Wiring: node chain (node -> voting -> call -> write) + tx modules. The
         // single terminal write per line is loki.write.default (base pipeline).
-        mod.node_enrich "node" {
-          forward_to = [mod.leios_voting_enrich.vote.receiver]
+        mod.cardano_node_process "node" {
+          forward_to = [mod.leios_voting_process.vote.receiver]
         }
 
-        mod.leios_voting_enrich "vote" {
-          forward_to = [mod.call_trace_enrich.call.receiver]
+        mod.leios_voting_process "vote" {
+          forward_to = [mod.call_trace_process.call.receiver]
         }
 
-        mod.call_trace_enrich "call" {
+        mod.call_trace_process "call" {
           forward_to = [loki.write.default.receiver]
         }
 
-        mod.tx_firehose_enrich "firehose" {
+        mod.tx_firehose_process "firehose" {
           forward_to = [loki.write.default.receiver]
         }
 
-        mod.tx_centrifuge_enrich "centrifuge" {
+        mod.tx_centrifuge_process "centrifuge" {
           forward_to = [loki.write.default.receiver]
         }
       '';
