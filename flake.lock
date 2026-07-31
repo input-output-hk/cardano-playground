@@ -9798,11 +9798,11 @@
     "leios-observability": {
       "flake": false,
       "locked": {
-        "lastModified": 1785474857,
-        "narHash": "sha256-9ca6nixEhnUGP9xGh8v8CfBGZx8QLa4toVYFW+4f1qE=",
+        "lastModified": 1785478061,
+        "narHash": "sha256-/0ZpJa5SuIFvtbA5mpq9/+LlmAKAdX7eL6HDKErEPbs=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "15fb574df850b5a1ce086b78dd1b97f058ab8f9d",
+        "rev": "5623730539872ed44bc1f34de3cfa13eb94af812",
         "type": "github"
       },
       "original": {

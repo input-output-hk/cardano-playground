@@ -11,7 +11,12 @@ with lib; let
   cluster = config.flake.cardano-parts.cluster.infra.aws;
 
   alertFileList = parseDir ./grafana/alerts ".nix-import";
-  dashboardFileList = parseDir ./grafana/dashboards ".json";
+
+  # Leios dashboards come from the leios-observability source pin (single source
+  # of truth, byte-identical with the ouroboros-leios repo); the rest are local.
+  dashboardFileList =
+    (parseDir ./grafana/dashboards ".json")
+    ++ (parseDir "${inputs.leios-observability}/demo/proto-devnet/config/dashboards" ".json");
   lokiAlertFileList = parseDir ./grafana/alerts-loki ".nix-import";
   recordingRulesFileList = parseDir ./grafana/recording-rules ".nix-import";
 

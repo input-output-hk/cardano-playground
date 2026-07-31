@@ -1,33 +1,36 @@
 # nixosModule: leios-alloy-logs
 #
-# Cardinality-bounded leios alloy log pipeline (single-write enrichment) for
-# the leios dashboards.  Adapted from the ouroboros-leios proto-devnet x-ray
-# pipeline (demo/proto-devnet/config/alloy.template) to the journald source the
-# cardano-parts profile-grafana-alloy module ships.
+# Cardinality-bounded leios alloy log pipeline for the leios dashboards, built
+# from per-service Alloy `declare` MODULES (Pattern B: fan-out + drop-first at
+# the service boundary; the node sub-facets voting/call-trace are chained so each
+# node line is written exactly once).
 #
-# Strategy: parse each cardano-node / tx-centrifuge journal line once and write
-# it once to loki.write.default carrying kind/ns/sev/service labels, so every
-# kind is label-filterable in Explore without `| json`.  The vote/call
-# enrichment is folded in as nested stage.match blocks with a single terminal
-# forward_to -- fanning to loki.write.default from multiple processors would
-# otherwise re-write the whole Debug-level trace volume ~3x.  The cardano-parts
-# base journal pipeline still ships one raw systemd_unit-labelled copy.
+# The five enrichment modules are the SHARED source of truth, imported via
+# import.file from the leios-observability flake input
+# (ouroboros-leios demo/proto-devnet/config/alloy-modules/*.alloy) -- the SAME files the
+# ouroboros-leios proto-devnet stack uses. Only the FRONT-END below differs per
+# environment: here it routes the cardano-parts journald source by `systemd_unit`
+# and stamps a normalized `stream` label; proto-devnet tails process-compose
+# files and routes by `process`. Everything downstream is shared.
+#
+# The base cardano-parts profile-grafana-alloy journal pipeline already ships one
+# raw systemd_unit-labelled copy to loki.write.default and hands each line (body
+# = the raw trace JSON) to loki.process.leios_route via extraJournalReceivers, so
+# this side needs no raw write and no envelope unwrap.
 #
 # Cardinality budget (measured on the live 15-node fleet), all deliberately
 # indexed for Explore performance:
 #   service/type ~4, ns ~56 (stable), sev ~5, kind ~50-150, voterId ~3,
 #   event 2, name ~tens, thread ~few (named threads)  -- all bounded.
-#   host: NOT labelled -- duplicates the base `instance` label.
-#   rbHash (voting, ~one per block) and stack (call-trace call path, grows with
-#     the call graph -- higher-card once enabled fleet-wide): left in the line
-#     for query-time `| json` (vote_rbHash / stack), which keeps them off the
-#     counters too.
+#   host: NOT labelled (== base instance); rbHash/stack NEVER labelled -- they
+#   stay in the line for query-time `| json`, which keeps them off the counters.
 #
-# Loki-derived counters are named cardano_node_metrics_loki_{leios,call}_* to
-# group with the node-metrics family while flagging loki provenance, and are
-# bounded because the unbounded fields above are never labelled.  Metrics come
-# from the base integrations/cardano-node scrape (environment="leios").
-_: {
+# Both tx-generator modules are always present but DORMANT unless their unit is
+# running, so an environment can switch centrifuge<->firehose (or neither) with
+# no config change. Today playground runs cardano-tx-centrifuge.service.
+#
+# Loki-derived counters are named cardano_node_metrics_loki_{leios,call,txgen}_*.
+{inputs, ...}: {
   flake.nixosModules.leios-alloy-logs = {
     config,
     name,
@@ -36,9 +39,37 @@ _: {
     groupCfg = config.cardano-parts.cluster.group;
     inherit (groupCfg.meta) environmentName;
     inherit (groupCfg) groupName;
+
+    # Shared alloy enrichment modules, pinned independently of the node version.
+    # builtins.path narrows the node closure to just the module files -- the
+    # leios-observability input tree as a whole is NOT deployed to nodes.
+    leiosAlloyModules = builtins.path {
+      path = "${inputs.leios-observability}/demo/proto-devnet/config/alloy-modules";
+      name = "leios-alloy-modules";
+    };
   in {
+    # Place the shared modules at a discoverable /etc path instead of a bare nix
+    # store path. A SUBDIR of /etc/alloy is safe: alloy loads *.alloy from
+    # /etc/alloy ignoring subdirs, so these are not auto-loaded as top-level
+    # config -- only imported explicitly via import.file below.
+    #
+    # Placed PER-FILE (not `.source = <dir>`) on purpose: a whole-dir `.source`
+    # makes /etc/alloy/leios-modules a SYMLINK, and alloy's directory import.file
+    # does NOT traverse a symlinked directory (fails at runtime with "custom
+    # component ... not found in the registry"). Per-file entries make
+    # /etc/alloy/leios-modules a real directory of file-symlinks, which imports fine.
+    environment.etc = builtins.listToAttrs (
+      map (f: {
+        name = "alloy/leios-modules/${f}";
+        value.source = "${leiosAlloyModules}/${f}";
+      }) (
+        builtins.filter (f: builtins.match ".*[.]alloy$" f != null)
+        (builtins.attrNames (builtins.readDir leiosAlloyModules))
+      )
+    );
+
     services.alloy = {
-      extraJournalReceivers = ["loki.process.leios_extract_logs.receiver"];
+      extraJournalReceivers = ["loki.process.leios_route.receiver"];
 
       extraAlloyConfig = ''
         // Export the cardano_node_metrics_loki_* counters derived below.  The base
@@ -69,222 +100,74 @@ _: {
           }
         }
 
-        // Single enrichment pipeline: parse once, label everything, write once.
-        loki.process "leios_extract_logs" {
-          // Route: keep only the units that emit machine-format leios traces.
-          // cardano-tracer.service is excluded (it journals the same forwarded
-          // traces a second time); multi-instance cardano-node-N.service matched.
+        // FRONT-END (environment-specific): route the journald source by
+        // systemd_unit and stamp a normalized `stream` label, then fan to the
+        // shared modules. cardano-tracer.service is excluded (double-journals
+        // forwarded traces); multi-instance cardano-node-N is matched. Units with
+        // no `stream` are dropped by every module. No raw write / no unwrap -- the
+        // base journal pipeline handles the raw copy and the journal message is
+        // already the trace JSON.
+        loki.process "leios_route" {
           stage.match {
-            selector = `{systemd_unit!~"cardano-node(-[0-9]+)?\\.service|cardano-tx-centrifuge\\.service"}`
+            selector = `{systemd_unit!~"cardano-node(-[0-9]+)?\\.service|cardano-tx-centrifuge\\.service|cardano-tx-firehose\\.service"}`
             action   = "drop"
           }
 
-          // Pull kind straight from data.kind so it can be labelled on every line.
-          stage.json {
-            expressions = {
-              at   = "at",
-              sev  = "sev",
-              ns   = "ns",
-              kind = "data.kind",
-              data = "data",
-            }
-            drop_malformed = true
-          }
-
-          stage.timestamp {
-            source = "at"
-            format = "RFC3339"
-          }
-
-          // Indexed labels applied to ALL lines (bounded; drive fast Explore).
-          // `host` intentionally omitted -- it equals the base `instance` label.
-          stage.labels {
-            values = {
-              level = "sev",
-              sev   = "sev",
-              ns    = "ns",
-              kind  = "kind",
-            }
-          }
-
-          stage.static_labels {
-            values = {
-              service = "cardano-node",
-              type    = "cardano-node",
+          stage.match {
+            selector = `{systemd_unit=~"cardano-node(-[0-9]+)?\\.service"}`
+            stage.static_labels {
+              values = {stream = "node"}
             }
           }
 
           stage.match {
             selector = `{systemd_unit="cardano-tx-centrifuge.service"}`
             stage.static_labels {
-              values = {
-                service = "tx-centrifuge",
-                type    = "tx-centrifuge",
-              }
+              values = {stream = "tx-centrifuge"}
             }
           }
 
-          // Emit the decoded 'data' object as the line body so query-time `| json`
-          // sees kind/vote/event/etc, at the top level (rbHash -> vote_rbHash,
-          // thread, ...).
-          stage.output {
-            source = "data"
-          }
-
-          // --- Voting enrichment (inline; no extra write) ---
-          // rbHash deliberately NOT extracted/labelled -- it stays in the line for
-          // `| json` (field vote_rbHash) and off the counters, keeping them bounded.
-          // voterId (~3) is the only variable label the counters inherit.
           stage.match {
-            selector = `{kind=~"LeiosVoted|LeiosVoteAcquired"}`
-
-            stage.json {
-              expressions = {
-                voterId = "vote.voterId",
-              }
-              drop_malformed = true
-            }
-
+            selector = `{systemd_unit="cardano-tx-firehose.service"}`
             stage.static_labels {
-              values = {
-                service = "cardano-node/leios-voting",
-                type    = "leios-voting",
-              }
-            }
-
-            stage.labels {
-              values = {
-                voterId = "voterId",
-              }
-            }
-
-            stage.match {
-              selector = `{kind="LeiosVoted"}`
-
-              stage.json {
-                expressions = {
-                  weight = "weight",
-                }
-              }
-
-              stage.metrics {
-                metric.counter {
-                  name              = "voted_weight_total"
-                  description       = "The total accumulated voting weight"
-                  prefix            = "cardano_node_metrics_loki_leios_"
-                  action            = "add"
-                  source            = "weight"
-                  max_idle_duration = "24h"
-                }
-              }
-            }
-
-            stage.match {
-              selector = `{kind="LeiosVoteAcquired"}`
-
-              stage.metrics {
-                metric.counter {
-                  name              = "votes_acquired_total"
-                  description       = "The total votes acquired"
-                  prefix            = "cardano_node_metrics_loki_leios_"
-                  action            = "inc"
-                  match_all         = true
-                  max_idle_duration = "24h"
-                }
-              }
+              values = {stream = "tx-firehose"}
             }
           }
 
-          // --- Call-trace enrichment (inline; active in proto-devnet, coming to Musashi) ---
-          // stack deliberately NOT extracted/labelled -- it is the call path (many
-          // combinations, grows with the call graph); stays in the line for `| json`.
-          // thread is a named, low-cardinality thread, so it is indexed instead.
-          stage.match {
-            selector = `{kind="Call"}`
+          forward_to = [
+            mod.node_enrich.node.receiver,
+            mod.tx_firehose_enrich.firehose.receiver,
+            mod.tx_centrifuge_enrich.centrifuge.receiver,
+          ]
+        }
 
-            stage.json {
-              expressions = {
-                event  = "event",
-                name   = "name",
-                thread = "thread",
-              }
-              drop_malformed = true
-            }
+        // Shared per-service enrichment modules (import.file from the pinned
+        // leios-observability source; directory import exposes each file's
+        // `declare` under this `mod` namespace). Its store path lands in the
+        // system closure, so the files are on the host for import at runtime.
+        import.file "mod" {
+          filename = "/etc/alloy/leios-modules"
+        }
 
-            stage.static_labels {
-              values = {
-                service = "cardano-node/call-trace",
-                type    = "leios-call-trace",
-              }
-            }
+        // Wiring: node chain (node -> voting -> call -> write) + tx modules. The
+        // single terminal write per line is loki.write.default (base pipeline).
+        mod.node_enrich "node" {
+          forward_to = [mod.leios_voting_enrich.vote.receiver]
+        }
 
-            stage.labels {
-              values = {
-                event  = "event",
-                name   = "name",
-                thread = "thread",
-              }
-            }
+        mod.leios_voting_enrich "vote" {
+          forward_to = [mod.call_trace_enrich.call.receiver]
+        }
 
-            stage.match {
-              selector = `{event="Start"}`
+        mod.call_trace_enrich "call" {
+          forward_to = [loki.write.default.receiver]
+        }
 
-              stage.metrics {
-                metric.counter {
-                  name              = "started_total"
-                  description       = "Total started calls"
-                  prefix            = "cardano_node_metrics_loki_call_"
-                  action            = "inc"
-                  match_all         = true
-                  max_idle_duration = "24h"
-                }
-              }
-            }
+        mod.tx_firehose_enrich "firehose" {
+          forward_to = [loki.write.default.receiver]
+        }
 
-            stage.match {
-              selector = `{event="End"}`
-
-              stage.json {
-                expressions = {
-                  duration    = "duration",
-                  allocations = "allocations",
-                  result      = "result",
-                }
-                drop_malformed = true
-              }
-
-              stage.metrics {
-                metric.counter {
-                  name              = "ended_total"
-                  description       = "Total ended calls"
-                  prefix            = "cardano_node_metrics_loki_call_"
-                  action            = "inc"
-                  match_all         = true
-                  max_idle_duration = "24h"
-                }
-
-                metric.counter {
-                  name              = "duration_total"
-                  description       = "Total call duration"
-                  prefix            = "cardano_node_metrics_loki_call_"
-                  action            = "add"
-                  source            = "duration"
-                  max_idle_duration = "24h"
-                }
-
-                metric.counter {
-                  name              = "allocations_total"
-                  description       = "Total call allocations"
-                  prefix            = "cardano_node_metrics_loki_call_"
-                  action            = "add"
-                  source            = "allocations"
-                  max_idle_duration = "24h"
-                }
-              }
-            }
-          }
-
-          // The only write: one enriched copy per line.
+        mod.tx_centrifuge_enrich "centrifuge" {
           forward_to = [loki.write.default.receiver]
         }
       '';

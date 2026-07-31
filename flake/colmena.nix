@@ -783,7 +783,7 @@ in
           # Alloy pipelines deriving the leios Loki streams from the journald
           # machine-format trace lines configured below.
           nixosModules.leios-alloy-logs
-          (nixos: {
+          {
             services = {
               cardano-node.extraNodeConfig = {
                 TraceOptions = {
@@ -820,7 +820,7 @@ in
                 };
               };
             };
-          })
+          }
         ];
       };
 
