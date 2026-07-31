@@ -13,6 +13,7 @@
 
     # Extra pins
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w30";
+    # cardano-node-leios.url = "path:/home/jlotoski/ai/share/input-output-hk/ouroboros-leios-wt/jl/prototype";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype";
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-prototype-2026w30";
