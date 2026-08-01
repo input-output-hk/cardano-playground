@@ -12,7 +12,7 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w30";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w31";
     # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/prototype";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
 
