@@ -100,9 +100,12 @@ _: {
         # (-p preserves the archived modes; the dest must be writable by the node user).
         ownerArgs=(--owner=0 --group=0)
 
-        # Newest snapshot of the form <dataset>@<prefix>-* (from profile-zfs-snapshots).
-        snap=$(${zfs} list -H -t snapshot -o name -s creation 2>/dev/null \
-                 | { grep -F "$dataset@$prefix-" || true; } | tail -n1)
+        # Newest snapshot profile-zfs-snapshots generates: exactly
+        # <dataset>@<prefix>-<UTC stamp> on <dataset> (-d 1 excludes child
+        # datasets). Exact-match so a manual/one-off snapshot that merely
+        # shares the prefix is never picked. Held ones are fine to read.
+        snap=$(${zfs} list -H -t snapshot -o name -s creation -d 1 "$dataset" 2>/dev/null \
+                 | { grep -E "@$prefix-[0-9]{8}T[0-9]{6}Z$" || true; } | tail -n1)
         if [ -z "$snap" ]; then
           echo "leios-chain-snapshot: no $dataset@$prefix-* snapshot found (is zfs-snapshots running here?), skipping" >&2
           exit 0
