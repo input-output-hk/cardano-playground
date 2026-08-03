@@ -65,12 +65,12 @@ in
         # Apply group wide common imports
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
-          ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs delayedSnapshot]
+          ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
           ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots]
-          ++ optionals (hasPrefix "preview" name) [hiConn delayedSnapshot]
-          ++ optionals (hasPrefix "preprod" name) [hiConn delayedSnapshot]
-          ++ optionals (hasPrefix "sanchonet" name) [noBPerf delayedSnapshot]
-          ++ optionals (hasPrefix "mainnet" name) [delayedSnapshot];
+          ++ optionals (hasPrefix "preview" name) [hiConn]
+          ++ optionals (hasPrefix "preprod" name) [hiConn]
+          ++ optionals (hasPrefix "sanchonet" name) [noBPerf]
+          ++ optionals (hasPrefix "mainnet" name) [];
 
         cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
 
@@ -469,19 +469,20 @@ in
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
       # topoEdge = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "edge";};}];};
 
-      # The new snapshot interval that will be used starting with node 11.1
-      delayedSnapshot = {
-        imports = [
-          (nixos: let
-            inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
-            inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
-            inherit (cardanoLib.environments.${environmentName}.nodeConfig) ShelleyGenesisFile;
-            k = (fromJSON (readFile ShelleyGenesisFile)).securityParam;
-          in {
-            services.cardano-node.extraNodeConfig.LedgerDB.SnapshotInterval = 40 * k;
-          })
-        ];
-      };
+      # The new snapshot interval that will be used starting with node 11.1.
+      # This can be used as an alternative override when needed.
+      # delayedSnapshot = {
+      #   imports = [
+      #     (nixos: let
+      #       inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
+      #       inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+      #       inherit (cardanoLib.environments.${environmentName}.nodeConfig) ShelleyGenesisFile;
+      #       k = (fromJSON (readFile ShelleyGenesisFile)).securityParam;
+      #     in {
+      #       services.cardano-node.extraNodeConfig.LedgerDB.SnapshotInterval = 40 * k;
+      #     })
+      #   ];
+      # };
 
       # Roles
       bp = {
