@@ -1905,16 +1905,16 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1785670161,
-        "narHash": "sha256-gLot1d8kndH2D2Y16d6aIBI6e5ClPlT5KRGT4encZks=",
+        "lastModified": 1785752055,
+        "narHash": "sha256-u0JaYiDudAsdNLh/0+WnsO+TZsOp7JCW2fLfE6eVlLk=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "9b56f5116cfd3fe6366e89b877e076c3a3a54b4c",
+        "rev": "1c7cd2ad3356e89db8b7d311d085c8e48c9e2106",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/leios-certrb-invalidblock",
+        "ref": "refs/tags/prototype-2026w31a",
         "repo": "ouroboros-leios",
         "type": "github"
       }
@@ -2002,16 +2002,16 @@
         "utils": "utils_3"
       },
       "locked": {
-        "lastModified": 1785669537,
-        "narHash": "sha256-k28j1ESGmIig90DcD4jiA8yKBWN58BljP9OHXok9ITI=",
+        "lastModified": 1785751988,
+        "narHash": "sha256-kujdbDbxcGCE822xlbLxhZje42yrDDY6dFeK5IdgojU=",
         "owner": "intersectmbo",
         "repo": "cardano-node",
-        "rev": "6592572419c764ed4ec0613814f8110a5b848da4",
+        "rev": "6971bb527288d0f362147fbe318c0e9c84312ab3",
         "type": "github"
       },
       "original": {
         "owner": "intersectmbo",
-        "ref": "jl/leios-certrb-invalidblock",
+        "ref": "leios-prototype",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -13153,11 +13153,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785513713,
-        "narHash": "sha256-LqUz8+YoTjS6rec/hpmg6WqXHwIEl6N8Z8JnQiVuO/0=",
+        "lastModified": 1785751934,
+        "narHash": "sha256-2GmXbmL8Mn0pwtmO7T46G6VCsQXDW88L4R+4ptjARBA=",
         "ref": "leios-prototype",
-        "rev": "50c97115f8bc4d11b75d3048e360f4a391aaf9b6",
-        "revCount": 11533,
+        "rev": "08ad5f10d4699b65a2dc47e61cf0632f2b8a32ac",
+        "revCount": 11537,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/intersectmbo/ouroboros-consensus"
