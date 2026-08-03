@@ -65,11 +65,12 @@ in
         # Apply group wide common imports
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
-          ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
+          ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs delayedSnapshot]
           ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots]
-          ++ optionals (hasPrefix "preview" name) [hiConn]
-          ++ optionals (hasPrefix "preprod" name) [hiConn]
-          ++ optionals (hasPrefix "sanchonet" name) [noBPerf];
+          ++ optionals (hasPrefix "preview" name) [hiConn delayedSnapshot]
+          ++ optionals (hasPrefix "preprod" name) [hiConn delayedSnapshot]
+          ++ optionals (hasPrefix "sanchonet" name) [noBPerf delayedSnapshot]
+          ++ optionals (hasPrefix "mainnet" name) [delayedSnapshot];
 
         cardano-parts.cluster.group = config.flake.cardano-parts.cluster.groups.${name};
 
@@ -468,6 +469,20 @@ in
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
       # topoEdge = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "edge";};}];};
 
+      # The new snapshot interval that will be used starting with node 11.1
+      delayedSnapshot = {
+        imports = [
+          (nixos: let
+            inherit (nixos.config.cardano-parts.cluster.group.meta) environmentName;
+            inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+            inherit (cardanoLib.environments.${environmentName}.nodeConfig) ShelleyGenesisFile;
+            k = (fromJSON (readFile ShelleyGenesisFile)).securityParam;
+          in {
+            services.cardano-node.extraNodeConfig.LedgerDB.SnapshotInterval = 40 * k;
+          })
+        ];
+      };
+
       # Roles
       bp = {
         imports = [
@@ -478,7 +493,9 @@ in
             cardano-parts.perNode.meta.enableDns = false;
 
             # Reduce slots missed on cloud machines with relatively low IOPS by taking only 1 snapshot per day
-            services.cardano-node.extraNodeConfig.LedgerDB.SnapshotInterval = 86400;
+            services.cardano-node.extraNodeInstanceConfig = _: {
+              LedgerDB.SnapshotInterval = 86400;
+            };
           }
         ];
       };
@@ -907,6 +924,7 @@ in
       amiZfs = {imports = [nixosModules.ami];};
       legacyT = {services.cardano-node.useLegacyTracing = true;};
       noBPerf = {services.blockperf.enable = false;};
+
       # deployIpv4 = {name, ...}: {deployment.targetHost = "${name}.ipv4";};
       #
       # hostsListByPrefix = prefix: {
