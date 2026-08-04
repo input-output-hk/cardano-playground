@@ -2231,11 +2231,11 @@
         "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
-        "lastModified": 1785785728,
-        "narHash": "sha256-UJnQXRX/eIO6+y3lyNCzqnwp4FEcYRqiwrTYJDfyU8o=",
+        "lastModified": 1785814537,
+        "narHash": "sha256-dRF1vdTxmfHC1dPNPQ/SgqMgqHvEwdyp2l35nUXlgm0=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "6e8ad1bcf37770f6d4003551db9396ff7f6fdcd2",
+        "rev": "384dba7b46ee2d15976afd5e05f1205148f7fc30",
         "type": "github"
       },
       "original": {
