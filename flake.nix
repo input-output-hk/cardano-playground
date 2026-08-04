@@ -19,7 +19,7 @@
     # (demo/proto-devnet/config/alloy-modules/*.alloy) and leios Grafana dashboards
     # (demo/proto-devnet/config/dashboards/*.json).
     leios-observability = {
-      url = "github:input-output-hk/ouroboros-leios/jl/dashboard-alignment2";
+      url = "github:input-output-hk/ouroboros-leios";
       flake = false;
     };
 

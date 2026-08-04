@@ -9798,16 +9798,15 @@
     "leios-observability": {
       "flake": false,
       "locked": {
-        "lastModified": 1785553140,
-        "narHash": "sha256-a4C/TgqspgJ9G2Xbn1UazmYmjUu7mZa25nHmdDDbxtw=",
+        "lastModified": 1785860773,
+        "narHash": "sha256-91eeSZKU6oSE41TzEolShNZ5FtNNA1NxTh1l0xNYy6A=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "28a4cba15b386dd086f8af2ac5ecff963802aaba",
+        "rev": "4c110c1ba552754174dc948f0abb3fd67c06559b",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/dashboard-alignment2",
         "repo": "ouroboros-leios",
         "type": "github"
       }
