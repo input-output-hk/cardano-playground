@@ -27,6 +27,9 @@ in {
   cname_book = mkCname {name = "book.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
   cname_book_staging = mkCname {name = "book-staging.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
 
+  # Pool metadata for testnets
+  cname_pools = mkCname {name = "pools.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
+
   # Explorers
   cname_explorer_preprod = mkCname {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_explorer_preview = mkCname {name = "preview-explorer.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
