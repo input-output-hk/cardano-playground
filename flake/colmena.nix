@@ -377,12 +377,10 @@ in
       # Once node 11.1 is released this imports content can be uncommented and utilized.
       submit-api = {
         imports = [
+          # The service module config default is cardanoLib submitApiConfig, so
+          # no explicit config override is required here.
           # config.flake.cardano-parts.cluster.groups.default.meta.cardano-submit-api-service-ng
           # inputs.cardano-parts.nixosModules.profile-cardano-submit-api
-          # (nixos: {
-          #   services.cardano-submit-api.config =
-          #     nixos.config.cardano-parts.perNode.lib.cardanoLib.defaultSubmitApiConfig;
-          # })
         ];
       };
 
