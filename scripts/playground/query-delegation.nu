@@ -311,18 +311,18 @@ def main [
         })
         $our_pool_mark_total = $our_pool_mark_total + $stake.mark
         $pool_rows = ($pool_rows | append {
-                    Group:          $group
-                    Pool:           $pool_name
-                    "Pool ID":      $pool_id
-                    "Stake (mark)": (lovelace-to-ada $stake.mark)
-                    "Stake (set)":  (lovelace-to-ada $stake.set)
-                    "Stake (go)":   (lovelace-to-ada $stake.go)
+                    Group:               $group
+                    Pool:                $pool_name
+                    "Pool ID":           $pool_id
+                    "Mark (next epoch)": (lovelace-to-ada $stake.mark)
+                    "Set (current)":     (lovelace-to-ada $stake.set)
+                    "Go (previous)":     (lovelace-to-ada $stake.go)
                 })
       }
     }
     print $"  Queried ($pool_rows | length) pool\(s\)                    "
     print ""
-    print "  Pool Delegation:"
+    print "  Pool Delegation — stake by snapshot:"
     print ($pool_rows | table)
   }
   # ── Our DRep ──────────────────────────────────────────────────────────────
