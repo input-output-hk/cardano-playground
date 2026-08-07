@@ -7,7 +7,7 @@
         "Stdout HumanFormatColoured"
       ],
       "detail": "DNormal",
-      "severity": "Notice"
+      "severity": "Info"
     }
   }
 }
