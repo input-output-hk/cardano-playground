@@ -1,8 +1,8 @@
 # Creating and updating pools in playground
 
 Sometimes we want to add a single pool to an existing network, or update a pool
-that already exists -- rotate its KES key, add a BLS key, or publish ticker
-metadata. All of this is done with the cardano-parts nix jobs exposed locally as
+that already exists -- rotate its KES key, add or rotate a BLS key, or publish
+ticker metadata. All of this is done with the cardano-parts nix jobs exposed locally as
 `nix run .#job-*`. The parameters accepted by each job, and the job definitions
 themselves, live in the cardano-parts repo `flakeModules/jobs.nix` file.
 
@@ -204,6 +204,69 @@ POOL_NAMES="leios1-bp-a-1" \
   USE_DECRYPTION=true USE_ENCRYPTION=true \
   SUBMIT_TX=false \
   nix run .#job-reregister-stake-pools
+```
+
+`BLS_SLOT` is unset here, so both jobs act on the pool's active key
+(`<pool>-bls.skey`) -- the same default every non-rotation invocation uses.
+
+### Rotating a BLS key
+
+A BLS rotation is staged: the replacement key is registered ahead of time and
+only becomes active later. If the node accepted a single key an operator would
+have to register at T1 and then redeploy the new key exactly at activation (T2)
+-- easy to forget or mistime. Instead the pool keeps two local slots, the active
+key (`<pool>-bls.skey`) and an incoming key (`<pool>-bls-next.skey`); the node is
+handed both and uses whichever the on-chain schedule has active, so the switch
+needs no timed deploy. Every job selects the slot with `BLS_SLOT` (unset =
+active, `next` = the rotation key).
+
+First mint the next key into the rotation slot. This adds
+`<pool>-bls-next.{skey,vkey}` and never touches the active key (and skips a pool
+that already has a `-next` key):
+
+```bash
+POOL_NAMES="leios1-bp-a-1" \
+  STAKE_POOL_DIR=secrets/groups/leios1 \
+  ERA_CMD=dijkstra \
+  TESTNET_MAGIC=<magic> \
+  BLS_SLOT=next \
+  USE_ENCRYPTION=true \
+  nix run .#job-create-stake-pool-bls-keys
+```
+
+Then register the rotation on chain, again with `BLS_SLOT=next`, so the
+re-register cert carries the incoming key. The same absolute-cert rules apply --
+verify the live params first and pass them back unchanged:
+
+```bash
+POOL_NAMES="leios1-bp-a-1" \
+  STAKE_POOL_DIR=secrets/groups/leios1 \
+  ERA_CMD=dijkstra \
+  TESTNET_MAGIC=<magic> \
+  USE_BLS=true BLS_SLOT=next \
+  PAYMENT_KEY=<funded payment key> \
+  POOL_MARGIN=<current> POOL_PLEDGE=<current> \
+  POOL_RELAY=<current> POOL_RELAY_PORT=<current> \
+  USE_DECRYPTION=true USE_ENCRYPTION=true \
+  SUBMIT_TX=false \
+  nix run .#job-reregister-stake-pools
+```
+
+Deploy the group. With both key files present the block-producer role wires each
+one for the node automatically (`/run/secrets/cardano-node-bls-signing` and
+`cardano-node-bls-signing-next`), so no service config change is needed.
+
+After the new key has activated on chain, promote it to the active slot.
+`job-rotate-stake-pool-bls-keys` renames `<pool>-bls-next.{skey,vkey}` over the
+active files, returning the pool to a single steady-state key ready for the next
+rotation. There is no deadline -- the node already switched at activation, so a
+late promote only means carrying a harmless extra key until it runs:
+
+```bash
+POOL_NAMES="leios1-bp-a-1" \
+  STAKE_POOL_DIR=secrets/groups/leios1 \
+  USE_ENCRYPTION=true \
+  nix run .#job-rotate-stake-pool-bls-keys
 ```
 
 ### Publishing ticker metadata
