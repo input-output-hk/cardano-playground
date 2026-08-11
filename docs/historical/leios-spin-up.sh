@@ -658,6 +658,9 @@ echo $(( $(date -u -d '2026-08-11 06:00:00Z' +%s) - $(date -u -d '2026-08-08 18:
 echo "Synthesize blocks until the just ahead of realtime target"
 synth-slots 215588
 
+# Give it a start to verify it is working at the target time:
+run-node-faketime "2026-08-11T06:00:00Z"
+
 # Or, alternatively, continue playing the chain at an accelerated rate (100x in this example)
 # until the chain is a bit ahead of realtime to allow for seamless transfer.
 #
