@@ -281,6 +281,24 @@ in
         ];
       };
 
+      leiosReadTeamBp = {config, ...}: let
+        inherit (config.cardano-parts.perNode.meta) cardanoNodePort;
+      in {
+        imports = [
+          leiosBp
+
+          topoEdge
+          # Just importing topoEdge leads to a conflict due to topoBp being imported by leiosBp.
+          {services.cardano-node-topology.role = lib.mkForce "edge";}
+        ];
+
+        cardano-parts.perNode.meta.enableDns = lib.mkForce true;
+
+        networking.firewall.allowedTCPPorts = [cardanoNodePort];
+
+        services.cardano-node.useLedgerAfterSlot = lib.mkForce 0;
+      };
+
       leiosRel = {imports = [rel];};
 
       leiosCentrifuge.imports = [
@@ -433,7 +451,7 @@ in
       # Note: not including a topology profile will default to edge topology if module profile-cardano-node-group is imported
       topoBp = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "bp";};}];};
       topoRel = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "relay";};}];};
-      # topoEdge = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "edge";};}];};
+      topoEdge = {imports = [inputs.cardano-parts.nixosModules.profile-cardano-node-topology {services.cardano-node-topology = {role = "edge";};}];};
 
       # The new default snapshot interval that will be used starting with node 11.1.0 is 40 * k.
       # This snippet sets the same thing on node 11.0.1.
@@ -1174,6 +1192,20 @@ in
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
       leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+
+      # Leios Red Team nodes.
+      # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
+      # They don't go through a relay.
+      leiosred1-bp-a-1 = {imports = [eu-central-1 c6id-large (ebs 80) (group "leiosred1") node-leios leiosReadTeamBp];};
+      # leiosred2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 80) (group "leiosred2") node-leios leiosBp];};
+      # leiosred3-bp-c-1 = {imports = [us-east-2 c6id-large (ebs 80) (group "leiosred3") node-leios leiosBp];};
+      # leiosred4-bp-d-1 = {imports = [eu-north-1 c6id-large (ebs 80) (group "leiosred4") node-leios leiosBp];};
+      # leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-large (ebs 80) (group "leiosred5") node-leios leiosBp];};
+      # leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-large (ebs 80) (group "leiosred6") node-leios leiosBp];};
+      # leiosred7-bp-g-1 = {imports = [af-south-1 c6id-large (ebs 80) (group "leiosred7") node-leios leiosBp];};
+      # leiosred8-bp-h-1 = {imports = [ap-northeast-1 c6id-large (ebs 80) (group "leiosred8") node-leios leiosBp];};
+      # leiosred9-bp-i-1 = {imports = [us-west-1 c6id-large (ebs 80) (group "leiosred9") node-leios leiosBp];};
+      # leiosred10-bp-j-1 = {imports = [us-west-2 c6id-large (ebs 80) (group "leiosred10") node-leios leiosBp];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------

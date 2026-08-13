@@ -35,6 +35,7 @@ keys:
   - &leios1-centrifuge-a-1 age1wavssdycw4cumqtws84a57c5r8u6366kw5e7ctjcqgkdzrsfyy2q6rtllk
   - &leios2-bp-b-1 age1lt8a78g53sgpspgtnce3w5v2fswdhhr7cnkl3eg4gkepd7gdd9lqcpy95c
   - &leios3-bp-c-1 age1pn8tx5ehm7hejphk6ewlvlmpmg4ujq4gc92mtudhsqpapj3q4apscyjwcy
+  - &leiosred1-bp-a-1 age1x9rklez6g95grqhgm5rlfyu3nt2gmtptnmh3c0uu9nw46r22mchqhj54fk
 
   # Sanchonet
   - &sanchonet1-bp-a-1 age1sxhjqwnuf5duczjv5fwle492jpm7fhwunkwhp6agle6y75yqdeas586aaj
@@ -184,6 +185,12 @@ creation_rules:
     - age:
       - *sre
       - *leios3-bp-c-1
+
+  - path_regex: secrets/groups/leiosred1/deploy/leiosred1-bp-a-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred1-bp-a-1
 
   # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*$
