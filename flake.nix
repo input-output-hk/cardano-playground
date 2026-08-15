@@ -12,13 +12,15 @@
 
     # Extra pins
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w32";
+    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/heads/jl/prototype";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
 
     # Leios observability source: the shared Alloy enrichment modules
     # (demo/proto-devnet/config/alloy-modules/*.alloy) and leios Grafana dashboards
     # (demo/proto-devnet/config/dashboards/*.json).
     leios-observability = {
-      url = "github:input-output-hk/ouroboros-leios";
+      # url = "github:input-output-hk/ouroboros-leios";
+      url = "github:input-output-hk/ouroboros-leios/nfrisby/leios-first-txcache-increment";
       flake = false;
     };
 
