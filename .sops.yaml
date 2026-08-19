@@ -36,6 +36,10 @@ keys:
   - &leios2-bp-b-1 age1lt8a78g53sgpspgtnce3w5v2fswdhhr7cnkl3eg4gkepd7gdd9lqcpy95c
   - &leios3-bp-c-1 age1pn8tx5ehm7hejphk6ewlvlmpmg4ujq4gc92mtudhsqpapj3q4apscyjwcy
   - &leiosred1-bp-a-1 age1x9rklez6g95grqhgm5rlfyu3nt2gmtptnmh3c0uu9nw46r22mchqhj54fk
+  - &leiosred2-bp-b-1 age1ew7xmm6ypqtn6c8jl9chrctk3ghgju2zfgnvy8kjm46eyzs5vvusr4emcu
+  - &leiosred3-bp-c-1 age100j4usae4uwn89vh6x336d94vw8n2x7qcqmpjgdra20f7kzztyeqwa66t9
+  - &leiosred4-bp-d-1 age12qc4alfpep36dmflvry7lj8gx83j0llgckjq855smaf79e765eesd2mjhx
+  - &leiosred5-bp-e-1 age1zst0d69z6y4u960fg2q3rpw5jsl3mfnln7k9lm8tlud4dcn5tudq9uj4hy
 
   # Sanchonet
   - &sanchonet1-bp-a-1 age1sxhjqwnuf5duczjv5fwle492jpm7fhwunkwhp6agle6y75yqdeas586aaj
@@ -192,6 +196,30 @@ creation_rules:
       - *sre
       - *leiosred1-bp-a-1
 
+  - path_regex: secrets/groups/leiosred2/deploy/leiosred2-bp-b-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred2-bp-b-1
+
+  - path_regex: secrets/groups/leiosred3/deploy/leiosred3-bp-c-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred3-bp-c-1
+
+  - path_regex: secrets/groups/leiosred4/deploy/leiosred4-bp-d-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred4-bp-d-1
+
+  - path_regex: secrets/groups/leiosred5/deploy/leiosred5-bp-e-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred5-bp-e-1
+
   # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*$
     key_groups:
@@ -236,6 +264,17 @@ creation_rules:
       - *buildkite1-eu-central-1-1
       - *buildkite1-sa-east-1-1
       - *buildkite-af-south-1-1
+
+  # Nix config file that sets access-tokens
+  - path_regex: secrets/nix-access-tokens.conf$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred1-bp-a-1
+      - *leiosred2-bp-b-1
+      - *leiosred3-bp-c-1
+      - *leiosred4-bp-d-1
+      - *leiosred5-bp-e-1
 
   # -------------------------------------------------------
   # Workbench pool onboarding -- modify during creation

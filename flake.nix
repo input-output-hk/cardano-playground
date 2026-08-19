@@ -14,6 +14,13 @@
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w34";
     # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/heads/jl/prototype";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
+    leios-adversarial-tools = {
+      url = "github:input-output-hk/leios-adversarial-tools/nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs-unstable"; # crane requires at least 26.05
+        flake-parts.follows = "flake-parts";
+      };
+    };
 
     # Leios observability source: the shared Alloy enrichment modules
     # (demo/proto-devnet/config/alloy-modules/*.alloy) and leios Grafana dashboards

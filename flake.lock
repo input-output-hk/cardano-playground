@@ -2243,6 +2243,21 @@
         "type": "github"
       }
     },
+    "crane_4": {
+      "locked": {
+        "lastModified": 1787074141,
+        "narHash": "sha256-MWnmk87W8akPIKh+yd0bTfXvlyumKQVh5l/KTbgI95o=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "6ed595a5527c0ec9563e0e06417f1b8fc88ccb66",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
     "customConfig": {
       "locked": {
         "lastModified": 1630400035,
@@ -8306,6 +8321,33 @@
         "type": "github"
       }
     },
+    "leios-adversarial-tools": {
+      "inputs": {
+        "crane": "crane_4",
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "leios-tools": "leios-tools",
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ],
+        "treefmt-nix": "treefmt-nix_5"
+      },
+      "locked": {
+        "lastModified": 1787257488,
+        "narHash": "sha256-WUCu9ixdie+sjsguewlqea4HTTRUMIIa5QJk0iO4OMk=",
+        "owner": "input-output-hk",
+        "repo": "leios-adversarial-tools",
+        "rev": "a2815e3cec5ae11505a686c4833a70fdde7d1bbe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "ref": "nix",
+        "repo": "leios-adversarial-tools",
+        "type": "github"
+      }
+    },
     "leios-observability": {
       "flake": false,
       "locked": {
@@ -8362,6 +8404,22 @@
         "owner": "input-output-hk",
         "repo": "ouroboros-leios-formal-spec",
         "rev": "a654a1761476fcf8e6a43aeedbc1455bd7ad77db",
+        "type": "github"
+      }
+    },
+    "leios-tools": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786552754,
+        "narHash": "sha256-SfxcVGLaSNUyJfRIc1JXQXZ90Ql3Irg1HJtdYtfoXj0=",
+        "owner": "input-output-hk",
+        "repo": "leios-tools",
+        "rev": "cab3a2d7d36709eab00a1e5709d8d0829950ec88",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "repo": "leios-tools",
         "type": "github"
       }
     },
@@ -11635,6 +11693,7 @@
           "cardano-parts",
           "flake-parts"
         ],
+        "leios-adversarial-tools": "leios-adversarial-tools",
         "leios-observability": "leios-observability",
         "nixpkgs": [
           "cardano-parts",
@@ -12955,6 +13014,27 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "rev": "337a4fe074be1042a35086f15481d763b8ddc0e7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_5": {
+      "inputs": {
+        "nixpkgs": [
+          "leios-adversarial-tools",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786901030,
+        "narHash": "sha256-WSFCsDSE5ffgD2MqzkM2CYjeFiKhRF/dJUN8uedb6YE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "27b3b12a8e6375f28ebe122f07d230ca5459bbfa",
         "type": "github"
       },
       "original": {

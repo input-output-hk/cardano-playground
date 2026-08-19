@@ -1,4 +1,4 @@
-{
+flake @ {
   inputs,
   config,
   lib,
@@ -281,24 +281,66 @@ in
         ];
       };
 
-      leiosRedTeamBp = {config, ...}: let
+      leiosRedTeamBp = {
+        config,
+        pkgs,
+        ...
+      }: let
         inherit (config.cardano-parts.perNode.meta) cardanoNodePort;
+        inherit (config.cardano-parts.perNode.lib) cardanoLib;
+        inherit (config.cardano-parts.cluster) group;
+        environment = cardanoLib.environments.${group.meta.environmentName};
+        opsLib = flake.config.flake.cardano-parts.lib.opsLib pkgs;
       in {
         imports = [
           leiosBp
 
           topoEdge
           # Just importing topoEdge leads to a conflict due to topoBp being imported by leiosBp.
-          {services.cardano-node-topology.role = lib.mkForce "edge";}
+          {services.cardano-node-topology.role = mkForce "edge";}
+
+          nixosModules.leios-piranha
         ];
 
-        cardano-parts.perNode.meta.enableDns = lib.mkForce true;
+        cardano-parts.perNode.meta.enableDns = mkForce true;
 
-        networking.firewall.allowedTCPPorts = [cardanoNodePort];
+        sops.secrets = opsLib.mkSopsSecret rec {
+          groupOutPath = group.groupFlake.self.outPath;
+          inherit (group) groupName;
+          inherit name;
+          pathPrefix = "${groupOutPath}/secrets/";
+          secretName = "nix-access-tokens";
+          keyName = "nix-access-tokens.conf";
+          fileOwner = "root";
+          fileGroup = "root";
+        };
 
-        services.cardano-node = {
-          useLedgerAfterSlot = lib.mkForce 0;
-          extraNodeConfig.PeerSharing = true;
+        nix.extraOptions = ''
+          !include ${config.sops.secrets.nix-access-tokens.path}
+        '';
+
+        security.acme = {
+          acceptTerms = true;
+          defaults.email = "devops@iohk.io";
+        };
+
+        networking.firewall.allowedTCPPorts = [
+          cardanoNodePort
+          config.services.nginx.defaultHTTPListenPort
+          config.services.nginx.defaultSSLListenPort
+        ];
+
+        services = {
+          cardano-node = {
+            useLedgerAfterSlot = mkForce environment.useLedgerAfterSlot;
+            extraNodeConfig.PeerSharing = true;
+          };
+
+          cardano-leios-piranha = {
+            enable = true;
+            openFirewall = true;
+            netClusterIp4 = "157.180.99.170";
+          };
         };
       };
 
@@ -1200,15 +1242,15 @@ in
       # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
       # They don't go through a relay.
       leiosred1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leiosred1") node-leios leiosRedTeamBp];};
-      # leiosred2-bp-b-1 = {imports = [eu-west-1 c6id-xlarge (ebs 80) (group "leiosred2") node-leios leiosBp];};
-      # leiosred3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 80) (group "leiosred3") node-leios leiosBp];};
-      # leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 80) (group "leiosred4") node-leios leiosBp];};
-      # leiosred5-bp-e-1 = {imports = [ap-southeast-2 c8id-xlarge (ebs 80) (group "leiosred5") node-leios leiosBp];};
-      # leiosred6-bp-f-1 = {imports = [sa-east-1 c8id-xlarge (ebs 80) (group "leiosred6") node-leios leiosBp];};
-      # leiosred7-bp-g-1 = {imports = [af-south-1 c8id-xlarge (ebs 80) (group "leiosred7") node-leios leiosBp];};
-      # leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 80) (group "leiosred8") node-leios leiosBp];};
-      # leiosred9-bp-i-1 = {imports = [us-west-1 c8id-xlarge (ebs 80) (group "leiosred9") node-leios leiosBp];};
-      # leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 80) (group "leiosred10") node-leios leiosBp];};
+      leiosred2-bp-b-1 = {imports = [eu-west-1 c6id-xlarge (ebs 80) (group "leiosred2") node-leios leiosRedTeamBp];};
+      leiosred3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 80) (group "leiosred3") node-leios leiosRedTeamBp];};
+      leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 80) (group "leiosred4") node-leios leiosRedTeamBp];};
+      leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-xlarge (ebs 80) (group "leiosred5") node-leios leiosRedTeamBp];};
+      # leiosred6-bp-f-1 = {imports = [sa-east-1 c8id-xlarge (ebs 80) (group "leiosred6") node-leios leiosRedTeamBp];};
+      # leiosred7-bp-g-1 = {imports = [af-south-1 c8id-xlarge (ebs 80) (group "leiosred7") node-leios leiosRedTeamBp];};
+      # leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 80) (group "leiosred8") node-leios leiosRedTeamBp];};
+      # leiosred9-bp-i-1 = {imports = [us-west-1 c8id-xlarge (ebs 80) (group "leiosred9") node-leios leiosRedTeamBp];};
+      # leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 80) (group "leiosred10") node-leios leiosRedTeamBp];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------

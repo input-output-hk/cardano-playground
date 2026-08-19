@@ -415,9 +415,10 @@ in {
 
                 monitoring = true;
                 key_name = "\${aws_key_pair.bootstrap_${underscore region}[0].key_name}";
-                vpc_security_group_ids = [
-                  "\${aws_security_group.common_${underscore region}[0].id}"
-                ];
+                vpc_security_group_ids =
+                  ["\${aws_security_group.common_${underscore region}[0].id}"]
+                  ++ optional (node.services.cardano-leios-piranha.enable or false)
+                  "\${aws_security_group.piranha_${name}[0].id}";
 
                 # Provider level `default_tags` are automatically inherited at
                 # the instance level.  Instance specific tags defined in
@@ -650,7 +651,31 @@ in {
 
                 tags = defaultTags;
               };
-            });
+            })
+            // mapAttrs' (
+              nodeName: node: let
+                inherit (node.services.cardano-leios-piranha) aggregatorPort netClusterIp4 netClusterIp6;
+              in
+                nameValuePair "piranha_${nodeName}" {
+                  inherit (node.aws.instance) count;
+                  provider = awsProviderFor node.aws.region;
+                  name = "piranha-${nodeName}";
+                  description = "Allow piranha aggregator from the net-cluster C&C host only";
+                  lifecycle = [{create_before_destroy = true;}];
+
+                  ingress = singleton (mkRule {
+                    description = "Allow piranha aggregator";
+                    from_port = aggregatorPort;
+                    to_port = aggregatorPort;
+                    cidr_blocks = optional (netClusterIp4 != null) "${netClusterIp4}/32";
+                    ipv6_cidr_blocks = optional (netClusterIp6 != null) "${netClusterIp6}/128";
+                    self = false;
+                  });
+
+                  tags = defaultTags;
+                }
+            )
+            (filterAttrs (_: node: node.services.cardano-leios-piranha.enable or false) nodes);
 
           aws_route53_record =
             # Generate individual route53 node records
