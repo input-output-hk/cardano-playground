@@ -281,7 +281,7 @@ in
         ];
       };
 
-      leiosReadTeamBp = {config, ...}: let
+      leiosRedTeamBp = {config, ...}: let
         inherit (config.cardano-parts.perNode.meta) cardanoNodePort;
       in {
         imports = [
@@ -296,7 +296,10 @@ in
 
         networking.firewall.allowedTCPPorts = [cardanoNodePort];
 
-        services.cardano-node.useLedgerAfterSlot = lib.mkForce 0;
+        services.cardano-node = {
+          useLedgerAfterSlot = lib.mkForce 0;
+          extraNodeConfig.PeerSharing = true;
+        };
       };
 
       leiosRel = {imports = [rel];};
@@ -1196,16 +1199,16 @@ in
       # Leios Red Team nodes.
       # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
       # They don't go through a relay.
-      leiosred1-bp-a-1 = {imports = [eu-central-1 c6id-large (ebs 80) (group "leiosred1") node-leios leiosReadTeamBp];};
-      # leiosred2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 80) (group "leiosred2") node-leios leiosBp];};
-      # leiosred3-bp-c-1 = {imports = [us-east-2 c6id-large (ebs 80) (group "leiosred3") node-leios leiosBp];};
-      # leiosred4-bp-d-1 = {imports = [eu-north-1 c6id-large (ebs 80) (group "leiosred4") node-leios leiosBp];};
-      # leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-large (ebs 80) (group "leiosred5") node-leios leiosBp];};
-      # leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-large (ebs 80) (group "leiosred6") node-leios leiosBp];};
-      # leiosred7-bp-g-1 = {imports = [af-south-1 c6id-large (ebs 80) (group "leiosred7") node-leios leiosBp];};
-      # leiosred8-bp-h-1 = {imports = [ap-northeast-1 c6id-large (ebs 80) (group "leiosred8") node-leios leiosBp];};
-      # leiosred9-bp-i-1 = {imports = [us-west-1 c6id-large (ebs 80) (group "leiosred9") node-leios leiosBp];};
-      # leiosred10-bp-j-1 = {imports = [us-west-2 c6id-large (ebs 80) (group "leiosred10") node-leios leiosBp];};
+      leiosred1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leiosred1") node-leios leiosRedTeamBp];};
+      # leiosred2-bp-b-1 = {imports = [eu-west-1 c6id-xlarge (ebs 80) (group "leiosred2") node-leios leiosBp];};
+      # leiosred3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 80) (group "leiosred3") node-leios leiosBp];};
+      # leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 80) (group "leiosred4") node-leios leiosBp];};
+      # leiosred5-bp-e-1 = {imports = [ap-southeast-2 c8id-xlarge (ebs 80) (group "leiosred5") node-leios leiosBp];};
+      # leiosred6-bp-f-1 = {imports = [sa-east-1 c8id-xlarge (ebs 80) (group "leiosred6") node-leios leiosBp];};
+      # leiosred7-bp-g-1 = {imports = [af-south-1 c8id-xlarge (ebs 80) (group "leiosred7") node-leios leiosBp];};
+      # leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 80) (group "leiosred8") node-leios leiosBp];};
+      # leiosred9-bp-i-1 = {imports = [us-west-1 c8id-xlarge (ebs 80) (group "leiosred9") node-leios leiosBp];};
+      # leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 80) (group "leiosred10") node-leios leiosBp];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
