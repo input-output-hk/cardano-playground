@@ -29,7 +29,7 @@
 # running, so an environment can switch centrifuge<->firehose (or neither) with
 # no config change. Today playground runs cardano-tx-centrifuge.service.
 #
-# Loki-derived counters are named cardano_node_metrics_loki_{leios,call,txgen}_*.
+# Loki-derived counters are named leios_logmetrics_{,leios_,call_}* per service.
 {inputs, ...}: {
   flake.nixosModules.leios-alloy-logs = {
     config,
@@ -72,7 +72,7 @@
       extraJournalReceivers = ["loki.process.leios_route.receiver"];
 
       extraAlloyConfig = ''
-        // Export the cardano_node_metrics_loki_* counters derived below.  The base
+        // Export the leios_logmetrics_* counters derived below.  The base
         // profile's integrations_alloy scrape uses prometheus.exporter.self which
         // does not expose loki.process metrics with a keep-regex, so it will not
         // carry these.  Scrape alloy's own /metrics, keep ONLY our derived series,
@@ -95,7 +95,7 @@
 
           rule {
             source_labels = ["__name__"]
-            regex         = "cardano_node_metrics_loki_.*"
+            regex         = "leios_logmetrics_.*"
             action        = "keep"
           }
         }
