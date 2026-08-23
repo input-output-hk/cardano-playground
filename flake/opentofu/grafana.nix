@@ -14,9 +14,8 @@ with lib; let
 
   # Leios dashboards come from the leios-observability source pin (single source
   # of truth, byte-identical with the ouroboros-leios repo); the rest are local.
-  dashboardFileList =
-    (parseDir ./grafana/dashboards ".json")
-    ++ (parseDir "${inputs.leios-observability}/demo/proto-devnet/config/dashboards" ".json");
+  localDashboardFileList = parseDir ./grafana/dashboards ".json";
+  leiosDashboardFileList = parseDir "${inputs.leios-observability}/demo/proto-devnet/config/dashboards" ".json";
   lokiAlertFileList = parseDir ./grafana/alerts-loki ".nix-import";
   recordingRulesFileList = parseDir ./grafana/recording-rules ".nix-import";
 
@@ -189,11 +188,19 @@ in {
           };
 
           # Dashboards
-          grafana_dashboard = foldl' (acc: f:
-            recursiveUpdate acc {
-              ${extractFileName f} = withGrafanaStack {config_json = readFile f;};
-            }) {}
-          dashboardFileList;
+          # tofu interpolates config_json, so grafana template vars ${x} and
+          # directives %{x} must be emitted as $${x} and %%{x}. local dashboards
+          # are stored pre-escaped; the leios pin is byte-identical with upstream
+          # bare syntax for grafana file provisioning, so escape it on read.
+          grafana_dashboard = let
+            # blunt replace; safe as these files target grafana, never tofu interpolation
+            escapeTofu = replaceStrings ["\${" "%{"] ["$\${" "%%{"];
+            mk = escape: f: {${extractFileName f} = withGrafanaStack {config_json = escape (readFile f);};};
+          in
+            foldl' recursiveUpdate {} (
+              (map (mk (x: x)) localDashboardFileList)
+              ++ (map (mk escapeTofu) leiosDashboardFileList)
+            );
 
           # Alerts
           mimir_rule_group_alerting = foldl' (acc: f:
