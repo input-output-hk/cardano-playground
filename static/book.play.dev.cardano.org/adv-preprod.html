@@ -181,25 +181,19 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="advanced-configuration-pre-production-testnet"><a class="header" href="#advanced-configuration-pre-production-testnet">Advanced Configuration: Pre-Production Testnet</a></h2>
-<p>There is currently no pre-release version available for the pre-production environment.</p>
-<p>The latest version available is cardano-node release <code>11.0.1</code>.</p>
+<p>Users wanting to test a cardano-node pre-release version on the preprod
+environment may obtain compatible configuration files below.</p>
+<p>The latest version available is cardano-node release <code>11.1.0</code>.</p>
 <h4 id="configuration-files"><a class="header" href="#configuration-files">Configuration files</a></h4>
-<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/11.0.1">11.0.1</a></p>
+<p>Compatible with cardano-node release <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/11.1.0">11.1.0</a></p>
 <pre><code>NOTE:
-* The new tracing system is now default.  See additional notes below.
-
-* There is no longer a need to maintain separate non-forger and forger config
-files.  Node will now intelligently set PeerSharing, and a few other config
-parameters based on forging status.
-
-* The legacy non-p2p networking mode is no longer available.
+* Legacy tracing system is no longer available.
 
 * Avoid connecting PeerSharing enabled nodes to a block producer using
 `InitiatorOnlyMode` as the block producer's IP will be leaked.
 </code></pre>
 <ul>
 <li><a href="environments-pre/preprod/config.json">Node Config</a></li>
-<li><a href="environments-pre/preprod/config-legacy.json">Node Config Legacy</a></li>
 <li><a href="environments-pre/preprod/tracer-config.json">Tracer Config</a></li>
 <li><a href="environments-pre/preprod/db-sync-config.json">DB Sync Config</a></li>
 <li><a href="environments-pre/preprod/submit-api-config.json">Submit API Config</a></li>
@@ -211,12 +205,6 @@ parameters based on forging status.
 <li><a href="environments-pre/preprod/conway-genesis.json">Conway Genesis</a></li>
 <li><a href="environments-pre/preprod/guardrails-script.plutus">Compiled guardrails script</a></li>
 </ul>
-<h4 id="new-tracing-system"><a class="header" href="#new-tracing-system">New Tracing System</a></h4>
-<p>As of node <code>10.6.0</code> the new tracing system is default.  The legacy tracing
-system is still available, with a legacy config provided above, but is
-deprecated and will be removed in the near future.</p>
-<p>See the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.0">10.6.0 release notes</a>
-for more information.</p>
 <h4 id="ouroboros-genesis-mode"><a class="header" href="#ouroboros-genesis-mode">Ouroboros Genesis Mode</a></h4>
 <p>Ouroboros genesis mode is now the default consensus mode on preview and preprod
 testnets starting with node <code>10.5.0</code>.  If needed, use of praos mode and the
@@ -224,12 +212,6 @@ bootstrap peers found in the above topology file can be reverted to by setting:<
 <ul>
 <li>Node config's <code>ConsensusMode</code> option to a value of <code>PraosMode</code></li>
 </ul>
-<h4 id="utxo-hd"><a class="header" href="#utxo-hd">UTXO-HD</a></h4>
-<p>Users migrating from a node version older than <code>10.4.1</code> should also read the <a href="https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1">10.4.1 release
-notes</a> and
-the consensus <a href="https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating">migration guide</a>
-to properly configure the node and convert the database such that a replay from
-genesis can be avoided.</p>
 <h4 id="guardrails-reference-script-utxo"><a class="header" href="#guardrails-reference-script-utxo">Guardrails reference script UTxO</a></h4>
 <p>For convenience, the guardrails script has been put on a UTxO so that it can be used as reference script in
 Treasury Withdrawal and Update Protocol Parameter proposals.</p>
