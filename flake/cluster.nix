@@ -14,6 +14,7 @@ with lib; {
         eu-central-1 = true;
         eu-west-1 = true;
         us-east-2 = true;
+        ap-northeast-1 = true;
 
         # Temporary machine usage in these regions for buildkite one-off tests
         # and wireguard CF tunnel tests.
@@ -106,9 +107,9 @@ with lib; {
       // (mkGroup "leiosred3" "leios" "leiosred-node.${dns}" "leiosred3-node.${dns}" false false)
       // (mkGroup "leiosred4" "leios" "leiosred-node.${dns}" "leiosred4-node.${dns}" false false)
       // (mkGroup "leiosred5" "leios" "leiosred-node.${dns}" "leiosred5-node.${dns}" false false)
-      # // (mkGroup "leiosred6" "leios" "leiosred-node.${dns}" "leiosred6-node.${dns}" false false)
-      # // (mkGroup "leiosred7" "leios" "leiosred-node.${dns}" "leiosred7-node.${dns}" false false)
-      # // (mkGroup "leiosred8" "leios" "leiosred-node.${dns}" "leiosred8-node.${dns}" false false)
+      // (mkGroup "leiosred6" "leios" "leiosred-node.${dns}" "leiosred6-node.${dns}" false false)
+      // (mkGroup "leiosred7" "leios" "leiosred-node.${dns}" "leiosred7-node.${dns}" false false)
+      // (mkGroup "leiosred8" "leios" "leiosred-node.${dns}" "leiosred8-node.${dns}" false false)
       # // (mkGroup "leiosred9" "leios" "leiosred-node.${dns}" "leiosred9-node.${dns}" false false)
       # // (mkGroup "leiosred10" "leios" "leiosred-node.${dns}" "leiosred10-node.${dns}" false false)
       // (mkGroup "mainnet1" "mainnet" null null false false)

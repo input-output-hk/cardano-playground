@@ -79,6 +79,7 @@ in {
             "/run/cardano-leios-piranha/pool-id.toml"
           ];
 
+          # TODO according to net-rs/net-node/configs/forge-musashi-live.toml
           settings = let
             inherit (config.cardano-parts.perNode.lib) cardanoLib;
             inherit (config.cardano-parts.cluster) group;
@@ -90,6 +91,11 @@ in {
 
             sync_method = "tip";
             scheduler = "priority-wfq";
+
+            # TODO take from somewhere?
+            # slot_duration_ms = 1000;
+            # genesis_time_unix = 1786060800;
+            # security_param_k = 2160;
 
             chain_data = {
               source = "kleioscan";
