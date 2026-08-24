@@ -40,6 +40,11 @@ keys:
   - &leiosred3-bp-c-1 age100j4usae4uwn89vh6x336d94vw8n2x7qcqmpjgdra20f7kzztyeqwa66t9
   - &leiosred4-bp-d-1 age12qc4alfpep36dmflvry7lj8gx83j0llgckjq855smaf79e765eesd2mjhx
   - &leiosred5-bp-e-1 age1zst0d69z6y4u960fg2q3rpw5jsl3mfnln7k9lm8tlud4dcn5tudq9uj4hy
+  - &leiosred6-bp-f-1 age1uhr0ywvd70eq09rcgmgn2n59jqfqafwjkuccc23wemnawj0zqacsaadtgu
+  - &leiosred7-bp-g-1 age15vkvs9mp5c3wws9m08xvfyw7j985aw846xy20r8ukj8pxmarguwqeccmqy
+  - &leiosred8-bp-h-1 age1c9eslsymressueqr9c77er87uewjqdl40fjpgu0t7apuhccg7fes2txaje
+  - &leiosred9-bp-i-1 age1dxg5nq4u3hdpsg8pzpaeh40p7muj4r9hfw5sjd6efcnlj2dqz3zqcfhplw
+  - &leiosred10-bp-j-1 age1eyvhtuftwvwhc7spapukdhpagjd7hvp4xvex3kq9cdup23nn9g9q5nz64p
 
   # Sanchonet
   - &sanchonet1-bp-a-1 age1sxhjqwnuf5duczjv5fwle492jpm7fhwunkwhp6agle6y75yqdeas586aaj
@@ -220,6 +225,36 @@ creation_rules:
       - *sre
       - *leiosred5-bp-e-1
 
+  - path_regex: secrets/groups/leiosred6/deploy/leiosred6-bp-f-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred6-bp-f-1
+
+  - path_regex: secrets/groups/leiosred7/deploy/leiosred7-bp-g-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred7-bp-g-1
+
+  - path_regex: secrets/groups/leiosred8/deploy/leiosred8-bp-h-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred8-bp-h-1
+
+  - path_regex: secrets/groups/leiosred9/deploy/leiosred9-bp-i-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred9-bp-i-1
+
+  - path_regex: secrets/groups/leiosred10/deploy/leiosred10-bp-j-1.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosred10-bp-j-1
+
   # Sanchonet specific
   - path_regex: secrets/groups/sanchonet1/deploy/.*$
     key_groups:
@@ -275,6 +310,11 @@ creation_rules:
       - *leiosred3-bp-c-1
       - *leiosred4-bp-d-1
       - *leiosred5-bp-e-1
+      - *leiosred6-bp-f-1
+      - *leiosred7-bp-g-1
+      - *leiosred8-bp-h-1
+      - *leiosred9-bp-i-1
+      - *leiosred10-bp-j-1
 
   # -------------------------------------------------------
   # Workbench pool onboarding -- modify during creation
