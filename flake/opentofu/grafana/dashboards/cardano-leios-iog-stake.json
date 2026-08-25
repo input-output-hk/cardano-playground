@@ -1,0 +1,1813 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "IOG share of active network stake on the Leios cluster. Most panels read db-sync directly, where leios_committee weight is the raw stake fraction so no denominator is needed. Three panels still need Mimir, for IOG vote coverage and per-seat vote coverage, which have no db-sync equivalent since its vote tables are all governance. Set the $dbsync datasource to a db-sync Postgres instance.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "id": 11,
+      "title": "Hours since last on-chain certification",
+      "description": "Age of the most recent block carrying a Leios certificate, from db-sync leios_cert_signer. Ground truth for whether Leios is certifying at all, and the best thing here to alert on.",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "h",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round((extract(epoch from (now() - max(b.time))) / 3600)::numeric, 2)\n       AS \"hours since last cert\"\nFROM leios_cert_signer s\nJOIN block b ON b.id = s.block_id",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 18,
+      "title": "Next epoch in",
+      "description": "Time until the next epoch boundary, when the stake snapshots rotate and mark becomes set. Epoch length is derived from the mean start to start delta of the last 10 epochs rather than hardcoded, so this stays correct on clusters with a different epoch length. Boundaries jitter by a few tens of seconds because epoch.start_time is the first block of the epoch, not the scheduled slot.",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "yellow"
+              },
+              {
+                "color": "green",
+                "value": 900
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     len AS (\n       SELECT round(avg(d)) AS secs FROM (\n         SELECT extract(epoch from (lead(start_time) OVER (ORDER BY no) - start_time)) AS d\n         FROM epoch, tip WHERE no BETWEEN tip.e - 10 AND tip.e\n       ) x WHERE d IS NOT NULL\n     )\nSELECT extract(epoch from (e.start_time + make_interval(secs => len.secs::int) - now()))\n       AS \"next epoch in\"\nFROM epoch e, tip, len\nWHERE e.no = tip.e",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 1,
+      "title": "IOG stake share of active network stake",
+      "description": "Summed leios_committee weight for the IOG pools in the chain tip epoch. Committee weight is the raw stake fraction of active network stake, so this is exactly IOG's share. Exact, per epoch, with no rate window and no relay-count factor.",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 8,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "yellow",
+                "value": 0.55
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT sum(lc.weight) AS \"IOG share\"\nFROM leios_committee lc\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nWHERE lc.epoch_no = (SELECT max(epoch_no) FROM block)\n  AND ph.view IN ($${iog_pools:sqlstring})",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 2,
+      "title": "db-sync lag",
+      "description": "Seconds between the newest block db-sync has processed and now. Almost every panel here is computed from db-sync, so this is the trust check: if it climbs, the numbers are stale rather than falling.",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 14,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 120
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT extract(epoch from (now() - max(time))) AS \"db-sync lag\" FROM block",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 10,
+      "title": "IOG own vote coverage",
+      "description": "Share of votable points the IOG pools actually voted on, at $vantage. The one number here that db-sync cannot supply: its vote tables are all governance, nothing per-seat. Falls independently of stake share, and participation drops if it does.",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 17,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 0.9
+              },
+              {
+                "color": "green",
+                "value": 0.95
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "avg(increase(leios_logmetrics_leios_votes_acquired_total{environment=~\"$environment\",instance=\"$vantage\"}[$window])\n  and on(voterId) leios_logmetrics_leios_voted_weight_total{environment=~\"$environment\", group=~\"leios[0-9]+\"})\n/ scalar(max(increase(leios_logmetrics_leios_votes_acquired_total{environment=~\"$environment\",instance=\"$vantage\"}[$window])))",
+          "legendFormat": "IOG coverage",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Smallest single-pool share",
+      "description": "Lowest of the three IOG pool weights in the tip epoch. Thresholds are the watermarks divided by three, the per-pool equivalents.",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 0.1667
+              },
+              {
+                "color": "green",
+                "value": 0.2
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT min(lc.weight) AS \"smallest pool\"\nFROM leios_committee lc\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nWHERE lc.epoch_no = (SELECT max(epoch_no) FROM block)\n  AND ph.view IN ($${iog_pools:sqlstring})",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Certified EBs per epoch, on-chain",
+      "description": "Blocks carrying a Leios certificate, by epoch. Zero means nothing certified in that epoch at all, which has happened on this cluster for several consecutive epochs, so a flat zero stretch is a real outage rather than a gap in the data. Read it with the hours since last certification stat above.",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT min(b.time) AS \"time\", count(DISTINCT s.block_id) AS \"certified EBs\"\nFROM block b\nLEFT JOIN leios_cert_signer s ON s.block_id = b.id\nWHERE $__timeFilter(b.time)\nGROUP BY b.epoch_no\nORDER BY 1",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Certification weight per epoch, on-chain",
+      "description": "Min, mean and max certificate weight per epoch. Certification fires the instant the threshold is crossed, so the recorded signer set is the minimal crossing set and these hug 75 percent, which shows that a block certified rather than by how much margin. Weights are joined to the committee of the epoch the votes were cast in, not the epoch of the carrying block: a cert may be carried up to minCertificationGap, 10 slots, later and so cross a boundary. Without that correction, a cert carried by the first block of an epoch is scored against the wrong committee and mis-reads as below threshold. Corrected, none has been observed below the threshold.",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH efs AS (SELECT epoch_no, min(slot_no) AS fs FROM block GROUP BY epoch_no),\n     cw AS (\n       SELECT b.epoch_no, b.time, s.block_id, sum(lc.weight) AS w\n       FROM leios_cert_signer s\n       JOIN block b ON b.id = s.block_id\n       JOIN efs ON efs.epoch_no = b.epoch_no\n       JOIN leios_committee lc\n         ON lc.seat_index = s.seat_index\n        AND lc.epoch_no = CASE WHEN b.slot_no - efs.fs < 10\n                               THEN b.epoch_no - 1 ELSE b.epoch_no END\n       WHERE $__timeFilter(b.time)\n       GROUP BY b.epoch_no, b.time, s.block_id\n     )\nSELECT min(cw.time) AS \"time\",\n       round((min(cw.w) * 100)::numeric, 2) AS \"min %\",\n       round((avg(cw.w) * 100)::numeric, 2) AS \"avg %\",\n       round((max(cw.w) * 100)::numeric, 2) AS \"max %\"\nFROM cw\nGROUP BY cw.epoch_no\nORDER BY 1",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 5,
+      "title": "IOG stake share over time",
+      "description": "Per epoch from leios_committee, exact. Bands are keyed to participation, which is the IOG share times IOG vote coverage plus the remaining share times everyone else's coverage. They were derived at a point when non-IOG coverage sat near half, which put break-even for the 75 percent certification threshold close to a 50 percent share. If network vote coverage shifts materially the break-even moves and the bands should be re-derived. Steps at epoch boundaries because the weight is constant within an epoch.",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "yellow",
+                "value": 0.55
+              },
+              {
+                "color": "green",
+                "value": 0.6
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT e.start_time AS \"time\", sum(lc.weight) AS \"IOG stake share\"\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nGROUP BY e.no, e.start_time\nORDER BY 1",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Stake share per IOG pool",
+      "description": "Per-pool committee weight by epoch. Labels prefer off_chain_pool_data.ticker_name, populated since offchain_pool_data was enabled on this db-sync, and fall back to a hardcoded IOG map if a pool has no fetched metadata.",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT e.start_time AS \"time\",\n       coalesce(o.ticker_name,\n                CASE ph.view\n                  WHEN 'pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred' THEN 'IOG1'\n                  WHEN 'pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm' THEN 'IOG2'\n                  WHEN 'pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s' THEN 'IOG3'\n                  ELSE left(ph.view, 14) || '...'\n                END) AS metric,\n       lc.weight AS value\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nLEFT JOIN off_chain_pool_data o ON o.pool_id = ph.id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nORDER BY 1",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Stake share against forged share",
+      "description": "Both exact and on-chain, per epoch. Forged share persistently above stake share means other pools are losing blocks that IOG is not, which has run persistently positive by several points across every multi-epoch window measured so far.",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH f AS (\n  SELECT b.epoch_no,\n         count(*) FILTER (WHERE ph.view IN ($${iog_pools:sqlstring}))::numeric\n           / nullif(count(*),0) AS forged\n  FROM block b\n  JOIN slot_leader sl ON sl.id = b.slot_leader_id\n  LEFT JOIN pool_hash ph ON ph.id = sl.pool_hash_id\n  WHERE sl.pool_hash_id IS NOT NULL\n  GROUP BY b.epoch_no\n), s AS (\n  SELECT lc.epoch_no, sum(lc.weight) AS share\n  FROM leios_committee lc\n  JOIN pool_hash ph ON ph.id = lc.pool_hash_id\n  WHERE ph.view IN ($${iog_pools:sqlstring})\n  GROUP BY lc.epoch_no\n)\nSELECT e.start_time AS \"time\", s.share AS \"stake share\", f.forged AS \"forged share\"\nFROM s JOIN f ON f.epoch_no = s.epoch_no\nJOIN epoch e ON e.no = s.epoch_no\nWHERE $__timeFilter(e.start_time)\nORDER BY 1",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Total ADA to reach the high watermark",
+      "description": "Additional stake across all IOG pools to reach the high watermark, rounded to 1M ADA, from epoch_stake at the chain tip. Adding stake also grows the network total, so this solves (K + x) / (T + x) = H rather than a flat difference. Reads 0 when already at or above.",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 31
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 20000000
+              }
+            ]
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     es AS (SELECT es.pool_id, es.amount FROM epoch_stake es, tip WHERE es.epoch_no = tip.e),\n     tot AS (SELECT sum(amount) / 1e6 AS t FROM es),\n     iog AS (SELECT es.pool_id, ph.view AS pool, sum(es.amount) / 1e6 AS k\n             FROM es JOIN pool_hash ph ON ph.id = es.pool_id\n             WHERE ph.view IN ($${iog_pools:sqlstring})\n             GROUP BY es.pool_id, ph.view),\n     agg AS (SELECT sum(k) AS ktot, count(*)::numeric AS n FROM iog)\nSELECT round(greatest(t.t * ($high_watermark - agg.ktot / t.t)\n                      / (1 - $high_watermark), 0) / 1e6) * 1e6 AS \"ADA to add\"\nFROM agg, tot t",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 9,
+      "title": "ADA to add per pool, to the high watermark",
+      "description": "Per-pool top-up, split so all three pools finish equal at one third of the high watermark of the post-top-up total. Rounded to 1M each, so rows can sum to 1M less than the total panel.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 8,
+        "y": 31
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ADA to add"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 15000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*ADA.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     es AS (SELECT es.pool_id, es.amount FROM epoch_stake es, tip WHERE es.epoch_no = tip.e),\n     tot AS (SELECT sum(amount) / 1e6 AS t FROM es),\n     iog AS (SELECT es.pool_id, ph.view AS pool, sum(es.amount) / 1e6 AS k\n             FROM es JOIN pool_hash ph ON ph.id = es.pool_id\n             WHERE ph.view IN ($${iog_pools:sqlstring})\n             GROUP BY es.pool_id, ph.view),\n     agg AS (SELECT sum(k) AS ktot, count(*)::numeric AS n FROM iog)\nSELECT coalesce(o.ticker_name,\n                CASE i.pool\n                  WHEN 'pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred' THEN 'IOG1'\n                  WHEN 'pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm' THEN 'IOG2'\n                  WHEN 'pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s' THEN 'IOG3'\n                  ELSE left(i.pool, 14) || '...'\n                END) AS \"pool\",\n       round((i.k)::numeric) AS \"stake now (ADA)\",\n       round((($high_watermark / agg.n)\n              * (t.t * (1 - agg.ktot / t.t) / (1 - $high_watermark)))::numeric) AS \"target (ADA)\",\n       round(greatest(($high_watermark / agg.n)\n                      * (t.t * (1 - agg.ktot / t.t) / (1 - $high_watermark)) - i.k, 0)\n             / 1e6) * 1e6 AS \"ADA to add\"\nFROM iog i\nLEFT JOIN off_chain_pool_data o ON o.pool_id = i.pool_id\nCROSS JOIN agg\nCROSS JOIN tot t\nORDER BY 4 DESC",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Defunding candidates, worst first",
+      "description": "Every seat in the current committee ranked by on-chain participation over the last $offender_epochs epochs. `forged` versus `exp` is blocks produced against the number its stake implies, computed per epoch so a pool that joined mid-window is not unfairly penalised. `cert sign %` is the share of certificates in the window whose signer set included this pool, and it discriminates well, spreading the committee between pools that sign none and pools that sign most. It undercounts a pool that votes but arrives late, because only the minimal set that crossed the threshold is recorded, so treat a low value as suggestive rather than proof of not voting. `faucet idx` is the stake key index to pass to `just dedelegate-pools`. A pool with forge ratio near zero AND cert sign 0 is doing nothing for density or certification.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ADA to add"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 15000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*ADA.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     win AS (SELECT (SELECT e FROM tip) - $offender_epochs AS lo, (SELECT e FROM tip) AS hi),\n     epb AS (SELECT b.epoch_no, count(*) AS n FROM block b, win\n             WHERE b.slot_leader_id IS NOT NULL AND b.epoch_no BETWEEN win.lo AND win.hi\n             GROUP BY b.epoch_no),\n     ept AS (SELECT es.epoch_no, sum(es.amount) AS tot FROM epoch_stake es, win\n             WHERE es.epoch_no BETWEEN win.lo AND win.hi GROUP BY es.epoch_no),\n     exp AS (SELECT es.pool_id, sum(es.amount::numeric / ept.tot * epb.n) AS expected\n             FROM epoch_stake es\n             JOIN ept ON ept.epoch_no = es.epoch_no\n             JOIN epb ON epb.epoch_no = es.epoch_no, win\n             WHERE es.epoch_no BETWEEN win.lo AND win.hi GROUP BY es.pool_id),\n     forged AS (SELECT sl.pool_hash_id, count(*) AS n\n                FROM block b JOIN slot_leader sl ON sl.id = b.slot_leader_id, win\n                WHERE b.epoch_no BETWEEN win.lo AND win.hi AND sl.pool_hash_id IS NOT NULL\n                GROUP BY sl.pool_hash_id),\n     tcert AS (SELECT count(DISTINCT s.block_id) AS n FROM leios_cert_signer s\n               JOIN block b ON b.id = s.block_id, win WHERE b.epoch_no BETWEEN win.lo AND win.hi),\n     certs AS (SELECT s.pool_hash_id, count(DISTINCT s.block_id) AS n\n               FROM leios_cert_signer s JOIN block b ON b.id = s.block_id, win\n               WHERE b.epoch_no BETWEEN win.lo AND win.hi GROUP BY s.pool_hash_id),\n     seats AS (SELECT lc.pool_hash_id, lc.seat_index, lc.weight FROM leios_committee lc, tip\n               WHERE lc.epoch_no = tip.e),\n     vk AS (SELECT DISTINCT ON (hash_id) hash_id, leios_vkey FROM pool_update\n            ORDER BY hash_id, registered_tx_id DESC, id DESC),\n     faucet AS (SELECT DISTINCT ON (d.addr_id) f.key::int AS idx, d.pool_hash_id\n                FROM faucet_stake_addr f JOIN stake_address sa ON sa.view = f.value\n                JOIN delegation d ON d.addr_id = sa.id ORDER BY d.addr_id, d.id DESC)\nSELECT s.seat_index AS seat,\n       coalesce(o.ticker_name, left(ph.view,12)||'..') AS pool,\n       round((s.weight*100)::numeric,2) AS \"wt %\",\n       coalesce(f.n,0) AS forged, round(e.expected,0) AS \"exp\",\n       round((coalesce(f.n,0)/nullif(e.expected,0))::numeric,2) AS \"forge ratio\",\n       round((100.0*coalesce(c.n,0)/tcert.n)::numeric,0) AS \"cert sign %\",\n       CASE WHEN vk.leios_vkey IS NULL THEN 'NO_VKEY' ELSE '' END AS vkey,\n       coalesce(fa.idx::text,'-') AS \"faucet idx\"\nFROM seats s JOIN pool_hash ph ON ph.id = s.pool_hash_id\nLEFT JOIN off_chain_pool_data o ON o.pool_id = ph.id\nLEFT JOIN forged f ON f.pool_hash_id = s.pool_hash_id\nLEFT JOIN exp e ON e.pool_id = s.pool_hash_id\nLEFT JOIN certs c ON c.pool_hash_id = s.pool_hash_id\nLEFT JOIN vk ON vk.hash_id = s.pool_hash_id\nLEFT JOIN faucet fa ON fa.pool_hash_id = s.pool_hash_id\nCROSS JOIN tcert\nORDER BY \"cert sign %\" NULLS FIRST, \"forge ratio\" NULLS FIRST\nLIMIT $offender_rows",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Vote coverage by seat, point in time",
+      "description": "Vote coverage per committee seat at $vantage over the last $window, worst first, from Mimir. Deliberately an instant table and not a timeseries: seats are reassigned to different pools every epoch, so a series drawn across epoch boundaries is a rotating cast of pools rather than one pool's behaviour. Read it with the seat column of the defunding table above to identify who currently holds each seat. A per-pool view across epochs is not possible today: vote counts live in Mimir keyed by seat while the seat to pool map lives in db-sync, with no shared key. The fix is not an Alloy change, since Alloy only sees logs and neither the weights nor the pool mapping appear in any log line. It needs the per-epoch seat to pool map and weight exported from db-sync as a metric, after which this becomes a native PromQL group_left join. Seats that have never voted have no series at all and are absent here rather than shown as zero.",
+      "type": "table",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2,
+          "mappings": [],
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.9
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "seat"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vote coverage"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "vote coverage",
+            "desc": false
+          }
+        ]
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "legendFormat": "",
+          "refId": "A",
+          "expr": "sum by (voterId) (increase(leios_logmetrics_leios_votes_acquired_total{environment=~\"$environment\",instance=\"$vantage\"}[$window]))\n/ scalar(max(increase(leios_logmetrics_leios_votes_acquired_total{environment=~\"$environment\",instance=\"$vantage\"}[$window])))"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "voterId": "seat",
+              "Value": "vote coverage"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Stake snapshots, current and pending",
+      "description": "IOG and total stake for each of the three ledger stake snapshots, from db-sync epoch_stake. Naming verified against cardano-cli query stake-snapshot on this cluster: stakeGo equals epoch_stake for the previous epoch, stakeSet the current tip epoch, and stakeMark the next. So `set` is what drives committee weight right now and `mark` is what takes effect at the next epoch boundary. Use this to see a delegation change two epochs before it lands, and to confirm a top-up arrived.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ADA to add"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 15000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*ADA.*"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     s AS (\n       SELECT es.epoch_no,\n              sum(es.amount) / 1e6 AS total,\n              sum(es.amount) FILTER (WHERE ph.view IN ($${iog_pools:sqlstring})) / 1e6 AS iog\n       FROM epoch_stake es\n       JOIN pool_hash ph ON ph.id = es.pool_id, tip\n       WHERE es.epoch_no >= tip.e - 1\n       GROUP BY es.epoch_no\n     )\nSELECT CASE WHEN s.epoch_no = tip.e - 1 THEN 'go, previous epoch'\n            WHEN s.epoch_no = tip.e     THEN 'set, current epoch'\n            WHEN s.epoch_no = tip.e + 1 THEN 'mark, next epoch'\n            ELSE 'epoch ' || s.epoch_no::text END AS \"snapshot\",\n       s.epoch_no                      AS \"epoch\",\n       round(s.iog)                    AS \"IOG stake (ADA)\",\n       round(s.total)                  AS \"total stake (ADA)\",\n       round(100 * s.iog / s.total, 3) AS \"IOG share %\"\nFROM s, tip\nORDER BY s.epoch_no",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    }
+  ],
+  "preload": false,
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "tags": [
+    "cardano",
+    "leios",
+    "stake"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "leios",
+          "value": "leios"
+        },
+        "datasource": {
+          "type": "prometheus"
+        },
+        "definition": "label_values(leios_logmetrics_leios_voted_weight_total, environment)",
+        "includeAll": false,
+        "multi": false,
+        "name": "environment",
+        "options": [],
+        "query": {
+          "query": "label_values(leios_logmetrics_leios_voted_weight_total, environment)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "2h",
+          "value": "2h"
+        },
+        "description": "Rate window. 2h spans the 1h on / 1h off load cycle so the series never gaps. 30m can land entirely in an idle hour and return no data.",
+        "includeAll": false,
+        "multi": false,
+        "name": "window",
+        "options": [
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": true,
+            "text": "2h",
+            "value": "2h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          }
+        ],
+        "query": "1h,2h,6h",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "dbsync-leios",
+          "value": "afw6ogqt5l728f"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "description": "The db-sync Postgres datasource, defaulted to dbsync-leios. Required by the on-chain certification panels; the rest of the dashboard works without it. Point it at the cexplorer database on a leios db-sync host.",
+        "name": "dbsync",
+        "options": [],
+        "query": "grafana-postgresql-datasource",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "leios1-dbsync-a-1",
+          "value": "leios1-dbsync-a-1"
+        },
+        "datasource": {
+          "type": "prometheus"
+        },
+        "definition": "label_values(leios_logmetrics_leios_votes_acquired_total{environment=~\"$environment\"}, instance)",
+        "description": "Vantage host for the coverage panel. Every node sees every vote, so this must be a single instance or counts multiply by the fleet size. Prefer a client host such as dbsync, faucet or centrifuge; block producers observe far fewer votes and are a poor vantage point.",
+        "includeAll": false,
+        "multi": false,
+        "name": "vantage",
+        "options": [],
+        "query": {
+          "query": "label_values(leios_logmetrics_leios_votes_acquired_total{environment=~\"$environment\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": [
+            "IOG1",
+            "IOG2",
+            "IOG3"
+          ],
+          "value": [
+            "pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred",
+            "pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm",
+            "pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s"
+          ]
+        },
+        "description": "The three IOG pool ids, used by the db-sync top-up panels to identify IOG stake in epoch_stake. Far more stable than a hand-maintained stake figure: these ids only change if IOG re-registers a pool.",
+        "includeAll": false,
+        "multi": true,
+        "name": "iog_pools",
+        "options": [
+          {
+            "selected": true,
+            "text": "IOG1",
+            "value": "pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred"
+          },
+          {
+            "selected": true,
+            "text": "IOG2",
+            "value": "pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm"
+          },
+          {
+            "selected": true,
+            "text": "IOG3",
+            "value": "pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s"
+          }
+        ],
+        "query": "IOG1 : pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred, IOG2 : pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm, IOG3 : pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "8",
+          "value": "8"
+        },
+        "description": "How many epochs back the defunding table looks. 8 epochs is 2 days at 6h per epoch.",
+        "includeAll": false,
+        "multi": false,
+        "name": "offender_epochs",
+        "options": [
+          {
+            "selected": false,
+            "text": "4",
+            "value": "4"
+          },
+          {
+            "selected": true,
+            "text": "8",
+            "value": "8"
+          },
+          {
+            "selected": false,
+            "text": "16",
+            "value": "16"
+          },
+          {
+            "selected": false,
+            "text": "28",
+            "value": "28"
+          }
+        ],
+        "query": "4,8,16,28",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "20",
+          "value": "20"
+        },
+        "description": "Rows shown in the defunding table.",
+        "includeAll": false,
+        "multi": false,
+        "name": "offender_rows",
+        "options": [
+          {
+            "selected": false,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": true,
+            "text": "20",
+            "value": "20"
+          },
+          {
+            "selected": false,
+            "text": "70",
+            "value": "70"
+          }
+        ],
+        "query": "10,20,70",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "0.60",
+          "value": "0.60"
+        },
+        "description": "High watermark as a fraction. Drives the threshold colouring and both top-up panels. The low watermark, 0.45, is set on the threshold steps of the share panels.",
+        "includeAll": false,
+        "multi": false,
+        "name": "high_watermark",
+        "options": [
+          {
+            "selected": true,
+            "text": "0.60",
+            "value": "0.60"
+          }
+        ],
+        "query": "0.60",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Cardano Leios - IOG Stake Share",
+  "uid": "cardano-leios-iog-stake"
+}
