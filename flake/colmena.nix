@@ -14,16 +14,16 @@ in
   with lib; {
     flake.colmena = let
       # Region defs:
-      af-south-1.aws.region = "af-south-1";
-      ap-northeast-1.aws.region = "ap-northeast-1";
-      ap-southeast-2.aws.region = "ap-southeast-2";
-      eu-central-1.aws.region = "eu-central-1";
-      eu-north-1.aws.region = "eu-north-1";
-      eu-west-1.aws.region = "eu-west-1";
-      sa-east-1.aws.region = "sa-east-1";
-      us-east-2.aws.region = "us-east-2";
-      us-west-1.aws.region = "us-west-1";
-      us-west-2.aws.region = "us-west-2";
+      eu-central-1.aws.region = "eu-central-1"; # a
+      eu-west-1.aws.region = "eu-west-1"; # b
+      us-east-2.aws.region = "us-east-2"; # c
+      eu-north-1.aws.region = "eu-north-1"; # d
+      ap-southeast-2.aws.region = "ap-southeast-2"; # e
+      sa-east-1.aws.region = "sa-east-1"; # f
+      af-south-1.aws.region = "af-south-1"; # g
+      ap-northeast-1.aws.region = "ap-northeast-1"; # h
+      us-west-1.aws.region = "us-west-1"; # i
+      us-west-2.aws.region = "us-west-2"; # j
 
       # Instance defs:
       # c5a-large.aws.instance.instance_type = "c5a.large";
