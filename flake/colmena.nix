@@ -271,19 +271,33 @@ in
       };
 
       leiosBp = {
-        imports = [
-          bp
-          {
-            services.cardano-node.extraNodeConfig = {
-              # Enable the Forge.Loop.Call call-trace spans (kind="Call",
-              # sev=Debug) that feed the leios call-trace Grafana dashboard.
-              # Only forgers run the forge loop, so this lives on the BPs only;
-              # parent Forge.Loop stays at Info (base config), and this
-              # more-specific child override turns on just the call-trace.
-              TraceOptions."Forge.Loop.Call".severity = "Debug";
-            };
-          }
-        ];
+        config,
+        pkgs,
+        ...
+      }: {
+        imports = [bp];
+
+        services.cardano-node.extraNodeConfig = {
+          # Enable the Forge.Loop.Call call-trace spans (kind="Call",
+          # sev=Debug) that feed the leios call-trace Grafana dashboard.
+          # Only forgers run the forge loop, so this lives on the BPs only;
+          # parent Forge.Loop stays at Info (base config), and this
+          # more-specific child override turns on just the call-trace.
+          TraceOptions."Forge.Loop.Call".severity = "Debug";
+        };
+
+        systemd.services.cardano-node = {
+          path = with pkgs; [sqlite];
+
+          preStart = ''
+            # Make it a bit more likely for sync to work.
+            # https://github.com/input-output-hk/ouroboros-leios/issues/998
+            sqlite3 ${lib.escapeShellArg config.services.cardano-node.extraNodeConfig.LeiosDbConfig.Filepath} <<EOF
+            DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
+            DELETE FROM ebs WHERE 0 <= missingTxCount;
+            EOF
+          '';
+        };
       };
 
       leiosRedTeamBp = {
