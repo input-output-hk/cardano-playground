@@ -38,7 +38,7 @@ build-book-prod:
   else
     ANSI_BG "bg_green" "STATUS:" "The git state appears to be clean: $COMMIT"
     echo
-    read -p "Are all required book updates except for the commit stamp already generated and commited? [yY]? " -n 1 -r
+    read -p "Are all required book updates except for the commit stamp already generated and commited? [y/N] " -n 1 -r
     echo
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -135,7 +135,7 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
 
   PROMPT() {
     echo
-    read -p "Does this look correct [yY]? " -n 1 -r
+    read -p "Does this look correct? [y/N] " -n 1 -r
     echo
     if ! [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Aborting the fund transfer."
