@@ -17,7 +17,7 @@
       }
     ]
   },
-  "description": "IOG share of active network stake on the Leios cluster. Most panels read db-sync directly, where leios_committee weight is the raw stake fraction so no denominator is needed. Three panels still need Mimir, for IOG vote coverage and per-seat vote coverage, which have no db-sync equivalent since its vote tables are all governance. Set the $dbsync datasource to a db-sync Postgres instance.",
+  "description": "IOG share of active network stake on the Leios cluster. Most panels read db-sync directly, where leios_committee weight is the raw stake fraction so no denominator is needed. Two panels still need Mimir, for IOG vote coverage and per-seat vote coverage, which have no db-sync equivalent since its vote tables are all governance. Set the $dbsync datasource to a db-sync Postgres instance.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -30,7 +30,7 @@
       "type": "stat",
       "gridPos": {
         "h": 5,
-        "w": 4,
+        "w": 5,
         "x": 0,
         "y": 0
       },
@@ -107,8 +107,8 @@
       "type": "stat",
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 4,
+        "w": 5,
+        "x": 5,
         "y": 0
       },
       "fieldConfig": {
@@ -174,95 +174,14 @@
       }
     },
     {
-      "id": 1,
-      "title": "IOG stake share of active network stake",
-      "description": "Summed leios_committee weight for the IOG pools in the chain tip epoch. Committee weight is the raw stake fraction of active network stake, so this is exactly IOG's share. Exact, per epoch, with no rate window and no relay-count factor.",
-      "type": "stat",
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 8,
-        "y": 0
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red"
-              },
-              {
-                "color": "orange",
-                "value": 0.5
-              },
-              {
-                "color": "yellow",
-                "value": 0.55
-              },
-              {
-                "color": "green",
-                "value": 0.6
-              }
-            ]
-          },
-          "unit": "percentunit",
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "$dbsync"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT sum(lc.weight) AS \"IOG share\"\nFROM leios_committee lc\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nWHERE lc.epoch_no = (SELECT max(epoch_no) FROM block)\n  AND ph.view IN ($${iog_pools:sqlstring})",
-          "refId": "A",
-          "sql": {
-            "columns": [],
-            "groupBy": []
-          }
-        }
-      ],
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "$dbsync"
-      }
-    },
-    {
       "id": 2,
       "title": "db-sync lag",
       "description": "Seconds between the newest block db-sync has processed and now. Almost every panel here is computed from db-sync, so this is the trust check: if it climbs, the numbers are stale rather than falling.",
       "type": "stat",
       "gridPos": {
         "h": 5,
-        "w": 3,
-        "x": 14,
+        "w": 4,
+        "x": 10,
         "y": 0
       },
       "fieldConfig": {
@@ -338,8 +257,8 @@
       "type": "stat",
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 17,
+        "w": 5,
+        "x": 14,
         "y": 0
       },
       "fieldConfig": {
@@ -399,12 +318,12 @@
     {
       "id": 3,
       "title": "Smallest single-pool share",
-      "description": "Lowest of the three IOG pool weights in the tip epoch. Thresholds are the watermarks divided by three, the per-pool equivalents.",
+      "description": "Lowest of the individual IOG pool weights in the current epoch. Colour bands were removed rather than left stale: they were the old per-pool equivalents of a 60 percent group target, and a static threshold cannot follow $iog_watermark. For the per-pool target compare against the ADA to add per pool table, which divides the group watermark across its pools.",
       "type": "stat",
       "gridPos": {
         "h": 5,
-        "w": 3,
-        "x": 21,
+        "w": 5,
+        "x": 19,
         "y": 0
       },
       "fieldConfig": {
@@ -417,15 +336,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red"
-              },
-              {
-                "color": "yellow",
-                "value": 0.1667
-              },
-              {
-                "color": "green",
-                "value": 0.2
+                "color": "text"
               }
             ]
           },
@@ -474,6 +385,282 @@
       }
     },
     {
+      "id": 20,
+      "title": "IOG stake share, current epoch",
+      "description": "Share of active network stake held by the IOG group in the CURRENT epoch, ie the ledger's `set` snapshot, which is what drives committee weight and leader election right now. A delegation change does not appear here until it rotates in at an epoch boundary; use the stake snapshots panel to see it coming one epoch ahead in `mark`.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     -- amt is ADA throughout, converted once here\n     s AS (SELECT es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es, tip WHERE es.epoch_no = tip.e GROUP BY es.pool_id),\n     g AS (SELECT s.pool_id, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     tot AS (SELECT sum(amt) AS total,\n                    sum(amt) FILTER (WHERE grp = 'REST') AS rest FROM g),\n     -- REST is the group we do not set, so it fixes the network total:\n     -- T = REST / (1 - sum of the three group watermarks)\n     tgt AS (SELECT tot.total, tot.rest,\n                    tot.rest / (1 - $iog_watermark - $pir0_watermark\n                                - $pir_cluster_watermark) AS t\n             FROM tot)\nSELECT sum(g.amt)::numeric / nullif(tgt.total, 0) AS \"IOG share\"\nFROM g, tgt WHERE g.grp = 'IOG' GROUP BY tgt.total",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "PIR0 stake share, current epoch",
+      "description": "Share of active network stake held by the PIR0 group in the CURRENT epoch, ie the ledger's `set` snapshot, which is what drives committee weight and leader election right now. A delegation change does not appear here until it rotates in at an epoch boundary; use the stake snapshots panel to see it coming one epoch ahead in `mark`.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     -- amt is ADA throughout, converted once here\n     s AS (SELECT es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es, tip WHERE es.epoch_no = tip.e GROUP BY es.pool_id),\n     g AS (SELECT s.pool_id, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     tot AS (SELECT sum(amt) AS total,\n                    sum(amt) FILTER (WHERE grp = 'REST') AS rest FROM g),\n     -- REST is the group we do not set, so it fixes the network total:\n     -- T = REST / (1 - sum of the three group watermarks)\n     tgt AS (SELECT tot.total, tot.rest,\n                    tot.rest / (1 - $iog_watermark - $pir0_watermark\n                                - $pir_cluster_watermark) AS t\n             FROM tot)\nSELECT sum(g.amt)::numeric / nullif(tgt.total, 0) AS \"PIR0 share\"\nFROM g, tgt WHERE g.grp = 'PIR0' GROUP BY tgt.total",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "PIR1-10 stake share, current epoch",
+      "description": "Share of active network stake held by the PIR1-10 group in the CURRENT epoch, ie the ledger's `set` snapshot, which is what drives committee weight and leader election right now. A delegation change does not appear here until it rotates in at an epoch boundary; use the stake snapshots panel to see it coming one epoch ahead in `mark`.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     -- amt is ADA throughout, converted once here\n     s AS (SELECT es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es, tip WHERE es.epoch_no = tip.e GROUP BY es.pool_id),\n     g AS (SELECT s.pool_id, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     tot AS (SELECT sum(amt) AS total,\n                    sum(amt) FILTER (WHERE grp = 'REST') AS rest FROM g),\n     -- REST is the group we do not set, so it fixes the network total:\n     -- T = REST / (1 - sum of the three group watermarks)\n     tgt AS (SELECT tot.total, tot.rest,\n                    tot.rest / (1 - $iog_watermark - $pir0_watermark\n                                - $pir_cluster_watermark) AS t\n             FROM tot)\nSELECT sum(g.amt)::numeric / nullif(tgt.total, 0) AS \"PIRC share\"\nFROM g, tgt WHERE g.grp = 'PIRC' GROUP BY tgt.total",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Rest of SPOs share, current epoch",
+      "description": "Share of active network stake held by the rest of SPOs group in the CURRENT epoch, ie the ledger's `set` snapshot, which is what drives committee weight and leader election right now. A delegation change does not appear here until it rotates in at an epoch boundary; use the stake snapshots panel to see it coming one epoch ahead in `mark`.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     -- amt is ADA throughout, converted once here\n     s AS (SELECT es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es, tip WHERE es.epoch_no = tip.e GROUP BY es.pool_id),\n     g AS (SELECT s.pool_id, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     tot AS (SELECT sum(amt) AS total,\n                    sum(amt) FILTER (WHERE grp = 'REST') AS rest FROM g),\n     -- REST is the group we do not set, so it fixes the network total:\n     -- T = REST / (1 - sum of the three group watermarks)\n     tgt AS (SELECT tot.total, tot.rest,\n                    tot.rest / (1 - $iog_watermark - $pir0_watermark\n                                - $pir_cluster_watermark) AS t\n             FROM tot)\nSELECT sum(g.amt)::numeric / nullif(tgt.total, 0) AS \"REST share\"\nFROM g, tgt WHERE g.grp = 'REST' GROUP BY tgt.total",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ]
+    },
+    {
       "id": 12,
       "title": "Certified EBs per epoch, on-chain",
       "description": "Blocks carrying a Leios certificate, by epoch. Zero means nothing certified in that epoch at all, which has happened on this cluster for several consecutive epochs, so a flat zero stretch is a real outage rather than a gap in the data. Read it with the hours since last certification stat above.",
@@ -482,7 +669,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -589,7 +776,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 9
       },
       "fieldConfig": {
         "defaults": {
@@ -689,128 +876,13 @@
     {
       "id": 5,
       "title": "IOG stake share over time",
-      "description": "Per epoch from leios_committee, exact. Bands are keyed to participation, which is the IOG share times IOG vote coverage plus the remaining share times everyone else's coverage. They were derived at a point when non-IOG coverage sat near half, which put break-even for the 75 percent certification threshold close to a 50 percent share. If network vote coverage shifts materially the break-even moves and the bands should be re-derived. Steps at epoch boundaries because the weight is constant within an epoch.",
+      "description": "IOG committee weight per epoch, from leios_committee, exact. The flat line is the $iog_watermark target, returned by the query rather than set as a threshold so it follows the variable. Grafana thresholds are fixed numbers and cannot reference a variable, which is why the earlier coloured bands were removed: they were calibrated for a 60 percent target and became misleading once the target moved. Steps at epoch boundaries because weight is constant within an epoch.",
       "type": "timeseries",
       "gridPos": {
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 13
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red"
-              },
-              {
-                "color": "orange",
-                "value": 0.5
-              },
-              {
-                "color": "yellow",
-                "value": 0.55
-              },
-              {
-                "color": "green",
-                "value": 0.6
-              }
-            ]
-          },
-          "unit": "percentunit",
-          "decimals": 2,
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "min",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "$dbsync"
-          },
-          "editorMode": "code",
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT e.start_time AS \"time\", sum(lc.weight) AS \"IOG stake share\"\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nGROUP BY e.no, e.start_time\nORDER BY 1",
-          "refId": "A",
-          "sql": {
-            "columns": [],
-            "groupBy": []
-          }
-        }
-      ],
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "$dbsync"
-      }
-    },
-    {
-      "id": 6,
-      "title": "Stake share per IOG pool",
-      "description": "Per-pool committee weight by epoch. Labels prefer off_chain_pool_data.ticker_name, populated since offchain_pool_data was enabled on this db-sync, and fall back to a hardcoded IOG map if a pool has no fetched metadata.",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 22
+        "y": 17
       },
       "fieldConfig": {
         "defaults": {
@@ -891,7 +963,110 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT e.start_time AS \"time\",\n       coalesce(o.ticker_name,\n                CASE ph.view\n                  WHEN 'pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred' THEN 'IOG1'\n                  WHEN 'pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm' THEN 'IOG2'\n                  WHEN 'pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s' THEN 'IOG3'\n                  ELSE left(ph.view, 14) || '...'\n                END) AS metric,\n       lc.weight AS value\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nLEFT JOIN off_chain_pool_data o ON o.pool_id = ph.id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nORDER BY 1",
+          "rawSql": "SELECT e.start_time AS \"time\",\n       sum(lc.weight)              AS \"IOG stake share\",\n       $iog_watermark::numeric     AS \"iog_watermark target\"\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nGROUP BY e.no, e.start_time\nORDER BY 1",
+          "refId": "A",
+          "sql": {
+            "columns": [],
+            "groupBy": []
+          }
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "$dbsync"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Stake share per IOG pool",
+      "description": "Per-pool committee weight by epoch. Labels prefer off_chain_pool_data.ticker_name, populated since offchain_pool_data was enabled on this db-sync, and fall back to a hardcoded IOG map if a pool has no fetched metadata.",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "$dbsync"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT e.start_time AS \"time\",\n       coalesce(o.ticker_name,\n                CASE ph.view\n                  WHEN 'pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred' THEN 'IOG1'\n                  WHEN 'pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm' THEN 'IOG2'\n                  WHEN 'pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s' THEN 'IOG3'\n                  ELSE left(ph.view, 14) || '...'\n                END) AS metric,\n       lc.weight AS value\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nLEFT JOIN (\n  -- off_chain_pool_data gains a row per metadata re-fetch, so it holds\n  -- several rows for some pools.  Joining it raw fans out and duplicates\n  -- pools in this panel.  Keep only the newest row per pool.\n  SELECT DISTINCT ON (pool_id) pool_id, ticker_name\n  FROM off_chain_pool_data ORDER BY pool_id, id DESC\n) o ON o.pool_id = ph.id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nORDER BY 1",
           "refId": "A",
           "sql": {
             "columns": [],
@@ -913,7 +1088,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 26
       },
       "fieldConfig": {
         "defaults": {
@@ -1009,14 +1184,14 @@
     },
     {
       "id": 8,
-      "title": "Total ADA to reach the high watermark",
-      "description": "Additional stake across all IOG pools to reach the high watermark, rounded to 1M ADA, from epoch_stake at the chain tip. Adding stake also grows the network total, so this solves (K + x) / (T + x) = H rather than a flat difference. Reads 0 when already at or above.",
+      "title": "Total ADA to add, all groups",
+      "description": "Additional stake needed across the IOG, PIR0 and PIR1-10 groups to reach their watermarks, in ADA. The total is anchored on the rest-of-SPOs group, which is not set here: T = REST / (1 - iog - pir0 - pir_cluster). Groups already at or above target contribute zero rather than a negative, so this is what to add, not a net position. Computed against the newest snapshot, `mark`, rather than the current epoch, since stake sent now lands in a future snapshot and mark is the closest estimate of where it will settle.",
       "type": "stat",
       "gridPos": {
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 31
+        "y": 35
       },
       "fieldConfig": {
         "defaults": {
@@ -1071,7 +1246,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     es AS (SELECT es.pool_id, es.amount FROM epoch_stake es, tip WHERE es.epoch_no = tip.e),\n     tot AS (SELECT sum(amount) / 1e6 AS t FROM es),\n     iog AS (SELECT es.pool_id, ph.view AS pool, sum(es.amount) / 1e6 AS k\n             FROM es JOIN pool_hash ph ON ph.id = es.pool_id\n             WHERE ph.view IN ($${iog_pools:sqlstring})\n             GROUP BY es.pool_id, ph.view),\n     agg AS (SELECT sum(k) AS ktot, count(*)::numeric AS n FROM iog)\nSELECT round(greatest(t.t * ($high_watermark - agg.ktot / t.t)\n                      / (1 - $high_watermark), 0) / 1e6) * 1e6 AS \"ADA to add\"\nFROM agg, tot t",
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM epoch_stake),\n     -- amt is ADA throughout, converted once here\n     s AS (SELECT es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es, tip WHERE es.epoch_no = tip.e GROUP BY es.pool_id),\n     g AS (SELECT s.pool_id, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     tot AS (SELECT sum(amt) AS total,\n                    sum(amt) FILTER (WHERE grp = 'REST') AS rest FROM g),\n     -- REST is the group we do not set, so it fixes the network total:\n     -- T = REST / (1 - sum of the three group watermarks)\n     tgt AS (SELECT tot.total, tot.rest,\n                    tot.rest / (1 - $iog_watermark - $pir0_watermark\n                                - $pir_cluster_watermark) AS t\n             FROM tot)\nSELECT round(greatest(\n         ($iog_watermark          * tgt.t - coalesce(sum(g.amt) FILTER (WHERE g.grp='IOG' ),0))\n       + ($pir0_watermark         * tgt.t - coalesce(sum(g.amt) FILTER (WHERE g.grp='PIR0'),0))\n       + ($pir_cluster_watermark  * tgt.t - coalesce(sum(g.amt) FILTER (WHERE g.grp='PIRC'),0))\n       , 0)) AS \"ADA to add\"\nFROM g, tgt GROUP BY tgt.t",
           "refId": "A",
           "sql": {
             "columns": [],
@@ -1086,8 +1261,8 @@
     },
     {
       "id": 9,
-      "title": "ADA to add per pool, to the high watermark",
-      "description": "Per-pool top-up, split so all three pools finish equal at one third of the high watermark of the post-top-up total. Rounded to 1M each, so rows can sum to 1M less than the total panel.",
+      "title": "ADA to add per pool, by group",
+      "description": "Per-pool top-up for every pool in the IOG, PIR0 and PIR1-10 groups. Each group's watermark is split equally across its pools. `ADA to add` clamps at zero, so a pool already above target shows 0 and its overshoot is visible by comparing `stake now` against `target`. Rounded to whole ADA. Computed against the newest snapshot, `mark`, not the current epoch.",
       "type": "table",
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -1097,7 +1272,7 @@
         "h": 6,
         "w": 16,
         "x": 8,
-        "y": 31
+        "y": 35
       },
       "fieldConfig": {
         "defaults": {
@@ -1199,7 +1374,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     es AS (SELECT es.pool_id, es.amount FROM epoch_stake es, tip WHERE es.epoch_no = tip.e),\n     tot AS (SELECT sum(amount) / 1e6 AS t FROM es),\n     iog AS (SELECT es.pool_id, ph.view AS pool, sum(es.amount) / 1e6 AS k\n             FROM es JOIN pool_hash ph ON ph.id = es.pool_id\n             WHERE ph.view IN ($${iog_pools:sqlstring})\n             GROUP BY es.pool_id, ph.view),\n     agg AS (SELECT sum(k) AS ktot, count(*)::numeric AS n FROM iog)\nSELECT coalesce(o.ticker_name,\n                CASE i.pool\n                  WHEN 'pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred' THEN 'IOG1'\n                  WHEN 'pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm' THEN 'IOG2'\n                  WHEN 'pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s' THEN 'IOG3'\n                  ELSE left(i.pool, 14) || '...'\n                END) AS \"pool\",\n       round((i.k)::numeric) AS \"stake now (ADA)\",\n       round((($high_watermark / agg.n)\n              * (t.t * (1 - agg.ktot / t.t) / (1 - $high_watermark)))::numeric) AS \"target (ADA)\",\n       round(greatest(($high_watermark / agg.n)\n                      * (t.t * (1 - agg.ktot / t.t) / (1 - $high_watermark)) - i.k, 0)\n             / 1e6) * 1e6 AS \"ADA to add\"\nFROM iog i\nLEFT JOIN off_chain_pool_data o ON o.pool_id = i.pool_id\nCROSS JOIN agg\nCROSS JOIN tot t\nORDER BY 4 DESC",
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM epoch_stake),\n     -- amt is ADA throughout, converted once here\n     s AS (SELECT es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es, tip WHERE es.epoch_no = tip.e GROUP BY es.pool_id),\n     g AS (SELECT s.pool_id, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     tot AS (SELECT sum(amt) AS total,\n                    sum(amt) FILTER (WHERE grp = 'REST') AS rest FROM g),\n     -- REST is the group we do not set, so it fixes the network total:\n     -- T = REST / (1 - sum of the three group watermarks)\n     tgt AS (SELECT tot.total, tot.rest,\n                    tot.rest / (1 - $iog_watermark - $pir0_watermark\n                                - $pir_cluster_watermark) AS t\n             FROM tot),\n     n AS (SELECT grp, count(*) AS pools FROM g GROUP BY grp),\n     per AS (SELECT g.pool_id, g.grp, g.amt,\n                    CASE g.grp\n                      WHEN 'IOG'  THEN $iog_watermark         * tgt.t / n.pools\n                      WHEN 'PIR0' THEN $pir0_watermark        * tgt.t / n.pools\n                      WHEN 'PIRC' THEN $pir_cluster_watermark * tgt.t / n.pools\n                    END AS target\n             FROM g JOIN n ON n.grp = g.grp, tgt\n             WHERE g.grp <> 'REST'),\n     ocpd AS (SELECT DISTINCT ON (pool_id) pool_id, ticker_name\n              FROM off_chain_pool_data ORDER BY pool_id, id DESC)\nSELECT coalesce(o.ticker_name, left(ph.view, 14) || '...') AS \"pool\",\n       per.grp                                             AS \"group\",\n       round(per.amt)                                      AS \"stake now (ADA)\",\n       round(per.target)                                   AS \"target (ADA)\",\n       round(greatest(per.target - per.amt, 0))            AS \"ADA to add\"\nFROM per JOIN pool_hash ph ON ph.id = per.pool_id\nLEFT JOIN ocpd o ON o.pool_id = per.pool_id\nORDER BY 5 DESC, 2, 1",
           "refId": "A",
           "sql": {
             "columns": [],
@@ -1221,7 +1396,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1323,7 +1498,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     win AS (SELECT (SELECT e FROM tip) - $offender_epochs AS lo, (SELECT e FROM tip) AS hi),\n     epb AS (SELECT b.epoch_no, count(*) AS n FROM block b, win\n             WHERE b.slot_leader_id IS NOT NULL AND b.epoch_no BETWEEN win.lo AND win.hi\n             GROUP BY b.epoch_no),\n     ept AS (SELECT es.epoch_no, sum(es.amount) AS tot FROM epoch_stake es, win\n             WHERE es.epoch_no BETWEEN win.lo AND win.hi GROUP BY es.epoch_no),\n     exp AS (SELECT es.pool_id, sum(es.amount::numeric / ept.tot * epb.n) AS expected\n             FROM epoch_stake es\n             JOIN ept ON ept.epoch_no = es.epoch_no\n             JOIN epb ON epb.epoch_no = es.epoch_no, win\n             WHERE es.epoch_no BETWEEN win.lo AND win.hi GROUP BY es.pool_id),\n     forged AS (SELECT sl.pool_hash_id, count(*) AS n\n                FROM block b JOIN slot_leader sl ON sl.id = b.slot_leader_id, win\n                WHERE b.epoch_no BETWEEN win.lo AND win.hi AND sl.pool_hash_id IS NOT NULL\n                GROUP BY sl.pool_hash_id),\n     tcert AS (SELECT count(DISTINCT s.block_id) AS n FROM leios_cert_signer s\n               JOIN block b ON b.id = s.block_id, win WHERE b.epoch_no BETWEEN win.lo AND win.hi),\n     certs AS (SELECT s.pool_hash_id, count(DISTINCT s.block_id) AS n\n               FROM leios_cert_signer s JOIN block b ON b.id = s.block_id, win\n               WHERE b.epoch_no BETWEEN win.lo AND win.hi GROUP BY s.pool_hash_id),\n     seats AS (SELECT lc.pool_hash_id, lc.seat_index, lc.weight FROM leios_committee lc, tip\n               WHERE lc.epoch_no = tip.e),\n     vk AS (SELECT DISTINCT ON (hash_id) hash_id, leios_vkey FROM pool_update\n            ORDER BY hash_id, registered_tx_id DESC, id DESC),\n     faucet AS (SELECT DISTINCT ON (d.addr_id) f.key::int AS idx, d.pool_hash_id\n                FROM faucet_stake_addr f JOIN stake_address sa ON sa.view = f.value\n                JOIN delegation d ON d.addr_id = sa.id ORDER BY d.addr_id, d.id DESC)\nSELECT s.seat_index AS seat,\n       coalesce(o.ticker_name, left(ph.view,12)||'..') AS pool,\n       round((s.weight*100)::numeric,2) AS \"wt %\",\n       coalesce(f.n,0) AS forged, round(e.expected,0) AS \"exp\",\n       round((coalesce(f.n,0)/nullif(e.expected,0))::numeric,2) AS \"forge ratio\",\n       round((100.0*coalesce(c.n,0)/tcert.n)::numeric,0) AS \"cert sign %\",\n       CASE WHEN vk.leios_vkey IS NULL THEN 'NO_VKEY' ELSE '' END AS vkey,\n       coalesce(fa.idx::text,'-') AS \"faucet idx\"\nFROM seats s JOIN pool_hash ph ON ph.id = s.pool_hash_id\nLEFT JOIN off_chain_pool_data o ON o.pool_id = ph.id\nLEFT JOIN forged f ON f.pool_hash_id = s.pool_hash_id\nLEFT JOIN exp e ON e.pool_id = s.pool_hash_id\nLEFT JOIN certs c ON c.pool_hash_id = s.pool_hash_id\nLEFT JOIN vk ON vk.hash_id = s.pool_hash_id\nLEFT JOIN faucet fa ON fa.pool_hash_id = s.pool_hash_id\nCROSS JOIN tcert\nORDER BY \"cert sign %\" NULLS FIRST, \"forge ratio\" NULLS FIRST\nLIMIT $offender_rows",
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     win AS (SELECT (SELECT e FROM tip) - $offender_epochs AS lo, (SELECT e FROM tip) AS hi),\n     epb AS (SELECT b.epoch_no, count(*) AS n FROM block b, win\n             WHERE b.slot_leader_id IS NOT NULL AND b.epoch_no BETWEEN win.lo AND win.hi\n             GROUP BY b.epoch_no),\n     ept AS (SELECT es.epoch_no, sum(es.amount) AS tot FROM epoch_stake es, win\n             WHERE es.epoch_no BETWEEN win.lo AND win.hi GROUP BY es.epoch_no),\n     exp AS (SELECT es.pool_id, sum(es.amount::numeric / ept.tot * epb.n) AS expected\n             FROM epoch_stake es\n             JOIN ept ON ept.epoch_no = es.epoch_no\n             JOIN epb ON epb.epoch_no = es.epoch_no, win\n             WHERE es.epoch_no BETWEEN win.lo AND win.hi GROUP BY es.pool_id),\n     forged AS (SELECT sl.pool_hash_id, count(*) AS n\n                FROM block b JOIN slot_leader sl ON sl.id = b.slot_leader_id, win\n                WHERE b.epoch_no BETWEEN win.lo AND win.hi AND sl.pool_hash_id IS NOT NULL\n                GROUP BY sl.pool_hash_id),\n     tcert AS (SELECT count(DISTINCT s.block_id) AS n FROM leios_cert_signer s\n               JOIN block b ON b.id = s.block_id, win WHERE b.epoch_no BETWEEN win.lo AND win.hi),\n     certs AS (SELECT s.pool_hash_id, count(DISTINCT s.block_id) AS n\n               FROM leios_cert_signer s JOIN block b ON b.id = s.block_id, win\n               WHERE b.epoch_no BETWEEN win.lo AND win.hi GROUP BY s.pool_hash_id),\n     seats AS (SELECT lc.pool_hash_id, lc.seat_index, lc.weight FROM leios_committee lc, tip\n               WHERE lc.epoch_no = tip.e),\n     vk AS (SELECT DISTINCT ON (hash_id) hash_id, leios_vkey FROM pool_update\n            ORDER BY hash_id, registered_tx_id DESC, id DESC),\n     faucet AS (SELECT DISTINCT ON (d.addr_id) f.key::int AS idx, d.pool_hash_id\n                FROM faucet_stake_addr f JOIN stake_address sa ON sa.view = f.value\n                JOIN delegation d ON d.addr_id = sa.id ORDER BY d.addr_id, d.id DESC)\nSELECT s.seat_index AS seat,\n       coalesce(o.ticker_name, left(ph.view,12)||'..') AS pool,\n       round((s.weight*100)::numeric,2) AS \"wt %\",\n       coalesce(f.n,0) AS forged, round(e.expected,0) AS \"exp\",\n       round((coalesce(f.n,0)/nullif(e.expected,0))::numeric,2) AS \"forge ratio\",\n       round((100.0*coalesce(c.n,0)/tcert.n)::numeric,0) AS \"cert sign %\",\n       CASE WHEN vk.leios_vkey IS NULL THEN 'NO_VKEY' ELSE '' END AS vkey,\n       coalesce(fa.idx::text,'-') AS \"faucet idx\"\nFROM seats s JOIN pool_hash ph ON ph.id = s.pool_hash_id\nLEFT JOIN (\n  -- off_chain_pool_data gains a row per metadata re-fetch, so it holds\n  -- several rows for some pools.  Joining it raw fans out and duplicates\n  -- pools in this panel.  Keep only the newest row per pool.\n  SELECT DISTINCT ON (pool_id) pool_id, ticker_name\n  FROM off_chain_pool_data ORDER BY pool_id, id DESC\n) o ON o.pool_id = ph.id\nLEFT JOIN forged f ON f.pool_hash_id = s.pool_hash_id\nLEFT JOIN exp e ON e.pool_id = s.pool_hash_id\nLEFT JOIN certs c ON c.pool_hash_id = s.pool_hash_id\nLEFT JOIN vk ON vk.hash_id = s.pool_hash_id\nLEFT JOIN faucet fa ON fa.pool_hash_id = s.pool_hash_id\nCROSS JOIN tcert\nORDER BY \"cert sign %\" NULLS FIRST, \"forge ratio\" NULLS FIRST\nLIMIT $offender_rows",
           "refId": "A",
           "sql": {
             "columns": [],
@@ -1341,7 +1516,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 48
+        "y": 52
       },
       "fieldConfig": {
         "defaults": {
@@ -1458,7 +1633,7 @@
     {
       "id": 17,
       "title": "Stake snapshots, current and pending",
-      "description": "IOG and total stake for each of the three ledger stake snapshots, from db-sync epoch_stake. Naming verified against cardano-cli query stake-snapshot on this cluster: stakeGo equals epoch_stake for the previous epoch, stakeSet the current tip epoch, and stakeMark the next. So `set` is what drives committee weight right now and `mark` is what takes effect at the next epoch boundary. Use this to see a delegation change two epochs before it lands, and to confirm a top-up arrived.",
+      "description": "Group shares for each of the three ledger stake snapshots, from db-sync epoch_stake. Naming verified against cardano-cli query stake-snapshot: stakeGo is the previous epoch, stakeSet the current tip, stakeMark the next. So `set` drives committee weight now and `mark` takes effect at the next boundary, which is where a delegation change first shows up. All three rows are always listed. `mark` shows as pending for roughly the first 45 minutes of an epoch because db-sync populates epoch_stake for the next epoch part way in rather than at the boundary; epoch_stake_progress.completed tracks that insert.",
       "type": "table",
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -1468,7 +1643,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 48
+        "y": 52
       },
       "fieldConfig": {
         "defaults": {
@@ -1570,7 +1745,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     s AS (\n       SELECT es.epoch_no,\n              sum(es.amount) / 1e6 AS total,\n              sum(es.amount) FILTER (WHERE ph.view IN ($${iog_pools:sqlstring})) / 1e6 AS iog\n       FROM epoch_stake es\n       JOIN pool_hash ph ON ph.id = es.pool_id, tip\n       WHERE es.epoch_no >= tip.e - 1\n       GROUP BY es.epoch_no\n     )\nSELECT CASE WHEN s.epoch_no = tip.e - 1 THEN 'go, previous epoch'\n            WHEN s.epoch_no = tip.e     THEN 'set, current epoch'\n            WHEN s.epoch_no = tip.e + 1 THEN 'mark, next epoch'\n            ELSE 'epoch ' || s.epoch_no::text END AS \"snapshot\",\n       s.epoch_no                      AS \"epoch\",\n       round(s.iog)                    AS \"IOG stake (ADA)\",\n       round(s.total)                  AS \"total stake (ADA)\",\n       round(100 * s.iog / s.total, 3) AS \"IOG share %\"\nFROM s, tip\nORDER BY s.epoch_no",
+          "rawSql": "WITH tip AS (SELECT max(epoch_no) AS e FROM block),\n     want AS (SELECT g.epoch_no, g.role FROM tip, LATERAL (VALUES\n                (tip.e - 1, 'go, previous epoch'),\n                (tip.e,     'set, current epoch'),\n                (tip.e + 1, 'mark, next epoch')) AS g(epoch_no, role)),\n     s AS (SELECT es.epoch_no, es.pool_id, sum(es.amount) / 1e6 AS amt\n           FROM epoch_stake es\n           WHERE es.epoch_no IN (SELECT epoch_no FROM want)\n           GROUP BY es.epoch_no, es.pool_id),\n     g AS (SELECT s.epoch_no, s.amt,\n             CASE WHEN ph.view IN ($${iog_pools:sqlstring})         THEN 'IOG'\n                  WHEN ph.view IN ($${pir0_pools:sqlstring})        THEN 'PIR0'\n                  WHEN ph.view IN ($${pir_cluster_pools:sqlstring}) THEN 'PIRC'\n                  ELSE 'REST' END AS grp\n           FROM s JOIN pool_hash ph ON ph.id = s.pool_id),\n     agg AS (SELECT epoch_no,\n                    round(100.0 * sum(amt) FILTER (WHERE grp='IOG')  / sum(amt), 3) AS iog,\n                    round(100.0 * sum(amt) FILTER (WHERE grp='PIR0') / sum(amt), 3) AS pir0,\n                    round(100.0 * sum(amt) FILTER (WHERE grp='PIRC') / sum(amt), 3) AS pirc,\n                    round(100.0 * sum(amt) FILTER (WHERE grp='REST') / sum(amt), 3) AS rest,\n                    round(sum(amt)) AS total\n             FROM g GROUP BY epoch_no)\nSELECT want.role       AS \"snapshot\",\n       want.epoch_no   AS \"epoch\",\n       agg.iog         AS \"IOG %\",\n       agg.pir0        AS \"PIR0 %\",\n       agg.pirc        AS \"PIR1-10 %\",\n       agg.rest        AS \"rest %\",\n       agg.total       AS \"total (ADA)\",\n       CASE WHEN agg.epoch_no IS NULL\n            THEN 'pending, db-sync writes this part way into the epoch'\n            ELSE 'written' END AS \"status\"\nFROM want LEFT JOIN agg ON agg.epoch_no = want.epoch_no\nORDER BY want.epoch_no",
           "refId": "A",
           "sql": {
             "columns": [],
@@ -1783,21 +1958,213 @@
       },
       {
         "current": {
-          "text": "0.60",
-          "value": "0.60"
+          "text": "0.40",
+          "value": "0.40"
         },
-        "description": "High watermark as a fraction. Drives the threshold colouring and both top-up panels. The low watermark, 0.45, is set on the threshold steps of the share panels.",
+        "description": "Target share for the IOG pools. The three watermarks must sum to less than 1; the remainder is the rest-of-SPOs share.",
         "includeAll": false,
         "multi": false,
-        "name": "high_watermark",
+        "name": "iog_watermark",
         "options": [
           {
+            "selected": false,
+            "text": "0.30",
+            "value": "0.30"
+          },
+          {
             "selected": true,
+            "text": "0.40",
+            "value": "0.40"
+          },
+          {
+            "selected": false,
+            "text": "0.50",
+            "value": "0.50"
+          },
+          {
+            "selected": false,
             "text": "0.60",
             "value": "0.60"
           }
         ],
-        "query": "0.60",
+        "query": "0.30,0.40,0.50,0.60",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "0.20",
+          "value": "0.20"
+        },
+        "description": "Target share for PIR0 on its own.",
+        "includeAll": false,
+        "multi": false,
+        "name": "pir0_watermark",
+        "options": [
+          {
+            "selected": false,
+            "text": "0.10",
+            "value": "0.10"
+          },
+          {
+            "selected": false,
+            "text": "0.15",
+            "value": "0.15"
+          },
+          {
+            "selected": true,
+            "text": "0.20",
+            "value": "0.20"
+          },
+          {
+            "selected": false,
+            "text": "0.25",
+            "value": "0.25"
+          }
+        ],
+        "query": "0.10,0.15,0.20,0.25",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "0.10",
+          "value": "0.10"
+        },
+        "description": "Target share for PIR1-10 combined, split equally across the ten.",
+        "includeAll": false,
+        "multi": false,
+        "name": "pir_cluster_watermark",
+        "options": [
+          {
+            "selected": false,
+            "text": "0.05",
+            "value": "0.05"
+          },
+          {
+            "selected": true,
+            "text": "0.10",
+            "value": "0.10"
+          },
+          {
+            "selected": false,
+            "text": "0.15",
+            "value": "0.15"
+          },
+          {
+            "selected": false,
+            "text": "0.20",
+            "value": "0.20"
+          }
+        ],
+        "query": "0.05,0.10,0.15,0.20",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": [
+            "PIR0"
+          ],
+          "value": [
+            "pool187a7fvjryyc83r59tgct7j7wuthdc3t09zv4f57za6vcqcfmtz4"
+          ]
+        },
+        "description": "PIR0's pool id, kept separate from the cluster so it can carry its own watermark.",
+        "includeAll": false,
+        "multi": true,
+        "name": "pir0_pools",
+        "options": [
+          {
+            "selected": true,
+            "text": "PIR0",
+            "value": "pool187a7fvjryyc83r59tgct7j7wuthdc3t09zv4f57za6vcqcfmtz4"
+          }
+        ],
+        "query": "PIR0 : pool187a7fvjryyc83r59tgct7j7wuthdc3t09zv4f57za6vcqcfmtz4",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": [
+            "PIR1",
+            "PIR2",
+            "PIR3",
+            "PIR4",
+            "PIR5",
+            "PIR6",
+            "PIR7",
+            "PIR8",
+            "PIR9",
+            "PIR10"
+          ],
+          "value": [
+            "pool1csy9wtlhe0ncujlam9tc8mnq0vapkwld7gcprrvqgvq67vfpklt",
+            "pool1tu6sq2s3t5zrlgphfz86lrsu7xsp0uk2wyrgzrrz5faavuxe9cp",
+            "pool1f9q8lmshu8klj9p7qg4z29gpy6udwmg0xj2muyk38ly95z03w0h",
+            "pool17xx3j3rkpwe669x6vmztat6f8vryh736h72zdmsdwzrswmanaa2",
+            "pool1h2fjn2hfyxaw2q9h2s5ucja7vaukry2vxrlp500hayp9c3nc97x",
+            "pool173ntrwzlctak73vr6svzxnlv4hyjj8v6tgjrrqyf90lys8t9emu",
+            "pool12llqx5gtaw0rund0679arm2y62fg2rkf9grc6y3hxmsxu8n4efh",
+            "pool1dj8597x2jjp0qqwu45msga8839je0zuxt78y8ettc0w7cjrkdra",
+            "pool1je9gglpn85jyw3se02dh8295z53j9eg935vcjl83cvevva6lwye",
+            "pool1h3rwtl7l9qy7cr64u77s3kdadjv3g5m0p9scnml2qv0hxcjwyva"
+          ]
+        },
+        "description": "The ten PIR cluster pool ids sharing one watermark.",
+        "includeAll": false,
+        "multi": true,
+        "name": "pir_cluster_pools",
+        "options": [
+          {
+            "selected": true,
+            "text": "PIR1",
+            "value": "pool1csy9wtlhe0ncujlam9tc8mnq0vapkwld7gcprrvqgvq67vfpklt"
+          },
+          {
+            "selected": true,
+            "text": "PIR2",
+            "value": "pool1tu6sq2s3t5zrlgphfz86lrsu7xsp0uk2wyrgzrrz5faavuxe9cp"
+          },
+          {
+            "selected": true,
+            "text": "PIR3",
+            "value": "pool1f9q8lmshu8klj9p7qg4z29gpy6udwmg0xj2muyk38ly95z03w0h"
+          },
+          {
+            "selected": true,
+            "text": "PIR4",
+            "value": "pool17xx3j3rkpwe669x6vmztat6f8vryh736h72zdmsdwzrswmanaa2"
+          },
+          {
+            "selected": true,
+            "text": "PIR5",
+            "value": "pool1h2fjn2hfyxaw2q9h2s5ucja7vaukry2vxrlp500hayp9c3nc97x"
+          },
+          {
+            "selected": true,
+            "text": "PIR6",
+            "value": "pool173ntrwzlctak73vr6svzxnlv4hyjj8v6tgjrrqyf90lys8t9emu"
+          },
+          {
+            "selected": true,
+            "text": "PIR7",
+            "value": "pool12llqx5gtaw0rund0679arm2y62fg2rkf9grc6y3hxmsxu8n4efh"
+          },
+          {
+            "selected": true,
+            "text": "PIR8",
+            "value": "pool1dj8597x2jjp0qqwu45msga8839je0zuxt78y8ettc0w7cjrkdra"
+          },
+          {
+            "selected": true,
+            "text": "PIR9",
+            "value": "pool1je9gglpn85jyw3se02dh8295z53j9eg935vcjl83cvevva6lwye"
+          },
+          {
+            "selected": true,
+            "text": "PIR10",
+            "value": "pool1h3rwtl7l9qy7cr64u77s3kdadjv3g5m0p9scnml2qv0hxcjwyva"
+          }
+        ],
+        "query": "PIR1 : pool1csy9wtlhe0ncujlam9tc8mnq0vapkwld7gcprrvqgvq67vfpklt, PIR2 : pool1tu6sq2s3t5zrlgphfz86lrsu7xsp0uk2wyrgzrrz5faavuxe9cp, PIR3 : pool1f9q8lmshu8klj9p7qg4z29gpy6udwmg0xj2muyk38ly95z03w0h, PIR4 : pool17xx3j3rkpwe669x6vmztat6f8vryh736h72zdmsdwzrswmanaa2, PIR5 : pool1h2fjn2hfyxaw2q9h2s5ucja7vaukry2vxrlp500hayp9c3nc97x, PIR6 : pool173ntrwzlctak73vr6svzxnlv4hyjj8v6tgjrrqyf90lys8t9emu, PIR7 : pool12llqx5gtaw0rund0679arm2y62fg2rkf9grc6y3hxmsxu8n4efh, PIR8 : pool1dj8597x2jjp0qqwu45msga8839je0zuxt78y8ettc0w7cjrkdra, PIR9 : pool1je9gglpn85jyw3se02dh8295z53j9eg935vcjl83cvevva6lwye, PIR10 : pool1h3rwtl7l9qy7cr64u77s3kdadjv3g5m0p9scnml2qv0hxcjwyva",
         "type": "custom"
       }
     ]
