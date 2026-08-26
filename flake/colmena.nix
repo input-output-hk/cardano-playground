@@ -31,6 +31,7 @@ in
       c5d-xlarge.aws.instance.instance_type = "c5d.xlarge";
       c6id-large.aws.instance.instance_type = "c6id.large";
       c6id-xlarge.aws.instance.instance_type = "c6id.xlarge";
+      c6id-2xlarge.aws.instance.instance_type = "c6id.2xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       c8id-large.aws.instance.instance_type = "c8id.large";
       c8id-xlarge.aws.instance.instance_type = "c8id.xlarge";
@@ -39,7 +40,7 @@ in
       # m5a-large.aws.instance.instance_type = "m5a.large";
       # m5ad-large.aws.instance.instance_type = "m5ad.large";
       m5ad-xlarge.aws.instance.instance_type = "m5ad.xlarge";
-      m6id-xlarge.aws.instance.instance_type = "m6id.xlarge";
+      # m6id-xlarge.aws.instance.instance_type = "m6id.xlarge";
       m8id-xlarge.aws.instance.instance_type = "m8id.xlarge";
       # m5a-2xlarge.aws.instance.instance_type = "m5a.2xlarge";
       r5-xlarge.aws.instance.instance_type = "r5.xlarge";
@@ -1233,9 +1234,9 @@ in
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 80) (group "leios2") node-leios leiosBp];};
-      leios2-rel-b-1 = {imports = [eu-west-1 m6id-xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
-      leios2-rel-b-3 = {imports = [eu-west-1 c6id-xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
+      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 80) (group "leios3") node-leios leiosBp];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
