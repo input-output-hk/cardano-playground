@@ -61,6 +61,7 @@ flake: {
         agent_id = name;
         metrics_url = "http://127.0.0.1:${toString cardanoNodePrometheusExporterPort}/metrics";
         upload_url = "https://${serverName}/v1/submit";
+        log.journal_unit = "cardano-node.service";
       };
     };
   };
