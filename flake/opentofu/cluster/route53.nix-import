@@ -42,6 +42,10 @@ in {
 
   # Govtool
 
+  # Metsuke, the MusashiNet telemetry ingest. Every operator's agent is
+  # configured with this name, so it stays put if the server changes host.
+  cname_metsuke_leios = mkCname {name = "metsuke-leios.${domain}"; records = ["leios1-metsuke-a-1.${domain}"];};
+
   # Ipfs for all testnets
   cname_metadata_ipfs = mkCname {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
 

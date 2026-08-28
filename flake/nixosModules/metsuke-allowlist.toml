@@ -1,0 +1,18 @@
+# Generated, never hand-written:
+#
+#   metsuke-allowlist query --socket-dir <dbsync socket dir> --dbname <db> --role <role> \
+#     --metadata-label 674 --metadata-key musashinet_incentives_application_code \
+#     --statement-timeout 30sec > registrations.csv
+#
+#   metsuke-allowlist generate applications.csv registrations.csv \
+#     --code-column application_code --pool-columns pool_id_1,pool_id_2,pool_id_3
+#
+# Paste what `generate` emits over the table below. It excludes a pool whose
+# application code disagrees with its current on-chain registration and says so
+# on stderr, so read that too. profile-metsuke-server refuses to build while
+# this table is empty.
+
+[ingest.allowlist]
+pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred = "IOG1"
+pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm = "IOG2"
+pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s = "IOG3"

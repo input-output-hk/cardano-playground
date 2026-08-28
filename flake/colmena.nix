@@ -365,6 +365,16 @@ in
 
       leiosRel = {imports = [rel];};
 
+      metsukeServer.imports = [
+        inputs.metsuke.nixosModules.metsuke-server
+        nixosModules.profile-metsuke-server
+      ];
+
+      metsukeAgent.imports = [
+        inputs.metsuke.nixosModules.metsuke
+        nixosModules.profile-metsuke-agent
+      ];
+
       leiosCentrifuge.imports = [
         # nodeNoRecycle
         nixosModules.cardano-tx-centrifuge
@@ -1243,13 +1253,14 @@ in
       # Leios, all on custom leios prototype version
       # Remove `ccMon` until governance works in Dijkstra era
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp metsukeAgent];};
       leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
+      leios1-metsuke-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios metsukeServer];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 80) (group "leios2") node-leios leiosBp];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
