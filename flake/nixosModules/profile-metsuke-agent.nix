@@ -54,8 +54,6 @@ flake: {
 
       signingKeyFile = config.sops.secrets.metsuke-cold-skey.path;
 
-      # `log` is left out: cardano-parts forwards traces to cardano-tracer
-      # rather than the node's own journal, so the agent takes metrics only.
       settings = {
         pool_id = poolId;
         agent_id = name;
