@@ -126,8 +126,12 @@ in
       #   RuntimeRandomizedExtraSec = mkForce 0;
       # };
 
-      node-leios =
-        # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
+      node-leios = {
+        config,
+        pkgs,
+        ...
+      }:
+      # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
         // {
           services.cardano-node.extraNodeConfig = {
@@ -168,9 +172,20 @@ in
           # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
           # leaves room for a clean shutdown. Analysis/observer nodes opt out via
           # nodeNoRecycle. Remove once the leak is fixed.
-          systemd.services.cardano-node.serviceConfig = {
-            RuntimeMaxSec = 44 * 3600;
-            RuntimeRandomizedExtraSec = 4 * 3600;
+          systemd.services.cardano-node = {
+            path = with pkgs; [sqlite];
+            preStart = lib.mkForce ''
+              # Make it a bit more likely for sync to work.
+              # https://github.com/input-output-hk/ouroboros-leios/issues/998
+              sqlite3 ${lib.escapeShellArg config.services.cardano-node.extraNodeConfig.LeiosDbConfig.Filepath} <<EOF
+              DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
+              DELETE FROM ebs WHERE 0 <= missingTxCount;
+              EOF
+            '';
+            serviceConfig = {
+              RuntimeMaxSec = 44 * 3600;
+              RuntimeRandomizedExtraSec = 4 * 3600;
+            };
           };
         };
 
@@ -271,10 +286,6 @@ in
       };
 
       leiosBp = {
-        config,
-        pkgs,
-        ...
-      }: {
         imports = [bp];
 
         services.cardano-node.extraNodeConfig = {
@@ -284,19 +295,6 @@ in
           # parent Forge.Loop stays at Info (base config), and this
           # more-specific child override turns on just the call-trace.
           TraceOptions."Forge.Loop.Call".severity = "Debug";
-        };
-
-        systemd.services.cardano-node = {
-          path = with pkgs; [sqlite];
-
-          preStart = ''
-            # Make it a bit more likely for sync to work.
-            # https://github.com/input-output-hk/ouroboros-leios/issues/998
-            sqlite3 ${lib.escapeShellArg config.services.cardano-node.extraNodeConfig.LeiosDbConfig.Filepath} <<EOF
-            DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
-            DELETE FROM ebs WHERE 0 <= missingTxCount;
-            EOF
-          '';
         };
       };
 
