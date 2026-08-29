@@ -116,9 +116,27 @@ flake: {
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
 
+      # metsuke-server holds one global semaphore of max_concurrent_requests
+      # and takes a permit before accept, so connections past it wait in the
+      # backlog. The semaphore does not know who holds a slot, and the read and
+      # idle timeouts are deliberately generous for pools on bad links, so one
+      # address can hold every slot for a minute at a time. Keying that on the
+      # address is nginx's to do; the server states so in its own http.rs.
+      appendHttpConfig = ''
+        limit_conn_zone $binary_remote_addr zone=metsukeConn:10m;
+        limit_req_zone $binary_remote_addr zone=metsukeSubmit:10m rate=6r/m;
+        limit_conn_status 429;
+        limit_req_status 429;
+      '';
+
       virtualHosts.${serverName} = {
         enableACME = true;
         forceSSL = true;
+
+        # Well under the server's 64 slots, and well over what a pool needs: an
+        # agent uploads its two batches one after the other, and several agents
+        # behind one egress address upload on a jittered hourly cadence.
+        extraConfig = "limit_conn metsukeConn 8;";
 
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString listenPort}";
@@ -127,6 +145,20 @@ flake: {
           # at exactly the limit would be refused here instead of reaching the
           # server that decides it.
           extraConfig = "client_max_body_size ${toString (2 * maxBodyBytes)};";
+        };
+
+        # The rate limit is the submission path's alone. A developer sync pulls
+        # one object per request as fast as the listing feeds it, so rate
+        # limiting the download route would throttle the tool that reads the
+        # archive. An agent submits hourly, so 6r/m is four orders of magnitude
+        # of headroom, and the burst covers a spool flush retrying.
+        locations."/v1/submit" = {
+          proxyPass = "http://127.0.0.1:${toString listenPort}";
+
+          extraConfig = ''
+            client_max_body_size ${toString (2 * maxBodyBytes)};
+            limit_req zone=metsukeSubmit burst=12 nodelay;
+          '';
         };
       };
     };
