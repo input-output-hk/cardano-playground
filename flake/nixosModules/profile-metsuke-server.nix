@@ -21,7 +21,13 @@ flake: {
 
     inherit ((builtins.fromTOML (builtins.readFile ./metsuke-allowlist.toml)).ingest) allowlist;
 
-    maxBodyBytes = 1048576;
+    # At least the agent's upload_batch_max_bytes, which is what it seals
+    # before compression and what this counts after it. Set under that, a
+    # submission compressing worse than the gap earns a 413, which the agent
+    # reads as terminal and reseals identically, so the same body is refused
+    # until its spool cap drops those rows. Equal numbers are enough: the least
+    # compressible JSON a trace line could carry seals to 0.59 of the cap.
+    maxBodyBytes = 4194304;
   in {
     assertions = [
       {
@@ -61,7 +67,7 @@ flake: {
         environmentFile = config.sops.secrets.metsuke-aws-env.path;
 
         # Field for field from contrib/server.example.toml in the metsuke repo,
-        # which is where each value's reason is written down. Only the three
+        # which is where each value's reason is written down. Only the ones
         # marked below are ours to decide.
         settings = {
           listen = "127.0.0.1:${toString listenPort}";
@@ -70,7 +76,14 @@ flake: {
             idle_timeout_ms = 30000;
             read_timeout_ms = 60000;
             write_timeout_ms = 60000;
-            max_concurrent_requests = 64;
+            # Ours: headroom for a deploy, which is when every agent uploads at
+            # once. An agent sends its first submission at startup and only
+            # then takes a place within upload_jitter_max_secs, so a fleet
+            # brought up together arrives together that once and is spread from
+            # the next interval on. A permit is taken before accept and a body
+            # is read whole, so this times max_body_bytes bounds what the host
+            # holds: 512 MiB of its 2.8 GiB.
+            max_concurrent_requests = 128;
           };
 
           # Ours: the bucket the bootstrap workspace creates.
@@ -91,8 +104,13 @@ flake: {
 
             max_body_bytes = maxBodyBytes;
             max_header_bytes = 4096;
-            rate_limit_uploads = 100;
-            rate_limit_uploads_total = 2000;
+            # Ours: sized for a hundred agents, each draining its spool rather
+            # than sending one submission a tick. A Leios producer was measured
+            # spooling about 12 MiB an hour of selected trace lines, so steady
+            # state is a handful of uploads an hour each; the room above that is
+            # for the burst when many drain a backlog at once.
+            rate_limit_uploads = 300;
+            rate_limit_uploads_total = 20000;
             rate_limit_window_secs = 3600;
           };
 
