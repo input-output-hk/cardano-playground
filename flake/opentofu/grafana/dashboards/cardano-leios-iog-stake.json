@@ -1753,6 +1753,101 @@
           }
         }
       ]
+    },
+    {
+      "id": 24,
+      "type": "state-timeline",
+      "title": "Red team pool mode",
+      "description": "Which service each leiosred host is running over time, from node_exporter's systemd collector. Node and Piranha conflict in systemd so exactly one can be active. Off means neither is active, which covers stopped, failed and mid-restart, so a persistent Off band is worth chasing. A long Piranha band on a pool that is meant to be forging is the failure this panel exists to catch.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "editorMode": "code",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{pool}}",
+          "expr": "label_replace(\n    max by (instance) (node_systemd_unit_state{instance=~\"leiosred[0-9]+-bp-.*\", name=\"cardano-node.service\", state=\"active\"})\n  + max by (instance) (node_systemd_unit_state{instance=~\"leiosred[0-9]+-bp-.*\", name=\"cardano-leios-piranha.service\", state=\"active\"}) * 2,\n  \"pool\", \"PIR$1\", \"instance\", \"leiosred([0-9]+)-bp-.*\")"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Off",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Node",
+                  "color": "green",
+                  "index": 1
+                },
+                "2": {
+                  "text": "Piranha",
+                  "color": "orange",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      }
     }
   ],
   "preload": false,
@@ -1818,6 +1913,7 @@
       },
       {
         "current": {
+          "selected": false,
           "text": "dbsync-leios",
           "value": "afw6ogqt5l728f"
         },
@@ -1829,7 +1925,7 @@
         "options": [],
         "query": "grafana-postgresql-datasource",
         "refresh": 1,
-        "regex": "",
+        "regex": "dbsync-leios",
         "skipUrlSync": false,
         "type": "datasource"
       },
