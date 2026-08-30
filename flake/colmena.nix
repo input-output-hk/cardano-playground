@@ -30,7 +30,7 @@ in
       # c5ad-large.aws.instance.instance_type = "c5ad.large";
       c5d-2xlarge.aws.instance.instance_type = "c5d.2xlarge";
       c6id-large.aws.instance.instance_type = "c6id.large";
-      c6id-xlarge.aws.instance.instance_type = "c6id.xlarge";
+      # c6id-xlarge.aws.instance.instance_type = "c6id.xlarge";
       c6id-2xlarge.aws.instance.instance_type = "c6id.2xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
       c8id-large.aws.instance.instance_type = "c8id.large";
@@ -1294,7 +1294,7 @@ in
       leiosred3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 80) (group "leiosred3") node-leios leiosRedTeamBp];};
       leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 80) (group "leiosred4") node-leios leiosRedTeamBp];};
       leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 80) (group "leiosred5") node-leios leiosRedTeamBp];};
-      leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-xlarge (ebs 80) (group "leiosred6") node-leios leiosRedTeamBp];};
+      leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-2xlarge (ebs 80) (group "leiosred6") node-leios leiosRedTeamBp];};
       leiosred7-bp-g-1 = {imports = [af-south-1 c5d-2xlarge (ebs 80) (group "leiosred7") node-leios leiosRedTeamBp];};
       leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 80) (group "leiosred8") node-leios leiosRedTeamBp];};
       leiosred9-bp-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 80) (group "leiosred9") node-leios leiosRedTeamBp];};
