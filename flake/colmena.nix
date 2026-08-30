@@ -173,10 +173,15 @@ in
               # The node creates this db on first start, so on a fresh machine neither the
               # file nor the tables exist yet.  A bare sqlite3 call on a missing path exits 1
               # and leaves a 0 byte file behind, so check the file before probing the schema.
+              # ebsMissingTxs is w35 and later, so a w34 db fails the count and is skipped
+              # rather than half repaired.
               if [ -s "$DB" ] \
                 && [ "$(sqlite3 -readonly "$DB" \
-                     "SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('ebs','ebTxs');")" = 2 ]; then
+                     "SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('ebs','ebTxs','ebsMissingTxs');")" = 3 ]; then
+                # No foreign keys are declared, so nothing cascades.  Both child tables
+                # have to be cleared before ebs, since they select from it.
                 sqlite3 "$DB" "
+                  DELETE FROM ebsMissingTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
                   DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
                   DELETE FROM ebs WHERE 0 <= missingTxCount;
                 "
