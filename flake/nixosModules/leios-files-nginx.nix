@@ -65,8 +65,10 @@ _: {
       name = "leios-chain-snapshot-publish";
       runtimeInputs = [
         config.boot.zfs.package
+        config.services.cardano-node.package
         pkgs.coreutils
         pkgs.findutils
+        pkgs.gawk
         pkgs.gnutar
         pkgs.zstd
         pkgs.gzip
@@ -82,6 +84,16 @@ _: {
         prefix=${lib.escapeShellArg csCfg.snapshotPrefix}
         src=${lib.escapeShellArg csCfg.sourcePath}
         servedDir=${lib.escapeShellArg cfg.servedDir}
+
+        # The node build that produced this state. State is not portable across
+        # incompatible node revs, so a consumer needs to pair an artifact with
+        # the node it is about to run. Read from the configured package at
+        # publish time so it cannot drift from what is deployed.
+        nodeVer=$(cardano-node --version 2>/dev/null || true)
+        nodeVersion=$(printf '%s\n' "$nodeVer" | awk 'NR == 1 {print $2; exit}')
+        nodeRev=$(printf '%s\n' "$nodeVer" | awk '/git rev/ {print $3; exit}')
+        [ -n "$nodeVersion" ] || nodeVersion=unknown
+        [ -n "$nodeRev" ] || nodeRev=unknown
 
         # Stamp every archive member as root (uid/gid 0). These tarballs are a
         # public bootstrap artifact: third-party consumers don't have our
@@ -213,7 +225,18 @@ _: {
             --arg zfs_snapshot "$snap" \
             --arg snapshot_created "$created" \
             --arg published "$now" \
-            '{artifact: $artifact, sha256: $sha256, bytes: $bytes, zfs_snapshot: $zfs_snapshot, snapshot_created: $snapshot_created, published: $published}' \
+            --arg node_version "$nodeVersion" \
+            --arg node_rev "$nodeRev" \
+            '{
+              artifact: $artifact,
+              sha256: $sha256,
+              bytes: $bytes,
+              node_version: $node_version,
+              node_rev: $node_rev,
+              zfs_snapshot: $zfs_snapshot,
+              snapshot_created: $snapshot_created,
+              published: $published
+            }' \
             > "$servedDir/$art.meta.json"
           chmod 0644 "$servedDir/$art.sha256" "$servedDir/$art.meta.json"
           echo "leios-chain-snapshot: published $art ($size bytes, sha256 $sum)"
