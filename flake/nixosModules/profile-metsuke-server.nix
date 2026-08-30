@@ -104,6 +104,7 @@ flake: {
 
             max_body_bytes = maxBodyBytes;
             max_header_bytes = 4096;
+            max_timestamp_skew_secs = 300;
             # Ours: sized for a hundred agents, each draining its spool rather
             # than sending one submission a tick. A Leios producer was measured
             # spooling about 12 MiB an hour of selected trace lines, so steady
@@ -142,7 +143,7 @@ flake: {
       # address is nginx's to do; the server states so in its own http.rs.
       appendHttpConfig = ''
         limit_conn_zone $binary_remote_addr zone=metsukeConn:10m;
-        limit_req_zone $binary_remote_addr zone=metsukeSubmit:10m rate=6r/m;
+        limit_req_zone $binary_remote_addr zone=metsukeSubmit:10m rate=60r/m;
         limit_conn_status 429;
         limit_req_status 429;
       '';
@@ -168,14 +169,19 @@ flake: {
         # The rate limit is the submission path's alone. A developer sync pulls
         # one object per request as fast as the listing feeds it, so rate
         # limiting the download route would throttle the tool that reads the
-        # archive. An agent submits hourly, so 6r/m is four orders of magnitude
-        # of headroom, and the burst covers a spool flush retrying.
+        # archive.
+        #
+        # An agent uploads hourly but no longer once: a tick drains each stream
+        # up to upload_max_submissions, so it arrives as a burst of up to 17 and
+        # is then silent for an hour. The burst has to clear a whole tick, and
+        # several agents behind one egress address at that. What keeps one
+        # address off the server's slots is limit_conn below, not this.
         locations."/v1/submit" = {
           proxyPass = "http://127.0.0.1:${toString listenPort}";
 
           extraConfig = ''
             client_max_body_size ${toString (2 * maxBodyBytes)};
-            limit_req zone=metsukeSubmit burst=12 nodelay;
+            limit_req zone=metsukeSubmit burst=64 nodelay;
           '';
         };
       };
