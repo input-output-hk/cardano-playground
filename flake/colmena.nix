@@ -163,25 +163,35 @@ in
             };
           };
 
-          # Temporary mitigation for the under-investigation leios cardano-node
-          # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
-          # host RAM in ~3 days): recycle the service every ~2 days so memory
-          # can't grow unbounded. RuntimeMaxSec caps runtime;
-          # RuntimeRandomizedExtraSec adds 0..N jitter so the fleet doesn't
-          # restart in lockstep (thundering herd). Window 44-48h (<= 2 days).
-          # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
-          # leaves room for a clean shutdown. Analysis/observer nodes opt out via
-          # nodeNoRecycle. Remove once the leak is fixed.
           systemd.services.cardano-node = {
             path = with pkgs; [sqlite];
             preStart = lib.mkForce ''
               # Make it a bit more likely for sync to work.
               # https://github.com/input-output-hk/ouroboros-leios/issues/998
-              sqlite3 ${lib.escapeShellArg config.services.cardano-node.extraNodeConfig.LeiosDbConfig.Filepath} <<EOF
-              DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
-              DELETE FROM ebs WHERE 0 <= missingTxCount;
-              EOF
+              DB=${lib.escapeShellArg config.services.cardano-node.extraNodeConfig.LeiosDbConfig.Filepath}
+
+              # The node creates this db on first start, so on a fresh machine neither the
+              # file nor the tables exist yet.  A bare sqlite3 call on a missing path exits 1
+              # and leaves a 0 byte file behind, so check the file before probing the schema.
+              if [ -s "$DB" ] \
+                && [ "$(sqlite3 -readonly "$DB" \
+                     "SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('ebs','ebTxs');")" = 2 ]; then
+                sqlite3 "$DB" "
+                  DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
+                  DELETE FROM ebs WHERE 0 <= missingTxCount;
+                "
+              fi
             '';
+
+            # Temporary mitigation for the under-investigation leios cardano-node
+            # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
+            # host RAM in ~3 days): recycle the service every ~2 days so memory
+            # can't grow unbounded. RuntimeMaxSec caps runtime;
+            # RuntimeRandomizedExtraSec adds 0..N jitter so the fleet doesn't
+            # restart in lockstep (thundering herd). Window 44-48h (<= 2 days).
+            # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
+            # leaves room for a clean shutdown. Analysis/observer nodes opt out via
+            # nodeNoRecycle. Remove once the leak is fixed.
             serviceConfig = {
               RuntimeMaxSec = 44 * 3600;
               RuntimeRandomizedExtraSec = 4 * 3600;
