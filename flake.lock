@@ -8586,15 +8586,16 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1787927116,
-        "narHash": "sha256-HINggJGC458vuW4n0DeXqy+EL7+renvs0JQjRuVBrAk=",
+        "lastModified": 1788077868,
+        "narHash": "sha256-VnUxMj7kSr7aML39Th79ix3EliimoVQAe+NyO0KNi4s=",
         "owner": "input-output-hk",
         "repo": "metsuke",
-        "rev": "8f3345cac4c74d81d6e0c7810887f1b1ef8700e0",
+        "rev": "efd1badff2d0158d738f5459e7842916f7304bdd",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "jl/updates",
         "repo": "metsuke",
         "type": "github"
       }
