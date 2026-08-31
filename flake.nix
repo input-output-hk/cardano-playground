@@ -11,8 +11,8 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w35";
-    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/heads/jl/prototype";
+    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w35";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
       url = "github:input-output-hk/leios-adversarial-tools/nix";
@@ -27,7 +27,8 @@
     # (demo/proto-devnet/config/dashboards/*.json).
     leios-observability = {
       # url = "github:input-output-hk/ouroboros-leios";
-      url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w34";
+      # url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w34";
+      url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
       flake = false;
     };
 

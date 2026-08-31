@@ -1605,16 +1605,16 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1788041145,
-        "narHash": "sha256-nTSpAenigGKGw9bONa4ko4E3V//ISteNncJVAv1P9sQ=",
+        "lastModified": 1788154399,
+        "narHash": "sha256-uqDWkrT4bfz+ebsKoyrCLmZAmPz59k4S7lvq2FsmZ7Y=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "e8594e1355c0c6d36ebb9886c8c8c47fa946046b",
+        "rev": "290ee0b5917e28dbcbbc2a5e2ae1287dfb4f9134",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "refs/tags/prototype-2026w35",
+        "ref": "jl/leios-prototype-w35-patched",
         "repo": "ouroboros-leios",
         "type": "github"
       }
@@ -1702,16 +1702,16 @@
         "utils": "utils_2"
       },
       "locked": {
-        "lastModified": 1788040658,
-        "narHash": "sha256-39dG8aoCCTeMqe9wV+Q4g1BxvJXRQpgxps7oEqQWAjw=",
+        "lastModified": 1788154307,
+        "narHash": "sha256-aJoKo0rFvXh7F5gFSS8hbsQjAYcAeuTvpfbJaD4hrQk=",
         "owner": "intersectmbo",
         "repo": "cardano-node",
-        "rev": "6a540bd43a83e697fd662b973f7e99cee02a59fb",
+        "rev": "5abd332e5e4f51feba05dc88b04fb321aae9c8a9",
         "type": "github"
       },
       "original": {
         "owner": "intersectmbo",
-        "ref": "leios-prototype",
+        "ref": "jl/leios-prototype-w35-patched",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -8455,16 +8455,16 @@
     "leios-observability": {
       "flake": false,
       "locked": {
-        "lastModified": 1787499145,
-        "narHash": "sha256-bCGzmHLqjafEiyQfeEJSki90dW6fiO8K9oWaIxcfcx8=",
+        "lastModified": 1788154399,
+        "narHash": "sha256-uqDWkrT4bfz+ebsKoyrCLmZAmPz59k4S7lvq2FsmZ7Y=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "875a19ca9065268832931c2d285fb17d3a37f630",
+        "rev": "290ee0b5917e28dbcbbc2a5e2ae1287dfb4f9134",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "refs/tags/prototype-2026w34",
+        "ref": "jl/leios-prototype-w35-patched",
         "repo": "ouroboros-leios",
         "type": "github"
       }
