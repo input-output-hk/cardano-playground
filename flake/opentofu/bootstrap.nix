@@ -67,6 +67,10 @@ in {
         variable = {
           # costCenter tag should remain secret in public repos
           ${infra.generic.costCenter} = sensitiveString;
+
+          # Separate (secret) cost center for leios resources, mirroring the
+          # cluster workspace. Applied as a per-resource tag override below.
+          tag_costCenterLeios = sensitiveString;
         };
 
         provider = {
@@ -488,9 +492,17 @@ in {
 
         resource = {
           # No force_destroy: the archive is the only copy of a submission.
+          #
+          # Tagged to the leios cost center, overriding the workspace
+          # default_tags for this key only. The archive grows with every SPO
+          # submission and is the one resource here whose spend is attributable
+          # to leios; the AMI and rain buckets are shared by every environment,
+          # so they keep the generic cost center. leios1-metsuke-a-1 itself
+          # already gets this tag from the group helper in flake/colmena.nix.
           aws_s3_bucket.metsuke = {
             provider = awsProviderFor infra.aws.region;
             bucket = "${infra.aws.profile}-metsuke";
+            tags.costCenter = "\${var.tag_costCenterLeios}";
           };
 
           aws_s3_bucket_server_side_encryption_configuration.metsuke = {
@@ -531,9 +543,12 @@ in {
             restrict_public_buckets = true;
           };
 
+          # No spend of its own, tagged so the identity is attributed with the
+          # bucket it writes to.
           aws_iam_user.metsuke = {
             provider = awsProviderFor infra.aws.region;
             name = "metsuke";
+            tags.costCenter = "\${var.tag_costCenterLeios}";
           };
 
           aws_iam_user_policy.metsuke = {
