@@ -198,7 +198,7 @@ in
             # leaves room for a clean shutdown. Analysis/observer nodes opt out via
             # nodeNoRecycle. Remove once the leak is fixed.
             serviceConfig = {
-              RuntimeMaxSec = 44 * 3600;
+              RuntimeMaxSec = 24 * 3600;
               RuntimeRandomizedExtraSec = 4 * 3600;
             };
           };
