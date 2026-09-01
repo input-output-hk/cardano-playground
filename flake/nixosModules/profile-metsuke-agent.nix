@@ -41,8 +41,8 @@ flake: {
     # no service user exists to own it, and systemd reads it as root to hand
     # the agent a credential.
     sops.secrets = mkSopsSecret {
-      secretName = "metsuke-cold-skey";
-      keyName = "${name}-metsuke-cold.skey";
+      secretName = "metsuke-bls-skey";
+      keyName = "${name}-bls.skey";
       inherit groupOutPath groupName name;
       fileOwner = "root";
       fileGroup = "root";
@@ -52,7 +52,10 @@ flake: {
     services.metsuke = {
       enable = true;
 
-      signingKeyFile = config.sops.secrets.metsuke-cold-skey.path;
+      # The pool's Leios key, not its cold key: a reporting machine holds a key
+      # the pool can rotate, and the agent reads which scheme a key file is from
+      # its own TextEnvelope type (ADR 0011).
+      signingKeyFile = config.sops.secrets.metsuke-bls-skey.path;
 
       settings = {
         pool_id = poolId;
