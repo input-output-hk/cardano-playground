@@ -8455,11 +8455,11 @@
     "leios-observability": {
       "flake": false,
       "locked": {
-        "lastModified": 1788154399,
-        "narHash": "sha256-uqDWkrT4bfz+ebsKoyrCLmZAmPz59k4S7lvq2FsmZ7Y=",
+        "lastModified": 1788204769,
+        "narHash": "sha256-DlyScGJd2ZYE2SRZw9Zj7tgBFlfGXUJUAO5DQyXAXYc=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "290ee0b5917e28dbcbbc2a5e2ae1287dfb4f9134",
+        "rev": "e66c6be7052ce095e9da15dc217ee2cea3663fb8",
         "type": "github"
       },
       "original": {
@@ -8586,11 +8586,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1788077868,
-        "narHash": "sha256-VnUxMj7kSr7aML39Th79ix3EliimoVQAe+NyO0KNi4s=",
+        "lastModified": 1788245218,
+        "narHash": "sha256-dJCfduTkWxgBgeFeQdmF8HEwPz93/RqIPEAHaFNwzjw=",
         "owner": "input-output-hk",
         "repo": "metsuke",
-        "rev": "efd1badff2d0158d738f5459e7842916f7304bdd",
+        "rev": "048b17c98aa00fa50c3f3eb1512897fb3a320b28",
         "type": "github"
       },
       "original": {
