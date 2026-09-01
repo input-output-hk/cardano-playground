@@ -1273,7 +1273,7 @@ in
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 250) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432)];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios leiosCentrifuge];};
-      leios1-metsuke-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "leios1") node-leios metsukeServer];};
+      leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios metsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 80) (group "leios2") node-leios leiosBp];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
