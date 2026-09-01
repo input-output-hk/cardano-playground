@@ -19,20 +19,28 @@ flake: {
     serverName = "metsuke-leios.${domain}";
     listenPort = 8080;
 
-    inherit ((builtins.fromTOML (builtins.readFile ./metsuke-allowlist.toml)).ingest) allowlist;
+    inherit ((fromTOML (builtins.readFile ./metsuke-allowlist.toml)).ingest) allowlist;
 
-    # At least the agent's upload_batch_max_bytes, which is what it seals
-    # before compression and what this counts after it. Set under that, a
-    # submission compressing worse than the gap earns a 413, which the agent
-    # reads as terminal and reseals identically, so the same body is refused
-    # until its spool cap drops those rows. Equal numbers are enough: the least
-    # compressible JSON a trace line could carry seals to 0.59 of the cap.
+    inherit (config.cardano-parts.perNode.lib) cardanoLib;
+    environment = cardanoLib.environments.${groupCfg.meta.environmentName};
+
+    # At least the agent's upload_batch_max_bytes, which is what it seals before
+    # compression and what this counts after it. Set under that, a submission
+    # compressing worse than the gap earns a 413, which the agent reads as
+    # terminal and reseals identically, so the same body is refused until its
+    # spool cap drops those rows.
     maxBodyBytes = 4194304;
   in {
     assertions = [
       {
         assertion = allowlist != {};
         message = "flake/nixosModules/metsuke-allowlist.toml holds no pools, and an empty allowlist refuses every submission. Generate it with metsuke-allowlist, as its header says.";
+      }
+      {
+        # When off the roster is refused by the node socket and the Requisite names
+        # a unit nothing defines, neither of which says why.
+        assertion = config.services.cardano-node.shareNodeSocket;
+        message = "${name} generates the Leios key roster, which reaches the node socket by group, so services.cardano-node.shareNodeSocket has to be on.";
       }
     ];
 
@@ -59,12 +67,34 @@ flake: {
     ];
 
     services = {
-      cardano-node.enable = lib.mkForce false;
+      # The roster generator reaches the socket by group, which only the unit
+      # this turns on makes writable.
+      cardano-node.shareNodeSocket = true;
       metsuke-server = {
         enable = true;
 
         developerPasswordFile = config.sops.secrets.metsuke-developer-password.path;
         environmentFile = config.sops.secrets.metsuke-aws-env.path;
+
+        # The timer that writes the Leios key roster (ADR 0011). It queries
+        # this host's own node, which is why the node runs here rather than
+        # being forced off.
+        roster = {
+          enable = true;
+          package = flake.inputs.metsuke.packages.x86_64-linux.metsuke-roster;
+
+          cardanoCli = config.cardano-parts.perNode.pkgs.cardano-cli;
+          era = "dijkstra";
+          network.testnetMagic = environment.peerSnapshot.NetworkMagic;
+
+          socketPath = config.services.cardano-node.socketPath 0;
+          inherit (config.services.cardano-node) socketGroup;
+
+          # Well inside an epoch, because this is the ceiling on how long a
+          # pool's key rotation takes to be accepted, and a run that fails
+          # leaves the previous roster in place.
+          interval = "1h";
+        };
 
         # Field for field from contrib/server.example.toml in the metsuke repo,
         # which is where each value's reason is written down. Only the ones
@@ -77,12 +107,12 @@ flake: {
             read_timeout_ms = 60000;
             write_timeout_ms = 60000;
             # Ours: headroom for a deploy, which is when every agent uploads at
-            # once. An agent sends its first submission at startup and only
-            # then takes a place within upload_jitter_max_secs, so a fleet
-            # brought up together arrives together that once and is spread from
-            # the next interval on. A permit is taken before accept and a body
-            # is read whole, so this times max_body_bytes bounds what the host
-            # holds: 512 MiB of its 2.8 GiB.
+            # once. An agent sends its first submission at startup and only then
+            # takes a place within upload_jitter_max_secs, so a fleet brought up
+            # together arrives together that once and is spread from the next
+            # interval on. A permit is taken before accept and a body is read
+            # whole, so this times max_body_bytes is the ceiling on bodies held
+            # in memory, and this host also runs a node.
             max_concurrent_requests = 128;
           };
 
@@ -102,14 +132,20 @@ flake: {
             # Ours: generated, never hand-written.
             inherit allowlist;
 
+            # The timer's own path, so the two cannot name different files.
+            # Set this once this host's node has caught up: the server refuses
+            # to start without a readable roster, and the generator writes none
+            # off a node short of the tip, so setting it earlier stops cold-key
+            # submissions too while nothing yet signs with a Leios key.
+            leios_roster = config.services.metsuke-server.roster.file;
+
             max_body_bytes = maxBodyBytes;
             max_header_bytes = 4096;
             max_timestamp_skew_secs = 300;
-            # Ours: sized for a hundred agents, each draining its spool rather
-            # than sending one submission a tick. A Leios producer was measured
-            # spooling about 12 MiB an hour of selected trace lines, so steady
-            # state is a handful of uploads an hour each; the room above that is
-            # for the burst when many drain a backlog at once.
+            # Sized for the expected fleet, each agent draining its spool
+            # rather than sending one submission a tick. Steady state is a
+            # handful of uploads an hour each; the room above that is for the
+            # burst when many drain a backlog at once.
             rate_limit_uploads = 300;
             rate_limit_uploads_total = 20000;
             rate_limit_window_secs = 3600;
@@ -121,6 +157,18 @@ flake: {
           };
         };
       };
+    };
+
+    # shareNodeSocket makes the socket group-writable from its own unit, so the
+    # group alone is not enough: a run before that lands finds the socket there
+    # and unwritable. Requisite rather than wants, so a tick that is too early
+    # fails at once and the timer takes the next one.
+    systemd.services.metsuke-roster = rec {
+      requisite = [
+        "cardano-node.service"
+        "cardano-node-socket-share.service"
+      ];
+      after = requisite;
     };
 
     security.acme = {
@@ -152,9 +200,11 @@ flake: {
         enableACME = true;
         forceSSL = true;
 
-        # Well under the server's 64 slots, and well over what a pool needs: an
-        # agent uploads its two batches one after the other, and several agents
-        # behind one egress address upload on a jittered hourly cadence.
+        # Well under the server's own permit count, and well over what a pool
+        # needs: an agent uploads a tick's submissions one after the other on
+        # one connection, and several agents behind one egress address upload on
+        # a jittered hourly cadence. This is what keeps one address off those
+        # permits; the request limit above is not.
         extraConfig = "limit_conn metsukeConn 8;";
 
         locations."/" = {
