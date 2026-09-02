@@ -1,4 +1,5 @@
 {
+  self,
   inputs,
   config,
   ...
@@ -23,7 +24,7 @@ in {
     options.services.cardano-leios-piranha = {
       flakeRef = lib.mkOption {
         type = lib.types.str;
-        default = "github:input-output-hk/leios-adversarial-tools/nix";
+        default = (import (self + /flake.nix)).inputs.leios-adversarial-tools.url;
         description = ''
           The flake ref to build on update requests.
         '';

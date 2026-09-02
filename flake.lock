@@ -9678,16 +9678,15 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1787257488,
-        "narHash": "sha256-WUCu9ixdie+sjsguewlqea4HTTRUMIIa5QJk0iO4OMk=",
+        "lastModified": 1788371819,
+        "narHash": "sha256-iBmx/0TUn96Y5X6kmeC1l84Vyb/blfikf6SG6aeLg88=",
         "owner": "input-output-hk",
         "repo": "leios-adversarial-tools",
-        "rev": "a2815e3cec5ae11505a686c4833a70fdde7d1bbe",
+        "rev": "70f4c068d595ce56dbad92393dfa6fdd83e5e51d",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "nix",
         "repo": "leios-adversarial-tools",
         "type": "github"
       }
@@ -9754,11 +9753,11 @@
     "leios-tools": {
       "flake": false,
       "locked": {
-        "lastModified": 1786552754,
-        "narHash": "sha256-SfxcVGLaSNUyJfRIc1JXQXZ90Ql3Irg1HJtdYtfoXj0=",
+        "lastModified": 1788278484,
+        "narHash": "sha256-1wv+tnns/aHuzsU71ULXK8R0zUAeaEEZTtfjg4ERLgo=",
         "owner": "input-output-hk",
         "repo": "leios-tools",
-        "rev": "cab3a2d7d36709eab00a1e5709d8d0829950ec88",
+        "rev": "8593ccf2d15b096f3ae1dace44cf4f3d1759b465",
         "type": "github"
       },
       "original": {

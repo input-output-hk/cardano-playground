@@ -15,7 +15,7 @@
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
-      url = "github:input-output-hk/leios-adversarial-tools/nix";
+      url = "github:input-output-hk/leios-adversarial-tools";
       inputs = {
         nixpkgs.follows = "nixpkgs-unstable"; # crane requires at least 26.05
         flake-parts.follows = "flake-parts";
