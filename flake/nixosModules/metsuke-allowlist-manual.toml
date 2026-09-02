@@ -1,0 +1,9 @@
+# A manually curated metsuke allowed pool list.
+# The code value for each pool key is unused by the metsuke server and can hold
+# something informative like the ticker as long as the character set is only
+# [:alnum:] and [-_.].
+#
+[ingest.allowlist]
+pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred = "IOG1"
+pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm = "IOG2"
+pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s = "IOG3"

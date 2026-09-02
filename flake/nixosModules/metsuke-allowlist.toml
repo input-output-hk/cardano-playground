@@ -1,18 +1,141 @@
 # Generated, never hand-written:
 #
-#   metsuke-allowlist query --socket-dir <dbsync socket dir> --dbname <db> --role <role> \
-#     --metadata-label 674 --metadata-key musashinet_incentives_application_code \
-#     --statement-timeout 30sec > registrations.csv
+#   metsuke-allowlist query \
+#     --socket-dir <dbsync socket dir> \
+#     --dbname <db> \
+#     --role <role> \
+#     --metadata-label 674 \
+#     --metadata-key musashinet_incentives_application_code \
+#     --statement-timeout 30sec \
+#     > registrations.csv
 #
-#   metsuke-allowlist generate applications.csv registrations.csv \
-#     --code-column application_code --pool-columns pool_id_1,pool_id_2,pool_id_3
+# Clean up the applications csv with:
 #
-# Paste what `generate` emits over the table below. It excludes a pool whose
-# application code disagrees with its current on-chain registration and says so
-# on stderr, so read that too. profile-metsuke-server refuses to build while
-# this table is empty.
+#   nu -c "open --raw applications.csv
+#     | from csv --no-infer
+#     | select ...[
+#         'Timestamp'
+#         'Pool ID of a stake pool you run on MusashiNet.'
+#         'Pool ID of a second stake pool you run on MusashiNet. (Optional)'
+#         'Pool ID of a third stake pool you run on MusashiNet. (optional)'
+#         'Registration code'
+#       ]
+#     | rename ts pool1 pool2 pool3 code
+#     | to csv
+#     | save applications-sanitized.csv"
+#
+#   metsuke-allowlist generate \
+#     applications-sanitized.csv \
+#     registrations.csv \
+#     --code-column code \
+#     --pool-columns pool1,pool2,pool3 \
+#     > allowlist.toml \
+#     2> rejected.txt
+#
+# Some rejected rows may prevent an allowlist from being made at all.  If os,
+# examine the rejected.txt file and trim the application csv accordinly, then
+# retry.  Iterate until successful:
+#
+#   metsuke-allowlist generate \
+#     applications-sanitized-trimmed.csv \
+#     registrations.csv \
+#     --code-column code \
+#     --pool-columns pool1,pool2,pool3 \
+#     > allowlist.toml \
+#     2> rejected-trimmed.txt
+#
+#
+# Paste what `generate` emits over the table below, whole: it is regenerated
+# rather than edited, so anything added here by hand is lost the next time.
+# Manually curated pools go into metsuke-allowlist-manual.toml which are merged.
+#
+# `generate` excludes a pool whose application code disagrees with its current
+# on-chain registration and says so on stderr, so read that too. It reports
+# nothing about a pool that registered on chain and never applied; that set is
+# the one with someone waiting on it, so compare the two lists as well.
 
 [ingest.allowlist]
-pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred = "IOG1"
-pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm = "IOG2"
-pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s = "IOG3"
+pool102xtd26h9r7dw068zdc5645r736793lujx7fpgcfmajhyxs7ny8 = "f4636c5753b889dcffe0d004dcc8fcd36368d689e3c9015abb5ddb27289aaa4e"
+pool10f0c7vmlrfnf75vqklca35eux9h5w5a8xl53elkcd5ma7dsd9zh = "a7e8c228cfe17d0338f989c66b94ca0653cb45fae75dbd5c862570b0bbb09d9c"
+pool10teel6z48x9nk9cjgrks08hc377xqfru3csr3qk338nzv8jmpts = "81e03eda5922339d51af041d5b61cc2ccae4162c5fef079edabff7ede4b55a13"
+pool12egzayyh8v75amsks3f9j2c0sk7nh7c6j9tvy4e48al0qxzcvzf = "593b3df4e914740639202320d268d336abc8e0aa823168f02e83918dc8a45609"
+pool12l2s7zxccvqn5qvurtfxqvsydz0hmsff7q74zfzuamsaza9y9ln = "cec6afecd25fda71f411abf619555b11967d910ef89bd34cc4a35c7617035449"
+pool12m2d2xffx3ffmakpjk5a5rq0m8rlgwf9tuu2v26lx90tqygjvxl = "3a36f1636298e8acdb69fb040466268edf9cd096063c88e189a1772c8babcaf0"
+pool13hxxx94chph7zydyjfyp6y9wd753nxayner52eng5adyy7zedlp = "83529215d2845ff790948a0aed8295dcfe1cd8408bf90c3828dd20b3af25f47c"
+pool14497fyzuzztzkj33gac39rlq84fsn3xuehtaqkg6y5t7wrrhrsm = "6b6eab07cb5a9c8b9956b07f8a1e2d828657ea1fc3dd2d34394043277d3907bd"
+pool14fshd5xe9h59d442p7y8ck3hs5xpdt2qts9up43zjaxhwpg36dx = "4bf22509edee4c04ba4f7272f8da50e5340c0492993182b4973166678675d376"
+pool14xj9y60k9478tk76uhhyrxz4j2pz2acaqf28d3cl9lc3cegp05v = "b10c7b51e037a09640638d3393c139018168f23f788537de2847ce1790e185ce"
+pool15at6zpa4jrswwx6r7rzztnwjtf8653ppdkzamqr3d3xp260ay3n = "57a5eb5a521e273bc0a4d75b438bfd74282af3261ea72bd71c48e1ff975373c1"
+pool15dxt6c98u3l0zqr95r8yk64573n0fgxc83tlh37l0vclyuz9n6y = "b10c7b51e037a09640638d3393c139018168f23f788537de2847ce1790e185ce"
+pool15mlfwa82pzqhmayx4ydne3nnfyrnsmcgyrfl3z69acxuklqtquy = "e6fbf08dae07e9a12d0d11725fcd2da2ff545e7be1283bfe9ca701d6da10ac5c"
+pool15svjdp7tnrju6qrdrgslmutrtcl5ys25avnqv4csukh2zgvgvex = "c5e5214e084fd870eec4ea78ec0e74674abd4386556cd0d3e0008588b17875db"
+pool15y5lrrm3fyvrtllpn85kxate0x3q6e7d6rdzqpsp88275m6jhup = "39c2419eee6129b7f7136e4b432a8f648ea3e104d06d74ba792529d1646489b5"
+pool17at5slyy52ssulc02pvqpues9gp7s2ey7cf6mphl97nl79k4255 = "e0d416c7ecd8e0dc55d0dce8752b43cf0a77be3be8ef74eca3964d308022ca7b"
+pool18jf7tcx0432rmmzdhr2em7wcnssse2737cnhhxy49jjcqqr8a7r = "f867661f2cb6bc27f40330418aa41e8cb0b1009f951b64f2a310bbc38400826d"
+pool19hfcy8n4ygj7g5e9ljj5tkref6gqq5a7w9jp9wag26wv5tv0vrl = "81e03eda5922339d51af041d5b61cc2ccae4162c5fef079edabff7ede4b55a13"
+pool19vlckzxxpz32dj5j84xtzut40tz002w6me6a6vc328v5yqrd2jx = "38c50659195a96c083e818360e013f88115e27cc068a5e1246aecfbeec148132"
+pool1a03qmcv5gassny47nnygnx4pzn3gvwf62ttqdtjk2tfwc2ts3xk = "83d9b57d25a18070483ab26be280c0f405ed7333a2b53ccd272618072968145c"
+pool1agplfadvkvvpzd2gymlknn32x7ju4lqg3ynemdtjv48c6qvvp4p = "368d1749401e66da2b2ead822f9abeb271b4da737efed63ae960b22ed53c3619"
+pool1ay0cvg7xpypchd2qmw7xm3796tv6qrzx57xy8wqv3djw72gqg7l = "57a5eb5a521e273bc0a4d75b438bfd74282af3261ea72bd71c48e1ff975373c1"
+pool1cp8dkjh5zf5tga3gr8qsr8j6n29unrwy4wf9dm9shh35xtps0e6 = "6d50834d2e2b61a868167c88f748499d407ed5d1458ad3d4839ca608e86d5eb9"
+pool1cptlr8wyr92hm3shazrm6huyph4p2h4wg8uffl5aga07srzsvg8 = "3a36f1636298e8acdb69fb040466268edf9cd096063c88e189a1772c8babcaf0"
+pool1cpw3tfwaxq3ejkdsg748kn68t3rkk5anmfegtqqlxj8fgax44k3 = "81e03eda5922339d51af041d5b61cc2ccae4162c5fef079edabff7ede4b55a13"
+pool1dkf08rprdqwt0qmlgzvpwmplm74ry5w22p9fg03eeqyjs7ylu84 = "b10c7b51e037a09640638d3393c139018168f23f788537de2847ce1790e185ce"
+pool1dmt6hr0d7nrxcqhkgdckar33vty3j68zlt936tu3cp0wc3jyevl = "942a8cd68822be70ef920ba74df0e54ca6364284962e2f7250ba34d5de360473"
+pool1eay9exv7p7jhw6c4nggdglwvpgggsccax8t50n03wmjysm8xagh = "39c2419eee6129b7f7136e4b432a8f648ea3e104d06d74ba792529d1646489b5"
+pool1ecp2e7yv75sw3y32kfx7hy8vc5fewflrm9wa7jps2r8ukn92y3z = "dea617156c0c659723f4199832391a9f7110c6fe53bcbf1bc6c53a79fb3f5877"
+pool1ektalsfq2dtz939ng9ms4yzj0sudytxs376q4jmxmcea67jd35a = "82a839f5e780f2cb452a1886187fc3e814dec3ec0c6b975e76221649b8df8a2a"
+pool1f6wrh4zus9cadzefllya2v40pj9ldfply3svlkk53282u3nyuke = "fb35b417a3d8ad5990b3f824f2b1e12bd611a442a14a24106bbfbfa0fc346fc2"
+pool1fdn7sfg604fvqgjl0k2ppmntkcrak8vcmrgag39k6fmhzmvz262 = "39c2419eee6129b7f7136e4b432a8f648ea3e104d06d74ba792529d1646489b5"
+pool1flmxn959lazu4nsrxyaxj6wa3yz7pjd3y7dam5xmg3zqytc779f = "a7e8c228cfe17d0338f989c66b94ca0653cb45fae75dbd5c862570b0bbb09d9c"
+pool1fqgsajsa8ekrcg2d46wtuwhufrefae2mqnyzmdhnshe9xq7wce9 = "6b6eab07cb5a9c8b9956b07f8a1e2d828657ea1fc3dd2d34394043277d3907bd"
+pool1fxe345ex6mdsxgfsts2w6f8rxhfazdtn8geuz93fqwsgjj3dz2s = "e95019ab4c6133176960146e7930836868738d188ffc5ece616c06547ee3af28"
+pool1gcerdtrqfurel2qjvdt98fpxazxxvvx77xnz9g22husc2frzfa2 = "5f45c77d1072631db670055b7be6123abea01bc5d0e892f63d76fc40935c1a46"
+pool1gfeygmd86hgcg2dft2g3vx7u824rl29m2llzy9rl0mhcc2nh8s4 = "5fb0d2293ba3fc1a4a525a9aa88c6e06d4be456ebb446b9dd93e4a4fbf473a12"
+pool1gfgvkydaj24yypsyjcawg4dnjyrpcs9h7j8ldzuty7j5xaf5luf = "c5e5214e084fd870eec4ea78ec0e74674abd4386556cd0d3e0008588b17875db"
+pool1gjymgja7vq9k6ajy3d5ygqxymctpdsqvja5yw8qf4kx3kpjc6su = "102d29c8a89a6fee53be2185a6645b9fade96b42b191cc53b64a9239db69368e"
+pool1gv4dg0u9egfts87d8jukzu68sa85hhtvvlpunmq7vry4zpfu4my = "48c91d3be967570505a971b75de887065b5b771c1b9730f3d9f8d3fb6e8ad2c5"
+pool1hts9z229runn8lrh2h5kcr9am9hypfr48080nxeerarpklym2sd = "f4636c5753b889dcffe0d004dcc8fcd36368d689e3c9015abb5ddb27289aaa4e"
+pool1jmatwe3tygtufld2n5xaf7ac4568elg64zprvrup76wqqkcj3m9 = "18a0c6b47417b380727bd33ffead30c25e502aff6b2ed323812a92830122721b"
+pool1jqrxz3x602t5xj6k35m585zvzfr5cd6kcwx2metsjnnj6j4y75s = "b933809505f55aecf67a71163d16d266aa506c38bec9518f3e12dfc65d640183"
+pool1jty4qara5gffpju9etgasgd2yfpxwrc6cpfhtz63507n55sz56c = "6b6eab07cb5a9c8b9956b07f8a1e2d828657ea1fc3dd2d34394043277d3907bd"
+pool1l42lxnce9e78ec3stxla7wewsl7t9erh45kll9zgtqtucgtjy9k = "83529215d2845ff790948a0aed8295dcfe1cd8408bf90c3828dd20b3af25f47c"
+pool1lknnhwa9xnawxmlmmnxxnep2485d0wvzsa794yrcv9r3w9z7mq8 = "593b3df4e914740639202320d268d336abc8e0aa823168f02e83918dc8a45609"
+pool1lq96uvgznlqr0j7m8ftpzdqq03vg8ny78dcmdffj4zn8j35e67j = "83cb2b25426808b01d0da715d800f776cb6e64e8a97843c71f5848271faf0bb1"
+pool1mp5lp56jk9jp6f3fh0psn440x6pqtkd53rtnvws0lc80w4j8ztm = "cec6afecd25fda71f411abf619555b11967d910ef89bd34cc4a35c7617035449"
+pool1mzj6lyaws8fcxh9crqpnxaqca0m92ht6r0ceg9egnhntj005pz5 = "39849e57092643f6b89c0c16beceec10a5060c87263570035de2cdca3ca05970"
+pool1n473t9z42nldn5286fwqvxz7zfpnzl9qs0yuzf7wzr9nkpregc5 = "3a36f1636298e8acdb69fb040466268edf9cd096063c88e189a1772c8babcaf0"
+pool1n7h0an706ye0nuy5up88k6ljqx79jxf3zr6qle7pkaw7xwxlkkt = "39849e57092643f6b89c0c16beceec10a5060c87263570035de2cdca3ca05970"
+pool1nk9mvga8k6xv6v7pvz8skqlzxtdshjp7gux6xxtzpfhq6kamayn = "7ab67e2c90410687b0bb67117c02f3886101df576aaa067da4495246a3fd1c88"
+pool1nxpv45mgx6jdx5d4ldpj0rgtq5l839xk8crpy0zqspkk7c6x54a = "1f758deea3ef0a48f811207d47fd462b087a8729c5c87f09d631a12ea948737e"
+pool1qdkwyr0umcrc5vjquhe498qh74z3wz9ty6dg360y7evn7r478nu = "95eb61c6609bf3b70fd677bce41ad5689403490afae1b089a3b22a95b5f3119b"
+pool1qpk543ymtnegdpvz58jzrfsszrshmhwawjpuxk8t4ckexr7ghcz = "a17c5102bb5815eec1152e25914a1f683331fe32c47be4dc6b0f5dda5e366a5f"
+pool1qvh8lse5mathpl7etl2cpczjqag8ye9lpsmehmpcww2wyn37eha = "c5e5214e084fd870eec4ea78ec0e74674abd4386556cd0d3e0008588b17875db"
+pool1r6csfcpf3ka5en45999cz2s6dg3nznfxqpuwzzt6vresgus6qwa = "6d50834d2e2b61a868167c88f748499d407ed5d1458ad3d4839ca608e86d5eb9"
+pool1rwlrxaw36ktxrrrjj27rmdtgqpsapq89er2atjrjzmylje2ttga = "c870ca58b84a0cdddbc87a213d23978c447e786560487bf21e22f2ce5c2d22be"
+pool1sfn4qayjll6lq83pv2uzfqx2756fdukj230uv724wqjnu4uktd0 = "fb35b417a3d8ad5990b3f824f2b1e12bd611a442a14a24106bbfbfa0fc346fc2"
+pool1trscjhwvklhj90dsfar3xlhapf7wqzvfsuh335dy2rzxvnd9awt = "3cc98ca4d6b6aca81e7307e0fd33cdb546ff5f46de9823f9172fe60fcd0984de"
+pool1u0futpww5ddgt4z7xpt0z2dy6e2047205l6v4ks485fm7gh53pf = "39849e57092643f6b89c0c16beceec10a5060c87263570035de2cdca3ca05970"
+pool1u28z5893zsfk8anj40t62qsr4tvd89vg9r6ajj54urumc6pvuu7 = "83d9b57d25a18070483ab26be280c0f405ed7333a2b53ccd272618072968145c"
+pool1ucmwhkvxzp38zhqt3mc3ymjdzztrrlzeu84v3h542ygag5h2shl = "4bf22509edee4c04ba4f7272f8da50e5340c0492993182b4973166678675d376"
+pool1ucwmpkjmnu6n43was0gat4nd5suldvp6u3rxkn9rthg8v7ek4mf = "d68f50c7259ee63a56a7869dfb050124afd88ad770022bfa22ea06908b64c584"
+pool1uk72a239s59mrj4n8rypsq0mwmffchp6vvnznqay22mlzxkfzu6 = "2200c809deb5babb569134fc532a65372dddb4bb3fe58ea6782a0a20ff2669ca"
+pool1uwhyem2njw2x7er0n334xp367ghqa8j0s5gp4d7wtdd66t7xdaq = "3022cc8fd56f531998a1f7d282f4efe071be90e5f34a40dc124da4142df0aaa0"
+pool1v4v09p5d9esn5ltrzq8j0q4gk7h2s2k8mgz80cs6ghewy60wvew = "6c651d5aad6656b2eed25332437cb59e27dcf0eeb32c7ade2abbd72b39ce15d1"
+pool1vgylvtu255k0gt82fev8aq00q6rwjesw7usjckgn5vdtwy3x0ls = "593b3df4e914740639202320d268d336abc8e0aa823168f02e83918dc8a45609"
+pool1wddfg8rnn3s8k3df9uv0tf4llzlxy76zlms6cre6vmnp57qj6dj = "cec6afecd25fda71f411abf619555b11967d910ef89bd34cc4a35c7617035449"
+pool1wkcjyyz8hazvucnjc5d3j7rlrpa9y0w2ru067t0p5ysljwyz80g = "fb35b417a3d8ad5990b3f824f2b1e12bd611a442a14a24106bbfbfa0fc346fc2"
+pool1wvnc8lpw8jzktrf5n4k0sjtxsjp4dmskef75tr9dexf7j9px9m7 = "e13152f95f83f31d483de1e96c6b7d4661da0169ccb9d79ccb1fb7ebfe3b8be3"
+pool1x2gjsp25uhy5s77n2atsxh2kf3n6q0u9pmjn40pgw9jdjwd60z0 = "36399cbea960ae75b9b10225a66a05735ecef1263361b903f72c83c1e35d6677"
+pool1xal6snplnk0zfus8zc3454knvyvv83443h3pnf8usu6hxu4h568 = "95eb61c6609bf3b70fd677bce41ad5689403490afae1b089a3b22a95b5f3119b"
+pool1xkypytpkyncn7dnmnhvqtj5q8mrpeef0tqrecudwkrftyzwlwnr = "4bf22509edee4c04ba4f7272f8da50e5340c0492993182b4973166678675d376"
+pool1xudqxhpzw4ysqzaz7qh9mm6yhq2n2ytz2c6tyhmz4f80qc8l5f7 = "c870ca58b84a0cdddbc87a213d23978c447e786560487bf21e22f2ce5c2d22be"
+pool1y35689a6wrlrqgrm892v3255ulmm2wwn3kxgd6lp4lepv6mmfsm = "95eb61c6609bf3b70fd677bce41ad5689403490afae1b089a3b22a95b5f3119b"
+pool1y43ykap27aqkg4v8vcnhtf9wj6gwquaj793fkupt5xwsyarv0wl = "a7e8c228cfe17d0338f989c66b94ca0653cb45fae75dbd5c862570b0bbb09d9c"
+pool1yezmm2y8thts9xfv29nyj5ns200r4lx6wlc8ckz2ra79kj5zah3 = "0e8631e0fd85f08795bb99469790f8d9d6ce6772c2f261847bef59517e1340b3"
+pool1yhqrvnu6n935n4wu99mfjavc6htc70l0sfyjj9mn43lzc32vq5h = "38c50659195a96c083e818360e013f88115e27cc068a5e1246aecfbeec148132"
+pool1ylvm3dapszd2lvyn6d2kd0c5swfhtkrz4fea8v8qe7glge2hda0 = "bffea07297d04079fce16d6ddbe4e4829a2961bd52171f17499aa4fdb8c56116"
+pool1za7357m9wvxs7rpnfdy37jv3hlup0xswapnrw67qrveycx03spc = "e95019ab4c6133176960146e7930836868738d188ffc5ece616c06547ee3af28"
+pool1zfeup8ljzutv584um75vqjsr75jx3cr6zkm9xm42empl67yfw8f = "8d8f871879467a9f2e2bf4a1d156e01d03cf97fadf901646599ce1eee626fe0e"
+pool1zmgyrcwsvxq84g7yt4w9fjwj4g52njvtu96xt28rqmvzs5k5q64 = "bffea07297d04079fce16d6ddbe4e4829a2961bd52171f17499aa4fdb8c56116"
+pool1zzsd237g2cdha6t66cw3qw23mskgzgfu9m58s96hmg7mjfdxjct = "1ed7e7c591c56f001796fff79815e57f21de6bee31c680c1d181e5b90b1d1260"

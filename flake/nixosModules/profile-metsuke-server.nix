@@ -19,7 +19,14 @@ flake: {
     serverName = "metsuke-leios.${domain}";
     listenPort = 8080;
 
-    inherit ((fromTOML (builtins.readFile ./metsuke-allowlist.toml)).ingest) allowlist;
+    # Merge and use both the official registered pools and, as needed, a set of
+    # manually curated test pools.
+    table = file: (fromTOML (builtins.readFile file)).ingest.allowlist;
+    generated = table ./metsuke-allowlist.toml;
+    manual = table ./metsuke-allowlist-manual.toml;
+    allowlist = generated // manual;
+
+    inBoth = lib.intersectLists (builtins.attrNames generated) (builtins.attrNames manual);
 
     inherit (config.cardano-parts.perNode.lib) cardanoLib;
     environment = cardanoLib.environments.${groupCfg.meta.environmentName};
@@ -34,7 +41,11 @@ flake: {
     assertions = [
       {
         assertion = allowlist != {};
-        message = "flake/nixosModules/metsuke-allowlist.toml holds no pools, and an empty allowlist refuses every submission. Generate it with metsuke-allowlist, as its header says.";
+        message = "flake/nixosModules/metsuke-allowlist.toml and metsuke-allowlist-manual.toml hold no pools between them, and an empty allowlist refuses every submission. Generate the first with metsuke-allowlist, as its header says.";
+      }
+      {
+        assertion = inBoth == [];
+        message = "flake/nixosModules/metsuke-allowlist.toml and metsuke-allowlist-manual.toml both name ${lib.concatStringsSep ", " inBoth}. A pool belongs to one of them.";
       }
       {
         # When off the roster is refused by the node socket and the Requisite names
