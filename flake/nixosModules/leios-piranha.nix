@@ -89,6 +89,8 @@ in {
             genesis_path = environment.nodeConfig.ShelleyGenesisFile;
             leios_enabled = true;
 
+            node_id = name;
+
             sync_method = "tip";
             scheduler = "priority-wfq";
 
