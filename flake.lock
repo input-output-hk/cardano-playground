@@ -3,11 +3,11 @@
     "CHaP": {
       "flake": false,
       "locked": {
-        "lastModified": 1786381389,
-        "narHash": "sha256-gZ88v8rrj2PFQLUaDWPoZRBPd99cnJjSzoYf3uGy3c4=",
+        "lastModified": 1786461519,
+        "narHash": "sha256-T0r6CvdSEDxszlb7uK7mxEVZcCtFNbk8tlr8B1bRKqM=",
         "owner": "IntersectMBO",
         "repo": "cardano-haskell-packages",
-        "rev": "4161e4ec9725ae49d9bcc63dbda846dce62cd7ae",
+        "rev": "b1d381aa5c7e7192f157ff514acf7feb5033aecf",
         "type": "github"
       },
       "original": {
@@ -1671,16 +1671,16 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1786439748,
-        "narHash": "sha256-IbKm8Cq/FFQcHwRxURnKFP+fJ414g69Pbr7P9mS8jng=",
+        "lastModified": 1787930184,
+        "narHash": "sha256-spo9eQIChdI3yBwKthT1d27whv1sJamhluIPP+wqmOA=",
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "6d7f6134707b73610464def9601a0561460a4d85",
+        "rev": "b4c58ea3781292576ff56da688cf41e11ab8e0c8",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "jl/leios-prototype",
+        "ref": "leios-w34-doomsday-mode",
         "repo": "cardano-db-sync",
         "type": "github"
       }
@@ -4548,11 +4548,11 @@
     "hackageNix": {
       "flake": false,
       "locked": {
-        "lastModified": 1786394245,
-        "narHash": "sha256-sZq5b0GtedympeQFYiHWAN+oQmQgTfjX/rxFvD6ATWo=",
+        "lastModified": 1786461266,
+        "narHash": "sha256-LzDVMur7G3QjI5fnkn7In1cEDYm//EJfptRFa92MdF4=",
         "owner": "input-output-hk",
         "repo": "hackage.nix",
-        "rev": "18cb4d5b3d62ec9d66fde1fadfe44c11ce221b1e",
+        "rev": "f28d1be795a2a51262e5ed7f6ee81e0fa58e2bbb",
         "type": "github"
       },
       "original": {
