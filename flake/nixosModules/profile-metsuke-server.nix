@@ -19,6 +19,8 @@ flake: {
     serverName = "metsuke-leios.${domain}";
     listenPort = 8080;
 
+    metsukePackages = flake.inputs.metsuke.packages.x86_64-linux;
+
     # Merge and use both the official registered pools and, as needed, a set of
     # manually curated test pools.
     table = file: (fromTOML (builtins.readFile file)).ingest.allowlist;
@@ -92,7 +94,7 @@ flake: {
         # being forced off.
         roster = {
           enable = true;
-          package = flake.inputs.metsuke.packages.x86_64-linux.metsuke-roster;
+          package = metsukePackages.metsuke-roster;
 
           cardanoCli = config.cardano-parts.perNode.pkgs.cardano-cli;
           era = "dijkstra";
@@ -112,6 +114,16 @@ flake: {
         # marked below are ours to decide.
         settings = {
           listen = "127.0.0.1:${toString listenPort}";
+
+          public_url = "https://${serverName}";
+
+          # The static agents this server offers for download, so an SPO
+          # needs no nix to get one. Both are cross-built on x86_64, so both
+          # come from that system's package set.
+          downloads = {
+            x86_64_linux = "${metsukePackages.metsuke-static-x86_64-linux}/bin/metsuke";
+            aarch64_linux = "${metsukePackages.metsuke-static-aarch64-linux}/bin/metsuke";
+          };
 
           http = {
             idle_timeout_ms = 30000;
