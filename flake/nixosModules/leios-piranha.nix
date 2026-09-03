@@ -22,11 +22,11 @@ in {
     # This option namespace already exists (from the module imported above).
     # We are extending it with additional options.
     options.services.cardano-leios-piranha = {
-      flakeRef = lib.mkOption {
+      defaultFlakeRef = lib.mkOption {
         type = lib.types.str;
         default = (import (self + /flake.nix)).inputs.leios-adversarial-tools.url;
         description = ''
-          The flake ref to build on update requests.
+          The flake ref to build on update requests if no other is specified in the request.
         '';
       };
 
@@ -34,7 +34,16 @@ in {
         type = lib.types.path;
         default = "/var/lib/cardano-leios-piranha/package";
         description = ''
-          Where to link the build result of {option}`services.cardano-leios-piranha.flakeRef`.
+          Where to link the build result of {option}`services.cardano-leios-piranha.defaultFlakeRef`.
+        '';
+      };
+
+      mutableConfigPath = lib.mkOption {
+        type = lib.types.path;
+        default = "/var/lib/cardano-leios-piranha/config.toml";
+        description = ''
+          Extra config file to load.
+          Can be written using the HTTP API.
         '';
       };
 
@@ -67,7 +76,18 @@ in {
         }
       ];
 
-      environment.shellAliases.piranha = "curl --insecure --header 'Host: ${name}.${domain}' https://[::1]/piranha";
+      environment.shellInit = ''
+        piranha() {
+          endpoint=$1
+          shift
+
+          curl \
+            --insecure \
+            --header 'Host: '${lib.escapeShellArg name}.${lib.escapeShellArg domain} \
+            https://[::1]/piranha/"$endpoint" \
+            "$@"
+        }
+      '';
 
       services = {
         cardano-leios-piranha = {
@@ -110,6 +130,8 @@ in {
               })
               environment.edgeNodes;
           };
+
+          extraArgs = ["--config" cfg.mutableConfigPath];
         };
 
         nginx = {
@@ -124,79 +146,115 @@ in {
             forceSSL = true;
             enableACME = true;
 
-            locations."= /piranha" = {
-              fastcgiParams.SCRIPT_FILENAME = let
-                writeNuStdin = name: argsOrScript:
-                  pkgs.writeShellScript "${name}-wrapper" (
-                    "exec ${lib.getExe pkgs.nushell} --no-config-file --stdin "
-                    + pkgs.writers.writeNu name argsOrScript
-                  );
-              in
-                writeNuStdin "piranha-handler" ''
-                  use std/util 'path add'
+            locations."/piranha" = {
+              fastcgiParams = {
+                SCRIPT_FILENAME = let
+                  writeNuStdin = name: argsOrScript:
+                    pkgs.writeShellScript "${name}-wrapper" (
+                      "exec ${lib.getExe pkgs.nushell} --no-config-file --stdin "
+                      + pkgs.writers.writeNu name argsOrScript
+                    );
 
-                  const unit_piranha = ${builtins.toJSON config.systemd.services.cardano-leios-piranha.name}
-                  const unit_node = ${builtins.toJSON config.systemd.services.cardano-node.name}
-                  const package_path = ${builtins.toJSON cfg.mutablePackagePath}
+                  inherit (config.systemd.services.cardano-leios-piranha) serviceConfig;
+                in
+                  writeNuStdin "piranha-handler" ''
+                    use std/util 'path add'
 
-                  def main []: string -> nothing {
-                    let req_body = $in
+                    const unit_piranha = ${builtins.toJSON config.systemd.services.cardano-leios-piranha.name}
+                    const unit_node = ${builtins.toJSON config.systemd.services.cardano-node.name}
+                    const package_path = ${builtins.toJSON cfg.mutablePackagePath}
+                    const config_path = ${builtins.toJSON cfg.mutableConfigPath}
 
-                    (
-                      path add
-                      ${lib.getBin config.nix.package}/bin
-                      ${lib.getBin pkgs.gitMinimal}/bin
-                    )
+                    def main []: string -> nothing {
+                      let req_body = $in
 
-                    mut status = 500
-                    mut content_type = 'text/plain'
+                      (
+                        path add
+                        ${lib.getBin config.nix.package}/bin
+                        ${lib.getBin pkgs.gitMinimal}/bin
+                      )
 
-                    let res_body = match $env.REQUEST_METHOD {
-                      GET => {
-                        $status = 200
-                        $content_type = 'application/json'
-                        {
-                          active: (systemctl is-active $unit_piranha | collect)
-                          path: (
+                      mut status = 500
+                      mut content_type = 'text/plain'
+
+                      let res_body = match $env.PATH_INFO {
+                        /status => (match $env.REQUEST_METHOD {
+                          GET => {
+                            $status = 200
+                            systemctl is-active $unit_piranha | collect
+                          }
+                          PUT | POST => {
+                            $status = 204
+                            match $req_body {
+                              start => {
+                                systemctl start $unit_piranha
+                              }
+                              stop => {
+                                systemctl start $unit_node
+                              }
+                              restart => {
+                                systemctl restart $unit_piranha
+                              }
+                            }
+                          }
+                          _ => {$status = 405}
+                        })
+                        /version => (match $env.REQUEST_METHOD {
+                          GET => {
+                            $status = 200
+                            $content_type = 'application/json'
                             if ($package_path | path type) == symlink {
                               nix path-info --json --json-format 2 $package_path | from json
-                            } else null
-                          )
-                        } | to json
+                            } else null | to json
+                          }
+                          PUT | POST => {
+                            $status = 204
+                            (
+                              nix build
+                              --print-build-logs
+                              --print-out-paths
+                              --out-link $package_path
+                              (
+                                $req_body
+                                | str trim
+                                | default --empty ${builtins.toJSON cfg.defaultFlakeRef}
+                              )
+                            )
+                          }
+                          _ => {$status = 405}
+                        })
+                        /config => (match $env.REQUEST_METHOD {
+                          GET => {
+                            if ($config_path | path exists) {
+                              $status = 200
+                              $content_type = 'application/toml'
+                              open --raw $config_path
+                            } else {
+                              $status = 204
+                            }
+                          }
+                          PUT | POST => {
+                            $status = 204
+                            $req_body | save --raw --force $config_path
+                            chown ${serviceConfig.User or config.users.users.nobody.name}:${serviceConfig.Group or config.users.groups.nogroup.name} $config_path
+                            chmod 0600 $config_path
+                          }
+                          DELETE => {
+                            $status = 204
+                            rm --permanent --force $config_path
+                          }
+                          _ => {$status = 405}
+                        })
+                        _ => {$status = 404}
                       }
-                      POST => {
-                        $status = 204
-                        match $req_body {
-                          start => {
-                            systemctl start $unit_piranha
-                          }
-                          stop => {
-                            systemctl start $unit_node
-                          }
-                          restart => {
-                            systemctl restart $unit_piranha
-                          }
-                          update => (
-                            nix build
-                            --print-build-logs
-                            --print-out-paths
-                            --out-link $package_path
-                            ${builtins.toJSON cfg.flakeRef}
-                          )
-                          _ => {
-                            $status = 400
-                            'Request body must contain only one of "start", "stop", "restart", and "update"'
-                          }
-                        }
-                      }
-                      _ => {$status = 405}
-                    }
 
-                    print --no-newline $"Status: ($status)\r\n"
-                    print --no-newline $"Content-Type: ($content_type)\r\n\r\n"
-                    print --no-newline $res_body
-                  }
-                '';
+                      print --no-newline $"Status: ($status)\r\n"
+                      print --no-newline $"Content-Type: ($content_type)\r\n\r\n"
+                      print --no-newline $res_body
+                    }
+                  '';
+                PATH_INFO = "$fastcgi_path_info";
+              };
               extraConfig =
                 ''
                   allow 127.0.0.1;
@@ -212,6 +270,7 @@ in {
                   deny  all;
 
                   fastcgi_pass unix:${config.services.fcgiwrap.instances.piranha.socket.address};
+                  fastcgi_split_path_info ^(/piranha)(/.*)$;
                 '';
             };
           };
@@ -251,6 +310,9 @@ in {
               >> "$pool_id_config"
             printf '"\n' >> $pool_id_config
           fi
+
+          # make sure it exists so startup does not fail
+          touch ${lib.escapeShellArg cfg.mutableConfigPath}
         '';
 
         serviceConfig.RuntimeDirectory = "cardano-leios-piranha";
