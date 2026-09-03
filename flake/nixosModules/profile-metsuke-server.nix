@@ -175,7 +175,6 @@ flake: {
           };
 
           developer = {
-            user = "metsuke-dev";
             list_max_rows = 1000;
           };
         };

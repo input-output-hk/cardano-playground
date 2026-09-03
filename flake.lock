@@ -9825,11 +9825,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1788419700,
-        "narHash": "sha256-IDhFpcHPdZlKffBN0tEbkzgP5yCuECgYFA71E5Yxy2w=",
+        "lastModified": 1788424793,
+        "narHash": "sha256-QGBwjAvkLx1lIPRTTPHR8ZtsC2mxER9MTx+CgjxcS8g=",
         "owner": "input-output-hk",
         "repo": "metsuke",
-        "rev": "f0b1080deaa049ca18ac10908b483ef459873b94",
+        "rev": "cbd7321321347905f56c650b13f0ae2f39e91480",
         "type": "github"
       },
       "original": {
