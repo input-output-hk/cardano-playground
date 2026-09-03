@@ -190,15 +190,15 @@ in
 
             # Temporary mitigation for the under-investigation leios cardano-node
             # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
-            # host RAM in ~3 days): recycle the service every ~2 days so memory
+            # host RAM in <1 day): recycle the service every ~16 hours so memory
             # can't grow unbounded. RuntimeMaxSec caps runtime;
             # RuntimeRandomizedExtraSec adds 0..N jitter so the fleet doesn't
-            # restart in lockstep (thundering herd). Window 44-48h (<= 2 days).
+            # restart in lockstep (thundering herd). Window 16-20h.
             # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
             # leaves room for a clean shutdown. Analysis/observer nodes opt out via
             # nodeNoRecycle. Remove once the leak is fixed.
             serviceConfig = {
-              RuntimeMaxSec = 24 * 3600;
+              RuntimeMaxSec = 16 * 3600;
               RuntimeRandomizedExtraSec = 4 * 3600;
             };
           };
