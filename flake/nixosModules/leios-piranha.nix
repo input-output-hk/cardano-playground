@@ -47,19 +47,20 @@ in {
         '';
       };
 
-      netClusterIp4 = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
+      netClusterIps = lib.mkOption {
+        type = with lib.types; listOf str;
         description = ''
-          The IPv4 of the net-cluster command & control server to whitelist.
+          The IPs of the net-cluster command & control server.
+          The first goes into {option}`services.cardano-leios-piranha.settings.aggregator_addr`.
+          All are whitelisted for the `/piranha` endpoint.
         '';
       };
 
-      netClusterIp6 = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
+      netClusterPort = lib.mkOption {
+        type = lib.types.port;
         description = ''
-          The IPv6 of the net-cluster command & control server to whitelist.
+          The port of the net-cluster command & control server.
+          This goes into {option}`services.cardano-leios-piranha.settings.aggregator_addr`.
         '';
       };
     };
@@ -110,6 +111,7 @@ in {
             leios_enabled = true;
 
             node_id = name;
+            aggregator_addr = "${lib.head cfg.netClusterIps}:${toString cfg.netClusterPort}";
 
             sync_method = "tip";
             scheduler = "priority-wfq";
@@ -269,12 +271,9 @@ in {
                   allow 127.0.0.1;
                   allow ::1;
                 ''
-                + lib.optionalString (cfg.netClusterIp4 != null) ''
-                  allow ${cfg.netClusterIp4};
-                ''
-                + lib.optionalString (cfg.netClusterIp6 != null) ''
-                  allow ${cfg.netClusterIp6};
-                ''
+                + lib.concatStrings (lib.forEach cfg.netClusterIps (netClusterIp: ''
+                  allow ${netClusterIp};
+                ''))
                 + ''
                   deny  all;
 

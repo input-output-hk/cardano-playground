@@ -371,8 +371,11 @@ in
           cardano-leios-piranha = {
             enable = true;
             openFirewall = true;
-            netClusterIp4 = "157.180.99.170";
-            netClusterIp6 = "2a01:4f9:3090:3026::2";
+            netClusterIps = [
+              "157.180.99.170"
+              "2a01:4f9:3090:3026::2"
+            ];
+            netClusterPort = 9100;
           };
         };
       };
