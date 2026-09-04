@@ -1,24 +1,55 @@
 {
   "activeSlotsCoeff": 0.050,
-  "epochLength": 86400,
-  "genDelegs": {
-    "42b30292d1f556fc2a32825cdea48c8b0047c0b98b393d503d08dd34": {
-      "delegate": "ce34df7e673c609e0d7afdd44fe6b0bd30dfb08075cb6ef232ca0d2a",
-      "vrf": "214df2912e4d6276825bad9b3ba8b299996b00f92d67be1105073d7c5eae9d37"
+  "epochLength": 21600,
+  "extraConfig": {
+    "initialFunds": {
+      "data": {
+        "0066878003c80c68e610236f87f742f06c53f30e4b051720faeff49f855e81366cb6f3c0d14837614afcea669d51b8be9519eaec4a237504f8": 900000000,
+        "60318277a23738a860d7b8f727b113236b2cd11cc413a5db0938241a27": 30000000000000000
+      }
     },
-    "b72315ff874db548e7e850df25525add5476ac43bd72115fed2f66b2": {
-      "delegate": "945fb26c1342c8de8b911f6f3871ccea5b492695bdfe29e239a388b8",
-      "vrf": "2cf9c48162cd5269c59f7dd389635948a3dd089d131b66e1a43f0a45b92d235b"
+    "stakeCredentials": {
+      "data": {
+        "5e81366cb6f3c0d14837614afcea669d51b8be9519eaec4a237504f8": "747aca09f322d2dfc56243b839e2d573ab92287684e5e37d66ec0f87"
+      }
     },
-    "c313120f0c8b5cf8cc7ae31323d0d07ae2185a71ea4aba6502a5a0fe": {
-      "delegate": "43135b3a55e0becee0e3009bdb8813e0e82a4369856907eef3901e0f",
-      "vrf": "d92a288d62da101e138e327f7cd51328f166cb99b93d839767c697724c3b117e"
+    "stakePools": {
+      "data": {
+        "747aca09f322d2dfc56243b839e2d573ab92287684e5e37d66ec0f87": {
+          "accountAddress": {
+            "credential": {
+              "keyHash": "bc2b888f42c68e4e118a4fa16ada52db896bffb61ceea51a58301bf6"
+            },
+            "network": "Testnet"
+          },
+          "cost": 0,
+          "leiosKey": null,
+          "margin": 0,
+          "metadata": null,
+          "owners": [],
+          "pledge": 0,
+          "poolId": "747aca09f322d2dfc56243b839e2d573ab92287684e5e37d66ec0f87",
+          "relays": [],
+          "vrf": "d8252bd637a90ba4dbd2cf63afda20a19888b7895ede067081ce7fb7411a972b"
+        }
+      }
     }
   },
-  "initialFunds": {
-    "0062644f98a463eaf0af184533e84c512c988edecfe35e31991951866cd91873d0e9e5efc8db7f54a50187bd7e284fc35b331c5d00f28a3ed1": 900000000,
-    "60b9fd0dd64c9dc8215c57eafa110362c832fbe73094ff89df9cb30c4e": 30000000000000000
+  "genDelegs": {
+    "12d894311704be0bcbbf3c802d1df931c1042f165118b5950c38c4fb": {
+      "delegate": "28e61504346b2321a7474e84bb868d20282ecca551fa195b474134cd",
+      "vrf": "815dfe31669dec6dae261a0c38009d6c195cb746b6f1053a12bb29fd585228bd"
+    },
+    "293a1d21af16b2a6c4553e5a587c6518c7ed13aecf6d467a276c5f5b": {
+      "delegate": "aa43125599455749e209b6ac89f87f4b2b7829b951b278914ff41da7",
+      "vrf": "ea3081e44ca2429c22bc1f8e09756a722ca76d9f89a1a637bac363d2d5fddefe"
+    },
+    "aa57d73d4b8790ac4fd195c2cfb0aefb82abb828893f4203e5eaf223": {
+      "delegate": "3c633d470ebb66763f598b92366c034daf87bd32f5619d9be7421281",
+      "vrf": "e431849e1f74782bde85e4030abebfbae6a5cd6c18c20ca35068d1c449287064"
+    }
   },
+  "initialFunds": {},
   "maxKESEvolutions": 62,
   "maxLovelaceSupply": 45000000000000000,
   "networkId": "Testnet",
@@ -41,38 +72,19 @@
     "nOpt": 150,
     "poolDeposit": 500000000,
     "protocolVersion": {
-      "major": 10,
+      "major": 11,
       "minor": 0
     },
     "rho": 0.0030,
     "tau": 0.2
   },
-  "securityParam": 432,
+  "securityParam": 108,
   "slotLength": 1,
   "slotsPerKESPeriod": 129600,
   "staking": {
-    "pools": {
-      "481ea4d15708d5c8ff373df2e1a7bfd6010599e55e32276b67dc1087": {
-        "cost": 0,
-        "margin": 0,
-        "metadata": null,
-        "owners": [],
-        "pledge": 0,
-        "relays": [],
-        "vrf": "4578d59bf370a57c8f4ec27f2095b26dd7d4aa6eb5a58f99e9ba06039c68c81b",
-        "publicKey": "481ea4d15708d5c8ff373df2e1a7bfd6010599e55e32276b67dc1087",
-        "rewardAccount": {
-          "credential": {
-            "keyHash": "4644cb6525b1a901874e0987cdd3493b1324171cc01f1b2d893587b9"
-          },
-          "network": "Testnet"
-        }
-      }
-    },
-    "stake": {
-      "d91873d0e9e5efc8db7f54a50187bd7e284fc35b331c5d00f28a3ed1": "481ea4d15708d5c8ff373df2e1a7bfd6010599e55e32276b67dc1087"
-    }
+    "pools": {},
+    "stake": {}
   },
-  "systemStart": "2026-04-25T00:00:00Z",
+  "systemStart": "2026-08-07T00:00:00Z",
   "updateQuorum": 3
 }

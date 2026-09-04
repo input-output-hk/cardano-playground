@@ -5,16 +5,36 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/v2026-05-14";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/v2026-05-14";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-05-15";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:IntersectMBO/cardano-node/leios-prototype";
-    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/bench/leios";
-    cardano-node-set-iowait.url = "github:IntersectMBO/cardano-node/jl/set-iowait";
+    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w35";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
+    cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
+    leios-adversarial-tools = {
+      url = "github:input-output-hk/leios-adversarial-tools";
+      inputs = {
+        nixpkgs.follows = "nixpkgs-unstable"; # crane requires at least 26.05
+        flake-parts.follows = "flake-parts";
+      };
+    };
+
+    # Leios observability source: the shared Alloy enrichment modules
+    # (demo/proto-devnet/config/alloy-modules/*.alloy) and leios Grafana dashboards
+    # (demo/proto-devnet/config/dashboards/*.json).
+    leios-observability = {
+      # url = "github:input-output-hk/ouroboros-leios";
+      # url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w34";
+      url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
+      flake = false;
+    };
+
+    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-2026w32";
+    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-w34-doomsday-mode";
+    metsuke.url = "github:input-output-hk/metsuke/jl/next-2026-09-01";
   };
 
   outputs = inputs: let

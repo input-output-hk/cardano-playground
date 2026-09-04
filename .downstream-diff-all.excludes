@@ -1,0 +1,13 @@
+# Files and directories which are never ported upstream by downstream-diff-all.
+# One git pathspec per line; '*' wildcards match across '/'; a bare directory
+# path excludes everything beneath it. '#' comment lines are ignored.
+.ai/skills/leios-repair
+docs
+flake.lock
+flake/nixosModules/ips-DONT-COMMIT.nix
+mdbook
+scripts/playground
+scripts/recipes/custom.just
+secrets/envs
+secrets/groups
+static

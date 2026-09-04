@@ -1,6 +1,19 @@
 # Include any repo customized justfile recipes in this file.
 # Doing so will make diffing and patching the main repo Justfile easier.
 
+# Deployment-specific config for the generic governance tools in scripts/gov/.
+# These stay downstream (this file is excluded from upstream porting); the
+# scripts/gov/ tools read them from the environment so they carry no
+# playground-specific literals. Exported here so `just vote` / `just rationale`
+# (and the scripts they exec) inherit them.
+# EXTRA_ENV_MAGIC / STABLE_CLI_ENVS are available for extra downstream envs;
+# Uncomment and extend to add downstream-only envs, e.g.:
+# export EXTRA_ENV_MAGIC := '{"myenv":"999","othernet":"1234"}'            # extra env -> testnet magic (merged over the baked-in set)
+# export STABLE_CLI_ENVS := "myenv othernet"                               # extra envs that use the stable `cardano-cli` (not -ng), space-separated
+export CC_RATIONALE_AUTHOR := "IO Labs Node SRE"                           # CIP-100 author name prefix
+# Rationale IPFS uploads use Blockfrost. Supply the project id at runtime.
+#   export BLOCKFROST_IPFS_PROJECT_ID=ipfs<your-blockfrost-ipfs-project-id>
+
 # Build the prod cardano book
 build-book-prod:
   #!/usr/bin/env bash
@@ -25,7 +38,7 @@ build-book-prod:
   else
     ANSI_BG "bg_green" "STATUS:" "The git state appears to be clean: $COMMIT"
     echo
-    read -p "Are all required book updates except for the commit stamp already generated and commited? [yY]? " -n 1 -r
+    read -p "Are all required book updates except for the commit stamp already generated and commited? [y/N] " -n 1 -r
     echo
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -70,8 +83,8 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   set -euo pipefail
   {{checkEnvWithoutOverride}}
 
-  if ! [[ "$ENV" =~ ^preprod$|^preview$|^dijkstra$|^demo$ ]]; then
-    echo "Error: only node environments for preprod, preview, dijkstra and demo are supported"
+  if ! [[ "$ENV" =~ ^preprod$|^preview$|^dijkstra$|^demo$|^leios$ ]]; then
+    echo "Error: only node environments for preprod, preview, dijkstra, demo and leios are supported"
     exit 1
   fi
 
@@ -97,7 +110,12 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     exit 1
   fi
 
-  if [ "${USE_SHELL_BINS:-}" = "true" ]; then
+  if [[ "$ENV" == "leios" ]]; then
+    # leios uses the cardano-cli bundled with the leios prototype shell;
+    # never the -ng variant.
+    LEIOS_PIN=$(jq -r '.nodes[.nodes."cardano-node-leios".inputs."cardano-node-leios"].locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+    CARDANO_CLI="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
+  elif [ "${USE_SHELL_BINS:-}" = "true" ]; then
     CARDANO_CLI="cardano-cli"
   elif [ -n "${UNSTABLE:-}" ] && [ "${UNSTABLE:-}" != "true" ]; then
     CARDANO_CLI="cardano-cli"
@@ -109,9 +127,15 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     CARDANO_CLI="cardano-cli-ng"
   fi
 
+  if [[ "$ENV" == "leios" ]]; then
+    ERA="dijkstra"
+  else
+    ERA="latest"
+  fi
+
   PROMPT() {
     echo
-    read -p "Does this look correct [yY]? " -n 1 -r
+    read -p "Does this look correct? [y/N] " -n 1 -r
     echo
     if ! [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Aborting the fund transfer."
@@ -173,14 +197,14 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   echo "  Funding UTxO value: $TXIN_VALUE lovelace"
   PROMPT
 
-  eval "$CARDANO_CLI" latest transaction build \
+  eval "$CARDANO_CLI" "$ERA" transaction build \
     --tx-in "$TXIN" \
     --tx-out "$SEND_ADDR+$LOVELACE" \
     --change-address "$CHANGE_ADDR" \
     --testnet-magic "$TESTNET_MAGIC" \
     --out-file "$BASENAME.raw"
 
-  eval "$CARDANO_CLI" latest transaction sign \
+  eval "$CARDANO_CLI" "$ERA" transaction sign \
     --tx-body-file "$BASENAME.raw" \
     --signing-key-file <(just sops-decrypt-binary "secrets/envs/${ENV}/utxo-keys/rich-utxo.skey") \
     --testnet-magic "$TESTNET_MAGIC" \
@@ -194,10 +218,10 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
   PROMPT
 
   echo "Submitting the transaction to the network:"
-  eval "$CARDANO_CLI" latest transaction submit --tx-file "$BASENAME.signed"
+  eval "$CARDANO_CLI" "$ERA" transaction submit --tx-file "$BASENAME.signed"
   echo
 
-  TXID=$(eval "$CARDANO_CLI" latest transaction txid --tx-file "$BASENAME.signed" | jq -re .txhash)
+  TXID=$(eval "$CARDANO_CLI" "$ERA" transaction txid --tx-file "$BASENAME.signed" | jq -re .txhash)
   EXISTS="true"
 
   while [ "$EXISTS" = "true" ]; do

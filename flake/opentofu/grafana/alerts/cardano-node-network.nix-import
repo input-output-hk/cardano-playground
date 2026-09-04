@@ -7,7 +7,7 @@ in {
     # This latency alert requires the cardano-parts profile-cardano-custom-metrics nixosModule
     {
       alert = "high_cardano_ping_latency";
-      expr = "avg_over_time(netdata_statsd_cardano_node_ping_latency_ms_gauge_value_average[5m]) > 500";
+      expr = "avg_over_time(cardano_node_metrics_custom_ping_latency_ms[5m]) > 500";
       for = "60m";
       labels.severity = "page";
       annotations = {
@@ -17,49 +17,54 @@ in {
     }
     {
       alert = "blocks_adoption_delay_too_high";
-      expr = "avg(quantile_over_time(0.95, cardano_node_metrics_blockadoption_forgeDelay_real[6h])) >= 4.5";
+      expr = "avg by (environment, instance) (quantile_over_time(0.95, cardano_node_metrics_blockadoption_forgeDelay_real[6h])) >= 4.5";
       for = "1m";
       labels.severity = "page";
       annotations = {
-        summary = "Blocks adoption delay has been above 4.5s for more than 5% of blocks.";
-        description = "Node average of blocks adoption delay has been above 4.5s for more than 5% of blocks for more than 6 hours.";
+        summary = "{{$labels.environment}}/{{$labels.instance}}: block adoption delay above 4.5s for more than 5% of blocks.";
+        description = "{{$labels.environment}}/{{$labels.instance}}: block adoption delay has been above 4.5s for more than 5% of blocks over the last 6 hours.";
       };
     }
     {
       alert = "blocks_adoption_delay_too_high_new_tracing";
-      expr = "avg(quantile_over_time(0.95, cardano_node_metrics_blockfetchclient_blockdelay_real[6h])) >= 4.5";
+      expr = "avg by (environment, instance) (quantile_over_time(0.95, cardano_node_metrics_blockfetchclient_blockdelay_real[6h])) >= 4.5";
       for = "1m";
       labels.severity = "page";
       annotations = {
-        summary = "Blocks adoption delay has been above 4.5s for more than 5% of blocks.";
-        description = "Node average of blocks adoption delay has been above 4.5s for more than 5% of blocks for more than 6 hours.";
+        summary = "{{$labels.environment}}/{{$labels.instance}}: block adoption delay above 4.5s for more than 5% of blocks.";
+        description = "{{$labels.environment}}/{{$labels.instance}}: block adoption delay has been above 4.5s for more than 5% of blocks over the last 6 hours.";
       };
     }
     # TODO: Static max block size until node publishes max block size metric
     {
       alert = "blocks_utilization_too_high";
-      expr = "100 * avg(avg_over_time(cardano_node_metrics_blockfetchclient_blocksize[6h]) / 90112) > ${highBlockUtilization}";
+      expr = "100 * avg by (environment, instance) (avg_over_time(cardano_node_metrics_blockfetchclient_blocksize[6h]) / 90112) > ${highBlockUtilization}";
       for = "5m";
       labels.severity = "page";
       annotations = {
-        summary = "Block utilization is above ${highBlockUtilization}%.";
-        description = "Block utilization has averaged above ${highBlockUtilization}% for more than 6h.";
+        summary = "{{$labels.environment}}/{{$labels.instance}}: block utilization is above ${highBlockUtilization}%.";
+        description = "{{$labels.environment}}/{{$labels.instance}}: block utilization has averaged above ${highBlockUtilization}% over the last 6h.";
       };
     }
     # TODO: Static max block size until node publishes max block size metric
     {
       alert = "blocks_utilization_too_high_new_tracing";
-      expr = "100 * avg(avg_over_time(cardano_node_metrics_blockfetchclient_blocksize_int[6h]) / 90112) > ${highBlockUtilization}";
+      expr = "100 * avg by (environment, instance) (avg_over_time(cardano_node_metrics_blockfetchclient_blocksize_int[6h]) / 90112) > ${highBlockUtilization}";
       for = "5m";
       labels.severity = "page";
       annotations = {
-        summary = "Block utilization is above ${highBlockUtilization}%.";
-        description = "Block utilization has averaged above ${highBlockUtilization}% for more than 6h.";
+        summary = "{{$labels.environment}}/{{$labels.instance}}: block utilization is above ${highBlockUtilization}%.";
+        description = "{{$labels.environment}}/{{$labels.instance}}: block utilization has averaged above ${highBlockUtilization}% over the last 6h.";
       };
     }
     {
+      # Leios excluded: the current leios prototype's slow block propagation keeps
+      # cdfFive well under 0.90 (~0.66-0.89 sustained), so the 90%-within-5s SLO
+      # would page ~every node continuously. The blockdelay_critical rule (< 0.50)
+      # still covers leios as a genuine propagation-collapse signal. Re-evaluate this
+      # exclusion on the next prototype deployment (propagation may improve).
       alert = "cardano_blockfetchclient_blockdelay_high";
-      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive < 0.90'';
+      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive{environment!~"leios"} < 0.90'';
       for = "10m";
       labels.severity = "page";
       annotations = {
@@ -68,8 +73,11 @@ in {
       };
     }
     {
+      # Leios excluded (see blockdelay_high above): sub-0.90 cdfFive_real is expected
+      # on the current leios prototype; blockdelay_critical_new_tracing (< 0.50) still
+      # covers it. Re-evaluate on the next prototype deployment.
       alert = "cardano_blockfetchclient_blockdelay_high_new_tracing";
-      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive_real < 0.90'';
+      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive_real{environment!~"leios"} < 0.90'';
       for = "10m";
       labels.severity = "page";
       annotations = {
