@@ -158,6 +158,7 @@ in {
                   inherit (config.systemd.services.cardano-leios-piranha) serviceConfig;
                 in
                   writeNuStdin "piranha-handler" ''
+                    use std/log
                     use std/util 'path add'
 
                     const unit_piranha = ${builtins.toJSON config.systemd.services.cardano-leios-piranha.name}
@@ -167,6 +168,8 @@ in {
 
                     def main []: string -> nothing {
                       let req_body = $in
+
+                      log info $"request: ($env.REQUEST_METHOD) ($env.PATH_INFO)\n($req_body)"
 
                       (
                         path add
@@ -246,6 +249,12 @@ in {
                           _ => {$status = 405}
                         })
                         _ => {$status = 404}
+                      }
+
+                      if $status < 500 {
+                        log info $'response: HTTP ($status)'
+                      } else {
+                        log error $'response: HTTP ($status)'
                       }
 
                       print --no-newline $"Status: ($status)\r\n"
