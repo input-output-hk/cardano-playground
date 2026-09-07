@@ -117,12 +117,17 @@ flake: {
 
           public_url = "https://${serverName}";
 
-          # The static agents this server offers for download, so an SPO
-          # needs no nix to get one. Both are cross-built on x86_64, so both
-          # come from that system's package set.
+          # What this server offers for download, keyed by the name each is
+          # served under, so an SPO needs no nix to get an agent. All are
+          # cross-built on x86_64, so all come from that system's package set.
+          # The two agents are the names the quickstart's install step links;
+          # metsuke-fetch is served for a developer pulling the archive and is
+          # deliberately not one of them, so it stays off that page.
           downloads = {
-            x86_64_linux = "${metsukePackages.metsuke-static-x86_64-linux}/bin/metsuke";
-            aarch64_linux = "${metsukePackages.metsuke-static-aarch64-linux}/bin/metsuke";
+            metsuke-static-x86_64-linux = "${metsukePackages.metsuke-static-x86_64-linux}/bin/metsuke";
+            metsuke-static-aarch64-linux = "${metsukePackages.metsuke-static-aarch64-linux}/bin/metsuke";
+            metsuke-fetch-static-x86_64-linux = "${metsukePackages.metsuke-fetch-static-x86_64-linux}/bin/metsuke-fetch";
+            metsuke-fetch-static-aarch64-linux = "${metsukePackages.metsuke-fetch-static-aarch64-linux}/bin/metsuke-fetch";
           };
 
           http = {

@@ -8585,11 +8585,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1788542758,
-        "narHash": "sha256-pWuAV4w+BANqxBejBnpqpSed35u/hQHK9T2vrBNjkx4=",
+        "lastModified": 1788647489,
+        "narHash": "sha256-McqwcWInW8soTWWR4ZaxzSNwlOsDLoyeXt7FR8psI5w=",
         "owner": "input-output-hk",
         "repo": "metsuke",
-        "rev": "6d036d378e6536332d8c66624eee4a1532da1e7e",
+        "rev": "ccbfaae48d08bc9915591c7e37b953f08e106abe",
         "type": "github"
       },
       "original": {
