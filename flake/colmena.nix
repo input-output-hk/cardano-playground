@@ -755,6 +755,12 @@ in
         ];
       };
 
+      faucetReleasePin = moduleWithSystem ({system}: _: {
+        imports = [
+          {cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: mkForce config.cardano-parts.pkgs.cardano-faucet);}
+        ];
+      });
+
       preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
       dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
@@ -1216,7 +1222,7 @@ in
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre rel preprodRelMig tcpTxOpt];};
       preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync-pre smash preprodSmash];};
-      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre faucet preprodFaucet];};
+      preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre faucet faucetReleasePin preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node-pre bp mithrilRelease (declMRel "preprod2-rel-b-1")];};
       preprod2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node-pre rel preprodRelMig];};
@@ -1236,7 +1242,7 @@ in
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre rel];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre rel tcpTxOpt];};
       preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync-pre smash previewSmash];};
-      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet previewFaucet];};
+      preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre faucet faucetReleasePin previewFaucet];};
 
       # Lsm and in-mem pre-release backend testing
       preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf];};
@@ -1259,7 +1265,7 @@ in
       dijkstra1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre bp ccMon];};
       dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-pre smash dijkstraSmash];};
-      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet dijkstraFaucet];};
+      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet faucetReleasePin dijkstraFaucet];};
 
       dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
       dijkstra2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel];};
