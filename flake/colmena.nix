@@ -93,6 +93,7 @@ in
       };
 
       # Cardano-node modules for group deployment
+      #deadnix: skip
       node = {
         imports = [
           # Base cardano-node and tracer service
@@ -577,6 +578,7 @@ in
 
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
+      #deadnix: skip
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
