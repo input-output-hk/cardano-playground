@@ -168,6 +168,8 @@ in {
                     const package_path = ${builtins.toJSON cfg.mutablePackagePath}
                     const config_path = ${builtins.toJSON cfg.mutableConfigPath}
 
+                    const package_info_path = $'($package_path).json'
+
                     def main []: string -> nothing {
                       let req_body = $in
 
@@ -206,25 +208,46 @@ in {
                         })
                         /version => (match $env.REQUEST_METHOD {
                           GET => {
+                            if ($package_path | path exists) != ($package_info_path | path exists) {
+                              log warning $'Either none or both of ($package_path | path basename) and ($package_info_path | path basename) must exist, but only does.'
+                              exit 1
+                            }
+
                             $status = 200
                             $content_type = 'application/json'
-                            if ($package_path | path type) == symlink {
-                              nix path-info --json --json-format 2 $package_path | from json
+
+                            if ($package_info_path | path exists) {
+                              open $package_info_path
                             } else null | to json
                           }
                           PUT | POST => {
                             $status = 204
+
+                            let flake_ref = $req_body
+                              | str trim
+                              | default --empty ${builtins.toJSON cfg.defaultFlakeRef}
+
                             (
                               nix build
                               --print-build-logs
                               --print-out-paths
                               --out-link $package_path
-                              (
-                                $req_body
-                                | str trim
-                                | default --empty ${builtins.toJSON cfg.defaultFlakeRef}
-                              )
+                              $flake_ref
                             )
+
+                            (
+                              nix-instantiate
+                              --impure
+                              --eval
+                              --json
+                              --expr
+                              --argstr ref $flake_ref
+                              '{ref}: removeAttrs (builtins.getFlake ref).sourceInfo [ "outPath" ]'
+                            ) | save --raw --force $package_info_path
+                          }
+                          DELETE => {
+                            $status = 204
+                            rm --permanent --force $package_path $package_info_path
                           }
                           _ => {$status = 405}
                         })
