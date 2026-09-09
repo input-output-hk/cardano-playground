@@ -4,25 +4,23 @@
 # This script is meant more as a guide than an actual straight executable.
 # It requires interactivity with node starts, stops, block synthesis and time feedback.
 
+# Updated for leios-prototype-2026w35
+
 # Source bash helper functions
+# TODO: Unify the dual approach of alias and default shell bins between bash-fns.sh and nix jobs
 source scripts/bash-fns.sh
 
 # Basic cardano environment setup vars and bins:
 export USE_SHELL_BINS="true"
 LEIOS_PIN=$(jq -r '.nodes[.nodes."cardano-node-leios".inputs."cardano-node-leios"].locked | "github:\(.owner)/\(.repo)/\(.rev)"' flake.lock)
+
+# Aliases required for bash-fns.sh
 alias cardano-node="$(nix build -Lv "$LEIOS_PIN#cardano-node" --no-link --print-out-paths)/bin/cardano-node"
 alias cardano-cli="$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli"
 alias db-analyser="$(nix build -Lv "$LEIOS_PIN#db-analyser" --no-link --print-out-paths)/bin/db-analyser"
 alias db-immutaliser="$(nix build -Lv "$LEIOS_PIN#project.x86_64-linux.hsPkgs.ouroboros-consensus.components.exes.db-immutaliser" --no-link --print-out-paths)/bin/db-immutaliser"
 alias db-synthesizer="$(nix build -Lv "$LEIOS_PIN#db-synthesizer" --no-link --print-out-paths)/bin/db-synthesizer"
 alias db-truncater="$(nix build -Lv "$LEIOS_PIN#db-truncater" --no-link --print-out-paths)/bin/db-truncater"
-
-# So that the custom cardano-cli passes through to the nix jobs when USE_SHELL_BINS is in use -- aliases won't resolve
-# Note that the path export must be re-done if direnv is reloaded
-mkdir -p ~/.local/bin
-ln -sf "$(nix build -Lv "$LEIOS_PIN#cardano-cli" --no-link --print-out-paths)/bin/cardano-cli" ~/.local/bin/cardano-cli
-export PATH_BACKUP="$PATH"
-export PATH="$HOME/.local/bin:$PATH"
 
 # Alias the pre-release bins as well to ensure consistent bin usage
 alias cardano-node-ng=cardano-node
@@ -32,19 +30,21 @@ alias db-analyser-ng=db-immutaliser
 alias db-synthesizer-ng=db-synthesizer
 alias db-truncater-ng=db-truncater
 
-# Expect leios currently at ~11.0.1
+# Export the leios bins to subshells where aliases don't work
+source scripts/playground/leios-pin.sh
+
+# Expect leios currently at 11.1.0.164
 cardano-node --version
 cardano-node-ng --version
 
-# Expect leios currently at ~11.0.0.0
+# Expect leios currently at 11.2.2.0
 cardano-cli --version
 cardano-cli-ng --version
 
 export DEBUG="true"
-
 export ENV="leios"
-export UNSTABLE="false"
-export UNSTABLE_LIB="false"
+export UNSTABLE="true"
+export UNSTABLE_LIB="true"
 export CARDANO_NODE_NETWORK_ID="164"
 export TESTNET_MAGIC="164"
 export USE_NODE_CONFIG_BP="false"
@@ -52,10 +52,26 @@ export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 # Security param:
 #   432 for 1 day epoch
+#   216 for 12 hr epoch
+#   108 for 6 hr epoch
+#    54 for 3 hr epoch
 #    32 for 2 hr epoch
-export SECURITY_PARAM="432"
+#
+# Security implications:
+#   Calculated as (k/f) / 50% until ForkTooDeep (FTD) and 3k/f no-forge tolerance:
+#     1 day epoch: ~4.8 hrs at 50% partition until FTD, 7.2 hrs no-forge tolerance
+#     12 hr epoch: ~2.4 hrs at 50% partition until FTD, 3.6 hrs no-forge tolerance
+#     6 hr epoch:  ~1.2 hrs at 50% partition until FTD, 1.8 hrs no-forge tolerance
+export SECURITY_PARAM="108"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-05-29T00:00:00Z"
+
+# At 6 hr epochs, there are 4 epochs per day:
+#   4 are required for standard spin up procedure below to get to Dijkstra
+#   ~4 are required for Dijkstra era pool re-registration for BLS keys
+#   <= 4 are required for rounding to the next full day at 00:00 UTC
+#
+#   Total: 8 <= x <= 12 epochs
+export START_TIME="2026-09-07T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=dijkstra
@@ -75,14 +91,18 @@ export CARDANO_NODE_SOCKET_PATH="$DATA_DIR/node.socket"
 # Basic pool setup vars:
 export CURRENT_KES_PERIOD="0"
 export POOL_MARGIN="1.0"
+export POOL_METADATA_BASE_URL="https://pools.play.dev.cardano.org"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
 # For now, faucet will be:
 #   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
-#   1000000000000 (1M ADA) Pool delegation,
-#   10000000 (10 ADA) delegation UTxO @ 100 count
+#   1000000000000 (1M ADA) Faucet delegation,
+export FAUCET_DELEGATION="1000000000000"
+#   10000000 (10 ADA) delegation UTxO @ 500 count for 500 SPO delegations
+
 # For stability, our pool pledge will be 10M ADA
 export POOL_PLEDGE="10000000000000"
+export USE_BLS="true"
 
 # Basic secrets setup vars:
 export BULK_CREDS="$GENESIS_DIR/bulk.creds.all.json"
@@ -106,26 +126,13 @@ export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d
 
 # New Leios required env vars:
 # The old leios at 10.5.1 glibc required faketime adjustment.
-# The new leios remake at 11.0.1 does not require faketime glibc adjustment.
+# The new leios remake at 11.1.0 does not require faketime glibc adjustment.
 # export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
-#
-# TODO: Add this to the node cfg file -- this is now a noop
-# export LEIOS_DB_PATH="$DATA_DIR/leios.db"
 
-# Leios is now rebased on 11.0.1 so taking the latest testnet-template is
-# ideal. Even when previously using the old 10.5.1 Leios, taking the latest
-# testnet template and patching back for older versions was still the easiest
-# approach to a working deployment.
-export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix\"; in f.outPath")/cardano-lib/testnet-template"
+# Leios is now rebased on 11.1.0 so take the latest testnet-template.
+export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/node-11.1\"; in f.outPath")/cardano-lib/testnet-template"
 
-# Per the comment above, we'll use the pre-release node binary to generate
-# genesis config, and then use the leios node version for the remainder of the
-# commands.
-USE_SHELL_BINS="" \
-  UNSTABLE="true" \
-  UNSTABLE_LIBS="true" \
-  ERA_CMD="conway" \
-  nix run .#job-gen-custom-node-config-data-ng
+nix run .#job-gen-custom-node-config-data-ng
 
 # Create the network backbone pools
 POOL_NAMES="${ENV}1-bp-a-1" \
@@ -174,45 +181,30 @@ jq -S '.protocolParams += {
 # Adjust alonzo genesis to include to set execution unit limits and cost models
 # to van Rossem network standard.
 #
-# TODO: Investigate this -- it should create a cost model the way we want directly, ie: van Rossem, but it doesn't
-# jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
-#   "maxBlockExUnits": {
-#     "exUnitsMem": 72000000,
-#     "exUnitsSteps": 20000000000
-#   },
-#   "maxTxExUnits": {
-#     "exUnitsMem": 16500000,
-#     "exUnitsSteps": 10000000000
-#   }
-# }
-# | .extraConfig.costModels = $costModels[0]' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
-
-# The old fashioned way -- don't worry about the cost model until we submit on-chain gov action
-# Adjust alonzo genesis to set execution unit limits and cost models closer to mainnet
-jq -S '. += {
-   "maxBlockExUnits": {
-     "exUnitsMem": 72000000,
-     "exUnitsSteps": 20000000000
-   },
-   "maxTxExUnits": {
-     "exUnitsMem": 16500000,
-     "exUnitsSteps": 10000000000
-   }
-}' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
+# This will become available once
+# https://github.com/IntersectMBO/cardano-ledger/pull/6030 is merged and in
+# use, likely available for w37.
+jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
+  "maxBlockExUnits": {
+    "exUnitsMem": 72000000,
+    "exUnitsSteps": 20000000000
+  },
+  "maxTxExUnits": {
+    "exUnitsMem": 16500000,
+    "exUnitsSteps": 10000000000
+  }
+}
+| .extraConfig.costModels = $costModels[0]' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
 
 # Shim the node config as needed.
 # This will require:
 #   - Add leios specific config and tracing options
 #   - Snapshot interval is generally good at 40*k
 #
-# If forking directly to Dijkstra, the following will need to be added:
-#   - | .TestDijkstraHardForkAtEpoch = 0
-#
-jq -S '.ExperimentalHardForksEnabled = true
-  | .MempoolCapacityBytesOverride = 25000000
-  | .LedgerDB *= {
-      SnapshotInterval: 864
-    }
+jq -S --argjson snapInterval "$((40 * SECURITY_PARAM))" \
+  '.ExperimentalHardForksEnabled = true
+  | .MempoolCapacityBytesOverride = 500000
+  | .LedgerDB.Snapshots.SnapshotInterval = $snapInterval
   | .TestDijkstraHardForkAtEpoch = 0
   | .TraceOptions *= {
       "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
@@ -312,6 +304,10 @@ INDEX="0" \
   STAKE_DEPOSIT="2000000" \
   nix run .#job-register-drep
 wait-for-mempool
+
+
+# TODO: Below needs updating after the proper costModel at epoch 0 is verified
+# to be in effect.
 
 # If both cost model and hard fork proposal are submitted in the same
 # epoch, the cost model will fail to take effect.  We'll delay submission of
