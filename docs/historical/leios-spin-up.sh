@@ -4,7 +4,7 @@
 # This script is meant more as a guide than an actual straight executable.
 # It requires interactivity with node starts, stops, block synthesis and time feedback.
 
-# Updated for leios-prototype-2026w32
+# Updated for leios-prototype-2026w36
 
 # Source bash helper functions
 # TODO: Unify the dual approach of alias and default shell bins between bash-fns.sh and nix jobs
@@ -71,7 +71,7 @@ export SLOT_LENGTH="1000"
 #   <= 4 are required for rounding to the next full day at 00:00 UTC
 #
 #   Total: 8 <= x <= 12 epochs
-export START_TIME="2026-08-07T00:00:00Z"
+export START_TIME="2026-09-06T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -130,7 +130,7 @@ export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d
 # export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
 
 # Leios is now rebased on 11.1.0 so take the latest testnet-template.
-export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/node-11.1\"; in f.outPath")/cardano-lib/testnet-template"
+export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/jl/leios-w36\"; in f.outPath")/cardano-lib/testnet-template"
 
 nix run .#job-gen-custom-node-config-data-ng
 
@@ -181,7 +181,9 @@ jq -S '.protocolParams += {
 # Adjust alonzo genesis to include to set execution unit limits and cost models
 # to van Rossem network standard.
 #
-# This will become available once https://github.com/IntersectMBO/cardano-ledger/pull/5899 is merged and in use
+# This will become available once
+# https://github.com/IntersectMBO/cardano-ledger/pull/6030 is merged and in
+# use, likely available for w37.
 # jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
 #   "maxBlockExUnits": {
 #     "exUnitsMem": 72000000,
@@ -368,7 +370,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((21090 - 60))
+synth-slots $((20960 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
@@ -384,7 +386,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 echo "Synthesize blocks until realtime plus desired offset"
 # This brings us to epoch 1 + 1 = 2
-synth-slots $((21476 - 60))
+synth-slots $((21502 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 12 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
@@ -535,7 +537,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 3
 echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 3"
-synth-slots $((19301 - 60))
+synth-slots $((21038 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 18 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 3, verify the Dijkstra hard fork has ratified:
@@ -550,7 +552,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 4
 echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 4"
-synth-slots $((21407 - 60))
+synth-slots $((21510 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 24 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 4, verify the Dijkstra hard fork has enacted:
@@ -590,6 +592,7 @@ POOL_NAMES="leios1-bp-a-1" \
   USE_BLS=true \
   SUBMIT_TX=true \
   nix run .#job-reregister-stake-pools
+wait-for-mempool
 
 POOL_NAMES="leios2-bp-b-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}2" \
@@ -597,6 +600,7 @@ POOL_NAMES="leios2-bp-b-1" \
   USE_BLS=true \
   SUBMIT_TX=true \
   nix run .#job-reregister-stake-pools
+wait-for-mempool
 
 POOL_NAMES="leios3-bp-c-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}3" \
@@ -604,13 +608,14 @@ POOL_NAMES="leios3-bp-c-1" \
   USE_BLS=true \
   SUBMIT_TX=true \
   nix run .#job-reregister-stake-pools
+wait-for-mempool
 
 # Check for futurePoolParams and that it includes a spsLeiosKey struct
 cardano-cli query pool-state --all-stake-pools
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 5
-echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 5"
+echo "Synthesize blocks until just before the BLS keys take effect, epoch 5"
 synth-slots $((19648 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 30 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
@@ -620,14 +625,14 @@ cardano-cli query pool-state --all-stake-pools
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 6
-echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 6"
+echo "Synthesize blocks until just before the BLS keys get the set stake snapshot, epoch 6"
 synth-slots $((21448 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 36 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # This should now be "Set" stake snapshot with BLS keys present
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 7
-echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 7"
+echo "Synthesize blocks until just before the BLS keys get the go stake snapshot, epoch 7"
 synth-slots $((21383 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 42 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
