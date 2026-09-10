@@ -71,7 +71,7 @@ export SLOT_LENGTH="1000"
 #   <= 4 are required for rounding to the next full day at 00:00 UTC
 #
 #   Total: 8 <= x <= 12 epochs
-export START_TIME="2026-09-06T00:00:00Z"
+export START_TIME="2026-09-07T00:00:00Z"
 export IPFS_GATEWAY_URI="https://ipfs.io"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
@@ -130,7 +130,7 @@ export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d
 # export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
 
 # Leios is now rebased on 11.1.0 so take the latest testnet-template.
-export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/jl/leios-w36\"; in f.outPath")/cardano-lib/testnet-template"
+export TEMPLATE_DIR="$(nix eval --refresh --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/jl/leios-w36\"; in f.outPath")/cardano-lib/testnet-template"
 
 nix run .#job-gen-custom-node-config-data-ng
 
@@ -219,7 +219,7 @@ jq -S '. += {
 #
 jq -S --argjson snapInterval "$((40 * SECURITY_PARAM))" \
   '.ExperimentalHardForksEnabled = true
-  | .MempoolCapacityBytesOverride = 500000
+  | .MempoolCapacityBytesOverride = 2000000
   | .LedgerDB.Snapshots.SnapshotInterval = $snapInterval
   | .TraceOptions *= {
       "Consensus.LeiosKernel": {"maxFrequency": 0, "severity": "Debug"},
@@ -305,6 +305,11 @@ wait-for-mempool
 # behavior was noted with genesis embedded pools in prior node versions.  By
 # retiring the bootstrap pool and keeping the new backbone pools as the primary
 # forgers, we avoid any residual unexpected edge cases.
+
+# New cardano-cli is not compatible here:
+# Reload the devShell with direnv undo the w36 pin and go back to cli-ng
+direnv reload
+
 BOOTSTRAP_POOL_DIR="$KEY_DIR/bootstrap-pool" \
   RICH_KEY="$KEY_DIR/utxo-keys/rich-utxo" \
   nix run .#job-retire-bootstrap-pool
@@ -370,7 +375,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 1
 echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((20960 - 60))
+synth-slots $((20607 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
@@ -386,7 +391,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | ke
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 echo "Synthesize blocks until realtime plus desired offset"
 # This brings us to epoch 1 + 1 = 2
-synth-slots $((21502 - 60))
+synth-slots $((21520 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 12 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
@@ -412,7 +417,7 @@ NOMENU=true scripts/distribute.py \
   --address "$(cat "$PAYMENT_KEY.addr")" \
   --payments-json rewards.json
 
-cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned | less
 
 # shellcheck disable=SC2045
 for i in $(ls -tr1 tx-payments*.txsigned); do
@@ -421,9 +426,9 @@ for i in $(ls -tr1 tx-payments*.txsigned); do
   echo
 done
 
+watch 'cardano-cli query tip; echo; cardano-cli query tx-mempool info'
 cardano-cli query utxo --address "$FAUCET_ADDR" | jq length
 rm ./*.txsigned
-
 
 UTXO_NUM="500"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
@@ -435,7 +440,7 @@ NOMENU=true scripts/distribute.py \
   --address "$(cat "$PAYMENT_KEY.addr")" \
   --payments-json delegation.json
 
-cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned | less
 
 # shellcheck disable=SC2045
 for i in $(ls -tr1 tx-payments*.txsigned); do
@@ -444,6 +449,7 @@ for i in $(ls -tr1 tx-payments*.txsigned); do
   echo
 done
 
+watch 'cardano-cli query tip; echo; cardano-cli query tx-mempool info'
 cardano-cli query utxo --address "$FAUCET_ADDR" | jq length
 rm ./*.txsigned
 
@@ -455,6 +461,9 @@ NOMENU=true scripts/setup-delegation-accounts.py \
   --num-accounts "500" \
   --delegation-amount "$FAUCET_DELEGATION"
 
+cardano-cli query utxo --whole-utxo \
+  | jq --argjson faucetDeleg "$FAUCET_DELEGATION" \
+    'to_entries | map(select(.value.value.lovelace == $faucetDeleg)) | length'
 rm ./*.txsigned
 
 # Centrifuge
@@ -473,16 +482,17 @@ NOMENU=true scripts/playground/fund-centrifuge.nu send-funds \
 cardano-cli query utxo --address "$CENTRIFUGE_ADDR" | jq length
 
 # In epoch 2, submit a Dijkstra hard fork:
-# For w32 respin, submitted at block:
+# For w36 respin, submitted at block:
+# ❯ cardano-cli query tip
 # {
-#     "block": 2274,
+#     "block": 2220,
 #     "epoch": 2,
 #     "era": "Conway",
-#     "hash": "396a997437f3a7e421ca3911ec13c5f4a144e7eecd533f33ec8c9b5af45c2d18",
-#     "slot": 45188,
-#     "slotInEpoch": 1988,
-#     "slotsToEpochEnd": 19612,
-#     "syncProgress": "12.67"
+#     "hash": "990d69b28e0391692d737939f5ff229cd0ca1340da1c7c09d18ab144a2deb96d",
+#     "slot": 45471,
+#     "slotInEpoch": 2271,
+#     "slotsToEpochEnd": 19329,
+#     "syncProgress": "16.79"
 # }
 echo "Submitting a Dijkstra hard fork action..."
 PROPOSAL_ARGS=("--protocol-major-version" "12" "--protocol-minor-version" "0")
@@ -537,7 +547,7 @@ wait-for-mempool
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 3
 echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 3"
-synth-slots $((21038 - 60))
+synth-slots $((18928 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 18 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 3, verify the Dijkstra hard fork has ratified:
@@ -552,7 +562,7 @@ cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 4
 echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 4"
-synth-slots $((21510 - 60))
+synth-slots $((21008 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 24 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # After the epoch rollover into epoch 4, verify the Dijkstra hard fork has enacted:
@@ -563,6 +573,9 @@ cardano-cli query protocol-parameters | jq .protocolVersion
 #   "major": 12,
 #   "minor": 0
 # }
+
+# Now switch back into leios w36 cardano-cli for dijkstra support
+. scripts/playground/leios-pin.sh
 
 # Reregister the pools with BLS keys
 # First back up the pool state and ledger state to compare before making modifications
@@ -616,7 +629,7 @@ cardano-cli query pool-state --all-stake-pools
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 5
 echo "Synthesize blocks until just before the BLS keys take effect, epoch 5"
-synth-slots $((19648 - 60))
+synth-slots $((20941 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 30 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # Check that spsLeiosKey has been incorporated into the pools
@@ -626,14 +639,14 @@ cardano-cli query pool-state --all-stake-pools
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 6
 echo "Synthesize blocks until just before the BLS keys get the set stake snapshot, epoch 6"
-synth-slots $((21448 - 60))
+synth-slots $((21489 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 36 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # This should now be "Set" stake snapshot with BLS keys present
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
 # Start 1m before epoch 7
 echo "Synthesize blocks until just before the BLS keys get the go stake snapshot, epoch 7"
-synth-slots $((21383 - 60))
+synth-slots $((21529 - 60))
 run-node-faketime "$(date -u -d "$START_TIME + 42 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
 # This should now be "Go" stake snapshot with BLS keys present
@@ -642,33 +655,33 @@ run-node-faketime "$(date -u -d "$START_TIME + 42 hours - 1 minute" "+%Y-%m-%dT%
 # Note the current point of the chain and log time; take a backup if desired.
 # ❯ cardano-cli query tip
 # {
-#     "block": 7581,
+#     "block": 7523,
 #     "epoch": 7,
 #     "era": "Dijkstra",
-#     "hash": "4fee052187c142fd08d13fa1b7b548aea49a042554aa2378c56db460773f0320",
-#     "slot": 151599,
-#     "slotInEpoch": 399,
-#     "slotsToEpochEnd": 21201,
-#     "syncProgress": "41.64"
+#     "hash": "172f76470f90cfe7eecde1542492aa5e9e6e4c269a8a282e7995aaf15a2e6ee2",
+#     "slot": 151212,
+#     "slotInEpoch": 12,
+#     "slotsToEpochEnd": 21588,
+#     "syncProgress": "54.97"
 # }
 #
-# 2026-08-08 18:06:52.0022
+# 2026-09-08 18:00:22.0015Z
 
 # Calculate the required slots to reach realtime and project slightly forward,
 # where the first time is the target and the second time is the last log stamp
 # above:
-echo $(( $(date -u -d '2026-08-11 06:00:00Z' +%s) - $(date -u -d '2026-08-08 18:06:52Z' +%s) ))
-215588
+echo $(( $(date -u -d '2026-09-10 06:00:00Z' +%s) - $(date -u -d '2026-09-08 18:00:22Z' +%s) ))
+129578
 
 echo "Synthesize blocks until the just ahead of realtime target"
-synth-slots 215588
+synth-slots 129578
 
 # Give it a start to verify it is working at the target time:
-run-node-faketime "2026-08-11T06:00:00Z"
+run-node-faketime "2026-09-10T06:00:00Z"
 
 # Or, alternatively, continue playing the chain at an accelerated rate (100x in this example)
 # until the chain is a bit ahead of realtime to allow for seamless transfer.
 #
 # The datetime provided in the command is the timepoint your want to start
 # accelerated forging.
-faketime-fast-at "2026-08-08T18:06:52Z" "100"
+faketime-fast-at "2026-09-08T18:00:22Z" "100"
