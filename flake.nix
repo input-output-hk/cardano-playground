@@ -11,8 +11,8 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w35";
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w36";
+    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
       url = "github:input-output-hk/leios-adversarial-tools";
@@ -27,13 +27,13 @@
     # (demo/proto-devnet/config/dashboards/*.json).
     leios-observability = {
       # url = "github:input-output-hk/ouroboros-leios";
-      # url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w34";
-      url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
+      url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w36";
+      # url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
       flake = false;
     };
 
-    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-2026w32";
-    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-w34-doomsday-mode";
+    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w36";
+    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-w36";
     metsuke.url = "github:input-output-hk/metsuke/server-v0.2.0";
     metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.0";
     metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
