@@ -21,6 +21,17 @@ flake: {
 
     metsukePackages = flake.inputs.metsuke.packages.x86_64-linux;
 
+    # Where the builds under downloads come from, which is a separate question
+    # from where the server comes from. Until the crates are tagged these are
+    # the same input, so a download is rebuilt whenever anything in metsuke
+    # changes; flake.nix says why a tag is better. Swap each line for the one
+    # under it once those inputs are uncommented.
+    #
+    # clientPackages = metsukePackages;
+    # fetchPackages = metsukePackages;
+    clientPackages = flake.inputs.metsuke-client.packages.x86_64-linux;
+    fetchPackages = flake.inputs.metsuke-fetch.packages.x86_64-linux;
+
     # Merge and use both the official registered pools and, as needed, a set of
     # manually curated test pools.
     table = file: (fromTOML (builtins.readFile file)).ingest.allowlist;
@@ -124,10 +135,10 @@ flake: {
           # metsuke-fetch is served for a developer pulling the archive and is
           # deliberately not one of them, so it stays off that page.
           downloads = {
-            metsuke-static-x86_64-linux = "${metsukePackages.metsuke-static-x86_64-linux}/bin/metsuke";
-            metsuke-static-aarch64-linux = "${metsukePackages.metsuke-static-aarch64-linux}/bin/metsuke";
-            metsuke-fetch-static-x86_64-linux = "${metsukePackages.metsuke-fetch-static-x86_64-linux}/bin/metsuke-fetch";
-            metsuke-fetch-static-aarch64-linux = "${metsukePackages.metsuke-fetch-static-aarch64-linux}/bin/metsuke-fetch";
+            metsuke-static-x86_64-linux = "${clientPackages.metsuke-static-x86_64-linux}/bin/metsuke";
+            metsuke-static-aarch64-linux = "${clientPackages.metsuke-static-aarch64-linux}/bin/metsuke";
+            metsuke-fetch-static-x86_64-linux = "${fetchPackages.metsuke-fetch-static-x86_64-linux}/bin/metsuke-fetch";
+            metsuke-fetch-static-aarch64-linux = "${fetchPackages.metsuke-fetch-static-aarch64-linux}/bin/metsuke-fetch";
           };
 
           http = {

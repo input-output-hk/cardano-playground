@@ -34,7 +34,9 @@
 
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-2026w32";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-w34-doomsday-mode";
-    metsuke.url = "github:input-output-hk/metsuke/jl/next-2026-09-01";
+    metsuke.url = "github:input-output-hk/metsuke/server-v0.2.0";
+    metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.0";
+    metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
   };
 
   outputs = inputs: let
