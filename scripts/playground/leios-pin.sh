@@ -11,6 +11,18 @@
 # LEIOS_PATH_BACKUP are meant to survive. Never call exit here, it would kill
 # the caller's shell, and never set -e or set -u, they leak too.
 
+# This file edits PATH in the caller, so it only does anything when sourced.
+# Executed it still creates the symlinks, then throws the PATH change away with
+# the subshell and exits 0, which looks exactly like success. Dropping the
+# shebang does not prevent that: the kernel fails execve and the shell reruns
+# the file anyway, and shellcheck then loses the target shell. So check.
+if [ "${BASH_SOURCE[0]:-$0}" = "$0" ]; then
+  echo "leios-pin.sh must be sourced, not executed:" >&2
+  echo "  . ${BASH_SOURCE[0]:-$0}         # pin" >&2
+  echo "  . ${BASH_SOURCE[0]:-$0} -u      # unpin" >&2
+  exit 1
+fi
+
 _leios_pin() {
   local bindir="$HOME/.local/bin"
 
@@ -20,14 +32,14 @@ _leios_pin() {
   # the saved backup is from the previous shell instance so it is stale. Every
   # check that looks right still looks right, which is what makes it nasty.
   local pinned=false desynced=false
-  if [ -n "$LEIOS_PATH_BACKUP" ]; then
+  if [ -n "${LEIOS_PATH_BACKUP:-}" ]; then
     case ":$PATH:" in
       *":$bindir:"*) pinned=true ;;
       *) desynced=true ;;
     esac
   fi
 
-  if [ "$1" = "-u" ]; then
+  if [ "${1:-}" = "-u" ]; then
     if [ "$pinned" = true ]; then
       export PATH="$LEIOS_PATH_BACKUP"
       unset LEIOS_PATH_BACKUP
@@ -124,12 +136,13 @@ _leios_pin() {
   echo "cardano-cli now resolves to: $(command -v cardano-cli 2>/dev/null || echo none)"
 }
 
-# Propagate the result. A bare `unset -f` here would mask it and always report
-# success. The exit fallbacks only fire if this file is run instead of sourced.
-if _leios_pin "$@"; then
-  unset -f _leios_pin
-  return 0 2>/dev/null || exit 0
-else
-  unset -f _leios_pin
-  return 1 2>/dev/null || exit 1
-fi
+# Report the result without a top level return or exit. With either of those,
+# a caller that does `. leios-pin.sh` has every following line reported as
+# unreachable, SC2317, because the linter cannot tell the file was sourced.
+# Ending on a plain test keeps the failure visible to a `set -e` caller and
+# leaves the code in LEIOS_PIN_RC for anyone who wants to branch on it. A bare
+# `unset -f` last would swallow the failure entirely.
+_leios_pin "$@" && LEIOS_PIN_RC=0 || LEIOS_PIN_RC=$?
+export LEIOS_PIN_RC
+unset -f _leios_pin
+[ "$LEIOS_PIN_RC" = 0 ]
