@@ -230,7 +230,6 @@ in {
                             (
                               nix build
                               --print-build-logs
-                              --print-out-paths
                               --out-link $package_path
                               $flake_ref
                             )
