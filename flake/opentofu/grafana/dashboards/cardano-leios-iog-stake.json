@@ -879,7 +879,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT e.start_time AS \"time\",\n       coalesce(o.ticker_name,\n                CASE ph.view\n                  WHEN 'pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred' THEN 'IOG1'\n                  WHEN 'pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm' THEN 'IOG2'\n                  WHEN 'pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s' THEN 'IOG3'\n                  ELSE left(ph.view, 14) || '...'\n                END) AS metric,\n       lc.weight AS value\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nLEFT JOIN (\n  -- off_chain_pool_data gains a row per metadata re-fetch, so it holds\n  -- several rows for some pools.  Joining it raw fans out and duplicates\n  -- pools in this panel.  Keep only the newest row per pool.\n  SELECT DISTINCT ON (pool_id) pool_id, ticker_name\n  FROM off_chain_pool_data ORDER BY pool_id, id DESC\n) o ON o.pool_id = ph.id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nORDER BY 1",
+          "rawSql": "SELECT e.start_time AS \"time\",\n       -- $iog_pools is resolved from the IOG tickers, so a pool reaching this\n       -- query always has metadata. The fallback is only for a metadata fetch\n       -- that has not landed yet.\n       coalesce(o.ticker_name, left(ph.view, 14) || '...') AS metric,\n       lc.weight AS value\nFROM leios_committee lc\nJOIN epoch e ON e.no = lc.epoch_no\nJOIN pool_hash ph ON ph.id = lc.pool_hash_id\nLEFT JOIN (\n  -- off_chain_pool_data gains a row per metadata re-fetch, so it holds\n  -- several rows for some pools.  Joining it raw fans out and duplicates\n  -- pools in this panel.  Keep only the newest row per pool.\n  SELECT DISTINCT ON (pool_id) pool_id, ticker_name\n  FROM off_chain_pool_data ORDER BY pool_id, id DESC\n) o ON o.pool_id = ph.id\nWHERE ph.view IN ($${iog_pools:sqlstring}) AND $__timeFilter(e.start_time)\nORDER BY 1",
           "refId": "A",
           "sql": {
             "columns": [],
@@ -2739,40 +2739,24 @@
       },
       {
         "current": {
-          "text": [
-            "IOG1",
-            "IOG2",
-            "IOG3"
-          ],
-          "value": [
-            "pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred",
-            "pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm",
-            "pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s"
-          ]
+          "text": "All",
+          "value": "$__all"
         },
-        "description": "The three IOG pool ids, used by the db-sync top-up panels to identify IOG stake in epoch_stake. Far more stable than a hand-maintained stake figure: these ids only change if IOG re-registers a pool.",
-        "includeAll": false,
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "$dbsync"
+        },
+        "definition": "IOG pool ids, resolved from their IOG1, IOG2 and IOG3 tickers",
+        "description": "The IOG pool ids, used by the db-sync top-up panels to identify IOG stake in epoch_stake. Resolved from the pool tickers rather than pinned, because a network respin regenerates the cold keys and every pinned id goes stale at once, silently emptying every panel that filters on this. DISTINCT ON keeps the newest metadata row per pool, since off_chain_pool_data gains a row per re-fetch. Leave this on All.",
+        "includeAll": true,
         "multi": true,
         "name": "iog_pools",
-        "options": [
-          {
-            "selected": true,
-            "text": "IOG1",
-            "value": "pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred"
-          },
-          {
-            "selected": true,
-            "text": "IOG2",
-            "value": "pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm"
-          },
-          {
-            "selected": true,
-            "text": "IOG3",
-            "value": "pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s"
-          }
-        ],
-        "query": "IOG1 : pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred, IOG2 : pool1t72gcvkxfzrzzzxt55ms29rn3ejv86yzp8cep8k8eml9gtypldm, IOG3 : pool1jljl9rkjqk0e3spad2d0tucgml4qeqjqecxk290jdn2lxuawt5s",
-        "type": "custom"
+        "options": [],
+        "query": "SELECT DISTINCT ON (o.ticker_name) o.ticker_name AS __text, ph.view AS __value FROM pool_hash ph JOIN off_chain_pool_data o ON o.pool_id = ph.id WHERE o.ticker_name IN ('IOG1', 'IOG2', 'IOG3') ORDER BY o.ticker_name, o.id DESC",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
       },
       {
         "current": {
@@ -2941,112 +2925,45 @@
       },
       {
         "current": {
-          "text": [
-            "PIR0"
-          ],
-          "value": [
-            "pool187a7fvjryyc83r59tgct7j7wuthdc3t09zv4f57za6vcqcfmtz4"
-          ]
+          "text": "All",
+          "value": "$__all"
         },
-        "description": "PIR0's pool id, kept separate from the cluster so it can carry its own watermark.",
-        "includeAll": false,
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "$dbsync"
+        },
+        "definition": "PIR0 pool id, resolved from its ticker rather than pinned, so a network respin that regenerates cold keys does not silently empty the panels. Kept separate from the cluster so it can carry its own watermark. Leave this on All.",
+        "description": "PIR0 pool id, resolved from its ticker rather than pinned, so a network respin that regenerates cold keys does not silently empty the panels. Kept separate from the cluster so it can carry its own watermark. Leave this on All.",
+        "includeAll": true,
         "multi": true,
         "name": "pir0_pools",
-        "options": [
-          {
-            "selected": true,
-            "text": "PIR0",
-            "value": "pool187a7fvjryyc83r59tgct7j7wuthdc3t09zv4f57za6vcqcfmtz4"
-          }
-        ],
-        "query": "PIR0 : pool187a7fvjryyc83r59tgct7j7wuthdc3t09zv4f57za6vcqcfmtz4",
-        "type": "custom"
+        "options": [],
+        "query": "SELECT DISTINCT ON (o.ticker_name) o.ticker_name AS __text, ph.view AS __value FROM pool_hash ph JOIN off_chain_pool_data o ON o.pool_id = ph.id WHERE o.ticker_name = 'PIR0' ORDER BY o.ticker_name, o.id DESC",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
       },
       {
         "current": {
-          "text": [
-            "PIR1",
-            "PIR2",
-            "PIR3",
-            "PIR4",
-            "PIR5",
-            "PIR6",
-            "PIR7",
-            "PIR8",
-            "PIR9",
-            "PIR10"
-          ],
-          "value": [
-            "pool1csy9wtlhe0ncujlam9tc8mnq0vapkwld7gcprrvqgvq67vfpklt",
-            "pool1tu6sq2s3t5zrlgphfz86lrsu7xsp0uk2wyrgzrrz5faavuxe9cp",
-            "pool1f9q8lmshu8klj9p7qg4z29gpy6udwmg0xj2muyk38ly95z03w0h",
-            "pool17xx3j3rkpwe669x6vmztat6f8vryh736h72zdmsdwzrswmanaa2",
-            "pool1h2fjn2hfyxaw2q9h2s5ucja7vaukry2vxrlp500hayp9c3nc97x",
-            "pool173ntrwzlctak73vr6svzxnlv4hyjj8v6tgjrrqyf90lys8t9emu",
-            "pool12llqx5gtaw0rund0679arm2y62fg2rkf9grc6y3hxmsxu8n4efh",
-            "pool1dj8597x2jjp0qqwu45msga8839je0zuxt78y8ettc0w7cjrkdra",
-            "pool1je9gglpn85jyw3se02dh8295z53j9eg935vcjl83cvevva6lwye",
-            "pool1h3rwtl7l9qy7cr64u77s3kdadjv3g5m0p9scnml2qv0hxcjwyva"
-          ]
+          "text": "All",
+          "value": "$__all"
         },
-        "description": "The ten PIR cluster pool ids sharing one watermark.",
-        "includeAll": false,
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "$dbsync"
+        },
+        "definition": "The PIR1 to PIR10 cluster pool ids sharing one watermark, resolved from their tickers rather than pinned. The regex stops at PIR10 on purpose; a PIR11 would need it widened. DISTINCT ON keeps the newest metadata row per pool. Leave this on All.",
+        "description": "The PIR1 to PIR10 cluster pool ids sharing one watermark, resolved from their tickers rather than pinned. The regex stops at PIR10 on purpose; a PIR11 would need it widened. DISTINCT ON keeps the newest metadata row per pool. Leave this on All.",
+        "includeAll": true,
         "multi": true,
         "name": "pir_cluster_pools",
-        "options": [
-          {
-            "selected": true,
-            "text": "PIR1",
-            "value": "pool1csy9wtlhe0ncujlam9tc8mnq0vapkwld7gcprrvqgvq67vfpklt"
-          },
-          {
-            "selected": true,
-            "text": "PIR2",
-            "value": "pool1tu6sq2s3t5zrlgphfz86lrsu7xsp0uk2wyrgzrrz5faavuxe9cp"
-          },
-          {
-            "selected": true,
-            "text": "PIR3",
-            "value": "pool1f9q8lmshu8klj9p7qg4z29gpy6udwmg0xj2muyk38ly95z03w0h"
-          },
-          {
-            "selected": true,
-            "text": "PIR4",
-            "value": "pool17xx3j3rkpwe669x6vmztat6f8vryh736h72zdmsdwzrswmanaa2"
-          },
-          {
-            "selected": true,
-            "text": "PIR5",
-            "value": "pool1h2fjn2hfyxaw2q9h2s5ucja7vaukry2vxrlp500hayp9c3nc97x"
-          },
-          {
-            "selected": true,
-            "text": "PIR6",
-            "value": "pool173ntrwzlctak73vr6svzxnlv4hyjj8v6tgjrrqyf90lys8t9emu"
-          },
-          {
-            "selected": true,
-            "text": "PIR7",
-            "value": "pool12llqx5gtaw0rund0679arm2y62fg2rkf9grc6y3hxmsxu8n4efh"
-          },
-          {
-            "selected": true,
-            "text": "PIR8",
-            "value": "pool1dj8597x2jjp0qqwu45msga8839je0zuxt78y8ettc0w7cjrkdra"
-          },
-          {
-            "selected": true,
-            "text": "PIR9",
-            "value": "pool1je9gglpn85jyw3se02dh8295z53j9eg935vcjl83cvevva6lwye"
-          },
-          {
-            "selected": true,
-            "text": "PIR10",
-            "value": "pool1h3rwtl7l9qy7cr64u77s3kdadjv3g5m0p9scnml2qv0hxcjwyva"
-          }
-        ],
-        "query": "PIR1 : pool1csy9wtlhe0ncujlam9tc8mnq0vapkwld7gcprrvqgvq67vfpklt, PIR2 : pool1tu6sq2s3t5zrlgphfz86lrsu7xsp0uk2wyrgzrrz5faavuxe9cp, PIR3 : pool1f9q8lmshu8klj9p7qg4z29gpy6udwmg0xj2muyk38ly95z03w0h, PIR4 : pool17xx3j3rkpwe669x6vmztat6f8vryh736h72zdmsdwzrswmanaa2, PIR5 : pool1h2fjn2hfyxaw2q9h2s5ucja7vaukry2vxrlp500hayp9c3nc97x, PIR6 : pool173ntrwzlctak73vr6svzxnlv4hyjj8v6tgjrrqyf90lys8t9emu, PIR7 : pool12llqx5gtaw0rund0679arm2y62fg2rkf9grc6y3hxmsxu8n4efh, PIR8 : pool1dj8597x2jjp0qqwu45msga8839je0zuxt78y8ettc0w7cjrkdra, PIR9 : pool1je9gglpn85jyw3se02dh8295z53j9eg935vcjl83cvevva6lwye, PIR10 : pool1h3rwtl7l9qy7cr64u77s3kdadjv3g5m0p9scnml2qv0hxcjwyva",
-        "type": "custom"
+        "options": [],
+        "query": "SELECT __text, __value FROM (SELECT DISTINCT ON (o.ticker_name) o.ticker_name AS __text, ph.view AS __value FROM pool_hash ph JOIN off_chain_pool_data o ON o.pool_id = ph.id WHERE o.ticker_name ~ '^PIR([1-9]|10)$' ORDER BY o.ticker_name, o.id DESC) t ORDER BY (regexp_replace(__text, '\\D', '', 'g'))::int",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
       },
       {
         "name": "min_opp",
