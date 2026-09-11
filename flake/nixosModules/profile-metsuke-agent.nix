@@ -21,7 +21,7 @@ flake: {
     # Which pool a producer runs. The generated allowlist says which pools may
     # submit at all, not which host holds which, and the id itself is only on
     # disk sops-encrypted, so this mapping has nowhere else to live.
-    poolIds."leios1-bp-a-1" = "pool1kye7409qnlnk2wwnqj5qfr7m0xqns7kk0s09echrnejtud5nred";
+    poolIds."leios1-bp-a-1" = "pool14y8sp4qf6p2a06e5w26rqcvwmf62jp40jt3059m72mxw58y5rqy";
 
     poolId =
       poolIds.${name}
