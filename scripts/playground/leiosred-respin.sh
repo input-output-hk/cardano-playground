@@ -40,9 +40,11 @@ for i in "leiosred1 a" "leiosred2 b" "leiosred3 c" "leiosred4 d" "leiosred5 e" "
 
   echo
   echo "Review the registration transaction:"
+  read -n 1 -srp "Press a char to continue, or hit CTRL-C"
+  echo
   cardano-cli debug transaction view --tx-file "$machine-tx-pool-reg.txsigned"
   echo
-  read -n 1 -srp "Press a char to continue, or hit CTRL-C"
+  read -n 1 -srp "Press a char to submit the transaction, or hit CTRL-C"
   echo
   cardano-cli dijkstra transaction submit --tx-file "$machine-tx-pool-reg.txsigned"
   wait-for-mempool
@@ -51,10 +53,27 @@ for i in "leiosred1 a" "leiosred2 b" "leiosred3 c" "leiosred4 d" "leiosred5 e" "
 
   echo
   echo "Review the delegation transaction:"
+  read -n 1 -srp "Press a char to continue, or hit CTRL-C"
+  echo
   cardano-cli debug transaction view --tx-file "$machine-tx-pool-deleg.txsigned"
   echo
-  read -n 1 -srp "Press a char to continue, or hit CTRL-C"
+  read -n 1 -srp "Press a char to submit the transaction, or hit CTRL-C"
   echo
   cardano-cli dijkstra transaction submit --tx-file "$machine-tx-pool-deleg.txsigned"
   wait-for-mempool
+
+  echo
+  echo "Rotating KES/opcert"
+  read -n 1 -srp "Press a char to continue, or hit CTRL-C"
+  echo
+  nix run .#job-rotate-kes-pools
+  read -n 1 -srp "Press a char to continue, or hit CTRL-C"
+  echo
+
+  echo
+  echo "Deploying $machine "
+  read -n 1 -srp "Press a char to deploy, or hit CTRL-C"
+  echo
+  just apply "$machine"
+  echo
 done
