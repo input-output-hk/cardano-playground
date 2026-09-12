@@ -149,13 +149,25 @@
           filename = "/etc/alloy/leios-modules"
         }
 
-        // Wiring: node chain (node -> voting -> call -> write) + tx modules. The
-        // single terminal write per line is loki.write.default (base pipeline).
+        // Wiring: node chain (node -> voting -> diffusion -> call -> write) + tx
+        // modules. The single terminal write per line is loki.write.default (base
+        // pipeline).
+        //
+        // This chain is duplicated in the leios-observability source's own
+        // alloy.template for proto-devnet. A module added there is shipped here by
+        // the pin and imported by the directory import above, but it stays inert
+        // until it is also forwarded to here: an unwired `declare` is never
+        // instantiated, emits nothing, and logs no error. Add modules in both
+        // places.
         mod.cardano_node_process "node" {
           forward_to = [mod.leios_voting_process.vote.receiver]
         }
 
         mod.leios_voting_process "vote" {
+          forward_to = [mod.leios_diffusion_process.diffusion.receiver]
+        }
+
+        mod.leios_diffusion_process "diffusion" {
           forward_to = [mod.call_trace_process.call.receiver]
         }
 
