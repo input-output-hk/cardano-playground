@@ -241,7 +241,7 @@ API key usage may be optional, depending on the faucet configuration file.
 https://faucet.$ENV.play.dev.cardano.org/basic-faucet
 
 # Curl:
-curl -v "https://faucet.$ENV.play.dev.cardano.org/send-money?address=$SEND_ADDRESS&api_key=$API_KEY"
+curl -v -XPOST "https://faucet.$ENV.play.dev.cardano.org/send-money?address=$SEND_ADDRESS&api_key=$API_KEY"
 ```
 
 ## Refilling the Faucet

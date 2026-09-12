@@ -27,6 +27,9 @@ in {
   cname_book = mkCname {name = "book.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
   cname_book_staging = mkCname {name = "book-staging.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
 
+  # Pool metadata for testnets
+  cname_pools = mkCname {name = "pools.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
+
   # Explorers
   cname_explorer_preprod = mkCname {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
   cname_explorer_preview = mkCname {name = "preview-explorer.${domain}"; records = ["preview1-dbsync-a-1.${domain}"];};
@@ -38,6 +41,10 @@ in {
   cname_faucet_leios = mkCname {name = "faucet.leios.${domain}"; records = ["leios1-faucet-a-1.${domain}"];};
 
   # Govtool
+
+  # Metsuke, the MusashiNet telemetry ingest. Every operator's agent is
+  # configured with this name, so it stays put if the server changes host.
+  cname_metsuke_leios = mkCname {name = "metsuke-leios.${domain}"; records = ["leios1-metsuke-a-1.${domain}"];};
 
   # Ipfs for all testnets
   cname_metadata_ipfs = mkCname {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};

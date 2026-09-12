@@ -2,11 +2,23 @@
   # Uncomment for node service debugging
   # flake.config.cardano-parts.pkgs.special.cardano-node-service = "${flake.inputs.cardano-node-service.outPath}/nix/nixos";
 
-  perSystem = {inputs', ...}: {
+  perSystem = {
+    config,
+    inputs',
+    ...
+  }: {
     cardano-parts = {
       shell.global = {
         defaultShell = "ops";
-        extraPkgs = [inputs'.cardano-parts.packages.pre-push];
+        extraPkgs =
+          [config.packages.pre-push]
+          ++ (with inputs'.metsuke.packages; [
+            duckdb
+            metsuke
+            metsuke-allowlist
+            metsuke-fetch
+            metsuke-server
+          ]);
       };
 
       # Note that these package config assignments impact not only the devShell which utilize

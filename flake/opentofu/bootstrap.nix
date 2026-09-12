@@ -67,6 +67,10 @@ in {
         variable = {
           # costCenter tag should remain secret in public repos
           ${infra.generic.costCenter} = sensitiveString;
+
+          # Separate (secret) cost center for leios resources, mirroring the
+          # cluster workspace. Applied as a per-resource tag override below.
+          tag_costCenterLeios = sensitiveString;
         };
 
         provider = {
@@ -433,6 +437,141 @@ in {
             name = "vmimport";
             role = "\${aws_iam_role.${name}.id}";
             policy = "\${data.aws_iam_policy_document.iam_role_policy-${name}.minified_json}";
+          };
+        };
+      }
+
+      # The metsuke submission archive and the identity that writes to it.
+      #
+      # An IAM user rather than a role on ec2Profile: metsuke-server takes its
+      # credentials from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in its
+      # process environment and makes no instance-metadata call, so it cannot
+      # assume the instance role. Beads metsuke-4zo.125 in the metsuke repo is
+      # the change that would let this become a role.
+      {
+        data.aws_iam_policy_document = {
+          s3_bucket_policy-metsuke.statement =
+            bucketPolicyStatementSecureTransport "\${aws_s3_bucket.metsuke.arn}";
+
+          # The server only ever adds an object and reads it back. It never
+          # creates a bucket and never deletes an object, so neither appears
+          # here.
+          iam_user_policy-metsuke.statement = [
+            {
+              effect = "Allow";
+              actions = [
+                "s3:GetObject"
+                "s3:PutObject"
+              ];
+              resources = ["\${aws_s3_bucket.metsuke.arn}/*"];
+            }
+            {
+              effect = "Allow";
+              actions = ["s3:ListBucket"];
+              resources = ["\${aws_s3_bucket.metsuke.arn}"];
+            }
+            {
+              effect = "Allow";
+              actions = [
+                "kms:Decrypt"
+                "kms:DescribeKey"
+                "kms:GenerateDataKey"
+              ];
+
+              # Scoped the way aws_iam_policy.kms_user in the cluster workspace
+              # scopes it: any key the shared alias currently points at.
+              resources = ["arn:aws:kms:*:${infra.aws.orgId}:key/*"];
+              condition = {
+                test = "ForAnyValue:StringLike";
+                variable = "kms:ResourceAliases";
+                values = ["alias/kmsKey"];
+              };
+            }
+          ];
+        };
+
+        resource = {
+          # No force_destroy: the archive is the only copy of a submission.
+          #
+          # Tagged to the leios cost center, overriding the workspace
+          # default_tags for this key only. The archive grows with every SPO
+          # submission and is the one resource here whose spend is attributable
+          # to leios; the AMI and rain buckets are shared by every environment,
+          # so they keep the generic cost center. leios1-metsuke-a-1 itself
+          # already gets this tag from the group helper in flake/colmena.nix.
+          aws_s3_bucket.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            bucket = "${infra.aws.profile}-metsuke";
+            tags.costCenter = "\${var.tag_costCenterLeios}";
+          };
+
+          aws_s3_bucket_server_side_encryption_configuration.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            bucket = "\${aws_s3_bucket.metsuke.id}";
+            rule.apply_server_side_encryption_by_default = {
+              sse_algorithm = "aws:kms";
+              kms_master_key_id = "alias/kmsKey";
+            };
+          };
+
+          aws_s3_bucket_policy.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            bucket = "\${aws_s3_bucket.metsuke.id}";
+            policy = "\${data.aws_iam_policy_document.s3_bucket_policy-metsuke.minified_json}";
+          };
+
+          aws_s3_bucket_versioning.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            bucket = "\${aws_s3_bucket.metsuke.id}";
+            versioning_configuration.status = "Enabled";
+          };
+
+          aws_s3_bucket_logging.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            bucket = "\${aws_s3_bucket.metsuke.id}";
+            target_bucket = with infra.aws; "s3-server-access-logs-${orgId}-${region}";
+            target_prefix = "logs/";
+            target_object_key_format.partitioned_prefix.partition_date_source = "EventTime";
+          };
+
+          aws_s3_bucket_public_access_block.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            bucket = "\${aws_s3_bucket.metsuke.id}";
+            block_public_acls = true;
+            block_public_policy = true;
+            ignore_public_acls = true;
+            restrict_public_buckets = true;
+          };
+
+          # No spend of its own, tagged so the identity is attributed with the
+          # bucket it writes to.
+          aws_iam_user.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            name = "metsuke";
+            tags.costCenter = "\${var.tag_costCenterLeios}";
+          };
+
+          aws_iam_user_policy.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            name = "metsuke";
+            user = "\${aws_iam_user.metsuke.name}";
+            policy = "\${data.aws_iam_policy_document.iam_user_policy-metsuke.minified_json}";
+          };
+
+          # Read out with `just tofu bootstrap output -raw <name>` and put both
+          # into the sops EnvironmentFile the metsuke-server module is handed.
+          aws_iam_access_key.metsuke = {
+            provider = awsProviderFor infra.aws.region;
+            user = "\${aws_iam_user.metsuke.name}";
+          };
+        };
+
+        output = {
+          metsuke_access_key_id.value = "\${aws_iam_access_key.metsuke.id}";
+
+          metsuke_secret_access_key = {
+            value = "\${aws_iam_access_key.metsuke.secret}";
+            sensitive = true;
           };
         };
       }
