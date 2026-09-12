@@ -9280,16 +9280,16 @@
     "leios-observability": {
       "flake": false,
       "locked": {
-        "lastModified": 1788777437,
-        "narHash": "sha256-rRdKgPAiSAiIW5xs+HJFGC3n0B3ZxiZx4uoVKFf2bfw=",
+        "lastModified": 1789257191,
+        "narHash": "sha256-pl58QYKRK63e+KRvCRzVb5oDGQ3EJdfUdAGKGS4sSGA=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "4c030ceee6eb0e7e3d495599d74ca11c8078dfbb",
+        "rev": "2aa5c58014ccc82fc666b68356c4d939ea60323e",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "refs/tags/prototype-2026w36",
+        "ref": "jl/leios-prototype-w36",
         "repo": "ouroboros-leios",
         "type": "github"
       }
