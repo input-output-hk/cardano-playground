@@ -22,6 +22,9 @@ run to those, which is useful now that an env may hold many pools:
   ENV=leios $(basename "$0")                      # all leios* groups
   ENV=leios $(basename "$0") leiosred4 leiosred5  # just these two
 
+Env toggles:
+  ERA_CMD=dijkstra   build and submit in the given era instead of latest
+
 Run from the repo root.  Each pool prompts y/N individually before any
 transfer, so an unexpected entry in the list can simply be declined.
 EOF

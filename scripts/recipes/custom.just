@@ -127,7 +127,9 @@ fund-transfer ENV SEND_ADDR LOVELACE UTXO="auto":
     CARDANO_CLI="cardano-cli-ng"
   fi
 
-  if [[ "$ENV" == "leios" ]]; then
+  if [ -n "${ERA_CMD:-}" ]; then
+    ERA="$ERA_CMD"
+  elif [[ "$ENV" == "leios" ]]; then
     ERA="dijkstra"
   else
     ERA="latest"

@@ -26,6 +26,7 @@ may hold many pools:
 Env toggles:
   DISABLE_POOL_RETURN=1   skip the pools entirely
   DISABLE_DREP_RETURN=1   skip the drep
+  ERA_CMD=dijkstra        build and submit in the given era instead of latest
 
 Run from the repo root.  Each pool lists its UTXO and waits for one to be named,
 so an unexpected entry in the list can be skipped by hitting enter.
