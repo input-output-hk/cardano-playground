@@ -69,13 +69,18 @@
 
       maxRuntimeSeconds = lib.mkOption {
         type = lib.types.ints.unsigned;
-        default = 3600;
+        default = 4200;
         description = ''
           Maximum wall-clock seconds a single tx-centrifuge invocation is
-          allowed to run before systemd terminates it (SIGTERM → SIGKILL
-          after TimeoutStopSec). The unit transitions to 'failed' state on
-          expiry, which the existing Restart=on-failure policy then handles
-          — so the service restarts automatically after RestartSec.
+          allowed to run before systemd terminates it with SIGTERM.
+
+          This is a backstop, not the normal way a window ends: keep it above
+          the gap between startOnCalendar and stopOnCalendar so the stop timer
+          gets there first. An explicit stop is the safer path, because
+          systemd does not apply Restart to a unit it was told to stop, so the
+          load cannot bounce back inside the off hour whatever exit status the
+          process reports. Lengthening the window via the calendars means
+          raising this too.
 
           Long benchmark runs accumulate state (pending-recycle map growth, GC
           fragmentation, file descriptor churn from observer reconnects); a
@@ -87,34 +92,36 @@
         '';
       };
 
-      postStopDelaySeconds = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 3600;
+      startOnCalendar = lib.mkOption {
+        type = lib.types.str;
+        default = "00/2:00:00";
         description = ''
-          Seconds the unit idles in its ExecStopPost hook after a clean
-          runtime-cap exit, before transitioning to inactive and being
-          restarted. Combined with 'maxRuntimeSeconds', this gives an
-          on/off load cycle: the service runs for maxRuntimeSeconds,
-          systemd terminates it via RuntimeMaxSec (SERVICE_RESULT=
-          timeout), the ExecStopPost hook sleeps for
-          postStopDelaySeconds, then RestartSec governs the next start.
-          The default 3600 paired with maxRuntimeSeconds=3600 yields a
-          ~50% duty cycle (1 hr on, 1 hr off). Set to 0 to disable the
-          wait entirely.
+          systemd OnCalendar expression for the timer that starts the load
+          window. The default fires at the top of every even hour, which
+          together with stopOnCalendar gives a 50% duty cycle aligned to the
+          wall clock: load on for even hours, off for odd hours.
 
-          The wait is only applied when SERVICE_RESULT=timeout — i.e.
-          when systemd terminated the service due to the runtime cap.
-          Genuine crashes (SERVICE_RESULT=exit-code/signal/core-dump/
-          oom-kill) bypass the wait and respect RestartSec directly, so
-          fail-fast behaviour and the startLimitBurst guard above
-          remain effective. A manual `systemctl stop`
-          (SERVICE_RESULT=success) also bypasses, since Restart=
-          on-failure won't fire in that case.
+          Clock alignment is the point. A cycle built from runtime caps and
+          restart delays drifts by the startup time plus RestartSec on every
+          iteration, so the on window walks around the clock and other teams
+          cannot plan their own load runs against it.
 
-          Implementation note: ExecStopPost time is bounded by
-          TimeoutStopSec, which this module sets to
-          postStopDelaySeconds + 90s to leave a buffer for the main
-          process to handle SIGTERM before the wait begins.
+          The timer is not Persistent, so a host that boots mid-window waits
+          for the next start rather than firing a missed one immediately and
+          putting load into an odd hour.
+        '';
+      };
+
+      stopOnCalendar = lib.mkOption {
+        type = lib.types.str;
+        default = "01/2:00:00";
+        description = ''
+          systemd OnCalendar expression for the timer that ends the load
+          window, by default the top of every odd hour.
+
+          This is what holds the window edge when a crash restart has reset
+          the runtime cap mid-window: maxRuntimeSeconds alone would let that
+          restart run a further full cap past the boundary.
         '';
       };
 
@@ -152,19 +159,47 @@
           max_batch_size = lib.mkDefault 10;
         };
 
-        systemd.services.${serviceName} = {
-          wantedBy = ["multi-user.target"];
+        # Started by the timer below, not at boot: a boot inside an odd hour
+        # must not put load on the network until the next even hour.
+        systemd.timers.${serviceName} = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = cfg.startOnCalendar;
+            # Default accuracy is 1 minute, which would jitter the window edge.
+            AccuracySec = "1s";
+            Persistent = false;
+          };
+        };
 
+        # Ends the window on the clock. A clean stop is not a failure, so
+        # Restart does not fire and the service waits for the next timer.
+        systemd.timers."${serviceName}-stop" = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = cfg.stopOnCalendar;
+            AccuracySec = "1s";
+            Persistent = false;
+          };
+        };
+
+        systemd.services."${serviceName}-stop" = {
+          description = "Stop ${serviceName} at the end of its load window";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.systemd}/bin/systemctl stop ${serviceName}.service";
+          };
+        };
+
+        systemd.services.${serviceName} = {
           enableStrictShellChecks = true;
 
           # Restart on failure: up to 3 retries, 1 minute apart. After 3
           # failed retries within the 10-minute window the unit stays in
           # 'failed' state until a manual `systemctl reset-failed` /
           # `start`. Initial start counts toward the burst, so 4 total
-          # start attempts (initial + 3 retries) are permitted. The
-          # cycle wait (postStopDelaySeconds) runs in ExecStopPost and
-          # is not counted by the start-limit window — only true crash
-          # restarts feed the burst.
+          # start attempts (initial + 3 retries) are permitted. Only true
+          # crash restarts feed the burst: ending a window is a SIGTERM,
+          # which RestartPreventExitStatus below excludes.
           startLimitBurst = 4;
           startLimitIntervalSec = 600;
 
@@ -173,32 +208,6 @@
               (lib.getExe cfg.package)
               (settingsFormat.generate "centrifuge.json" cfg.settings)
             ];
-
-            # Load-cycle gate. After a runtime-cap exit
-            # (SERVICE_RESULT=timeout) sleep postStopDelaySeconds before
-            # the unit becomes inactive — this defers Restart=on-failure
-            # so the next cycle starts late. Crash exits skip the sleep
-            # so RestartSec governs alone and the startLimitBurst guard
-            # still works. writeShellApplication gives us shellcheck and
-            # set -euo pipefail at build time.
-            ExecStopPost = lib.getExe (pkgs.writeShellApplication {
-              name = "${serviceName}-post-stop";
-              runtimeInputs = [pkgs.coreutils];
-              text =
-                if cfg.postStopDelaySeconds == 0
-                then ''
-                  # Cycle wait disabled (postStopDelaySeconds = 0). The
-                  # hook is a no-op so the unit deactivates immediately
-                  # and RestartSec governs the restart gap.
-                  :
-                ''
-                else ''
-                  if [ "''${SERVICE_RESULT:-}" = "timeout" ]; then
-                    echo "${serviceName}: runtime cap reached, sleeping ${toString cfg.postStopDelaySeconds}s before next cycle"
-                    sleep ${toString cfg.postStopDelaySeconds}
-                  fi
-                '';
-            });
 
             DynamicUser = true;
 
@@ -209,25 +218,21 @@
             Restart = "on-failure";
             RestartSec = 60;
 
-            # Forced restart to bound state accumulation across long runs. On
-            # expiry, systemd terminates the process and marks the unit as
-            # 'failed', which Restart=on-failure above then handles. The
-            # post-expiry idle is implemented in ExecStopPost
-            # ('postStopDelaySeconds'); RestartSec only governs the
-            # post-deactivate -> next-start gap (60s here). Set
-            # cfg.maxRuntimeSeconds = 0 to disable — systemd's disable value is
-            # "infinity", not 0 (0 would terminate the service immediately).
+            # Keeps a window ending from looking like a crash. Both the
+            # runtime cap and the stop timer end the run with SIGTERM, and
+            # without this Restart=on-failure would bring the load straight
+            # back up inside the off hour. Genuine crashes carry an exit code
+            # or another signal and still restart.
+            RestartPreventExitStatus = "SIGTERM";
+
+            # Ends the load window, and bounds state accumulation across the
+            # run. Set cfg.maxRuntimeSeconds = 0 to disable — systemd's
+            # disable value is "infinity", not 0 (0 would terminate the
+            # service immediately).
             RuntimeMaxSec =
               if cfg.maxRuntimeSeconds == 0
               then "infinity"
               else cfg.maxRuntimeSeconds;
-
-            # ExecStopPost runs within the TimeoutStopSec budget. Default is
-            # 90s, which is too short for a long cycle wait — extend it to
-            # postStopDelaySeconds + 90s so the sleep fits and the main
-            # process still has its usual 90s to handle SIGTERM before the
-            # wait starts running.
-            TimeoutStopSec = cfg.postStopDelaySeconds + 90;
 
             # Disable journald rate-limiting on this unit. At high TPS the
             # trace-dispatcher emits thousands of lines per second; the
