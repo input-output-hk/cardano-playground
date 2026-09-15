@@ -159,87 +159,90 @@
           max_batch_size = lib.mkDefault 10;
         };
 
-        # Started by the timer below, not at boot: a boot inside an odd hour
-        # must not put load on the network until the next even hour.
-        systemd.timers.${serviceName} = {
-          wantedBy = ["timers.target"];
-          timerConfig = {
-            OnCalendar = cfg.startOnCalendar;
-            # Default accuracy is 1 minute, which would jitter the window edge.
-            AccuracySec = "1s";
-            Persistent = false;
+        systemd.timers = {
+          # Started by the timer below, not at boot: a boot inside an odd hour
+          # must not put load on the network until the next even hour.
+          ${serviceName} = {
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnCalendar = cfg.startOnCalendar;
+              # Default accuracy is 1 minute, which would jitter the window edge.
+              AccuracySec = "1s";
+              Persistent = false;
+            };
+          };
+          # Ends the window on the clock. A clean stop is not a failure, so
+          # Restart does not fire and the service waits for the next timer.
+          "${serviceName}-stop" = {
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnCalendar = cfg.stopOnCalendar;
+              AccuracySec = "1s";
+              Persistent = false;
+            };
           };
         };
 
-        # Ends the window on the clock. A clean stop is not a failure, so
-        # Restart does not fire and the service waits for the next timer.
-        systemd.timers."${serviceName}-stop" = {
-          wantedBy = ["timers.target"];
-          timerConfig = {
-            OnCalendar = cfg.stopOnCalendar;
-            AccuracySec = "1s";
-            Persistent = false;
+        systemd.services = {
+          ${serviceName} = {
+            enableStrictShellChecks = true;
+
+            # Restart on failure: up to 3 retries, 1 minute apart. After 3
+            # failed retries within the 10-minute window the unit stays in
+            # 'failed' state until a manual `systemctl reset-failed` /
+            # `start`. Initial start counts toward the burst, so 4 total
+            # start attempts (initial + 3 retries) are permitted. Only true
+            # crash restarts feed the burst: ending a window is a SIGTERM,
+            # which RestartPreventExitStatus below excludes.
+            startLimitBurst = 4;
+            startLimitIntervalSec = 600;
+
+            serviceConfig = {
+              ExecStart = toString [
+                (lib.getExe cfg.package)
+                (settingsFormat.generate "centrifuge.json" cfg.settings)
+              ];
+
+              DynamicUser = true;
+
+              LoadCredential = [
+                "funds.skey:${cfg.signingKeyFile}"
+              ];
+
+              Restart = "on-failure";
+              RestartSec = 60;
+
+              # Keeps a window ending from looking like a crash. Both the
+              # runtime cap and the stop timer end the run with SIGTERM, and
+              # without this Restart=on-failure would bring the load straight
+              # back up inside the off hour. Genuine crashes carry an exit code
+              # or another signal and still restart.
+              RestartPreventExitStatus = "SIGTERM";
+
+              # Ends the load window, and bounds state accumulation across the
+              # run. Set cfg.maxRuntimeSeconds = 0 to disable — systemd's
+              # disable value is "infinity", not 0 (0 would terminate the
+              # service immediately).
+              RuntimeMaxSec =
+                if cfg.maxRuntimeSeconds == 0
+                then "infinity"
+                else cfg.maxRuntimeSeconds;
+
+              # Disable journald rate-limiting on this unit. At high TPS the
+              # trace-dispatcher emits thousands of lines per second; the
+              # systemd default (10000 in 30s) would silently drop most of
+              # them after the first 30 seconds of a run.
+              LogRateLimitIntervalSec = 0;
+              LogRateLimitBurst = 0;
+            };
           };
-        };
 
-        systemd.services."${serviceName}-stop" = {
-          description = "Stop ${serviceName} at the end of its load window";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.systemd}/bin/systemctl stop ${serviceName}.service";
-          };
-        };
-
-        systemd.services.${serviceName} = {
-          enableStrictShellChecks = true;
-
-          # Restart on failure: up to 3 retries, 1 minute apart. After 3
-          # failed retries within the 10-minute window the unit stays in
-          # 'failed' state until a manual `systemctl reset-failed` /
-          # `start`. Initial start counts toward the burst, so 4 total
-          # start attempts (initial + 3 retries) are permitted. Only true
-          # crash restarts feed the burst: ending a window is a SIGTERM,
-          # which RestartPreventExitStatus below excludes.
-          startLimitBurst = 4;
-          startLimitIntervalSec = 600;
-
-          serviceConfig = {
-            ExecStart = toString [
-              (lib.getExe cfg.package)
-              (settingsFormat.generate "centrifuge.json" cfg.settings)
-            ];
-
-            DynamicUser = true;
-
-            LoadCredential = [
-              "funds.skey:${cfg.signingKeyFile}"
-            ];
-
-            Restart = "on-failure";
-            RestartSec = 60;
-
-            # Keeps a window ending from looking like a crash. Both the
-            # runtime cap and the stop timer end the run with SIGTERM, and
-            # without this Restart=on-failure would bring the load straight
-            # back up inside the off hour. Genuine crashes carry an exit code
-            # or another signal and still restart.
-            RestartPreventExitStatus = "SIGTERM";
-
-            # Ends the load window, and bounds state accumulation across the
-            # run. Set cfg.maxRuntimeSeconds = 0 to disable — systemd's
-            # disable value is "infinity", not 0 (0 would terminate the
-            # service immediately).
-            RuntimeMaxSec =
-              if cfg.maxRuntimeSeconds == 0
-              then "infinity"
-              else cfg.maxRuntimeSeconds;
-
-            # Disable journald rate-limiting on this unit. At high TPS the
-            # trace-dispatcher emits thousands of lines per second; the
-            # systemd default (10000 in 30s) would silently drop most of
-            # them after the first 30 seconds of a run.
-            LogRateLimitIntervalSec = 0;
-            LogRateLimitBurst = 0;
+          "${serviceName}-stop" = {
+            description = "Stop ${serviceName} at the end of its load window";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.systemd}/bin/systemctl stop ${serviceName}.service";
+            };
           };
         };
       }
