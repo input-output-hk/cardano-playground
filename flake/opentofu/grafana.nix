@@ -11,7 +11,12 @@ with lib; let
   cluster = config.flake.cardano-parts.cluster.infra.aws;
 
   alertFileList = parseDir ./grafana/alerts ".nix-import";
-  dashboardFileList = parseDir ./grafana/dashboards ".json";
+
+  # Leios dashboards come from the leios-observability source pin (single source
+  # of truth, byte-identical with the ouroboros-leios repo); the rest are local.
+  localDashboardFileList = parseDir ./grafana/dashboards ".json";
+  leiosDashboardFileList = parseDir "${inputs.leios-observability}/demo/proto-devnet/config/dashboards" ".json";
+  lokiAlertFileList = parseDir ./grafana/alerts-loki ".nix-import";
   recordingRulesFileList = parseDir ./grafana/recording-rules ".nix-import";
 
   extractFileName = file:
@@ -44,6 +49,7 @@ in {
         terraform = {
           required_providers = {
             grafana.source = "grafana/grafana";
+            loki.source = "fgouteroux/loki";
             mimir.source = "fgouteroux/mimir";
           };
 
@@ -59,6 +65,7 @@ in {
 
         variable = {
           deadmanssnitch_api_url = sensitiveString;
+          deadmanssnitch_loki_api_url = sensitiveString;
           grafana_token = sensitiveString;
           grafana_url = sensitiveString;
           pagerduty_api_key = sensitiveString;
@@ -71,6 +78,9 @@ in {
           mimir_prometheus_ruler_uri = sensitiveString;
           mimir_prometheus_alertmanager_uri = sensitiveString;
           mimir_prometheus_username = sensitiveString;
+
+          loki_uri = sensitiveString;
+          loki_username = sensitiveString;
         };
 
         provider = {
@@ -100,6 +110,13 @@ in {
               password = "\${var.mimir_api_key}";
             }
           ];
+
+          loki = {
+            uri = "\${var.loki_uri}";
+            org_id = "1";
+            username = "\${var.loki_username}";
+            password = "\${var.mimir_api_key}";
+          };
         };
 
         resource = {
@@ -133,6 +150,17 @@ in {
                     group_interval = "1m";
                     repeat_interval = "5m";
                   }
+                  # Exception route for the always-firing Loki ruler heartbeat
+                  # (alerts-loki/deadmanssnitch-loki.nix-import): deliver to
+                  # its own snitch so either ruler dying is detected
+                  # independently.
+                  {
+                    receiver = "deadmanssnitch-loki";
+                    matchers = [''alertname="DeadMansSnitchLoki"''];
+                    group_wait = "30s";
+                    group_interval = "1m";
+                    repeat_interval = "5m";
+                  }
                 ];
               }
             ];
@@ -149,15 +177,30 @@ in {
                   url = "\${var.deadmanssnitch_api_url}";
                 };
               }
+              {
+                name = "deadmanssnitch-loki";
+                webhook_configs = {
+                  send_resolved = false;
+                  url = "\${var.deadmanssnitch_loki_api_url}";
+                };
+              }
             ];
           };
 
           # Dashboards
-          grafana_dashboard = foldl' (acc: f:
-            recursiveUpdate acc {
-              ${extractFileName f} = withGrafanaStack {config_json = readFile f;};
-            }) {}
-          dashboardFileList;
+          # tofu interpolates config_json, so grafana template vars ${x} and
+          # directives %{x} must be emitted as $${x} and %%{x}. local dashboards
+          # are stored pre-escaped; the leios pin is byte-identical with upstream
+          # bare syntax for grafana file provisioning, so escape it on read.
+          grafana_dashboard = let
+            # blunt replace; safe as these files target grafana, never tofu interpolation
+            escapeTofu = replaceStrings ["\${" "%{"] ["$\${" "%%{"];
+            mk = escape: f: {${extractFileName f} = withGrafanaStack {config_json = escape (readFile f);};};
+          in
+            foldl' recursiveUpdate {} (
+              (map (mk (x: x)) localDashboardFileList)
+              ++ (map (mk escapeTofu) leiosDashboardFileList)
+            );
 
           # Alerts
           mimir_rule_group_alerting = foldl' (acc: f:
@@ -171,6 +214,19 @@ in {
                 // {provider = "mimir.prometheus";};
             }) {}
           alertFileList;
+
+          # Loki alerts
+          loki_rule_group_alerting = foldl' (acc: f:
+            recursiveUpdate acc {
+              ${extractFileName f} =
+                (
+                  if isFunction (import f)
+                  then (import f) self
+                  else (import f)
+                )
+                // {provider = "loki";};
+            }) {}
+          lokiAlertFileList;
 
           # Recording rules
           mimir_rule_group_recording = foldl' (acc: f:
