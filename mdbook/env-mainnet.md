@@ -20,24 +20,17 @@ Informed: Cardano Core Tribe, COO, IOG Director of Engineering, IOG VP Community
 
 #### Configuration files
 
-Compatible with cardano-node release [11.0.1](https://github.com/IntersectMBO/cardano-node/releases/tag/11.0.1)
+Compatible with cardano-node release [11.1.1](https://github.com/IntersectMBO/cardano-node/releases/tag/11.1.1)
 
 ```
 NOTE:
-* The new tracing system is now default.  See additional notes below.
-
-* There is no longer a need to maintain separate non-forger and forger config
-files.  Node will now intelligently set PeerSharing, and a few other config
-parameters based on forging status.
-
-* The legacy non-p2p networking mode is no longer available.
+* Legacy tracing system is no longer available.
 
 * Avoid connecting PeerSharing enabled nodes to a block producer using
 `InitiatorOnlyMode` as the block producer's IP will be leaked.
 ```
 
 - [Node Config](environments/mainnet/config.json)
-- [Node Config Legacy](environments/mainnet/config-legacy.json)
 - [Tracer Config](environments/mainnet/tracer-config.json)
 - [DB Sync Config](environments/mainnet/db-sync-config.json)
 - [Submit API Config](environments/mainnet/submit-api-config.json)
@@ -51,27 +44,13 @@ parameters based on forging status.
 - [Conway Genesis](environments/mainnet/conway-genesis.json)
 - [Compiled guardrails script](environments/mainnet/guardrails-script.plutus)
 
-#### New Tracing System
-
-As of node `10.6.0` the new tracing system is default.  The legacy tracing
-system is still available, with a legacy config provided above, but is
-deprecated and will be removed in the near future.
-
-See the [10.6.0 release notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.6.0)
-for more information.
-
 #### Ouroboros Genesis Mode
 
-For those preferring to use Genesis mode over Praos mode bootstrap peers, the
-node config file will need to have `ConsensusMode` set to `GenesisMode`.
+Ouroboros genesis mode is set as the default consensus mode in the node config
+file provided above.  If needed, use of praos mode and the bootstrap peers
+found in the above topology file can be reverted to by setting:
 
-#### UTXO-HD
-
-Users migrating from a node version older than `10.4.1` should also read the [10.4.1 release
-notes](https://github.com/IntersectMBO/cardano-node/releases/tag/10.4.1) and
-the consensus [migration guide](https://ouroboros-consensus.cardano.intersectmbo.org/docs/for-developers/utxo-hd/migrating)
-to properly configure the node and convert the database such that a replay from
-genesis can be avoided.
+* Node config's `ConsensusMode` option to a value of `PraosMode`
 
 #### Guardrails reference script UTxO
 
