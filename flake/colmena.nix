@@ -400,11 +400,23 @@ in
         {
           services = {
             cardano-tx-centrifuge.settings = {
-              rate_limit.params.tps = 25;
+              rate_limit.params.tps = 100;
               # observers.local-follower.params.confirmation_depth = 3;
-              workloads.synthetic-chain.targets.leios1-rel-a-1 = {
-                addr = "leios1-rel-a-1.play.dev.cardano.org";
-                port = 3001;
+              workloads.synthetic-chain.targets = {
+                leios1-rel-a-1 = {
+                  addr = "leios1-rel-a-1.play.dev.cardano.org";
+                  port = 3001;
+                };
+
+                leios2-rel-b-1 = {
+                  addr = "leios2-rel-b-1.play.dev.cardano.org";
+                  port = 3001;
+                };
+
+                leios3-rel-c-1 = {
+                  addr = "leios3-rel-c-1.play.dev.cardano.org";
+                  port = 3001;
+                };
               };
             };
           };
