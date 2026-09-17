@@ -739,7 +739,14 @@ def do-status [environment: string, num_accounts: int, dbsync_host?: string] {
   # Optionally query dbsync for last forged block per pool
   let forged_data = if $dbsync_host != null and not ($pool_ids | is-empty) {
     print $"\n(ansi green)Querying dbsync on ($dbsync_host) for last forged blocks...(ansi reset)"
-    let result = (try { query-last-forged $pool_ids $dbsync_host } catch { [] })
+    let result = (try { query-last-forged $pool_ids $dbsync_host } catch {|err|
+      # Never fail `status` over the optional dbsync enrichment -- but never hide it either:
+      # a silent [] here is indistinguishable from "every pool has no blocks".
+      print -e $"(ansi yellow)WARNING:(ansi reset) dbsync last-forged lookup failed on ($dbsync_host)."
+      print -e "         Continuing without last-block info in the Pool column."
+      print -e $err.rendered
+      []
+    })
     print ""
     $result
   } else { [] }
