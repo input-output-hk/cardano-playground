@@ -18,12 +18,21 @@
 # = the raw trace JSON) to loki.process.leios_route via extraJournalReceivers, so
 # this side needs no raw write and no envelope unwrap.
 #
-# Cardinality budget (measured on the live 15-node fleet), all deliberately
-# indexed for Explore performance:
-#   service ~4, ns ~56 (stable), sev ~5, kind ~50-150, voterId ~3,
-#   event 2, name ~tens, thread ~few (named threads)  -- all bounded.
-#   host: NOT labelled (== base instance); rbHash/stack NEVER labelled -- they
-#   stay in the line for query-time `| json`, which keeps them off the counters.
+# Cardinality policy. The indexed labels are service, ns, sev, kind, event, name,
+# thread, and voterId on cast votes only; each is deliberately indexed for Explore
+# performance and each is bounded by something structural -- a fixed vocabulary in
+# the node, or the pools one node votes for.
+#
+# What must never be labelled is anything bounded by the chain instead: rbHash and
+# ebHash are one value per block, voterId across the whole committee is one per
+# seat and reassigned every epoch, and stack is unbounded. Those stay in the line
+# for query-time `| json`, which also keeps them off the derived counters, since
+# stage.metrics inherits whatever labels are set when it runs.
+#
+# host is not labelled because it duplicates the base instance label.
+#
+# Before adding a label, name the thing that bounds it. If the answer involves the
+# committee, the chain, or a peer connection, it belongs in the body.
 #
 # Both tx-generator modules are always present but DORMANT unless their unit is
 # running, so an environment can switch centrifuge<->firehose (or neither) with
