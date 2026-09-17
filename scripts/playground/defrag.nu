@@ -10,12 +10,24 @@
 # decrypted on the fly.  Private key material is written only to short-lived
 # mktemp files that are deleted immediately after use.
 #
+# By default nothing is submitted: each pass is built and signed, and the signed
+# tx is left in the directory the script was called from for manual inspection
+# and submission.  Those files are submittable as-is.
+#
+# --submit restores the submit-and-wait behaviour, still behind a y/N prompt.
+# --dry-run reports what would be consolidated and builds nothing.
+#
+# An active leios-pin.sh or node-local-pin.sh is honoured even when PATH has
+# lost its prepend, and the cardano-cli in use is printed before any work.
+#
 # ENVIRONMENT VARIABLES (provided by the playground devShell):
 #   TESTNET_MAGIC            Cardano testnet magic number
 #   CARDANO_NODE_SOCKET_PATH Path to the running cardano-node socket
 #
 # USAGE (run from repo root inside the devShell):
-#   defrag.nu <environment> <key-path> [--dry-run]
+#   defrag.nu <environment> <key-path> [--dry-run] [--submit]
+#
+# --dry-run takes precedence when both flags are given.
 #
 # ARGUMENTS:
 #   environment  Playground environment: preview, preprod, etc.
@@ -97,11 +109,55 @@ def net-args [] {
     $env.TESTNET_MAGIC
   ]
 }
+# ─── Tooling resolution ───────────────────────────────────────────────────────
+# leios-pin.sh and node-local-pin.sh prepend a symlink dir to PATH, but a
+# `nix develop -c` or a direnv reload rebuilds PATH from the devShell and drops
+# that prepend while the pin's marker variable survives. Without this the
+# devShell cardano-cli gets used against a chain that needs the pinned one.
+def --env respect-pins []: nothing -> list<string> {
+  let pins = [
+    {
+      marker: "LEIOS_PATH_BACKUP"
+      dir: ($nu.home-dir | path join ".local" "bin")
+    }
+    {
+      marker: "NODE_LOCAL_PATH_BACKUP"
+      dir: ($nu.home-dir | path join ".local" "bin-node-local")
+    }
+  ] | where {|p| ($p.marker in $env) and (($p.dir | path join "cardano-cli") | path exists)}
+  # Move to the front rather than only adding when absent. `nix develop` can
+  # keep the dir on PATH but reorder it behind the devShell's own bin, which
+  # still resolves the wrong cardano-cli.
+  for p in $pins { $env.PATH = ($env.PATH | where {|d| $d != $p.dir} | prepend $p.dir) }
+  $pins | get dir
+}
+# The node's era as a cardano-cli command group. `latest` is an alias for the
+# newest *stable* era, so it silently builds a Conway tx against a Dijkstra node
+# and the node rejects it. Probe with `complete`; a plain `try` around
+# `o+e>| ignore` swallows the non-zero exit and reports success.
+def era-group [tip_era: string]: nothing -> string {
+  let era = $tip_era | str downcase
+  if (^cardano-cli $era --help | complete | get exit_code) != 0 {
+    error make --unspanned {
+      msg: $"cardano-cli has no '($era)' era command group, but the node is in the ($tip_era) era. Pin a cardano-cli that knows it, e.g. with scripts/playground/leios-pin.sh or node-local-pin.sh."
+    }
+  }
+  $era
+}
+# Fail early and visibly rather than deep inside a transaction build.
+def report-tooling [] {
+  let cli = which cardano-cli | get --optional path.0
+  if ($cli | is-empty) {
+    error make --unspanned {msg: "cardano-cli not found on PATH. Are you inside the playground devShell?"}
+  }
+  print $"  cardano-cli: ($cli)"
+  print $"  version:     (^cardano-cli --version | lines | first | str trim)"
+}
 # ─── Transaction helpers ─────────────────────────────────────────────────────
-def wait-for-tx [txid: string, net_args: list<string>] {
+def wait-for-tx [txid: string, net_args: list<string>, --era: string] {
   print $"  Waiting for tx ($txid) to leave mempool..."
   loop {
-    let result = (^cardano-cli latest query tx-mempool tx-exists $txid ...$net_args | from json)
+    let result = (^cardano-cli $era query tx-mempool tx-exists $txid ...$net_args | from json)
     if not ($result | get exists) {
       print "  Transaction confirmed on-chain."
       break
@@ -109,7 +165,7 @@ def wait-for-tx [txid: string, net_args: list<string>] {
     sleep 5sec
   }
 }
-def confirm-and-submit [tx_file: string, net_args: list<string>] {
+def confirm-and-submit [tx_file: string, net_args: list<string>, --era: string] {
   print "\n  Transaction view:"
   print (^cardano-cli debug transaction view --tx-file $tx_file --output-json)
   print ""
@@ -118,16 +174,54 @@ def confirm-and-submit [tx_file: string, net_args: list<string>] {
     print $"(ansi yellow)Transaction cancelled.(ansi reset)"
     return null
   }
-  ^cardano-cli latest transaction submit --tx-file $tx_file ...$net_args
-  ^cardano-cli latest transaction txid --tx-file $tx_file --output-text | str trim
+  ^cardano-cli $era transaction submit --tx-file $tx_file ...$net_args
+  ^cardano-cli $era transaction txid --tx-file $tx_file --output-text | str trim
+}
+# Consolidate every utxo in the list into a single change output.
+def build-args [utxos: list<record>, out_file: string, --address: string]: nothing -> list<string> {
+  $utxos | each { |u| ["--tx-in" $u.txin] } | flatten | append [
+    "--change-address"
+    $address
+    "--witness-override"
+    "1"
+    "--out-file"
+    $out_file
+  ]
+}
+# The tx body is a short-lived temp file; the signed tx lands in out_file.
+def build-and-sign [
+  utxos: list<record>
+  out_file: string
+  --address: string
+  --skey-file: string
+  --net-args: list<string>
+  --era: string
+] {
+  let f_tx_body = ^mktemp --suffix .txbody | str trim
+  ^cardano-cli $era transaction build ...(build-args $utxos $f_tx_body --address $address | append $net_args)
+  ^cardano-cli $era transaction sign --tx-body-file $f_tx_body --signing-key-file $skey_file --out-file $out_file
+  rm --force $f_tx_body
+}
+def report-unsubmitted [tx_file: string, net_args: list<string>, --era: string] {
+  print $"  Signed tx written to: ($tx_file)"
+  print $"    inspect: cardano-cli debug transaction view --tx-file ($tx_file)"
+  print $"    submit:  cardano-cli ($era) transaction submit --tx-file ($tx_file) ($net_args | str join ' ')"
 }
 # ─── Main ─────────────────────────────────────────────────────────────────────
 # Defragment a payment address: consolidate lovelace-only and native token UTxOs
 def main [
     environment: string # Playground environment: preview, preprod, etc.
     key_path: string    # Path and filename without .skey extension (sops-encrypted)
-    --dry-run           # Show details without submitting
+    --dry-run           # Report what would be consolidated, build nothing
+    --submit            # Submit after confirmation; default builds and signs only
 ] {
+  let stamp = date now | format date "%Y%m%d-%H%M%S"
+  print "Resolving cardano tooling..."
+  let pinned = respect-pins
+  if not ($pinned | is-empty) {
+    print $"  pin active:  ($pinned | str join ', ')"
+  }
+  report-tooling
   check-network $environment
   let skey_file = $"($key_path).skey"
   if not ($skey_file | path exists) {
@@ -139,11 +233,14 @@ def main [
   # Verify node is reachable and fully synced before doing any work
   print $"Checking node connectivity and sync status on environment ($environment)..."
   let tip_json = try {
-    ^cardano-cli latest query tip ...$net | from json
+    ^cardano-cli query tip ...$net | from json
   } catch {
     error make --unspanned {msg: "Cannot connect to cardano-node. Is the node running and CARDANO_NODE_SOCKET_PATH set correctly?"}
   }
   print ($tip_json | to json --indent 2)
+  # Match the node's era rather than assuming `latest`
+  let era = era-group ($tip_json | get era)
+  print $"  era group:   ($era)"
   let sync_pct = ($tip_json | get syncProgress | into float)
   if $sync_pct < 100.0 {
     error make --unspanned {
@@ -172,7 +269,7 @@ def main [
   print $"  Address: ($address)"
   # Query UTxOs
   print $"\nQuerying UTxOs..."
-  let all_data = (^cardano-cli latest query utxo --address $address --output-json ...$net | from json)
+  let all_data = (^cardano-cli $era query utxo --address $address --output-json ...$net | from json)
   let all_utxos = if ($all_data | is-empty) { [] } else {
     $all_data | transpose key value
   }
@@ -221,68 +318,68 @@ def main [
   # ── Pass 1: consolidate lovelace-only UTxOs ──────────────────────────────
   if $lovelace_count >= 2 {
     print $"\n  Pass 1: consolidating ($lovelace_count) lovelace-only UTxOs into 1..."
-    let f_tx_body = (^mktemp --suffix .txbody | str trim)
-    let f_tx_signed = (^mktemp --suffix .tx | str trim)
-    mut build_args: list<string> = []
-    for utxo in $lovelace_utxos {
-      $build_args = ($build_args | append [
-        "--tx-in"
-        $utxo.txin
-      ])
+    let f_tx_signed = if $submit {
+      ^mktemp --suffix .tx | str trim
+    } else {
+      $env.PWD | path join $"defrag-($environment)-lovelace-($stamp).tx"
     }
-    $build_args = ($build_args | append [
-      "--change-address"
-      $address
-      "--witness-override"
-      "1"
-      "--out-file"
-      $f_tx_body
-    ])
-    ^cardano-cli latest transaction build ...($build_args | append $net)
-    ^cardano-cli latest transaction sign --tx-body-file $f_tx_body --signing-key-file $f_skey --out-file $f_tx_signed
-    let txid = (confirm-and-submit $f_tx_signed $net)
-    rm --force $f_tx_body $f_tx_signed
-    if $txid == null {
+    try {
+      build-and-sign $lovelace_utxos $f_tx_signed --address $address --skey-file $f_skey --net-args $net --era $era
+    } catch {|e|
       rm --force $f_skey
-      return
+      error make --unspanned {
+        msg: $"Pass 1 build failed: ($e.msg)"
+      }
     }
-    wait-for-tx $txid $net
-    print $"(ansi green)Pass 1 complete! TxID: ($txid)(ansi reset)"
-    print $"  Consolidated ($lovelace_count) lovelace-only UTxOs into 1."
+    if not $submit {
+      report-unsubmitted $f_tx_signed $net --era $era
+    } else {
+      let txid = (confirm-and-submit $f_tx_signed $net --era $era)
+      rm --force $f_tx_signed
+      if $txid == null {
+        rm --force $f_skey
+        return
+      }
+      wait-for-tx $txid $net --era $era
+      print $"(ansi green)Pass 1 complete! TxID: ($txid)(ansi reset)"
+      print $"  Consolidated ($lovelace_count) lovelace-only UTxOs into 1."
+    }
   }
   # ── Pass 2: consolidate native token UTxOs ───────────────────────────────
   if $token_count >= 2 {
     print $"\n  Pass 2: consolidating ($token_count) native token UTxOs into 1..."
-    let f_tx_body = (^mktemp --suffix .txbody | str trim)
-    let f_tx_signed = (^mktemp --suffix .tx | str trim)
-    mut build_args: list<string> = []
-    for utxo in $token_utxos {
-      $build_args = ($build_args | append [
-        "--tx-in"
-        $utxo.txin
-      ])
+    let f_tx_signed = if $submit {
+      ^mktemp --suffix .tx | str trim
+    } else {
+      $env.PWD | path join $"defrag-($environment)-token-($stamp).tx"
     }
-    $build_args = ($build_args | append [
-      "--change-address"
-      $address
-      "--witness-override"
-      "1"
-      "--out-file"
-      $f_tx_body
-    ])
-    ^cardano-cli latest transaction build ...($build_args | append $net)
-    ^cardano-cli latest transaction sign --tx-body-file $f_tx_body --signing-key-file $f_skey --out-file $f_tx_signed
-    let txid = (confirm-and-submit $f_tx_signed $net)
-    rm --force $f_tx_body $f_tx_signed
-    if $txid == null {
+    try {
+      build-and-sign $token_utxos $f_tx_signed --address $address --skey-file $f_skey --net-args $net --era $era
+    } catch {|e|
       rm --force $f_skey
-      return
+      error make --unspanned {
+        msg: $"Pass 2 build failed: ($e.msg)"
+      }
     }
-    wait-for-tx $txid $net
-    print $"(ansi green)Pass 2 complete! TxID: ($txid)(ansi reset)"
-    print $"  Consolidated ($token_count) native token UTxOs into 1."
+    if not $submit {
+      report-unsubmitted $f_tx_signed $net --era $era
+    } else {
+      let txid = (confirm-and-submit $f_tx_signed $net --era $era)
+      rm --force $f_tx_signed
+      if $txid == null {
+        rm --force $f_skey
+        return
+      }
+      wait-for-tx $txid $net --era $era
+      print $"(ansi green)Pass 2 complete! TxID: ($txid)(ansi reset)"
+      print $"  Consolidated ($token_count) native token UTxOs into 1."
+    }
   }
   # Clean up
   rm --force $f_skey
-  print $"\n(ansi green)Defrag complete at ($address)(ansi reset)"
+  if $submit {
+    print $"\n(ansi green)Defrag complete at ($address)(ansi reset)"
+  } else {
+    print $"\n(ansi yellow)Nothing submitted. Inspect the signed tx files above, then submit with --submit or by hand.(ansi reset)"
+  }
 }
