@@ -1465,11 +1465,11 @@
     },
     "capkgs": {
       "locked": {
-        "lastModified": 1788539070,
-        "narHash": "sha256-42Y7UdEWfR//PT7Y6VC2mel77Zxw7HhFl1+V4PXV50M=",
+        "lastModified": 1789610569,
+        "narHash": "sha256-2SFYt04eQvwy1+/WH9ysFkrEKXiyYbuoyoPxBktLfiY=",
         "owner": "input-output-hk",
         "repo": "capkgs",
-        "rev": "92a9a3d9c51aaac4dc1ff73dd0999585f774d3ac",
+        "rev": "1755acc1a4ce8477ec2c5334050c12039582d45a",
         "type": "github"
       },
       "original": {
@@ -2095,11 +2095,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1789503106,
-        "narHash": "sha256-OqMvkSike+dKxYGNxylZ/qGQONZu5i4wsSJCYKhsKBU=",
+        "lastModified": 1789612419,
+        "narHash": "sha256-eRIoaLlnVKVKzHIl3aTQyEAjUcp6i7rVs4ezHsZNYPw=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "8c6503c830a4a099a01f10984acba33382b53eb4",
+        "rev": "3be78aa34c172615d77b1b7a33c414bfcf57c414",
         "type": "github"
       },
       "original": {
@@ -9278,16 +9278,16 @@
     "leios-observability": {
       "flake": false,
       "locked": {
-        "lastModified": 1789316641,
-        "narHash": "sha256-S81QGQlbTboMenFnovxt3/LKuEIL/dYtsfEZ99m0En4=",
+        "lastModified": 1789528397,
+        "narHash": "sha256-JpcgQxaFn4B8PVc7wH0/CwJLbVeaQ4dIuYNn+8usQgI=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "88a980800d9537be2a8823edfae24f2c7506ba8a",
+        "rev": "c0e80924d6cf71e14136e513bfbdc442d4686d74",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/leios-prototype-w36",
+        "ref": "jl/alloy-dash-enhance",
         "repo": "ouroboros-leios",
         "type": "github"
       }

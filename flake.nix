@@ -27,7 +27,7 @@
     # (demo/proto-devnet/config/dashboards/*.json).
     leios-observability = {
       # url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w36";
-      url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w36";
+      url = "github:input-output-hk/ouroboros-leios/jl/alloy-dash-enhance";
       flake = false;
     };
 
