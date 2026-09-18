@@ -86,8 +86,8 @@ in {
 
             Datastore.StorageMax = "40GB";
 
-            # Only advertise local node pinned content to the ipfs network
-            Reprovider.Strategy = "pinned";
+            # Only advertise local node pinned content to the ipfs network.
+            Provide.Strategy = "pinned";
           };
         };
 
