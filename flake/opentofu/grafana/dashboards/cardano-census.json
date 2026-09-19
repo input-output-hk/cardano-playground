@@ -4812,7 +4812,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "One row per network, coloured by the share of its relays answering each run: green above 90%, yellow above 50%, red below. Every row turning yellow at once is the census host's own connectivity; one row turning is that hoster. Only hosting networks appear, the private, reserved, unrouted and unresolved buckets are in the table. The twelve are chosen by their largest relay count over the whole time range, so the rows stay put; a network whose relays are DNS names can still move rows between runs when those names resolve to another provider.",
+      "description": "One row per network, coloured by the share of its relays answering each run: green above 90%, yellow above 50%, red below. Every row turning yellow at once is the census host's own connectivity; one row turning is that hoster. Only hosting networks appear, the private, reserved, unrouted and unresolved buckets are in the table. The twelve are chosen by their largest relay count over the whole time range, so the rows stay put; a network whose relays are DNS names can still move rows between runs when those names resolve to another provider. Over long ranges each cell spans several runs and shows the worst of them.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4871,13 +4871,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "(max by (environment, asn, name) (cardano_census_asn_relays_reachable{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}) / max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"})) and topk(12, max by (environment, asn, name) (max_over_time(cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}[$__range])))",
+          "expr": "(min by (environment, asn, name) (min_over_time(cardano_census_asn_relays_reachable{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}[$__interval])) / max by (environment, asn, name) (max_over_time(cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}[$__interval]))) and topk(12, max by (environment, asn, name) (max_over_time(cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}[$__range])))",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
       ],
       "title": "Share of relays answering, twelve largest networks",
-      "type": "status-history"
+      "type": "status-history",
+      "maxDataPoints": 240
     },
     {
       "collapsed": false,
@@ -5135,7 +5136,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "The twelve SRV names with the lowest chance that a node drawing a target by weight reaches one that answered, one row each. Green is every target answering; red is a record a node can no longer use. Healthy names drop off the bottom, so a full green panel is the normal state; the table above lists every name.",
+      "description": "The twelve SRV names with the lowest chance that a node drawing a target by weight reaches one that answered, one row each. Green is every target answering; red is a record a node can no longer use. Healthy names drop off the bottom, so a full green panel is the normal state; the table above lists every name. The twelve are the least reachable over the whole range, so rows stay put; over long ranges each cell spans several runs and shows the worst of them.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5194,13 +5195,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "bottomk(12, max by (environment, name) (cardano_census_srv_reach_probability{environment=\"$environment\", instance=~\"$instance\"}))",
+          "expr": "min by (environment, name) (min_over_time(cardano_census_srv_reach_probability{environment=\"$environment\", instance=~\"$instance\"}[$__interval])) and bottomk(12, min by (environment, name) (min_over_time(cardano_census_srv_reach_probability{environment=\"$environment\", instance=~\"$instance\"}[$__range])))",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
       ],
       "title": "SRV reach probability, twelve least reachable names",
-      "type": "status-history"
+      "type": "status-history",
+      "maxDataPoints": 240
     },
     {
       "collapsed": false,
