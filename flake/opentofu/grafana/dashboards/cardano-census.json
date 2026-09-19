@@ -3763,7 +3763,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Tips grouped by hash, merged when within the fork tolerance of each other, the most-staked group being main. Hashes at tip counts distinct block hashes at the highest block; more than one is a slot battle or fork at the tip. Without chain history a group far behind cannot be told from a fork and is usually stuck relays, so read it with the lag panel.",
+      "description": "Tips grouped by hash, merged when their blocks lie within the fork tolerance of each other, the most-staked group being main. Fork tolerance is that distance in blocks, shown so the groups and heights beside it read correctly: relays within it count as one chain, relays further apart form another group. Hashes at tip counts distinct block hashes at the highest block; more than one is a slot battle or fork at the tip. Without chain history a group far behind cannot be told from a fork and is usually stuck relays, so read it with the lag panel.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3784,7 +3784,27 @@
           },
           "unit": "none"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -3825,9 +3845,17 @@
           "expr": "max by (environment) (cardano_census_tips_at_max_block{environment=\"$environment\", instance=~\"$instance\"})",
           "legendFormat": "hashes at tip",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "C",
+          "expr": "max by (environment) (cardano_census_fork_tolerance_blocks{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "fork tolerance, blocks"
         }
       ],
-      "title": "Chain groups / hashes at tip",
+      "title": "Chain groups / hashes at tip / fork tolerance",
       "type": "stat"
     },
     {
