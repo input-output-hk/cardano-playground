@@ -1748,12 +1748,199 @@
       "type": "table"
     },
     {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Every operator the outreach rows named anywhere in the time range, with the share of census runs it appeared in. Near 100% is steadily dark, near 0% a single bad run, and the band between is flapping: a relay crossing the timeout on some runs, a name failing over between hosts, or a node restarting. Largest stake first.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stake"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pool ID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "cexplorer",
+                    "url": "https://cexplorer.io/pool/$${__data.fields[\"Pool ID\"]}"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "pooltool",
+                    "url": "https://pooltool.io/pool/$${__data.fields[\"Pool ID\"]}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Share of runs unreachable"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.2
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "id": 67,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Stake"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A",
+          "format": "table",
+          "instant": true,
+          "expr": "sum by (environment, pool_id, ticker, name) (count_over_time(cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\"}[$__range])) / scalar(max(count_over_time(cardano_census_success{environment=\"$environment\", instance=~\"$instance\"}[$__range])))"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "B",
+          "format": "table",
+          "instant": true,
+          "expr": "max by (environment, pool_id, ticker, name) (max_over_time(cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\"}[$__range]))"
+        }
+      ],
+      "title": "Operators unreachable in some runs but not others",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #B",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "environment": true
+            },
+            "indexByName": {
+              "ticker": 0,
+              "name": 1,
+              "pool_id": 2,
+              "Value #B": 3,
+              "Value #A": 4
+            },
+            "renameByName": {
+              "ticker": "Ticker",
+              "name": "Name",
+              "pool_id": "Pool ID",
+              "Value #B": "Stake",
+              "Value #A": "Share of runs unreachable"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 53
       },
       "id": 52,
       "panels": [],
@@ -1788,7 +1975,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 45
+        "y": 54
       },
       "id": 53,
       "options": {
@@ -1848,7 +2035,7 @@
         "h": 4,
         "w": 6,
         "x": 4,
-        "y": 45
+        "y": 54
       },
       "id": 54,
       "options": {
@@ -1924,7 +2111,7 @@
         "h": 4,
         "w": 5,
         "x": 10,
-        "y": 45
+        "y": 54
       },
       "id": 55,
       "options": {
@@ -1984,7 +2171,7 @@
         "h": 4,
         "w": 4,
         "x": 15,
-        "y": 45
+        "y": 54
       },
       "id": 56,
       "options": {
@@ -2044,7 +2231,7 @@
         "h": 4,
         "w": 5,
         "x": 19,
-        "y": 45
+        "y": 54
       },
       "id": 57,
       "options": {
@@ -2169,7 +2356,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 58
       },
       "id": 58,
       "options": {
@@ -2295,7 +2482,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 49
+        "y": 58
       },
       "id": 59,
       "options": {
@@ -2348,7 +2535,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 67
       },
       "id": 60,
       "panels": [],
@@ -2449,7 +2636,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 68
       },
       "id": 61,
       "options": {
@@ -2545,7 +2732,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 68
       },
       "id": 62,
       "options": {
@@ -2594,7 +2781,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 77
       },
       "id": 15,
       "panels": [],
@@ -2622,7 +2809,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 69
+        "y": 78
       },
       "id": 16,
       "options": {
@@ -2759,7 +2946,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 69
+        "y": 78
       },
       "id": 17,
       "options": {
@@ -2899,7 +3086,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 69
+        "y": 78
       },
       "id": 18,
       "options": {
@@ -2975,7 +3162,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 86
       },
       "id": 19,
       "options": {
@@ -3033,7 +3220,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 94
       },
       "id": 20,
       "panels": [],
@@ -3119,7 +3306,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 86
+        "y": 95
       },
       "id": 21,
       "options": {
@@ -3171,7 +3358,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 86
+        "y": 95
       },
       "id": 22,
       "options": {
@@ -3311,7 +3498,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 86
+        "y": 95
       },
       "id": 23,
       "options": {
@@ -3366,7 +3553,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 103
       },
       "id": 24,
       "options": {
@@ -3424,7 +3611,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 111
       },
       "id": 25,
       "panels": [],
@@ -3464,7 +3651,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 103
+        "y": 112
       },
       "id": 26,
       "options": {
@@ -3528,7 +3715,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 112
       },
       "id": 27,
       "options": {
@@ -3565,7 +3752,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 111
+        "y": 120
       },
       "id": 28,
       "panels": [],
@@ -3603,7 +3790,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 112
+        "y": 121
       },
       "id": 29,
       "options": {
@@ -3707,7 +3894,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 112
+        "y": 121
       },
       "id": 30,
       "options": {
@@ -3759,7 +3946,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 112
+        "y": 121
       },
       "id": 31,
       "options": {
@@ -3877,7 +4064,7 @@
         "h": 9,
         "w": 10,
         "x": 0,
-        "y": 120
+        "y": 129
       },
       "fieldConfig": {
         "defaults": {
@@ -3978,7 +4165,7 @@
         "h": 9,
         "w": 8,
         "x": 10,
-        "y": 120
+        "y": 129
       },
       "fieldConfig": {
         "defaults": {
@@ -4042,7 +4229,7 @@
         "h": 9,
         "w": 6,
         "x": 18,
-        "y": 120
+        "y": 129
       },
       "fieldConfig": {
         "defaults": {
@@ -4110,7 +4297,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 129
+        "y": 138
       },
       "id": 32,
       "panels": [],
@@ -4192,7 +4379,7 @@
         "h": 11,
         "w": 14,
         "x": 0,
-        "y": 130
+        "y": 139
       },
       "id": 33,
       "options": {
@@ -4329,7 +4516,7 @@
         "h": 11,
         "w": 10,
         "x": 14,
-        "y": 130
+        "y": 139
       },
       "id": 34,
       "options": {
@@ -4429,7 +4616,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 141
+        "y": 150
       },
       "id": 35,
       "options": {
@@ -4529,7 +4716,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 141
+        "y": 150
       },
       "id": 36,
       "options": {
@@ -4634,7 +4821,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 150
+        "y": 159
       },
       "id": 37,
       "options": {
@@ -4670,7 +4857,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 160
+        "y": 169
       },
       "id": 38,
       "panels": [],
@@ -4704,7 +4891,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 161
+        "y": 170
       },
       "id": 39,
       "options": {
@@ -4830,7 +5017,7 @@
         "h": 9,
         "w": 18,
         "x": 6,
-        "y": 161
+        "y": 170
       },
       "id": 40,
       "options": {
@@ -4957,7 +5144,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 170
+        "y": 179
       },
       "id": 41,
       "options": {
@@ -4993,7 +5180,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 179
+        "y": 188
       },
       "id": 42,
       "panels": [],
@@ -5035,7 +5222,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 180
+        "y": 189
       },
       "id": 43,
       "options": {
@@ -5113,7 +5300,7 @@
         "h": 4,
         "w": 3,
         "x": 4,
-        "y": 180
+        "y": 189
       },
       "id": 44,
       "options": {
@@ -5177,7 +5364,7 @@
         "h": 4,
         "w": 3,
         "x": 7,
-        "y": 180
+        "y": 189
       },
       "id": 45,
       "options": {
@@ -5236,7 +5423,7 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 180
+        "y": 189
       },
       "id": 46,
       "options": {
@@ -5299,7 +5486,7 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 180
+        "y": 189
       },
       "id": 47,
       "options": {
@@ -5359,7 +5546,7 @@
         "h": 4,
         "w": 3,
         "x": 16,
-        "y": 180
+        "y": 189
       },
       "id": 48,
       "options": {
@@ -5418,7 +5605,7 @@
         "h": 4,
         "w": 5,
         "x": 19,
-        "y": 180
+        "y": 189
       },
       "id": 49,
       "options": {
@@ -5488,7 +5675,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 184
+        "y": 193
       },
       "id": 50,
       "options": {
@@ -5569,7 +5756,7 @@
         "h": 8,
         "w": 20,
         "x": 4,
-        "y": 184
+        "y": 193
       },
       "id": 51,
       "options": {
@@ -5598,6 +5785,233 @@
         }
       ],
       "title": "Scan duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Distinct relays that answered this run but not the previous one, above the axis, and the reverse below, plus relays whose name resolved into a different network. A steady trickle is normal churn. A spike in both directions at once is the census host's own connectivity; a spike in one direction is a hoster or an operator. Only present when the previous report was readable.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/became reachable$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#199e70",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/became unreachable$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d95926",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/moved network$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3987e5",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 192
+      },
+      "id": 68,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max by (environment) (cardano_census_relays_changed{environment=\"$environment\", instance=~\"$instance\", to=\"reachable\"})",
+          "legendFormat": "became reachable",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A"
+        },
+        {
+          "expr": "-1 * max by (environment) (cardano_census_relays_changed{environment=\"$environment\", instance=~\"$instance\", to=\"unreachable\"})",
+          "legendFormat": "became unreachable",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "B"
+        },
+        {
+          "expr": "max by (environment) (cardano_census_relays_moved_network{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "moved network",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "C"
+        }
+      ],
+      "title": "Relays changing state since the previous run",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "The stake behind the relays that changed state, each pool split over its relays. Puts the churn in the units the top row uses.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/became reachable$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#199e70",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/became unreachable$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d95926",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 192
+      },
+      "id": 69,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max by (environment) (cardano_census_stake_changed{environment=\"$environment\", instance=~\"$instance\", to=\"reachable\"})",
+          "legendFormat": "became reachable",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A"
+        },
+        {
+          "expr": "-1 * max by (environment) (cardano_census_stake_changed{environment=\"$environment\", instance=~\"$instance\", to=\"unreachable\"})",
+          "legendFormat": "became unreachable",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "B"
+        }
+      ],
+      "title": "Stake changing state since the previous run",
       "type": "timeseries"
     }
   ],
