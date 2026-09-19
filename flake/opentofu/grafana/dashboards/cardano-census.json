@@ -5819,7 +5819,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Distinct relays that answered this run but not the previous one, above the axis, and the reverse below, plus relays whose name resolved into a different network. A steady trickle is normal churn. A spike in both directions at once is the census host's own connectivity; a spike in one direction is a hoster or an operator. Only present when the previous report was readable.",
+      "description": "Distinct relays that answered this run but not the previous one, above the axis, and the reverse drawn below it, with the legend showing the count itself, plus relays whose name resolved into a different network. A steady trickle is normal churn. A spike in both directions at once is the census host's own connectivity; a spike in one direction is a hoster or an operator. Only present when the previous report was readable. Each run's count holds until the next run, like every other census series, so a level is the latest run, not a repeat of the change.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5827,8 +5827,8 @@
           },
           "custom": {
             "axisPlacement": "auto",
-            "drawStyle": "bars",
-            "fillOpacity": 80,
+            "drawStyle": "line",
+            "fillOpacity": 30,
             "gradientMode": "none",
             "lineWidth": 1,
             "showPoints": "never",
@@ -5836,7 +5836,8 @@
             "stacking": {
               "group": "A",
               "mode": "none"
-            }
+            },
+            "lineInterpolation": "stepAfter"
           },
           "unit": "none"
         },
@@ -5868,6 +5869,10 @@
                   "fixedColor": "#d95926",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
               }
             ]
           },
@@ -5921,7 +5926,7 @@
           "refId": "A"
         },
         {
-          "expr": "-1 * max by (environment) (cardano_census_relays_changed{environment=\"$environment\", instance=~\"$instance\", to=\"unreachable\"})",
+          "expr": "max by (environment) (cardano_census_relays_changed{environment=\"$environment\", instance=~\"$instance\", to=\"unreachable\"})",
           "legendFormat": "became unreachable",
           "datasource": {
             "type": "prometheus"
@@ -5944,7 +5949,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "The stake behind the relays that changed state, each pool split over its relays. Puts the churn in the units the top row uses.",
+      "description": "The stake behind the relays that changed state, each pool split over its relays. Puts the churn in the units the top row uses. Each run's count holds until the next run, like every other census series, so a level is the latest run, not a repeat of the change.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5952,8 +5957,8 @@
           },
           "custom": {
             "axisPlacement": "auto",
-            "drawStyle": "bars",
-            "fillOpacity": 80,
+            "drawStyle": "line",
+            "fillOpacity": 30,
             "gradientMode": "none",
             "lineWidth": 1,
             "showPoints": "never",
@@ -5961,7 +5966,8 @@
             "stacking": {
               "group": "A",
               "mode": "none"
-            }
+            },
+            "lineInterpolation": "stepAfter"
           },
           "unit": "percentunit"
         },
@@ -5993,6 +5999,10 @@
                   "fixedColor": "#d95926",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
               }
             ]
           }
@@ -6031,7 +6041,7 @@
           "refId": "A"
         },
         {
-          "expr": "-1 * max by (environment) (cardano_census_stake_changed{environment=\"$environment\", instance=~\"$instance\", to=\"unreachable\"})",
+          "expr": "max by (environment) (cardano_census_stake_changed{environment=\"$environment\", instance=~\"$instance\", to=\"unreachable\"})",
           "legendFormat": "became unreachable",
           "datasource": {
             "type": "prometheus"
