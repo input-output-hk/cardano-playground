@@ -4597,7 +4597,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "One row per network, coloured by the share of its relays answering each run: green above 90%, yellow above 50%, red below. Every row turning yellow at once is the census host's own connectivity; one row turning is that hoster.",
+      "description": "One row per network, coloured by the share of its relays answering each run: green above 90%, yellow above 50%, red below. Every row turning yellow at once is the census host's own connectivity; one row turning is that hoster. Only hosting networks appear, the private, reserved, unrouted and unresolved buckets are in the table. The twelve are chosen by their largest relay count over the whole time range, so the rows stay put; a network whose relays are DNS names can still move rows between runs when those names resolve to another provider.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4656,7 +4656,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "(max by (environment, asn, name) (cardano_census_asn_relays_reachable{environment=\"$environment\", instance=~\"$instance\"}) / max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\"})) and topk(12, max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\"}))",
+          "expr": "(max by (environment, asn, name) (cardano_census_asn_relays_reachable{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}) / max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"})) and topk(12, max by (environment, asn, name) (max_over_time(cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\", asn=~\"[0-9]+\"}[$__range])))",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
