@@ -859,7 +859,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Operators with the most stake whose relays all failed to answer this run, from the census pool index built on the db-sync host. Pools registered with the same relays are one operator, counted in Pools. Ticker and Name come from the pool's registered metadata; where the index did not match, Pool ID shows the first relay instead. Click the pool id for cexplorer or pooltool. This is the contact list.",
+      "description": "Operators with the most stake whose relays all failed to answer this run, from the census pool index built on the db-sync host. Pools registered with the same relays are one operator, counted in Pools. Ticker and Name come from the pool's registered metadata; where the index did not match, Pool ID shows the first relay instead. Click the pool id for cexplorer or pooltool. This is the contact list. Reversed counts relays the pool index could name only by reversing the IPv4 octets, the spelling node 11.1.x gives; a pool with every relay reversed is dark because of that bug, not its own outage.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -920,6 +920,41 @@
                 "value": 420
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reversed"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "transparent",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
           }
         ]
       },
@@ -953,7 +988,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "max by (environment, pool_id, ticker, name, pools, relays_total, relays_reachable, relays) (cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"none\"})",
+          "expr": "max by (environment, pool_id, ticker, name, pools, relays_total, relays_reachable, relays_reversed, relays) (cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"none\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -976,10 +1011,11 @@
               "name": 1,
               "pool_id": 2,
               "pools": 4,
-              "relays": 7,
+              "relays": 8,
               "relays_reachable": 6,
               "relays_total": 5,
-              "ticker": 0
+              "ticker": 0,
+              "relays_reversed": 7
             },
             "renameByName": {
               "Value": "Stake",
@@ -989,7 +1025,8 @@
               "relays": "Relay addresses",
               "relays_reachable": "Answering",
               "relays_total": "Relays",
-              "ticker": "Ticker"
+              "ticker": "Ticker",
+              "relays_reversed": "Reversed"
             }
           }
         }
@@ -1063,7 +1100,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Operators with some but not all relays answering, largest stake first. Worth a friendly note before they go fully dark; Answering over Relays shows how close they are.",
+      "description": "Operators with some but not all relays answering, largest stake first. Worth a friendly note before they go fully dark; Answering over Relays shows how close they are. Reversed counts relays the pool index could name only by reversing the IPv4 octets, the spelling node 11.1.x gives; a pool with every relay reversed is dark because of that bug, not its own outage.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1124,6 +1161,41 @@
                 "value": 420
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reversed"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "transparent",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
           }
         ]
       },
@@ -1157,7 +1229,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "max by (environment, pool_id, ticker, name, pools, relays_total, relays_reachable, relays) (cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"partial\"})",
+          "expr": "max by (environment, pool_id, ticker, name, pools, relays_total, relays_reachable, relays_reversed, relays) (cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"partial\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -1180,10 +1252,11 @@
               "name": 1,
               "pool_id": 2,
               "pools": 4,
-              "relays": 7,
+              "relays": 8,
               "relays_reachable": 6,
               "relays_total": 5,
-              "ticker": 0
+              "ticker": 0,
+              "relays_reversed": 7
             },
             "renameByName": {
               "Value": "Stake",
@@ -1193,7 +1266,8 @@
               "relays": "Relay addresses",
               "relays_reachable": "Answering",
               "relays_total": "Relays",
-              "ticker": "Ticker"
+              "ticker": "Ticker",
+              "relays_reversed": "Reversed"
             }
           }
         }
@@ -1207,6 +1281,601 @@
         "w": 24,
         "x": 0,
         "y": 35
+      },
+      "id": 52,
+      "panels": [],
+      "title": "IPv4 relay addresses",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Relay entries whose address is an IPv4 literal rather than a name. Each is probed as given and again with its four octets reversed, because node 11.1.0 through 11.1.2 decode the ledger's IPv4 relay bytes in the wrong order and hand out the reversed address.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 36
+      },
+      "id": 53,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_ipv4_literal{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "IPv4 literal relay entries",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "IPv4 literal entries that returned a tip at the address the snapshot gives, and at that address with its octets reversed. While the node is affected almost everything answers reversed; once fixed, given rises and reversed falls to about zero.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 4,
+        "y": 36
+      },
+      "id": 54,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_ipv4_literal_reachable{environment=\"$environment\", instance=~\"$instance\", spelling=\"given\"})",
+          "legendFormat": "as given",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_ipv4_literal_reachable{environment=\"$environment\", instance=~\"$instance\", spelling=\"reversed\"})",
+          "legendFormat": "reversed",
+          "refId": "B"
+        }
+      ],
+      "title": "Answering as given / reversed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Stake of pools with no relay answering as given and at least one answering at its octet reversal. This is what the address bug alone removes from reachable stake, and the number to watch go to zero after the node fix.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.02
+              },
+              {
+                "color": "red",
+                "value": 0.1
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 10,
+        "y": 36
+      },
+      "id": 55,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_stake_ipv4_reversed_only_ratio{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Stake hidden by the reversal",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Pools none of whose relays answer as given while one answers reversed. They are dark to every node running the affected versions, and most of them appear in the outreach table above through no fault of their own.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 15,
+        "y": 36
+      },
+      "id": 56,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_pools_ipv4_reversed_only{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Pools reachable only reversed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Reachable stake plus the stake hidden by the reversal: what the top row's Reachable stake should read after the node spells IPv4 relays correctly, everything else being equal.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 36
+      },
+      "id": 57,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_reachable_stake_ratio_with_reversed{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Reachable stake once fixed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "How many IPv4 literal entries answer at the given address and at its reversal, over time, against the number of such entries. The two answering lines should trade places when the fixed node is deployed on the census host.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "max": null,
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/as given$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#199e70",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/reversed$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d95926",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/entries$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c3c2b7",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 58,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_ipv4_literal_reachable{environment=\"$environment\", instance=~\"$instance\", spelling=\"given\"})",
+          "legendFormat": "as given",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_ipv4_literal_reachable{environment=\"$environment\", instance=~\"$instance\", spelling=\"reversed\"})",
+          "legendFormat": "reversed",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_ipv4_literal{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "IPv4 literal entries",
+          "refId": "C"
+        }
+      ],
+      "title": "IPv4 literal entries answering, by spelling",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Reachable stake as the node sees it, the same with reversed answers counted, and the gap between them. The gap is the stake hidden by the address bug; the two upper lines meet once it is fixed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "max": 1,
+          "min": 0,
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/as seen$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3987e5",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/reversal counted$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#199e70",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/hidden$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d95926",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 59,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_reachable_stake_ratio{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "as seen",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_reachable_stake_ratio_with_reversed{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "with the reversal counted",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_stake_ipv4_reversed_only_ratio{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "hidden",
+          "refId": "C"
+        }
+      ],
+      "title": "Reachable stake, as seen and with the reversal counted",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
       },
       "id": 15,
       "panels": [],
@@ -1234,7 +1903,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 36
+        "y": 50
       },
       "id": 16,
       "options": {
@@ -1371,7 +2040,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 36
+        "y": 50
       },
       "id": 17,
       "options": {
@@ -1511,7 +2180,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 36
+        "y": 50
       },
       "id": 18,
       "options": {
@@ -1587,7 +2256,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 58
       },
       "id": 19,
       "options": {
@@ -1645,7 +2314,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 66
       },
       "id": 20,
       "panels": [],
@@ -1731,7 +2400,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 53
+        "y": 67
       },
       "id": 21,
       "options": {
@@ -1783,7 +2452,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 53
+        "y": 67
       },
       "id": 22,
       "options": {
@@ -1923,7 +2592,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 53
+        "y": 67
       },
       "id": 23,
       "options": {
@@ -1978,7 +2647,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 75
       },
       "id": 24,
       "options": {
@@ -2036,7 +2705,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 83
       },
       "id": 25,
       "panels": [],
@@ -2076,7 +2745,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 70
+        "y": 84
       },
       "id": 26,
       "options": {
@@ -2140,7 +2809,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 70
+        "y": 84
       },
       "id": 27,
       "options": {
@@ -2177,7 +2846,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 92
       },
       "id": 28,
       "panels": [],
@@ -2215,7 +2884,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 79
+        "y": 93
       },
       "id": 29,
       "options": {
@@ -2319,7 +2988,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 79
+        "y": 93
       },
       "id": 30,
       "options": {
@@ -2371,7 +3040,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 79
+        "y": 93
       },
       "id": 31,
       "options": {
@@ -2483,7 +3152,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 101
       },
       "id": 32,
       "panels": [],
@@ -2565,7 +3234,7 @@
         "h": 11,
         "w": 14,
         "x": 0,
-        "y": 88
+        "y": 102
       },
       "id": 33,
       "options": {
@@ -2702,7 +3371,7 @@
         "h": 11,
         "w": 10,
         "x": 14,
-        "y": 88
+        "y": 102
       },
       "id": 34,
       "options": {
@@ -2802,7 +3471,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 99
+        "y": 113
       },
       "id": 35,
       "options": {
@@ -2902,7 +3571,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 99
+        "y": 113
       },
       "id": 36,
       "options": {
@@ -3007,7 +3676,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 108
+        "y": 122
       },
       "id": 37,
       "options": {
@@ -3043,7 +3712,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 118
+        "y": 132
       },
       "id": 38,
       "panels": [],
@@ -3077,7 +3746,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 119
+        "y": 133
       },
       "id": 39,
       "options": {
@@ -3203,7 +3872,7 @@
         "h": 9,
         "w": 18,
         "x": 6,
-        "y": 119
+        "y": 133
       },
       "id": 40,
       "options": {
@@ -3330,7 +3999,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 128
+        "y": 142
       },
       "id": 41,
       "options": {
@@ -3366,7 +4035,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 137
+        "y": 151
       },
       "id": 42,
       "panels": [],
@@ -3408,7 +4077,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 138
+        "y": 152
       },
       "id": 43,
       "options": {
@@ -3486,7 +4155,7 @@
         "h": 4,
         "w": 3,
         "x": 4,
-        "y": 138
+        "y": 152
       },
       "id": 44,
       "options": {
@@ -3550,7 +4219,7 @@
         "h": 4,
         "w": 3,
         "x": 7,
-        "y": 138
+        "y": 152
       },
       "id": 45,
       "options": {
@@ -3609,7 +4278,7 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 138
+        "y": 152
       },
       "id": 46,
       "options": {
@@ -3672,7 +4341,7 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 138
+        "y": 152
       },
       "id": 47,
       "options": {
@@ -3732,7 +4401,7 @@
         "h": 4,
         "w": 3,
         "x": 16,
-        "y": 138
+        "y": 152
       },
       "id": 48,
       "options": {
@@ -3791,7 +4460,7 @@
         "h": 4,
         "w": 5,
         "x": 19,
-        "y": 138
+        "y": 152
       },
       "id": 49,
       "options": {
@@ -3859,7 +4528,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 142
+        "y": 156
       },
       "id": 50,
       "options": {
@@ -3940,7 +4609,7 @@
         "h": 8,
         "w": 20,
         "x": 4,
-        "y": 142
+        "y": 156
       },
       "id": 51,
       "options": {
