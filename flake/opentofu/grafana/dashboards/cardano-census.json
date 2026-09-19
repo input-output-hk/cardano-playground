@@ -3393,12 +3393,251 @@
       "type": "bargauge"
     },
     {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 63,
+      "type": "timeseries",
+      "title": "Tip and fork heights",
+      "description": "Highest block of each tip group at every run, rank 1 the main group then by stake, against the highest tip any relay reported. One line means the network agrees. A second line below the tip is a group of relays more than the fork tolerance behind, stuck or syncing relays when it stays flat and a fork when it climbs in step. The report names each group's hash.",
+      "gridPos": {
+        "h": 9,
+        "w": 10,
+        "x": 0,
+        "y": 111
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineWidth": 2,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/highest tip$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c3c2b7",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max by (environment, rank) (cardano_census_chain_group_block{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "group {{rank}}",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A"
+        },
+        {
+          "expr": "max by (environment) (cardano_census_tip_block_max{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "highest tip",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 64,
+      "type": "timeseries",
+      "title": "Stake per chain group",
+      "description": "Stake behind each tip group, stacked, each pool split evenly over its answering relays so the stack sums to Reachable stake. A fork with real weight shows as a band that is not group 1; a sliver is a few stuck relays.",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 10,
+        "y": 111
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "max": 1,
+          "min": 0,
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max by (environment, rank) (cardano_census_chain_group_stake_ratio{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "group {{rank}}",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 65,
+      "type": "state-timeline",
+      "title": "Fork presence",
+      "description": "Green while every answering relay sits in one tip group and reports one hash at the highest block. Red on the top row when a second hash competes at the tip, a slot battle caught at probe time. Red on the bottom row when relays split into groups more than the fork tolerance apart.",
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 111
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.8,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max by (environment) (cardano_census_tips_at_max_block{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "hashes at tip",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A"
+        },
+        {
+          "expr": "max by (environment) (cardano_census_chains{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "chain groups",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "B"
+        }
+      ]
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 111
+        "y": 120
       },
       "id": 32,
       "panels": [],
@@ -3480,7 +3719,7 @@
         "h": 11,
         "w": 14,
         "x": 0,
-        "y": 112
+        "y": 121
       },
       "id": 33,
       "options": {
@@ -3617,7 +3856,7 @@
         "h": 11,
         "w": 10,
         "x": 14,
-        "y": 112
+        "y": 121
       },
       "id": 34,
       "options": {
@@ -3717,7 +3956,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 123
+        "y": 132
       },
       "id": 35,
       "options": {
@@ -3817,7 +4056,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 123
+        "y": 132
       },
       "id": 36,
       "options": {
@@ -3922,7 +4161,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 132
+        "y": 141
       },
       "id": 37,
       "options": {
@@ -3958,7 +4197,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 142
+        "y": 151
       },
       "id": 38,
       "panels": [],
@@ -3992,7 +4231,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 143
+        "y": 152
       },
       "id": 39,
       "options": {
@@ -4118,7 +4357,7 @@
         "h": 9,
         "w": 18,
         "x": 6,
-        "y": 143
+        "y": 152
       },
       "id": 40,
       "options": {
@@ -4245,7 +4484,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 152
+        "y": 161
       },
       "id": 41,
       "options": {
@@ -4281,7 +4520,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 161
+        "y": 170
       },
       "id": 42,
       "panels": [],
@@ -4323,7 +4562,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 162
+        "y": 171
       },
       "id": 43,
       "options": {
@@ -4401,7 +4640,7 @@
         "h": 4,
         "w": 3,
         "x": 4,
-        "y": 162
+        "y": 171
       },
       "id": 44,
       "options": {
@@ -4465,7 +4704,7 @@
         "h": 4,
         "w": 3,
         "x": 7,
-        "y": 162
+        "y": 171
       },
       "id": 45,
       "options": {
@@ -4524,7 +4763,7 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 162
+        "y": 171
       },
       "id": 46,
       "options": {
@@ -4587,7 +4826,7 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 162
+        "y": 171
       },
       "id": 47,
       "options": {
@@ -4647,7 +4886,7 @@
         "h": 4,
         "w": 3,
         "x": 16,
-        "y": 162
+        "y": 171
       },
       "id": 48,
       "options": {
@@ -4706,7 +4945,7 @@
         "h": 4,
         "w": 5,
         "x": 19,
-        "y": 162
+        "y": 171
       },
       "id": 49,
       "options": {
@@ -4774,7 +5013,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 166
+        "y": 175
       },
       "id": 50,
       "options": {
@@ -4855,7 +5094,7 @@
         "h": 8,
         "w": 20,
         "x": 4,
-        "y": 166
+        "y": 175
       },
       "id": 51,
       "options": {
