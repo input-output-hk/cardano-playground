@@ -615,7 +615,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Every relay entry by the stage it reached, stacked to the snapshot total. dns: the name did not resolve. srv: the SRV lookup returned nothing. connect: TCP timed out or was refused. handshake: connected but no node-to-node handshake. chainsync: handshake done but no tip. Connect dominates when relays are dead or firewalled; handshake growing points at overloaded nodes.",
+      "description": "Every relay entry by the stage it reached, stacked to the snapshot total. dns: the name did not resolve. srv: the SRV lookup returned nothing. connect: TCP timed out or was refused. handshake: connected but no node-to-node handshake. chainsync: handshake done but no tip. Connect dominates when relays are dead or firewalled; handshake growing points at overloaded nodes. address is a relay that resolved only to private or reserved space and was never dialled.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -724,6 +724,21 @@
                 "id": "color",
                 "value": {
                   "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/address$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#8f3bb8",
                   "mode": "fixed"
                 }
               }
@@ -5380,7 +5395,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Version and git revision of the cardano-census binary that wrote the latest file.",
+      "description": "Version and git revision of the cardano-census binary that wrote the latest file. Only the build currently reporting is shown, so several deploys inside the time range do not stack up here.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5429,7 +5444,9 @@
           },
           "expr": "max by (environment, version, rev) (cardano_census_build_info{environment=\"$environment\", instance=~\"$instance\"})",
           "legendFormat": "{{version}} {{rev}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "range": false
         }
       ],
       "title": "Build",
