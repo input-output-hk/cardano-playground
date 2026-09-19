@@ -1877,6 +1877,252 @@
         "x": 0,
         "y": 49
       },
+      "id": 60,
+      "panels": [],
+      "title": "Why relays fail",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Relay entries that failed at the connect stage, split by the error. Timeout is a dead host or a firewall dropping the port. Refused is a live host with nothing listening there, usually a moved or stopped node. Unreachable is a route that does not exist, which is where private, reserved and reversed addresses end up. Compare with Relay entries by outcome in the top row, whose connect line this breaks down.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "max": null,
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/timeout$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d95926",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/refused$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c98500",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/unreachable$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3987e5",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/other$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c3c2b7",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "id": 61,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment, reason) (cardano_census_relays_failed_connect{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{reason}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Connect failures by what the socket said",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "The node's own experience, from this environment's relay logs: the share of cold to warm promotion attempts that failed over the previous six hours, big ledger peers and all other peers separately. A node retries a failing address six times before forgetting it, so a few dead relays weigh heavily here. The big ledger line is the one the IPv4 reversal inflates; it will not reach zero after the fix while operators register relays at private addresses.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "max": 1,
+          "min": 0,
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/^big ledger peers$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#d95926",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/^other peers$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3987e5",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |= \"PromoteColdBigLedgerPeerFailed\" [6h])) / sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |~ \"PromoteColdBigLedgerPeer(Failed|Done)\" [6h]))",
+          "legendFormat": "big ledger peers",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |= \"PromoteColdFailed\" [6h])) / sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |~ \"PromoteCold(Failed|Done)\" [6h]))",
+          "legendFormat": "other peers",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ],
+      "title": "Cold to warm promotions failing on the relays",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
       "id": 15,
       "panels": [],
       "title": "Time to answer",
@@ -1903,7 +2149,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 50
+        "y": 60
       },
       "id": 16,
       "options": {
@@ -2040,7 +2286,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 50
+        "y": 60
       },
       "id": 17,
       "options": {
@@ -2180,7 +2426,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 50
+        "y": 60
       },
       "id": 18,
       "options": {
@@ -2256,7 +2502,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 68
       },
       "id": 19,
       "options": {
@@ -2314,7 +2560,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 76
       },
       "id": 20,
       "panels": [],
@@ -2400,7 +2646,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 67
+        "y": 77
       },
       "id": 21,
       "options": {
@@ -2452,7 +2698,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 67
+        "y": 77
       },
       "id": 22,
       "options": {
@@ -2592,7 +2838,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 67
+        "y": 77
       },
       "id": 23,
       "options": {
@@ -2647,7 +2893,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 85
       },
       "id": 24,
       "options": {
@@ -2705,7 +2951,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 83
+        "y": 93
       },
       "id": 25,
       "panels": [],
@@ -2745,7 +2991,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 84
+        "y": 94
       },
       "id": 26,
       "options": {
@@ -2809,7 +3055,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 84
+        "y": 94
       },
       "id": 27,
       "options": {
@@ -2846,7 +3092,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 92
+        "y": 102
       },
       "id": 28,
       "panels": [],
@@ -2884,7 +3130,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 93
+        "y": 103
       },
       "id": 29,
       "options": {
@@ -2988,7 +3234,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 93
+        "y": 103
       },
       "id": 30,
       "options": {
@@ -3040,7 +3286,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 93
+        "y": 103
       },
       "id": 31,
       "options": {
@@ -3152,7 +3398,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 101
+        "y": 111
       },
       "id": 32,
       "panels": [],
@@ -3163,7 +3409,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Relay entries and stake by hosting network, each pool's stake split evenly over its relays. unrouted: relays whose address no network announces, dead or bogus registrations. unresolved: never got an address. other: networks hosting fewer relays than the fold threshold. Sort by Answering to find networks that are mostly dark.",
+      "description": "Relay entries and stake by hosting network, each pool's stake split evenly over its relays. unrouted: relays whose public address no network announces, dead address space. reserved: loopback, multicast or other space no host can hold, a bogus or mangled registration; on node 11.1.x mostly reversed IPv4 addresses. private: RFC 1918 and similar addresses, a registration or DNS record pointing inside the operator's own network. unresolved: never got an address. other: networks hosting fewer relays than the fold threshold. Sort by Answering to find networks that are mostly dark.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -3234,7 +3480,7 @@
         "h": 11,
         "w": 14,
         "x": 0,
-        "y": 102
+        "y": 112
       },
       "id": 33,
       "options": {
@@ -3371,7 +3617,7 @@
         "h": 11,
         "w": 10,
         "x": 14,
-        "y": 102
+        "y": 112
       },
       "id": 34,
       "options": {
@@ -3439,7 +3685,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Stake whose relays did not answer, by hosting network, each pool's stake split evenly over its relays. The stake view of the relay-count chart beside it: a network with few relays but heavy pools ranks here and not there. unrouted is stake registered at addresses nobody announces.",
+      "description": "Stake whose relays did not answer, by hosting network, each pool's stake split evenly over its relays. The stake view of the relay-count chart beside it: a network with few relays but heavy pools ranks here and not there. unrouted, reserved and private are stake registered at addresses nobody can reach from outside; private is the part that stays once the IPv4 reversal is fixed.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3471,7 +3717,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 113
+        "y": 123
       },
       "id": 35,
       "options": {
@@ -3571,7 +3817,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 113
+        "y": 123
       },
       "id": 36,
       "options": {
@@ -3676,7 +3922,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 122
+        "y": 132
       },
       "id": 37,
       "options": {
@@ -3712,7 +3958,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 132
+        "y": 142
       },
       "id": 38,
       "panels": [],
@@ -3746,7 +3992,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 133
+        "y": 143
       },
       "id": 39,
       "options": {
@@ -3872,7 +4118,7 @@
         "h": 9,
         "w": 18,
         "x": 6,
-        "y": 133
+        "y": 143
       },
       "id": 40,
       "options": {
@@ -3999,7 +4245,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 142
+        "y": 152
       },
       "id": 41,
       "options": {
@@ -4035,7 +4281,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 151
+        "y": 161
       },
       "id": 42,
       "panels": [],
@@ -4077,7 +4323,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 152
+        "y": 162
       },
       "id": 43,
       "options": {
@@ -4155,7 +4401,7 @@
         "h": 4,
         "w": 3,
         "x": 4,
-        "y": 152
+        "y": 162
       },
       "id": 44,
       "options": {
@@ -4219,7 +4465,7 @@
         "h": 4,
         "w": 3,
         "x": 7,
-        "y": 152
+        "y": 162
       },
       "id": 45,
       "options": {
@@ -4278,7 +4524,7 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 152
+        "y": 162
       },
       "id": 46,
       "options": {
@@ -4314,7 +4560,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Ranges loaded from the ip2asn database. Zero means the refresh failed or the file is missing, every relay then lands in unresolved or unrouted, and the census still ran.",
+      "description": "Ranges loaded from the ip2asn database. Zero means the refresh failed or the file is missing, every relay then lands in unresolved, private, reserved or unrouted, and the census still ran.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4341,7 +4587,7 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 152
+        "y": 162
       },
       "id": 47,
       "options": {
@@ -4401,7 +4647,7 @@
         "h": 4,
         "w": 3,
         "x": 16,
-        "y": 152
+        "y": 162
       },
       "id": 48,
       "options": {
@@ -4460,7 +4706,7 @@
         "h": 4,
         "w": 5,
         "x": 19,
-        "y": 152
+        "y": 162
       },
       "id": 49,
       "options": {
@@ -4528,7 +4774,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 156
+        "y": 166
       },
       "id": 50,
       "options": {
@@ -4609,7 +4855,7 @@
         "h": 8,
         "w": 20,
         "x": 4,
-        "y": 156
+        "y": 166
       },
       "id": 51,
       "options": {
