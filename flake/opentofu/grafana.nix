@@ -17,6 +17,7 @@ with lib; let
   localDashboardFileList = parseDir ./grafana/dashboards ".json";
   leiosDashboardFileList = parseDir "${inputs.leios-observability}/demo/proto-devnet/config/dashboards" ".json";
   lokiAlertFileList = parseDir ./grafana/alerts-loki ".nix-import";
+  lokiRecordingRulesFileList = parseDir ./grafana/recording-rules-loki ".nix-import";
   recordingRulesFileList = parseDir ./grafana/recording-rules ".nix-import";
 
   extractFileName = file:
@@ -227,6 +228,19 @@ in {
                 // {provider = "loki";};
             }) {}
           lokiAlertFileList;
+
+          # Loki recording rules, written into mimir by the loki ruler
+          loki_rule_group_recording = foldl' (acc: f:
+            recursiveUpdate acc {
+              ${extractFileName f} =
+                (
+                  if isFunction (import f)
+                  then (import f) self
+                  else (import f)
+                )
+                // {provider = "loki";};
+            }) {}
+          lokiRecordingRulesFileList;
 
           # Recording rules
           mimir_rule_group_recording = foldl' (acc: f:

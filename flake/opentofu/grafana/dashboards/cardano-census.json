@@ -2669,10 +2669,9 @@
     },
     {
       "datasource": {
-        "type": "loki",
-        "uid": "loki"
+        "type": "prometheus"
       },
-      "description": "The node's own experience, from this environment's relay logs: the share of cold to warm promotion attempts that failed over the previous six hours, big ledger peers and all other peers separately. A node retries a failing address six times before forgetting it, so a few dead relays weigh heavily here. The big ledger line is the one the IPv4 reversal inflates; it will not reach zero after the fix while operators register relays at private addresses.",
+      "description": "The node's own experience, from this environment's relay logs: the share of cold to warm promotion attempts that failed over the previous six hours, big ledger peers and all other peers separately. The counts come from a Loki recording rule that tallies the promotion lines once a minute into mimir, so the panel draws any range at once. A node retries a failing address six times before forgetting it, so a few dead relays weigh heavily here. The big ledger line is the one the IPv4 reversal inflates; it will not reach zero after the fix while operators register relays at private addresses.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2753,23 +2752,19 @@
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus"
           },
-          "expr": "sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |= \"PromoteColdBigLedgerPeerFailed\" [6h])) / sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |~ \"PromoteColdBigLedgerPeer(Failed|Done)\" [6h]))",
-          "legendFormat": "big ledger peers",
-          "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "expr": "sum(sum_over_time(cardano_node_logmetrics_cold_promotions_count1m{environment=\"$environment\", instance=~\".*-rel-.*\", channel=\"big_ledger\", result=\"failed\"}[6h])) / sum(sum_over_time(cardano_node_logmetrics_cold_promotions_count1m{environment=\"$environment\", instance=~\".*-rel-.*\", channel=\"big_ledger\"}[6h]))",
+          "legendFormat": "big ledger peers"
         },
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus"
           },
-          "expr": "sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |= \"PromoteColdFailed\" [6h])) / sum(count_over_time({environment=\"$environment\", systemd_unit=\"cardano-node.service\", instance=~\".*-rel-.*\"} |~ \"PromoteCold(Failed|Done)\" [6h]))",
-          "legendFormat": "other peers",
-          "queryType": "range",
-          "refId": "B"
+          "refId": "B",
+          "expr": "sum(sum_over_time(cardano_node_logmetrics_cold_promotions_count1m{environment=\"$environment\", instance=~\".*-rel-.*\", channel=\"other\", result=\"failed\"}[6h])) / sum(sum_over_time(cardano_node_logmetrics_cold_promotions_count1m{environment=\"$environment\", instance=~\".*-rel-.*\", channel=\"other\"}[6h]))",
+          "legendFormat": "other peers"
         }
       ],
       "title": "Cold to warm promotions failing on the relays",
