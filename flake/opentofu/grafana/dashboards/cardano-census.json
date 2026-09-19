@@ -25,6 +25,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Share of total stake held by pools with at least one relay that returned a chainsync tip within the run's budget: the snapshot's relativeStake summed over those pools. It can never exceed the snapshot ceiling of about 90%. Compare with Relay-weighted stake to see how much of it rests on partial relay sets.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -92,6 +93,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Each pool's stake multiplied by the share of its relays that answered, an SRV entry counting by the weight of its answering targets. Equals Reachable stake when every pool is fully up or fully down; the gap between the two is stake hanging on partial relay sets.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -159,6 +161,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Stake of pools whose fastest relay answered within 10 seconds. The census allows 60 seconds per relay, so this is the stricter figure a probe with a 10 second timeout would report.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -226,6 +229,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Relay entries in the snapshot that returned a tip, both address families. Entries resolving to the same address are probed once and share the result.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -284,6 +288,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Relay lines in the node's big ledger peer snapshot, SRV names included. Not distinct addresses.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -342,6 +347,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Pools by how many of their relays answered: all of them, some, or none. A growing partial count is pools that are up but degraded; watch whether it moves on into none.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -446,6 +452,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "The three stake figures over time against the snapshot ceiling, the total relativeStake the snapshot covers. Sudden steps usually mean a heavily shared endpoint crossed a timeout; slow drift is relays going dark for good.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -608,6 +615,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Every relay entry by the stage it reached, stacked to the snapshot total. dns: the name did not resolve. srv: the SRV lookup returned nothing. connect: TCP timed out or was refused. handshake: connected but no node-to-node handshake. chainsync: handshake done but no tip. Connect dominates when relays are dead or firewalled; handshake growing points at overloaded nodes.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -776,6 +784,432 @@
       },
       "id": 10,
       "panels": [],
+      "title": "Outreach",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Stake of pools none of whose relays answered, over every pool in the snapshot. The size of the outreach problem; the table beside it is the list.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.25
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 4,
+        "x": 0,
+        "y": 15
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_blp_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"none\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Stake with no reachable relay",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Operators with the most stake whose relays all failed to answer this run, from the census pool index built on the db-sync host. Pools registered with the same relays are one operator, counted in Pools. Ticker and Name come from the pool's registered metadata; where the index did not match, Pool ID shows the first relay instead. Click the pool id for cexplorer or pooltool. This is the contact list.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stake"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pool ID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "cexplorer",
+                    "url": "https://cexplorer.io/pool/$${__data.fields[\"Pool ID\"]}"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "pooltool",
+                    "url": "https://pooltool.io/pool/$${__data.fields[\"Pool ID\"]}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Relay addresses"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 420
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 20,
+        "x": 4,
+        "y": 15
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Stake"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment, pool_id, ticker, name, pools, relays_total, relays_reachable, relays) (cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"none\"})",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Unreachable operators, largest stake first",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "environment": true,
+              "reach": true
+            },
+            "indexByName": {
+              "Value": 3,
+              "name": 1,
+              "pool_id": 2,
+              "pools": 4,
+              "relays": 7,
+              "relays_reachable": 6,
+              "relays_total": 5,
+              "ticker": 0
+            },
+            "renameByName": {
+              "Value": "Stake",
+              "name": "Name",
+              "pool_id": "Pool ID",
+              "pools": "Pools",
+              "relays": "Relay addresses",
+              "relays_reachable": "Answering",
+              "relays_total": "Relays",
+              "ticker": "Ticker"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Snapshot pools the db-sync pool index could name. Zero means the index build failed or the host has no db-sync, and the outreach tables fall back to relay addresses.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 0,
+        "y": 26
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_pools_indexed{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Pools named by the index",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Operators with some but not all relays answering, largest stake first. Worth a friendly note before they go fully dark; Answering over Relays shows how close they are.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stake"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pool ID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "cexplorer",
+                    "url": "https://cexplorer.io/pool/$${__data.fields[\"Pool ID\"]}"
+                  },
+                  {
+                    "targetBlank": true,
+                    "title": "pooltool",
+                    "url": "https://pooltool.io/pool/$${__data.fields[\"Pool ID\"]}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Relay addresses"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 420
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 20,
+        "x": 4,
+        "y": 26
+      },
+      "id": 14,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Stake"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment, pool_id, ticker, name, pools, relays_total, relays_reachable, relays) (cardano_census_pool_stake_ratio{environment=\"$environment\", instance=~\"$instance\", reach=\"partial\"})",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Partially reachable operators, largest stake first",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "environment": true,
+              "reach": true
+            },
+            "indexByName": {
+              "Value": 3,
+              "name": 1,
+              "pool_id": 2,
+              "pools": 4,
+              "relays": 7,
+              "relays_reachable": 6,
+              "relays_total": 5,
+              "ticker": 0
+            },
+            "renameByName": {
+              "Value": "Stake",
+              "name": "Name",
+              "pool_id": "Pool ID",
+              "pools": "Pools",
+              "relays": "Relay addresses",
+              "relays_reachable": "Answering",
+              "relays_total": "Relays",
+              "ticker": "Ticker"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 15,
+      "panels": [],
       "title": "Time to answer",
       "type": "row"
     },
@@ -783,6 +1217,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Cumulative: stake of pools whose fastest relay answered within each bound. Where the bars stop growing is where the network has answered. A large step between 10 and 45 seconds is stake reachable only slowly, usually a few heavily shared exchange relays.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -799,9 +1234,9 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 15
+        "y": 36
       },
-      "id": 11,
+      "id": 16,
       "options": {
         "displayMode": "gradient",
         "maxVizHeight": 300,
@@ -919,6 +1354,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "The same time buckets counted in relay entries rather than stake.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -935,9 +1371,9 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 15
+        "y": 36
       },
-      "id": 12,
+      "id": 17,
       "options": {
         "displayMode": "gradient",
         "maxVizHeight": 300,
@@ -1055,6 +1491,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Distribution of connect-through-tip time per answering endpoint, DNS and handshake included, so slower than a bare ping. Most endpoints answer inside a second; a second band above 10 seconds is the slow tail, listed by address in the run's report file.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1074,9 +1511,9 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 15
+        "y": 36
       },
-      "id": 13,
+      "id": 18,
       "options": {
         "calculate": false,
         "cellGap": 1,
@@ -1127,14 +1564,90 @@
       "type": "heatmap"
     },
     {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "The time-to-answer distribution of stake as it changes run by run, the same buckets as the bar gauge above. Colour is stake answering in that band. A band above 10 seconds that darkens over weeks is the slow tail growing, the shape a slow decline takes before it shows in the headline number.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "id": 19,
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "blue",
+          "mode": "scheme",
+          "reverse": false,
+          "scheme": "Greens",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1E-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "showColorScale": false,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "sum by (le) (max by (environment, le) (cardano_census_stake_reachable_within{environment=\"$environment\", instance=~\"$instance\"}))",
+          "format": "heatmap",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Stake reachable within, over time",
+      "type": "heatmap"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 52
       },
-      "id": 14,
+      "id": 20,
       "panels": [],
       "title": "Pools",
       "type": "row"
@@ -1143,6 +1656,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Pool counts by reach class over time. Pools move from full to partial before they move to none.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1217,9 +1731,9 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 24
+        "y": 53
       },
-      "id": 15,
+      "id": 21,
       "options": {
         "legend": {
           "calcs": [
@@ -1252,6 +1766,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Cumulative distribution of pools by the share of their relays that answered. 'none answering' equals the none reach class, and the difference between neighbouring bars is the pools in that band. A single-relay pool can only sit at 0 or 100%.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1268,9 +1783,9 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 24
+        "y": 53
       },
-      "id": 16,
+      "id": 22,
       "options": {
         "displayMode": "gradient",
         "maxVizHeight": 300,
@@ -1348,6 +1863,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Which address family the answering connection used. IPv6 is tried first with a 500 ms head start, so v6 falling to zero while v4 holds points at the census host's own v6 path, not at the relays.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1407,9 +1923,9 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 24
+        "y": 53
       },
-      "id": 17,
+      "id": 23,
       "options": {
         "legend": {
           "calcs": [
@@ -1439,14 +1955,231 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Distribution of pools by the share of their relays answering, over time. Pools sliding out of the 100% band into the middle bands is degradation ahead of them leaving the reachable count.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 24,
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "blue",
+          "mode": "scheme",
+          "reverse": false,
+          "scheme": "Purples",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1E-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "showColorScale": false,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "percentunit"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "sum by (le) (max by (environment, le) (cardano_census_blp_relay_reachability_bucket{environment=\"$environment\", instance=~\"$instance\"}))",
+          "format": "heatmap",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Pools by share of relays answering, over time",
+      "type": "heatmap"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 69
       },
-      "id": 18,
+      "id": 25,
+      "panels": [],
+      "title": "Node-to-node protocol versions",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "The node-to-node protocol version each answering relay agreed to, which is the highest it supports that the census also offers. A new version appearing and growing is a node release rolling out across the network; a version lingering is operators who have not upgraded.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "max": null,
+          "min": null,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 70
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment, version) (cardano_census_relays_n2n_version{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "v{{version}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Answering relay entries by negotiated version",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "The same breakdown weighted by stake, each pool split evenly over its relays. Shows whether the pools that matter for consensus have moved, not just the relay count.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "max": null,
+          "min": 0,
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 70
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment, version) (cardano_census_stake_n2n_version{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "v{{version}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Stake by negotiated version",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 78
+      },
+      "id": 28,
       "panels": [],
       "title": "Chains",
       "type": "row"
@@ -1455,6 +2188,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Tips grouped by hash, merged when within the fork tolerance of each other, the most-staked group being main. Hashes at tip counts distinct block hashes at the highest block; more than one is a slot battle or fork at the tip. Without chain history a group far behind cannot be told from a fork and is usually stuck relays, so read it with the lag panel.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1481,9 +2215,9 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 33
+        "y": 79
       },
-      "id": 19,
+      "id": 29,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -1525,6 +2259,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Stake on the main group against all others, each pool split evenly over its answering relays so the two sum to Reachable stake. Other above a few percent for consecutive runs deserves a look at the chain table in the run's report.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1584,9 +2319,9 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 33
+        "y": 79
       },
-      "id": 20,
+      "id": 30,
       "options": {
         "legend": {
           "calcs": [
@@ -1619,6 +2354,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Cumulative stake of pools whose most current relay is at most this many blocks behind the highest tip seen. Relays are probed over the whole run, so a few blocks of lag is the run's own duration; stake still missing past 10 blocks is relays that are behind.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1635,9 +2371,9 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 33
+        "y": 79
       },
-      "id": 21,
+      "id": 31,
       "options": {
         "displayMode": "gradient",
         "maxVizHeight": 300,
@@ -1747,9 +2483,9 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 87
       },
-      "id": 22,
+      "id": 32,
       "panels": [],
       "title": "Networks",
       "type": "row"
@@ -1758,6 +2494,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Relay entries and stake by hosting network, each pool's stake split evenly over its relays. unrouted: relays whose address no network announces, dead or bogus registrations. unresolved: never got an address. other: networks hosting fewer relays than the fold threshold. Sort by Answering to find networks that are mostly dark.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1828,9 +2565,9 @@
         "h": 11,
         "w": 14,
         "x": 0,
-        "y": 42
+        "y": 88
       },
-      "id": 23,
+      "id": 33,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -1933,6 +2670,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "The twelve networks with the most unanswering relay entries. A network at the top with a low answering share in the table is a hoster-level problem; one at the top with a normal share is simply large.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1945,15 +2683,28 @@
             "lineWidth": 1
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Not answering"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 11,
         "w": 10,
         "x": 14,
-        "y": 42
+        "y": 88
       },
-      "id": 24,
+      "id": 34,
       "options": {
         "barWidth": 0.8,
         "groupWidth": 0.7,
@@ -1999,6 +2750,18 @@
               "name": "Network"
             }
           }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Not answering"
+              }
+            ]
+          }
         }
       ],
       "type": "barchart"
@@ -2007,50 +2770,258 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Stake whose relays did not answer, by hosting network, each pool's stake split evenly over its relays. The stake view of the relay-count chart beside it: a network with few relays but heavy pools ranks here and not there. unrouted is stake registered at addresses nobody announces.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "red",
+            "mode": "fixed"
           },
           "custom": {
             "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "lineWidth": 1,
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stake not answering"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 99
+      },
+      "id": 35,
+      "options": {
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "Network"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "topk(12, max by (environment, asn, name) (cardano_census_asn_stake_ratio{environment=\"$environment\", instance=~\"$instance\"}) - max by (environment, asn, name) (cardano_census_asn_stake_reachable_ratio{environment=\"$environment\", instance=~\"$instance\"}))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Stake not answering, by network",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "asn": true,
+              "environment": true
+            },
+            "renameByName": {
+              "Value": "Stake not answering",
+              "name": "Network"
             }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Stake not answering"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Where the snapshot's stake is hosted, by network, whether answering or not. The concentration view: how much of the network rides on the three largest hosters.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stake hosted"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 99
+      },
+      "id": 36,
+      "options": {
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "Network"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "topk(12, max by (environment, asn, name) (cardano_census_asn_stake_ratio{environment=\"$environment\", instance=~\"$instance\"}))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Stake hosted, by network",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "asn": true,
+              "environment": true
+            },
+            "renameByName": {
+              "Value": "Stake hosted",
+              "name": "Network"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Stake hosted"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "One row per network, coloured by the share of its relays answering each run: green above 90%, yellow above 50%, red below. Every row turning yellow at once is the census host's own connectivity; one row turning is that hoster.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0
           },
           "max": 1,
           "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.9
+              }
+            ]
+          },
           "unit": "percentunit"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 108
       },
-      "id": 25,
+      "id": 37,
       "options": {
+        "colWidth": 0.9,
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
+          "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
+        "rowHeight": 0.85,
+        "showValue": "never",
         "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -2058,13 +3029,13 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "(max by (environment, asn, name) (cardano_census_asn_relays_reachable{environment=\"$environment\", instance=~\"$instance\"}) / max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\"})) and topk(8, max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\"}))",
+          "expr": "(max by (environment, asn, name) (cardano_census_asn_relays_reachable{environment=\"$environment\", instance=~\"$instance\"}) / max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\"})) and topk(12, max by (environment, asn, name) (cardano_census_asn_relays{environment=\"$environment\", instance=~\"$instance\"}))",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
       ],
-      "title": "Share of relays answering, eight largest networks",
-      "type": "timeseries"
+      "title": "Share of relays answering, twelve largest networks",
+      "type": "status-history"
     },
     {
       "collapsed": false,
@@ -2072,9 +3043,9 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 118
       },
-      "id": 26,
+      "id": 38,
       "panels": [],
       "title": "SRV relay records",
       "type": "row"
@@ -2083,6 +3054,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Relay entries registered as SRV records, the distinct target endpoints they resolve to, and how many of those answered. Many SRV names commonly share one target set.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2105,9 +3077,9 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 63
+        "y": 119
       },
-      "id": 27,
+      "id": 39,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -2157,6 +3129,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Per SRV name: its top-priority targets, how many answered, and the chance a node drawing a target by SRV weight reaches one that answered. Below 100% means a node using that record can land on a dead target.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -2230,9 +3203,9 @@
         "h": 9,
         "w": 18,
         "x": 6,
-        "y": 63
+        "y": 119
       },
-      "id": 28,
+      "id": 40,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -2317,14 +3290,85 @@
       "type": "table"
     },
     {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "The twelve SRV names with the lowest chance that a node drawing a target by weight reaches one that answered, one row each. Green is every target answering; red is a record a node can no longer use. Healthy names drop off the bottom, so a full green panel is the normal state; the table above lists every name.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0
+          },
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 128
+      },
+      "id": 41,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "rowHeight": 0.85,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "bottomk(12, max by (environment, name) (cardano_census_srv_reach_probability{environment=\"$environment\", instance=~\"$instance\"}))",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "SRV reach probability, twelve least reachable names",
+      "type": "status-history"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 137
       },
-      "id": 29,
+      "id": 42,
       "panels": [],
       "title": "Run health",
       "type": "row"
@@ -2333,6 +3377,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Seconds since the census last finished. The timer runs every 15 minutes, so red past 45 minutes means runs are being missed or failing before they write anything.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2363,9 +3408,9 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 73
+        "y": 138
       },
-      "id": 30,
+      "id": 43,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2399,6 +3444,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "1 when the run completed, 0 when it failed before probing, for example at the node socket or the snapshot query. A failed run still writes this and the timestamp, so a stale file and a failing run look different.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2440,9 +3486,9 @@
         "h": 4,
         "w": 3,
         "x": 4,
-        "y": 73
+        "y": 138
       },
-      "id": 31,
+      "id": 44,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2476,6 +3522,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Wall time of the probe phase. Every unanswering relay holds a slot for the full budget, so duration tracks the failure count; past 10 minutes the 15 minute interval is at risk.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2503,9 +3550,9 @@
         "h": 4,
         "w": 3,
         "x": 7,
-        "y": 73
+        "y": 138
       },
-      "id": 32,
+      "id": 45,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2539,6 +3586,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Big ledger pools in the snapshot the node served, which should match a fresh cardano-cli ledger-peer-snapshot query against the same node.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2561,9 +3609,9 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 73
+        "y": 138
       },
-      "id": 33,
+      "id": 46,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2597,6 +3645,7 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Ranges loaded from the ip2asn database. Zero means the refresh failed or the file is missing, every relay then lands in unresolved or unrouted, and the census still ran.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2623,9 +3672,9 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 73
+        "y": 138
       },
-      "id": 34,
+      "id": 47,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2659,6 +3708,67 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Relay entries divided by distinct probed addresses. Above 1 means pools share relay hosts, exchanges and custodians mostly, and it is why a handful of endpoints crossing a timeout can move several percent of stake.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 16,
+        "y": 138
+      },
+      "id": 48,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_relays_total{environment=\"$environment\", instance=~\"$instance\"}) / max by (environment) (cardano_census_endpoints_total{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "{{environment}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Entries per endpoint",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Version and git revision of the cardano-census binary that wrote the latest file.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2679,11 +3789,11 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 73
+        "w": 5,
+        "x": 19,
+        "y": 138
       },
-      "id": 35,
+      "id": 49,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -2717,6 +3827,75 @@
       "datasource": {
         "type": "prometheus"
       },
+      "description": "Slots between the highest tip any relay reported and the ledger point the node served the snapshot from. A few hundred slots is the run's own duration; thousands means the census host's node is behind and the pool set it probed may be stale.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 600
+              },
+              {
+                "color": "red",
+                "value": 3600
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 142
+      },
+      "id": 50,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "max by (environment) (cardano_census_tip_slot_max{environment=\"$environment\", instance=~\"$instance\"}) - max by (environment) (cardano_census_snapshot_slot{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "slots",
+          "refId": "A"
+        }
+      ],
+      "title": "Snapshot behind tip",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Probe phase duration over time. It rises with the number of relays that time out rather than with the number probed.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2759,11 +3938,11 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 77
+        "w": 20,
+        "x": 4,
+        "y": 142
       },
-      "id": 36,
+      "id": 51,
       "options": {
         "legend": {
           "calcs": [
