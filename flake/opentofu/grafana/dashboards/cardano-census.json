@@ -874,7 +874,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Operators with the most stake whose relays all failed to answer this run, from the census pool index built on the db-sync host. Pools registered with the same relays are one operator, counted in Pools. Ticker and Name come from the pool's registered metadata; where the index did not match, Pool ID shows the first relay instead. Click the pool id for cexplorer or pooltool. This is the contact list. Reversed counts relays the pool index could name only by reversing the IPv4 octets, the spelling node 11.1.x gives; a pool with every relay reversed is dark because of that bug, not its own outage. Endpoints is the distinct addresses behind all the operator's relays. Why lists what the failed relays ran into, most common first: reversed ipv4 is the node bug, an address class is a broken registration or DNS record, dns and srv did not resolve, the rest is what the socket or protocol said.",
+      "description": "Operators with the most stake whose relays all failed to answer this run, from the census pool index built on the db-sync host. Pools registered with the same relays are one operator, counted in Pools. Ticker and Name come from the pool's registered metadata; where the index did not match, Pool ID shows the first relay instead. Click the pool id for cexplorer or pooltool. This is the contact list. Reversed counts relays the pool index could name only by reversing the IPv4 octets, the spelling node 11.1.x gives; a pool with every relay reversed is dark because of that bug, not its own outage. Endpoints counts relay hosts, not names: one per address a relay name resolves to, with IPv4 and IPv6 paired only within one relay entry, so a name answering both families is one set of dual-stacked hosts while an IPv6-only relay counts in full, and an unresolved name as one. Route 53 multivalue names hand out at most eight of their records per lookup, so addresses a name resolved to in earlier runs are remembered for a day and probed too; the count fills in over the first hours after a deploy and a member the name has stopped handing out shows as a failure until it ages out. Why lists what the failed relays ran into, most common first: reversed ipv4 is the node bug, an address class is a broken registration or DNS record, dns and srv did not resolve, the rest is what the socket or protocol said.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1182,7 +1182,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Operators with some but not all relays answering, largest stake first. Worth a friendly note before they go fully dark; Answering over Relays shows how close they are. Reversed counts relays the pool index could name only by reversing the IPv4 octets, the spelling node 11.1.x gives; a pool with every relay reversed is dark because of that bug, not its own outage. Endpoints is the distinct addresses behind all the operator's relays. Why lists what the failed relays ran into, most common first: reversed ipv4 is the node bug, an address class is a broken registration or DNS record, dns and srv did not resolve, the rest is what the socket or protocol said.",
+      "description": "Operators with some but not all relays answering, largest stake first. Worth a friendly note before they go fully dark; Answering over Relays shows how close they are. Reversed counts relays the pool index could name only by reversing the IPv4 octets, the spelling node 11.1.x gives; a pool with every relay reversed is dark because of that bug, not its own outage. Endpoints counts relay hosts, not names: one per address a relay name resolves to, with IPv4 and IPv6 paired only within one relay entry, so a name answering both families is one set of dual-stacked hosts while an IPv6-only relay counts in full, and an unresolved name as one. Route 53 multivalue names hand out at most eight of their records per lookup, so addresses a name resolved to in earlier runs are remembered for a day and probed too; the count fills in over the first hours after a deploy and a member the name has stopped handing out shows as a failure until it ages out. Why lists what the failed relays ran into, most common first: reversed ipv4 is the node bug, an address class is a broken registration or DNS record, dns and srv did not resolve, the rest is what the socket or protocol said.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1427,7 +1427,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Operators running the most pools per distinct relay endpoint, reachable or not; an operator qualifies with at least as many pools as endpoints. Twenty pools on three relays means one outage takes twenty pools dark at once, so these are worth a word before anything fails. Sorted by pools per endpoint, then stake.",
+      "description": "Operators running the most pools per distinct relay endpoint, reachable or not; an operator qualifies with at least as many pools as endpoints. Twenty pools on three relays means one outage takes twenty pools dark at once, so these are worth a word before anything fails. Sorted by pools per endpoint, then stake. Endpoints counts relay hosts, not names: one per address a relay name resolves to, with IPv4 and IPv6 paired only within one relay entry, so a name answering both families is one set of dual-stacked hosts while an IPv6-only relay counts in full, and an unresolved name as one. Route 53 multivalue names hand out at most eight of their records per lookup, so addresses a name resolved to in earlier runs are remembered for a day and probed too; the count fills in over the first hours after a deploy and a member the name has stopped handing out shows as a failure until it ages out.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -5894,7 +5894,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 192
+        "y": 201
       },
       "id": 68,
       "options": {
@@ -6009,7 +6009,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 192
+        "y": 201
       },
       "id": 69,
       "options": {
@@ -6048,6 +6048,164 @@
       ],
       "title": "Stake changing state since the previous run",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "id": 70,
+      "type": "timeseries",
+      "title": "Relay entries and the hosts behind them",
+      "description": "What the snapshot lists against what the census actually finds. Relay entries are the registrations, several pools often naming one relay. Endpoints are the distinct addresses those names and literals resolve to, one per address of a multi-address name, plus addresses remembered from earlier runs; probed are the ones dialled, so the gap to endpoints is private, reserved and, without an IPv6 route, IPv6 addresses. Remembered grows over the hours after a deploy as names that hand out a subset of their records per lookup reveal more of their set.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/relay entries$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c3c2b7",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/endpoints$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3987e5",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/probed$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#199e70",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/remembered$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#c98500",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 209
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (environment) (cardano_census_relays_total{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "relay entries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "B",
+          "expr": "max by (environment) (cardano_census_endpoints_total{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "endpoints"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "C",
+          "expr": "max by (environment) (cardano_census_endpoints_probed{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "probed"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "D",
+          "expr": "max by (environment) (cardano_census_endpoints_remembered{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "remembered"
+        }
+      ]
     }
   ],
   "preload": false,
