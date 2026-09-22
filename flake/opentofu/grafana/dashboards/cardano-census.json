@@ -1427,7 +1427,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "Operators running the most pools per distinct relay endpoint, reachable or not; an operator qualifies with at least as many pools as endpoints. Twenty pools on three relays means one outage takes twenty pools dark at once, so these are worth a word before anything fails. Sorted by pools per endpoint, then stake. Endpoints counts relay hosts, not names: one per address a relay name resolves to, with IPv4 and IPv6 paired only within one relay entry, so a name answering both families is one set of dual-stacked hosts while an IPv6-only relay counts in full, and an unresolved name as one. Route 53 multivalue names hand out at most eight of their records per lookup, so addresses a name resolved to in earlier runs are remembered for a day and probed too; the count fills in over the first hours after a deploy and a member the name has stopped handing out shows as a failure until it ages out.",
+      "description": "Operators running the most pools per relay host, reachable or not; an operator qualifies with at least as many pools as hosts. Relays counts registrations, twenty pools each listing the same three names is sixty; Endpoints counts the hosts behind them, three; Pools per host divides the two, so one host going down there costs twenty pools a third of their relays. Sorted by pools per host, then stake. Endpoints counts relay hosts, not names: one per address a relay name resolves to, with IPv4 and IPv6 paired only within one relay entry, so a name answering both families is one set of dual-stacked hosts while an IPv6-only relay counts in full, and an unresolved name as one. Route 53 multivalue names hand out at most eight of their records per lookup, so addresses a name resolved to in earlier runs are remembered for a day and probed too; the count fills in over the first hours after a deploy and a member the name has stopped handing out shows as a failure until it ages out.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1590,7 +1590,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Pools per relay"
+              "options": "Pools per host"
             },
             "properties": [
               {
@@ -1666,7 +1666,7 @@
           "refId": "A"
         }
       ],
-      "title": "Operators with the fewest relays per pool",
+      "title": "Operators with the most pools per relay host",
       "transformations": [
         {
           "id": "convertFieldType",
@@ -1692,7 +1692,7 @@
               "operator": "/",
               "right": "endpoints"
             },
-            "alias": "Pools per relay",
+            "alias": "Pools per host",
             "replaceFields": false
           }
         },
@@ -1701,7 +1701,7 @@
           "options": {
             "sort": [
               {
-                "field": "Pools per relay",
+                "field": "Pools per host",
                 "desc": true
               }
             ]
@@ -1723,11 +1723,11 @@
               "reach": 4,
               "pools": 5,
               "endpoints": 6,
-              "Pools per relay": 7,
               "relays_total": 8,
               "relays_reachable": 9,
               "reasons": 10,
-              "relays": 11
+              "relays": 11,
+              "Pools per host": 7
             },
             "renameByName": {
               "Value": "Stake",
