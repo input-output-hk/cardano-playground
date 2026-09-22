@@ -3617,7 +3617,7 @@
       "datasource": {
         "type": "prometheus"
       },
-      "description": "The node-to-node protocol version each answering relay agreed to, which is the highest it supports that the census also offers. A new version appearing and growing is a node release rolling out across the network; a version lingering is operators who have not upgraded.",
+      "description": "The node-to-node protocol version each answering relay agreed to, which is the highest it supports that the census also offers. The census offers v11 to v14, shown by n2n_version_offered, so this can never read above v14 whatever the relays run; the two panels below show what they actually support. A version lingering here below the ceiling is operators who have not upgraded.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3742,12 +3742,138 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "What each relay can speak at most. For relays that answered the probe, asked over one more connection with the handshake query flag, which returns the whole version table of that relay; for relays that refused the census for want of a common version, taken from the refusal, which names the versions they have. This is the real capability of the network and a proxy for the node versions operators run, independent of what the census itself can negotiate; the panel above only ever shows the highest version the census offers. Relays that answered but did not answer the version query are counted in relays_n2n_version_unknown and are missing here.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 120
+      },
+      "id": 71,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (environment, version) (cardano_census_relays_n2n_version_max{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "v{{version}}"
+        }
+      ],
+      "title": "Answering relays by highest supported version",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "The oldest version each relay still accepts, from the same two sources. When relays raise their minimum above the highest version the census offers, currently v14, they refuse the census handshake and appear here from the refusal rather than the query, and relays_n2n_refused rises with them. That is the early warning to update the handshake table of the census before the top row reads as an outage of the network rather than of the census.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 120
+      },
+      "id": 72,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (environment, version) (cardano_census_relays_n2n_version_min{environment=\"$environment\", instance=~\"$instance\"})",
+          "legendFormat": "v{{version}}"
+        }
+      ],
+      "title": "Answering relays by lowest accepted version",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 120
+        "y": 128
       },
       "id": 28,
       "panels": [],
@@ -3805,7 +3931,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 121
+        "y": 129
       },
       "id": 29,
       "options": {
@@ -3917,7 +4043,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 121
+        "y": 129
       },
       "id": 30,
       "options": {
@@ -3969,7 +4095,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 121
+        "y": 129
       },
       "id": 31,
       "options": {
@@ -4087,7 +4213,7 @@
         "h": 9,
         "w": 10,
         "x": 0,
-        "y": 129
+        "y": 137
       },
       "fieldConfig": {
         "defaults": {
@@ -4188,7 +4314,7 @@
         "h": 9,
         "w": 8,
         "x": 10,
-        "y": 129
+        "y": 137
       },
       "fieldConfig": {
         "defaults": {
@@ -4252,7 +4378,7 @@
         "h": 9,
         "w": 6,
         "x": 18,
-        "y": 129
+        "y": 137
       },
       "fieldConfig": {
         "defaults": {
@@ -4320,7 +4446,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 138
+        "y": 146
       },
       "id": 32,
       "panels": [],
@@ -4402,7 +4528,7 @@
         "h": 11,
         "w": 14,
         "x": 0,
-        "y": 139
+        "y": 147
       },
       "id": 33,
       "options": {
@@ -4539,7 +4665,7 @@
         "h": 11,
         "w": 10,
         "x": 14,
-        "y": 139
+        "y": 147
       },
       "id": 34,
       "options": {
@@ -4639,7 +4765,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 150
+        "y": 158
       },
       "id": 35,
       "options": {
@@ -4739,7 +4865,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 150
+        "y": 158
       },
       "id": 36,
       "options": {
@@ -4844,7 +4970,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 159
+        "y": 167
       },
       "id": 37,
       "options": {
@@ -4881,7 +5007,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 169
+        "y": 177
       },
       "id": 38,
       "panels": [],
@@ -4915,7 +5041,7 @@
         "h": 9,
         "w": 6,
         "x": 0,
-        "y": 170
+        "y": 178
       },
       "id": 39,
       "options": {
@@ -5041,7 +5167,7 @@
         "h": 9,
         "w": 18,
         "x": 6,
-        "y": 170
+        "y": 178
       },
       "id": 40,
       "options": {
@@ -5168,7 +5294,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 179
+        "y": 187
       },
       "id": 41,
       "options": {
@@ -5205,7 +5331,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 188
+        "y": 196
       },
       "id": 42,
       "panels": [],
@@ -5247,7 +5373,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 189
+        "y": 197
       },
       "id": 43,
       "options": {
@@ -5325,7 +5451,7 @@
         "h": 4,
         "w": 3,
         "x": 4,
-        "y": 189
+        "y": 197
       },
       "id": 44,
       "options": {
@@ -5389,7 +5515,7 @@
         "h": 4,
         "w": 3,
         "x": 7,
-        "y": 189
+        "y": 197
       },
       "id": 45,
       "options": {
@@ -5448,7 +5574,7 @@
         "h": 4,
         "w": 3,
         "x": 10,
-        "y": 189
+        "y": 197
       },
       "id": 46,
       "options": {
@@ -5511,7 +5637,7 @@
         "h": 4,
         "w": 3,
         "x": 13,
-        "y": 189
+        "y": 197
       },
       "id": 47,
       "options": {
@@ -5571,7 +5697,7 @@
         "h": 4,
         "w": 3,
         "x": 16,
-        "y": 189
+        "y": 197
       },
       "id": 48,
       "options": {
@@ -5630,7 +5756,7 @@
         "h": 4,
         "w": 5,
         "x": 19,
-        "y": 189
+        "y": 197
       },
       "id": 49,
       "options": {
@@ -5700,7 +5826,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 193
+        "y": 201
       },
       "id": 50,
       "options": {
@@ -5781,7 +5907,7 @@
         "h": 8,
         "w": 20,
         "x": 4,
-        "y": 193
+        "y": 201
       },
       "id": 51,
       "options": {
@@ -5894,7 +6020,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 201
+        "y": 209
       },
       "id": 68,
       "options": {
@@ -6009,7 +6135,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 201
+        "y": 209
       },
       "id": 69,
       "options": {
@@ -6155,7 +6281,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 209
+        "y": 217
       },
       "options": {
         "legend": {
