@@ -32,7 +32,7 @@
     };
 
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w36";
-    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-w36";
+    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/e48dcb6befa30cc2991fe78916b214a38e3a98b8";
     metsuke.url = "github:input-output-hk/metsuke/server-v0.2.1";
     metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.1";
     metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
