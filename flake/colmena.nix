@@ -63,6 +63,14 @@ in
 
       # Helper defs:
       disableAlertCount.cardano-parts.perNode.meta.enableAlertCount = false;
+
+      # leios.imm.db is rewritten constantly, so each snapshot pins close to a
+      # full copy of it. Churn measured at ~2.2G per hour, so the default 24h
+      # window held 47-53G of snapshots against 9-18G live, filling the gp3
+      # root. 9 snapshots at the 20 minute cadence is a 3h window, ~7G.
+      # The cadence stays at 20 minutes because leios-chain-snapshot cuts its
+      # immutable chain from the newest autosnap.
+      leiosSnapRetention.services.zfs-snapshots.keep = 9;
       # delete.aws.instance.count = 0;
 
       # Cardano group assignments:
@@ -71,7 +79,7 @@ in
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
           ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
-          ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots]
+          ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots leiosSnapRetention]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
           ++ optionals (hasPrefix "sanchonet" name) [noBPerf]
@@ -135,16 +143,18 @@ in
       # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
         // {
+          # Each leios partition now follows the node's own db paths, so
+          # leios.imm.db sits beside immutable/ and leios.vol.db beside
+          # volatile/. Keep the growing immutable partition on the ebs root and
+          # put the write heavy volatile partition on the instance store. Note
+          # ledger/ and gsm/ follow the volatile path too.
+          services.cardano-node = {
+            immutableDatabasePath = config.services.cardano-node.databasePath 0;
+            volatileDatabasePath = "/ephemeral/cardano-node/${config.services.cardano-node.dbPrefix 0}";
+          };
+
           services.cardano-node.extraNodeConfig = {
             ConsensusMode = "PraosMode";
-
-            LeiosDbConfig = {
-              Backend = "SQLite";
-              # Ideally we probably want this saved in the chainDB state dir.
-              # Relative dirs to the process cwd should also work.
-              # Filepath = "db-leios/leios.db";
-              Filepath = "/ephemeral/cardano-node/leios.db";
-            };
 
             # Additional cfg to debug network issues
             TraceOptions = {
@@ -165,29 +175,34 @@ in
           };
 
           systemd.services.cardano-node = {
-            path = with pkgs; [sqlite];
-            preStart = lib.mkForce ''
-              # Make it a bit more likely for sync to work.
-              # https://github.com/input-output-hk/ouroboros-leios/issues/998
-              DB=${lib.escapeShellArg config.services.cardano-node.extraNodeConfig.LeiosDbConfig.Filepath}
-
-              # The node creates this db on first start, so on a fresh machine neither the
-              # file nor the tables exist yet.  A bare sqlite3 call on a missing path exits 1
-              # and leaves a 0 byte file behind, so check the file before probing the schema.
-              # ebsMissingTxs is w35 and later, so a w34 db fails the count and is skipped
-              # rather than half repaired.
-              if [ -s "$DB" ] \
-                && [ "$(sqlite3 -readonly "$DB" \
-                     "SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('ebs','ebTxs','ebsMissingTxs');")" = 3 ]; then
-                # No foreign keys are declared, so nothing cascades.  Both child tables
-                # have to be cleared before ebs, since they select from it.
-                sqlite3 "$DB" "
-                  DELETE FROM ebsMissingTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
-                  DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
-                  DELETE FROM ebs WHERE 0 <= missingTxCount;
-                "
-              fi
-            '';
+            # Dropped for w38a: the db is now split into leios.imm.db and
+            # leios.vol.db under the node's own db paths, so the single Filepath
+            # this read no longer exists. The repair also predates w38a and is
+            # likely stale, so it is parked rather than ported.
+            #
+            # path = with pkgs; [sqlite];
+            # preStart = lib.mkForce '''
+            #   # Make it a bit more likely for sync to work.
+            #   # https://github.com/input-output-hk/ouroboros-leios/issues/998
+            #   DB=<leios db path>
+            #
+            #   # The node creates this db on first start, so on a fresh machine neither the
+            #   # file nor the tables exist yet.  A bare sqlite3 call on a missing path exits 1
+            #   # and leaves a 0 byte file behind, so check the file before probing the schema.
+            #   # ebsMissingTxs is w35 and later, so a w34 db fails the count and is skipped
+            #   # rather than half repaired.
+            #   if [ -s "$DB" ] \
+            #     && [ "$(sqlite3 -readonly "$DB" \
+            #          "SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('ebs','ebTxs','ebsMissingTxs');")" = 3 ]; then
+            #     # No foreign keys are declared, so nothing cascades.  Both child tables
+            #     # have to be cleared before ebs, since they select from it.
+            #     sqlite3 "$DB" "
+            #       DELETE FROM ebsMissingTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
+            #       DELETE FROM ebTxs WHERE ebHashBytes IN (SELECT ebHashBytes FROM ebs WHERE 0 <= missingTxCount);
+            #       DELETE FROM ebs WHERE 0 <= missingTxCount;
+            #     "
+            #   fi
+            # ''';
 
             # Temporary mitigation for the under-investigation leios cardano-node
             # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
@@ -428,6 +443,11 @@ in
         nixosModules.leios-files-nginx
         {services.leios-files-nginx.acmeEmail = "devops@iohk.io";}
       ];
+
+      # For a host resyncing from genesis: keep serving nothing rather than
+      # publishing a truncated chain. Drop once it has a complete artifact set.
+      # Unused at present; leios1-rel-a-1 finished its resync 2026-09-22.
+      # leiosNoPublish = {services.leios-files-nginx.chainSnapshot.enable = false;};
 
       # mkCustomNode = flakeInput: let
       #   input = getAttrFromPath (splitString "." flakeInput) inputs;
