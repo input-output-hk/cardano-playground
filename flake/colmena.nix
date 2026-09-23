@@ -135,11 +135,7 @@ in
       #   RuntimeRandomizedExtraSec = mkForce 0;
       # };
 
-      node-leios = {
-        config,
-        pkgs,
-        ...
-      }:
+      node-leios = {config, ...}:
       # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
         // {
@@ -412,6 +408,32 @@ in
         # nodeNoRecycle
         nixosModules.cardano-tx-centrifuge
         nixosModules.profile-leios-tx-centrifuge
+        # w38a dropped LeiosDbConfig.Filepath from the node config, but
+        # tx-centrifuge comes from cardano-node-leios-bench, still pinned to
+        # IntersectMBO/cardano-node jl/leios-prototype-w36, whose parser
+        # requires that key under Backend=SQLite and rejects the whole file:
+        #   AesonException "Error in $.LeiosDbConfig: key \"Filepath\" not found"
+        # tx-centrifuge never reads LeiosDbConfig -- it parses the node config
+        # only to reach ncProtocolConfig -- so restoring the key is inert. This
+        # patches centrifuge's own copy of the config; the node reads a separate
+        # file and is untouched. Drop once the bench input tracks w38a.
+        ({
+          config,
+          pkgs,
+          ...
+        }: {
+          services.cardano-tx-centrifuge.settings.nodeConfig = let
+            nodeCfg = config.services.cardano-node.nodeConfig;
+          in
+            pkgs.writers.writeJSON "node-config.json" (
+              nodeCfg
+              // {
+                LeiosDbConfig =
+                  (nodeCfg.LeiosDbConfig or {Backend = "SQLite";})
+                  // {Filepath = "leios.db";};
+              }
+            );
+        })
         {
           services = {
             cardano-tx-centrifuge.settings = {
