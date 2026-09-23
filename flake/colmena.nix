@@ -1350,7 +1350,7 @@ in
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 80) (group "leios1") node-leios metsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 80) (group "leios2") node-leios leiosBp];};
-      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
+      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 160) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
       leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 80) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
