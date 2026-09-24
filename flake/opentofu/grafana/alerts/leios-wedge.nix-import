@@ -1,0 +1,57 @@
+let
+  # tx-centrifuge runs a 1h on, 1h off duty cycle, so mempool legitimately sits
+  # at 0 for roughly one hour in every two. Measured over 09-21 to 09-24 the
+  # zero-run distribution is cleanly bimodal with nothing in between:
+  #
+  #   scheduled off window   5 .. 65 min   (clusters at 55-65)
+  #   relay wedge            95 .. 195 min
+  #
+  # 75m sits in that gap with about 30 min of margin either side. Every run at
+  # or above 95 min mapped to a known relay wedge or the w38a migration.
+  stalledFor = "75m";
+
+  # The inbound governor freezes at a constant peer count during a wedge, so
+  # `changes` over the window is 0. Backtested over 09-21 to 09-24 this catches
+  # all 7 known episodes across 5 relays with no false positives.
+  #
+  # The `> 5` floor excludes a near-idle relay. It must stay low: the frozen
+  # value is whatever the hot count happened to be when the governor stopped,
+  # observed at 10, 15, 17, 20 and 54. An earlier `> 20` floor missed 5 of 7.
+  #
+  # `for` suppresses a single isolated evaluation. Restarting a relay produced
+  # one such sample; every real episode spanned 3 to 46 consecutive windows.
+  wedgeWindow = "30m";
+  wedgeFor = "30m";
+  minHotPeers = "5";
+in {
+  namespace = "cardano";
+  name = "leios-wedge";
+  rule = [
+    {
+      # Impact alert. Fires whatever the cause, a wedged relay, a broken
+      # centrifuge, or all targets down at once. Cheap, but it cannot say which
+      # host and it is blind to a wedge on a relay centrifuge does not submit
+      # to, which was 2 of the 5 affected relays. Pair with the governor alert.
+      alert = "leios_load_generation_stalled";
+      expr = ''max by (environment) (cardano_node_metrics_txsInMempool_int{environment="leios"}) == 0'';
+      for = stalledFor;
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.environment}}: no transactions in any mempool for ${stalledFor}.";
+        description = "{{$labels.environment}}: fleet-wide mempool has been empty for ${stalledFor}, longer than the tx-centrifuge off window of about 65 min, so load generation is not resuming on schedule. Check tx-centrifuge for a KeepAlive crash loop, then check the relays for an inbound governor wedge.";
+      };
+    }
+    {
+      # Diagnostic alert. Names the wedged relay, which the mempool alert
+      # cannot, and catches wedges on relays that take no centrifuge load.
+      alert = "leios_relay_inbound_governor_wedged";
+      expr = ''changes(cardano_node_metrics_inboundGovernor_hot_int{environment="leios", instance=~".*-rel-.*"}[${wedgeWindow}]) == 0 and cardano_node_metrics_inboundGovernor_hot_int{environment="leios", instance=~".*-rel-.*"} > ${minHotPeers}'';
+      for = wedgeFor;
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: inbound governor has not promoted a peer in ${wedgeWindow}.";
+        description = "{{$labels.instance}}: `inboundGovernor_hot` has held a constant value for ${wedgeWindow} while the connection manager keeps accepting connections, so the inbound governor event loop is blocked. New peers complete a handshake but are never promoted to warm or hot. Only a cardano-node restart has been seen to clear it, and the median window before the RuntimeMaxSec recycle closes it is about 7h. Capture the connection stuck in mux `Stopping` before restarting.";
+      };
+    }
+  ];
+}
