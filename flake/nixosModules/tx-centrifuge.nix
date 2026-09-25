@@ -5,6 +5,8 @@
     lib,
     ...
   }: let
+    inherit (lib) mkDefault;
+
     serviceName = "cardano-tx-centrifuge";
     settingsFormat = pkgs.formats.json {};
     cfg = config.services.cardano-tx-centrifuge;
@@ -16,30 +18,110 @@
 
       useLocalCardanoNode = {
         nodeConfig =
-          lib.mkEnableOption "using the local cardano-node's config"
+          lib.mkEnableOption ''
+            using the local cardano-node's config and its N2C socket as a
+            'nodetoclient' observer. The observer is REQUIRED for initial
+            UTxO discovery on every startup; if you disable this flag you
+            must add an observer via 'settings.observers' yourself.
+          ''
           // {
             default = config.services.cardano-node.enable;
           };
 
         recycling =
-          lib.mkEnableOption "using the local cardano-node for recycling"
+          lib.mkEnableOption ''
+            using on_confirm recycling via the local observer (depth 2).
+            Independent of the discovery use; you can have the observer for
+            discovery only and still pick a different recycle strategy
+            (on_pull / on_build) via settings.builder.recycle.
+          ''
           // {
             default = config.services.cardano-node.enable;
           };
       };
 
-      fundsFile = lib.mkOption {
+      signingKeyFile = lib.mkOption {
         type = lib.types.path;
         description = ''
-          Path to JSON file that contains the mapping of UTxOs to their lovelace amount.
-          Can be imported from output of `scripts/playground/fund-centrifuge.nu get-funds --json`,
+          Path at runtime to the recycle signing key for tx-centrifuge. This
+          key derives every recycle address (the supplied key is workload
+          0's; subsequent workloads derive from it). The operator must fund
+          at least workload 0's bech32 address before starting the service.
+
+          Initial UTxOs are discovered on-chain at every startup via a
+          QueryUTxOByAddress against the local node — there is no separate
+          funds.json. Restarts are stateless.
         '';
       };
 
-      fundsSigningKeyFile = lib.mkOption {
-        type = lib.types.path;
+      cooldownSeconds = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 0;
         description = ''
-          Path at runtime to the signing key for the funds.
+          Seconds tx-centrifuge waits after the builder has begun filling
+          the payload queue and before workers connect to their target
+          nodes. Use a non-zero value for multi-node benchmark clusters
+          where you want the cluster to stabilise before traffic begins
+          (so transmission ramps to the target TPS instantly). Leave at 0
+          for ops / single-node deployments.
+        '';
+      };
+
+      maxRuntimeSeconds = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 4200;
+        description = ''
+          Maximum wall-clock seconds a single tx-centrifuge invocation is
+          allowed to run before systemd terminates it with SIGTERM.
+
+          This is a backstop, not the normal way a window ends: keep it above
+          the gap between startOnCalendar and stopOnCalendar so the stop timer
+          gets there first. An explicit stop is the safer path, because
+          systemd does not apply Restart to a unit it was told to stop, so the
+          load cannot bounce back inside the off hour whatever exit status the
+          process reports. Lengthening the window via the calendars means
+          raising this too.
+
+          Long benchmark runs accumulate state (pending-recycle map growth, GC
+          fragmentation, file descriptor churn from observer reconnects); a
+          periodic forced restart bounds those effects and makes each run a
+          fresh, stateless attempt. Initial UTxOs are re-discovered on every
+          startup, so there is no state to lose across restarts.
+
+          Set to 0 to disable the time limit entirely.
+        '';
+      };
+
+      startOnCalendar = lib.mkOption {
+        type = lib.types.str;
+        default = "00/2:00:00";
+        description = ''
+          systemd OnCalendar expression for the timer that starts the load
+          window. The default fires at the top of every even hour, which
+          together with stopOnCalendar gives a 50% duty cycle aligned to the
+          wall clock: load on for even hours, off for odd hours.
+
+          Clock alignment is the point. A cycle built from runtime caps and
+          restart delays drifts by the startup time plus RestartSec on every
+          iteration, so the on window walks around the clock and other teams
+          cannot plan their own load runs against it.
+
+          The timer is not Persistent, so a host that boots mid-window waits
+          for the next start rather than firing a missed one immediately and
+          putting load into an odd hour.
+        '';
+      };
+
+      stopOnCalendar = lib.mkOption {
+        type = lib.types.str;
+        default = "01/2:00:00";
+        description = ''
+          systemd OnCalendar expression for the timer that ends the load
+          window, by default the top of every odd hour.
+
+          This is what holds the window edge when a crash restart has reset
+          the runtime cap mid-window: maxRuntimeSeconds alone would let that
+          restart run a further full cap past the boundary.
         '';
       };
 
@@ -53,10 +135,11 @@
     config = lib.mkIf cfg.enable (lib.mkMerge [
       {
         services.${serviceName}.settings = {
-          initial_inputs = {
-            type = "genesis_utxo_keys";
-            params.signing_keys_file = "/run/${serviceName}/funds.json";
-          };
+          # Resolved by systemd's LoadCredential below. Keep in sync with
+          # the unit name (serviceName) and credential name (funds.skey).
+          signing_key_file = "/run/credentials/${serviceName}.service/funds.skey";
+
+          cooldown_seconds = cfg.cooldownSeconds;
 
           builder = {
             type = "value";
@@ -76,66 +159,118 @@
           max_batch_size = lib.mkDefault 10;
         };
 
-        systemd.services.${serviceName} = {
-          wantedBy = ["multi-user.target"];
+        systemd.timers = {
+          # Started by the timer below, not at boot: a boot inside an odd hour
+          # must not put load on the network until the next even hour.
+          ${serviceName} = {
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnCalendar = cfg.startOnCalendar;
+              # Default accuracy is 1 minute, which would jitter the window edge.
+              AccuracySec = "1s";
+              Persistent = false;
+            };
+          };
+          # Ends the window on the clock. A clean stop is not a failure, so
+          # Restart does not fire and the service waits for the next timer.
+          "${serviceName}-stop" = {
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnCalendar = cfg.stopOnCalendar;
+              AccuracySec = "1s";
+              Persistent = false;
+            };
+          };
+        };
 
-          preStart = let
-            filter = ''
-              to_entries | map({
-                tx_in: .key,
-                value: .value,
-                signing_key: "\(env.CREDENTIALS_DIRECTORY)/funds.skey",
-              })
-            '';
-          in ''
-            ${lib.getExe pkgs.jaq} ${lib.escapeShellArg filter} "$CREDENTIALS_DIRECTORY"/funds.json > "$RUNTIME_DIRECTORY"/funds.json
-          '';
+        systemd.services = {
+          ${serviceName} = {
+            enableStrictShellChecks = true;
 
-          enableStrictShellChecks = true;
+            # Restart on failure: up to 3 retries, 1 minute apart. After 3
+            # failed retries within the 10-minute window the unit stays in
+            # 'failed' state until a manual `systemctl reset-failed` /
+            # `start`. Initial start counts toward the burst, so 4 total
+            # start attempts (initial + 3 retries) are permitted. Only true
+            # crash restarts feed the burst: ending a window is a SIGTERM,
+            # which RestartPreventExitStatus below excludes.
+            startLimitBurst = 4;
+            startLimitIntervalSec = 600;
 
-          serviceConfig = {
-            ExecStart = toString [
-              (lib.getExe cfg.package)
-              (settingsFormat.generate "centrifuge.json" cfg.settings)
-            ];
+            serviceConfig = {
+              ExecStart = toString [
+                (lib.getExe cfg.package)
+                (settingsFormat.generate "centrifuge.json" cfg.settings)
+              ];
 
-            DynamicUser = true;
+              DynamicUser = true;
 
-            LoadCredential = [
-              "funds.json:${cfg.fundsFile}"
-              "funds.skey:${cfg.fundsSigningKeyFile}"
-            ];
+              LoadCredential = [
+                "funds.skey:${cfg.signingKeyFile}"
+              ];
 
-            RuntimeDirectory = serviceName;
+              Restart = "on-failure";
+              RestartSec = 60;
+
+              # Keeps a window ending from looking like a crash. Both the
+              # runtime cap and the stop timer end the run with SIGTERM, and
+              # without this Restart=on-failure would bring the load straight
+              # back up inside the off hour. Genuine crashes carry an exit code
+              # or another signal and still restart.
+              RestartPreventExitStatus = "SIGTERM";
+
+              # Ends the load window, and bounds state accumulation across the
+              # run. Set cfg.maxRuntimeSeconds = 0 to disable — systemd's
+              # disable value is "infinity", not 0 (0 would terminate the
+              # service immediately).
+              RuntimeMaxSec =
+                if cfg.maxRuntimeSeconds == 0
+                then "infinity"
+                else cfg.maxRuntimeSeconds;
+
+              # Disable journald rate-limiting on this unit. At high TPS the
+              # trace-dispatcher emits thousands of lines per second; the
+              # systemd default (10000 in 30s) would silently drop most of
+              # them after the first 30 seconds of a run.
+              LogRateLimitIntervalSec = 0;
+              LogRateLimitBurst = 0;
+            };
+          };
+
+          "${serviceName}-stop" = {
+            description = "Stop ${serviceName} at the end of its load window";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.systemd}/bin/systemctl stop ${serviceName}.service";
+            };
           };
         };
       }
 
       (lib.mkIf cfg.useLocalCardanoNode.nodeConfig {
-        services.${serviceName}.settings.nodeConfig = with config.services.cardano-node;
-          if nodeConfigFile != null
-          then nodeConfigFile
-          else pkgs.writers.writeJSON "node-config.json" nodeConfig;
-      })
-
-      (lib.mkIf cfg.useLocalCardanoNode.recycling {
         services = {
           ${serviceName}.settings = {
-            builder.recycle = {
-              type = "on_confirm";
-              params = "local-follower";
-            };
+            nodeConfig = with config.services.cardano-node;
+              mkDefault (
+                if nodeConfigFile != null
+                then nodeConfigFile
+                else pkgs.writers.writeJSON "node-config.json" nodeConfig
+              );
 
+            # The local nodetoclient observer is used for initial UTxO
+            # discovery on every startup, regardless of the recycle
+            # strategy chosen below. Always present when the local node is
+            # configured.
             observers.local-follower = {
-              type = "nodetoclient";
+              type = mkDefault "nodetoclient";
               params = {
-                confirmation_depth = 2;
-                socket_path = config.services.cardano-node.socketPath 0;
+                confirmation_depth = mkDefault 2;
+                socket_path = mkDefault (config.services.cardano-node.socketPath 0);
               };
             };
           };
 
-          cardano-node.shareNodeSocket = true;
+          cardano-node.shareNodeSocket = mkDefault true;
         };
 
         systemd.services.${serviceName} = rec {
@@ -146,6 +281,13 @@
           after = requisite;
 
           serviceConfig.SupplementaryGroups = lib.singleton config.services.cardano-node.socketGroup;
+        };
+      })
+
+      (lib.mkIf cfg.useLocalCardanoNode.recycling {
+        services.${serviceName}.settings.builder.recycle = {
+          type = mkDefault "on_confirm";
+          params = mkDefault "local-follower";
         };
       })
     ]);
