@@ -823,7 +823,53 @@ in
         ];
       });
 
-      preprodFaucet = {services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];};
+      preprodFaucet = {
+        config,
+        pkgs,
+        name,
+        ...
+      }: let
+        inherit (config.cardano-parts.cluster) group;
+        opsLib = flake.config.flake.cardano-parts.lib.opsLib pkgs;
+        policy = "cardano-faucet-nginx-policy.conf";
+      in {
+        services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];
+
+        # keyName carries "faucet" so the preprod1 faucet sops rule encrypts it to
+        # this host. NixOS runs nginx as the nginx user, which must be able to read it.
+        sops.secrets = opsLib.mkSopsSecret {
+          inherit name;
+          inherit (group) groupName;
+          groupOutPath = group.groupFlake.self.outPath;
+          secretName = policy;
+          keyName = "${name}-faucet-nginx-policy.conf";
+          fileOwner = "nginx";
+          fileGroup = "nginx";
+          reloadUnits = ["nginx.service"];
+          extraCfg = {format = "binary";};
+        };
+
+        services.nginx = {
+          # One map key is 84 bytes and the default bucket size (cache-line, 64 here)
+          # cannot hold it. This MUST be the nixpkgs option, not a raw directive in
+          # commonHttpConfig: nginx requires map_hash_bucket_size to precede the first
+          # `map` block, and commonHttpConfig is emitted after the module's own
+          # $connection_upgrade map.
+          mapHashBucketSize = 128;
+
+          # The maps that set $faucetPolicy are in the secret. nginx refuses to start
+          # on an unknown variable, so a missing or empty secret fails loudly.
+          commonHttpConfig = mkAfter ''
+            include ${config.sops.secrets.${policy}.path};
+          '';
+
+          virtualHosts.faucet.locations."/send-money".extraConfig = ''
+            if ($faucetPolicy) {
+              return 429;
+            }
+          '';
+        };
+      };
       previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
       dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
       leiosFaucet = moduleWithSystem ({system}: _: {
