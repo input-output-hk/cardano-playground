@@ -1026,6 +1026,27 @@ in
                     severity = "Debug";
                     maxFrequency = 0;
                   };
+
+                  # DIAGNOSTIC for the inbound governor wedge, remove once the
+                  # stuck responder is identified.
+                  #
+                  # The governor blocks in `atomically (Mux.stopped csMux)`,
+                  # which cannot return until every mini-protocol thread on
+                  # that mux has finished. Naming the one that never returns
+                  # needs per-protocol start events, and at the default Notice
+                  # only CleanExit, ExceptionExit, State and
+                  # Bearer.TraceEmitDeltaQ reach the journal, so starts minus
+                  # exits cannot be computed. Confirmed against a live wedge on
+                  # leios2-rel-b-1 2026-09-25.
+                  #
+                  # maxFrequency is deliberately left at the default rather
+                  # than 0. Mux traces are per connection and relays churn
+                  # hard, and journal volume has wedged alloy here before. If
+                  # start events appear but are being sampled away, add
+                  # maxFrequency = 0 then.
+                  "Net.Mux" = {
+                    severity = "Debug";
+                  };
                 };
               };
             };
