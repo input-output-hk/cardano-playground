@@ -1,37 +1,20 @@
 let
-  # tx-centrifuge runs a 1h on, 1h off duty cycle, so mempool legitimately sits
-  # at 0 for roughly one hour in every two. Measured over 09-21 to 09-24 the
-  # zero-run distribution is cleanly bimodal with nothing in between:
-  #
-  #   scheduled off window   5 .. 65 min   (clusters at 55-65)
-  #   relay wedge            95 .. 195 min
-  #
-  # 75m sits in that gap with about 30 min of margin either side. Every run at
-  # or above 95 min mapped to a known relay wedge or the w38a migration.
   stalledFor = "75m";
 
-  # The inbound governor freezes at a constant peer count during a wedge, so
-  # `changes` over the window is 0. Backtested over 09-21 to 09-24 this catches
-  # all 7 known episodes across 5 relays with no false positives.
-  #
-  # The `> 5` floor excludes a near-idle relay. It must stay low: the frozen
-  # value is whatever the hot count happened to be when the governor stopped,
-  # observed at 10, 15, 17, 20 and 54. An earlier `> 20` floor missed 5 of 7.
-  #
-  # `for` suppresses a single isolated evaluation. Restarting a relay produced
-  # one such sample; every real episode spanned 3 to 46 consecutive windows.
-  wedgeWindow = "30m";
-  wedgeFor = "30m";
+  wedgeWindow = "15m";
+  wedgeFor = "5m";
   minHotPeers = "5";
+
+  pingGoneFor = "10m";
+
+  acceptStalledFor = "5m";
+  minOverflowRate = "0.1";
+  maxAcceptRate = "0.25";
 in {
   namespace = "cardano";
   name = "leios-wedge";
   rule = [
     {
-      # Impact alert. Fires whatever the cause, a wedged relay, a broken
-      # centrifuge, or all targets down at once. Cheap, but it cannot say which
-      # host and it is blind to a wedge on a relay centrifuge does not submit
-      # to, which was 2 of the 5 affected relays. Pair with the governor alert.
       alert = "leios_load_generation_stalled";
       expr = ''max by (environment) (cardano_node_metrics_txsInMempool_int{environment="leios"}) == 0'';
       for = stalledFor;
@@ -42,8 +25,6 @@ in {
       };
     }
     {
-      # Diagnostic alert. Names the wedged relay, which the mempool alert
-      # cannot, and catches wedges on relays that take no centrifuge load.
       alert = "leios_relay_inbound_governor_wedged";
       expr = ''changes(cardano_node_metrics_inboundGovernor_hot_int{environment="leios", instance=~".*-rel-.*"}[${wedgeWindow}]) == 0 and cardano_node_metrics_inboundGovernor_hot_int{environment="leios", instance=~".*-rel-.*"} > ${minHotPeers}'';
       for = wedgeFor;
@@ -51,6 +32,26 @@ in {
       annotations = {
         summary = "{{$labels.instance}}: inbound governor has not promoted a peer in ${wedgeWindow}.";
         description = "{{$labels.instance}}: `inboundGovernor_hot` has held a constant value for ${wedgeWindow} while the connection manager keeps accepting connections, so the inbound governor event loop is blocked. New peers complete a handshake but are never promoted to warm or hot. Only a cardano-node restart has been seen to clear it, and the median window before the RuntimeMaxSec recycle closes it is about 7h. Capture the connection stuck in mux `Stopping` before restarting.";
+      };
+    }
+    {
+      alert = "leios_node_ping_sample_missing";
+      expr = ''count by (instance) (cardano_node_metrics_blockNum_int{environment="leios"}) unless count by (instance) (cardano_node_metrics_custom_ping_latency_ms{environment="leios"})'';
+      for = pingGoneFor;
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: no cardano-cli ping sample for ${pingGoneFor}.";
+        description = "{{$labels.instance}}: the node is scraped and reporting blockNum but cardano-custom-metrics has published no ping sample for ${pingGoneFor}, so the local ping is failing or hanging. On a relay the usual cause is an inbound governor wedge, since the ping is an inbound connection that a blocked governor never promotes; check `leios_relay_inbound_governor_wedged` for the same host. Confirm on the host with `cardano-cli ping --count=1 --quiet --json --host=0.0.0.0 --port=3001 --magic=$TESTNET_MAGIC`, which returns in about 2s when healthy.";
+      };
+    }
+    {
+      alert = "leios_node_accept_queue_overflowing";
+      expr = ''rate(node_netstat_TcpExt_ListenOverflows{instance=~"leios.*"}[10m]) > ${minOverflowRate} and rate(node_netstat_Tcp_PassiveOpens{instance=~"leios.*"}[10m]) < ${maxAcceptRate}'';
+      for = acceptStalledFor;
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: kernel is dropping inbound connections, cardano-node has stopped accepting.";
+        description = "{{$labels.instance}}: the TCP accept queue is overflowing at {{ printf \"%.2f\" $value }} connections/s, so cardano-node is no longer calling accept() on its listening sockets. The node keeps following the chain over its existing outbound connections and keeps logging, so it looks healthy from systemd, but it serves nothing inbound and its own metrics endpoint stops answering too. Confirm with `ss -lnt '( sport = :3001 or sport = :12798 )'`, where Recv-Q pinned at or above Send-Q is the accept queue standing full. Only a cardano-node restart has been seen to clear it.";
       };
     }
   ];
