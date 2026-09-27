@@ -11,7 +11,13 @@
       shell.global = {
         defaultShell = "ops";
         extraPkgs =
-          [config.packages.pre-push]
+          [
+            config.packages.pre-push
+            # Reads one node's mempool over N2C and reports the tx-firehose
+            # colours it holds. Run it against a host socket over a tunnel,
+            # there is no reason to deploy it.
+            inputs'.cardano-node-leios.packages.mempool-monitor-static
+          ]
           ++ (with inputs'.metsuke.packages; [
             duckdb
             metsuke
