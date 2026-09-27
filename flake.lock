@@ -1823,11 +1823,11 @@
         "utils": "utils_3"
       },
       "locked": {
-        "lastModified": 1790292486,
-        "narHash": "sha256-iZCUghkeSzjyWV+up4VMbYBSVD6DQ7RYsqRscYO6i2E=",
+        "lastModified": 1790495593,
+        "narHash": "sha256-iyBgotIFsqd3pCXCqKlc/T2KK6RVgKj4r4f4Es4e0sk=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "5d8504829633d715f1ef6670d7df4605e9cf2ccd",
+        "rev": "9eeb7454468c68443ff631b54684640337b82a47",
         "type": "github"
       },
       "original": {
