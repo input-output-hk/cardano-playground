@@ -462,6 +462,15 @@ in
         (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
       ];
 
+      # Additive to centrifuge, on the same even hour window. Add to any host
+      # already running a node, one instance per host, and fund
+      # secrets/groups/<group>/deploy/<host>-firehose-fund.skey first, because
+      # tx-firehose exits when the startup UTxO query comes back empty.
+      leiosFirehose.imports = [
+        nixosModules.cardano-tx-firehose
+        nixosModules.profile-leios-tx-firehose
+      ];
+
       leiosFilesNginx.imports = [
         nixosModules.leios-files-nginx
         {services.leios-files-nginx.acmeEmail = "devops@iohk.io";}
@@ -1424,7 +1433,7 @@ in
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 300) (group "leios2") node-leios leiosBp];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 300) (group "leios3") node-leios leiosBp (lsmPath "/ephemeral/cardano-node/lsm/")];};

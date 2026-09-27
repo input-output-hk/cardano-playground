@@ -35,6 +35,7 @@ keys:
   - &leios1-centrifuge-a-1 age1wavssdycw4cumqtws84a57c5r8u6366kw5e7ctjcqgkdzrsfyy2q6rtllk
   - &leios1-metsuke-a-1 age137wf2507wl07lm9qnl8rszuhf5ltjfa6x8xz3a5tnjcceqsgrdpqlve8yc
   - &leios2-bp-b-1 age1lt8a78g53sgpspgtnce3w5v2fswdhhr7cnkl3eg4gkepd7gdd9lqcpy95c
+  - &leios2-rel-b-2 age16f699d46dehey3zpw0704uncck5r92vydz8js6gp58naddcqj94qk73fzr
   - &leios3-bp-c-1 age1pn8tx5ehm7hejphk6ewlvlmpmg4ujq4gc92mtudhsqpapj3q4apscyjwcy
   - &leiosred1-bp-a-1 age1x9rklez6g95grqhgm5rlfyu3nt2gmtptnmh3c0uu9nw46r22mchqhj54fk
   - &leiosred2-bp-b-1 age1ew7xmm6ypqtn6c8jl9chrctk3ghgju2zfgnvy8kjm46eyzs5vvusr4emcu
@@ -189,6 +190,12 @@ creation_rules:
     - age:
       - *sre
       - *leios1-centrifuge-a-1
+
+  - path_regex: secrets/groups/leios2/deploy/leios2-rel-b-2.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leios2-rel-b-2
 
   - path_regex: secrets/groups/leios2/deploy/.*$
     key_groups:
