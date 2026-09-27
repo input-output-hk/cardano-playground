@@ -273,12 +273,19 @@
           cardano-node.shareNodeSocket = mkDefault true;
         };
 
-        systemd.services.${serviceName} = rec {
-          requisite = [
+        systemd.services.${serviceName} = {
+          requisite = ["cardano-node.service"];
+
+          # The socket share unit is WantedBy the node, so a node already
+          # running from before this module was deployed never picked up that
+          # want and the socket stays unwritable. Pull it in rather than
+          # require it, which would instead fail the start on a dependency.
+          wants = ["cardano-node-socket-share.service"];
+
+          after = [
             "cardano-node.service"
             "cardano-node-socket-share.service"
           ];
-          after = requisite;
 
           serviceConfig.SupplementaryGroups = lib.singleton config.services.cardano-node.socketGroup;
         };
