@@ -1033,19 +1033,24 @@ in
                   # The governor blocks in `atomically (Mux.stopped csMux)`,
                   # which cannot return until every mini-protocol thread on
                   # that mux has finished. Naming the one that never returns
-                  # needs per-protocol start events, and at the default Notice
-                  # only CleanExit, ExceptionExit, State and
-                  # Bearer.TraceEmitDeltaQ reach the journal, so starts minus
-                  # exits cannot be computed. Confirmed against a live wedge on
-                  # leios2-rel-b-1 2026-09-25.
+                  # needs per-protocol start events.
                   #
-                  # maxFrequency is deliberately left at the default rather
-                  # than 0. Mux traces are per connection and relays churn
-                  # hard, and journal volume has wedged alloy here before. If
-                  # start events appear but are being sampled away, add
-                  # maxFrequency = 0 then.
-                  "Net.Mux" = {
+                  # Bearer and Channel are per message, not per protocol, and
+                  # are 99% of the volume. Measured on leios2-rel-b-3
+                  # 2026-09-26, Net.Mux.Remote at Debug alone emitted 28271
+                  # lines a minute, of which 28024 were those two and 289 were
+                  # the start and stop events wanted here. Holding them at Info
+                  # leaves the diagnostic intact.
+                  "Net.Mux.Remote" = {
                     severity = "Debug";
+                  };
+
+                  "Net.Mux.Remote.Bearer" = {
+                    severity = "Info";
+                  };
+
+                  "Net.Mux.Remote.Channel" = {
+                    severity = "Info";
                   };
                 };
               };

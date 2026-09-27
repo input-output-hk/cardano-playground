@@ -12,7 +12,7 @@
 
     # Extra pins
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w39";
-    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-prototype-w35-patched";
+    # cardano-node-leios.url = "github:input-output-hk/ouroboros-leios/jl/leios-w39";
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
       url = "github:input-output-hk/leios-adversarial-tools";
