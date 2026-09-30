@@ -23,11 +23,9 @@
     }
   },
   "LeiosDbConfig": {
-    "Backend": "SQLite",
-    "Filepath": "leios.db"
+    "Backend": "SQLite"
   },
-  "MempoolCapacityBytesOverride": 2000000,
-  "MinNodeVersion": "11.1.0.164-prototype-2026w36",
+  "MinNodeVersion": "11.1.0.164-prototype-2026w38a",
   "Protocol": "Cardano",
   "RequiresNetworkMagic": "RequiresMagic",
   "ShelleyGenesisFile": "shelley-genesis.json",
