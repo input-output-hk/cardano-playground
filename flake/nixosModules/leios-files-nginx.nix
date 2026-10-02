@@ -46,22 +46,40 @@ _: {
     #
     # The immutable side is read from the newest rolling ZFS snapshot that the
     # cardano-parts `profile-zfs-snapshots` module produces (<dataset>@<prefix>-*),
-    # atomic and crash-consistent without stopping the node. The volatile side is
-    # off-pool so no snapshot covers it, and is staged live instead:
+    # atomic and crash-consistent without stopping the node. That covers
+    # leios.imm.db and its `-wal`/`-shm`, which ship from the snapshot as a
+    # matched set; SQLite replays the WAL on first open.
+    #
+    # leios.imm.db was previously excluded from the ZFS side and taken via
+    # SQLite online backup as well, "so both DBs get the same treatment". That
+    # cost 43 min and 387G read / 382G written per run against a 6.9G DB (~55x
+    # amplification), because `.backup` restarts from the beginning whenever the
+    # source is written mid-copy and the node writes continuously. It saturated
+    # the device, tripped NodeDiskIOSaturation and stalled the hourly publish.
+    # The snapshot is already a consistent image, so `.backup` added nothing on
+    # that side. Verified: a snapshot (and even a torn `cp`) of the DB plus its
+    # WAL replays clean -- `wal_checkpoint(TRUNCATE)` 0|0|0 in 0.84s on a 7.5G
+    # DB, `quick_check` ok -- and cardano-node's LeiosDb opens it (restart after
+    # SIGKILL: walBytes 67108864 at open, no errors, EBs recovered not lost).
+    #
+    # The volatile side is off-pool so no snapshot covers it, and is staged live:
     #
     #   - the newest ledger snapshot dir that contains `meta`, which consensus
     #     writes last, so a dir having it is fully written and safe to copy. This
     #     is what saves a consumer a full ledger replay. volatile/ and gsm/ are
     #     not shipped; the node rebuilds them.
-    #   - both leios SQLite DBs, via SQLite's online backup (`.backup`), which
-    #     yields a consistent copy of a live DB without a node stop. Only files
-    #     matching `leiosDbGlob` whose header is `SQLite format 3` are backed up,
-    #     so live WAL/SHM companions and the published artifact itself are never
-    #     backup sources. leios.imm.db is excluded from the ZFS side of the tar
-    #     and taken this way too, so both DBs get the same treatment.
+    #   - leios.vol.db, via SQLite's online backup (`.backup`), which yields a
+    #     consistent copy of a live DB without a node stop. Only files matching
+    #     `leiosDbGlob` whose header is `SQLite format 3` are backed up, so live
+    #     WAL/SHM companions and the published artifact itself are never backup
+    #     sources. This one stays cheap (~30s) -- it is far smaller, so the
+    #     window for a mid-copy write to force a restart is correspondingly small.
     #
-    # Each backed-up DB is shipped with 0-byte `-wal`/`-shm` members so extraction
-    # truncates any stale journal files in the destination (see the staging loop).
+    # The `.backup`-produced leios.vol.db is shipped with 0-byte `-wal`/`-shm`
+    # members so extraction truncates any stale journal in the destination (see
+    # the staging loop). leios.imm.db instead carries its REAL companions: its
+    # main file is not checkpointed, so pairing it with an empty WAL would
+    # discard every transaction committed since the last checkpoint.
     # The artifact is named `leios.*` (served + indexed) and extracts into a
     # cardano-node data dir as a single `<artifactDirName>/` tree (default `db/`):
     # the chain dir is renamed in-archive from its on-disk basename (e.g.
@@ -217,12 +235,14 @@ _: {
           fi
         done
 
-        # Consistent online copies of the live leios SQLite DBs — no node stop.
-        # One DB sits beside each partition, so both source dirs are scanned.
-        # Staged under `$artDir/` so their in-archive paths land inside the
+        # Consistent online copy of the live leios SQLite DB on the volatile
+        # side — no node stop. Only this side is scanned: no snapshot covers the
+        # instance store, whereas leios.imm.db is on the ZFS side and ships
+        # straight from the snapshot (see the publish step below).
+        # Staged under `$artDir/` so its in-archive path lands inside the
         # renamed chain dir (e.g. `db/leios.vol.db`) and the artifact is one tree.
         shopt -s nullglob
-        for f in "$src"/${csCfg.leiosDbGlob} "$volSrc"/${csCfg.leiosDbGlob}; do
+        for f in "$volSrc"/${csCfg.leiosDbGlob}; do
           [ -f "$f" ] || continue
           # Only genuine SQLite main DBs (skips -wal/-shm and our own artifacts).
           # Compare the 16-byte magic as hex so binary companions don't trip
@@ -289,20 +309,18 @@ _: {
 
         # One artifact: the immutable side from the ZFS snapshot, plus everything
         # staged above from the non-ZFS volatile side. leios.imm.db lives inside
-        # the snapshotted dir, so exclude it there and take the staged
-        # sqlite-backed-up copy instead, which also carries the 0-byte companions.
-        # The exclude is anchored to "$chainName/" because tar applies excludes
-        # globally across every -C section: an unanchored `leios.*.db` would also
-        # drop the staged copies we just made.
+        # the snapshotted dir and ships from there as-is, together with its real
+        # -wal/-shm companions — the snapshot is atomic, so the three are a
+        # matched set and SQLite replays the WAL on first open.
         if [ ''${#stagefiles[@]} -gt 0 ]; then
           publish ${lib.escapeShellArg csCfg.artifactName} \
-            "''${xformArgs[@]}" --exclude="$chainName/${csCfg.leiosDbGlob}*" \
+            "''${xformArgs[@]}" \
             -C "$snapParent" "''${chainmembers[@]}" \
             -C "$stage" "''${stagefiles[@]}"
         else
           echo "leios-chain-snapshot: WARNING nothing staged from $volSrc; '${csCfg.artifactName}' will contain the immutable chain only" >&2
           publish ${lib.escapeShellArg csCfg.artifactName} \
-            "''${xformArgs[@]}" --exclude="$chainName/${csCfg.leiosDbGlob}*" \
+            "''${xformArgs[@]}" \
             -C "$snapParent" "''${chainmembers[@]}"
         fi
       '';
@@ -534,8 +552,8 @@ _: {
           description = ''
             Subdirectories of `sourcePath` to include, relative to it. Empty
             (default) includes all of it, which under the w38a split layout is
-            `immutable/` plus `leios.imm.db`. The latter is excluded from the
-            ZFS side regardless and shipped as a sqlite online backup instead.
+            `immutable/` plus `leios.imm.db` and its `-wal`/`-shm` companions,
+            all taken directly from the ZFS snapshot.
           '';
         };
 
