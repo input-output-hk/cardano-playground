@@ -415,7 +415,26 @@ in
         };
       };
 
-      leiosRel = {imports = [rel];};
+      leiosRel = nixos: {
+        imports = [rel];
+
+        # Ban peers stuck in a tight reconnect loop. On 2026-10-05 a single
+        # InitiatorOnly peer handshook ~4600x/10m per relay, overflowing the
+        # accept queue and starving the local ping. Legit peers peaked at 27/10m.
+        services.fail2ban.jails.cardano-node-reconnect-flood = {
+          filter = {
+            Init.journalmatch = "_SYSTEMD_UNIT=cardano-node.service";
+            Definition.failregex = ''"ns":"Net\.ConnectionManager\.Remote\.ConnectionHandler\.HandshakeSuccess".*"remoteAddress":\{"address":"<HOST>"'';
+          };
+          settings = {
+            backend = "systemd";
+            port = nixos.config.cardano-parts.perNode.meta.cardanoNodePort;
+            findtime = 600;
+            maxretry = 300;
+            bantime = 3600;
+          };
+        };
+      };
 
       metsukeServer.imports = [
         inputs.metsuke.nixosModules.metsuke-server
