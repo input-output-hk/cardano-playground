@@ -11,13 +11,13 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w39";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w40";
 
     # Same tree as cardano-node-leios plus a bound on the inbound governor's
     # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
     # the node-leios-patched import in colmena.nix, so this input and that
     # import come out together when the bound is no longer wanted.
-    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios/3db5e80c4bd9b60b9b860f5f8aae430de89c4625";
+    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios/jl/leios-w40";
 
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
