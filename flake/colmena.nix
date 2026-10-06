@@ -421,7 +421,7 @@ in
         # Ban peers stuck in a tight reconnect loop. On 2026-10-05 a single
         # InitiatorOnly peer handshook ~4600x/10m per relay, overflowing the
         # accept queue and starving the local ping. Legit peers peaked at 27/10m.
-        services.fail2ban.jails.cardano-node-reconnect-flood = {
+        services.fail2ban.jails.cnode-flood = {
           filter = {
             Init.journalmatch = "_SYSTEMD_UNIT=cardano-node.service";
             Definition.failregex = ''"ns":"Net\.ConnectionManager\.Remote\.ConnectionHandler\.HandshakeSuccess".*"remoteAddress":\{"address":"<HOST>"'';
