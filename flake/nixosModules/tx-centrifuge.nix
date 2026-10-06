@@ -147,6 +147,31 @@
               inputs_per_tx = lib.mkDefault 1;
               outputs_per_tx = lib.mkDefault 1;
               fee = lib.mkDefault 1000000;
+
+              # Bytes of filler metadata per transaction, the way to make
+              # transactions bigger without changing how many inputs they
+              # consume or outputs they produce, so the utxo set neither grows
+              # nor shrinks. The ledger caps a metadata byte string at 64, so
+              # the payload goes on the wire as a list of 64 byte chunks and
+              # costs about 3% more than the figure here, plus roughly 40 bytes
+              # for the headers and the auxiliary data hash.
+              #
+              # 256 is four whole chunks and measures 506 bytes on chain, from a
+              # 200 byte base, against a maxTxSize of 16384. Plenty of room to
+              # go bigger. Fee is not calculated, but 1000000 covers even a
+              # maxTxSize transaction, which needs 44 * 16384 + 155381 = 876277.
+              #
+              # Transaction size and tps together set the offered load, so
+              # changing one without the other changes how much traffic this
+              # puts on the network. At 100 tps this is about 51 KB/s against
+              # the 20 KB/s that bare transactions were offering.
+              #
+              # It also moves which endorser block cap binds. At 200 bytes the
+              # limit was maxEndorserBlockReferencesSize, 150000 over 36 byte
+              # references, so 4166 transactions and only 833 KB of payload. At
+              # 506 bytes maxEndorserBlockTxsSize binds instead, a measured 2941
+              # transactions for the full 1500000.
+              metadata_bytes = lib.mkDefault 256;
             };
           };
 
