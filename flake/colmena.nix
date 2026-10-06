@@ -639,6 +639,28 @@ in
         };
       };
 
+      # Move the immutable partition onto the instance store, so leios.imm.db
+      # lands there rather than on the ebs root. node-leios keeps it on ebs on
+      # the assumption that it is cold and append mostly, which the leios
+      # sqlite db beside it is not: it is 9G, read randomly in 4k pages, and on
+      # ebs those reads amplify against the 128k zfs recordsize and serialise
+      # at about 1ms each, which is what blocks the serving path. The instance
+      # store is ext2, so no recordsize amplification, and has no ebs
+      # throughput ceiling.
+      #
+      # This points the immutable path at the same directory the volatile path
+      # already uses. The two sets of names do not collide: immutable/ and
+      # leios.imm.db alongside volatile/, leios.vol.db, ledger/ and gsm/.
+      #
+      # The instance store does not survive a stop/start, so a host using this
+      # has to be resynced or restored from an artifact after one. Move the
+      # existing immutable/, leios.imm.db* , lock and protocolMagicId across
+      # with the node stopped, before deploying this.
+      immOnEphemeral = {config, ...}: {
+        services.cardano-node.immutableDatabasePath =
+          mkForce "/ephemeral/cardano-node/${config.services.cardano-node.dbPrefix 0}";
+      };
+
       lsm = lsmPath "/ephemeral/cardano-node/";
 
       smash = {
@@ -1480,9 +1502,12 @@ in
       # Leios, all on custom leios prototype version
       # Remove `ccMon` until governance works in Dijkstra era
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 300) (group "leios1") node-leios leiosBp metsukeAgent];};
-      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 300) (group "leios1") node-leios leiosBp immOnEphemeral metsukeAgent];};
+
+      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
+
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
