@@ -110,7 +110,9 @@ def select-cli [nenv: string, override: string] {
 # node replies with an era mismatch. `query tip` takes no era group, so it is
 # safe to probe with.
 def detect-era [cli: string, magic: string]: nothing -> string {
-  let era = (^$cli query tip --testnet-magic $magic | from json | get era | str downcase)
+  let era = (
+    ^$cli query tip --testnet-magic $magic | from json | get era | str downcase
+  )
   if (^$cli $era --help | complete | get exit_code) != 0 {
     error make --unspanned {
       msg: $"($cli) has no '($era)' era command group, but the node is in the ($era) era. Pin a cardano-cli that knows it."
