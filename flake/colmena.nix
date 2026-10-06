@@ -514,7 +514,24 @@ in
 
       leiosFilesNginx.imports = [
         nixosModules.leios-files-nginx
-        {services.leios-files-nginx.acmeEmail = "devops@iohk.io";}
+        ({config, ...}: let
+          immPath = config.services.cardano-node.immutableDatabasePath 0;
+        in {
+          services.leios-files-nginx = {
+            acmeEmail = "devops@iohk.io";
+
+            # Follow wherever the node actually keeps its immutable partition
+            # rather than the module default, and drop to a live read when that
+            # is off the pool. Without this, immOnEphemeral would leave the
+            # artifact job looking for a snapshot of a path that no longer sits
+            # on the dataset, which it reports and then exits 0 on, so the host
+            # would quietly stop publishing.
+            chainSnapshot = {
+              sourcePath = immPath;
+              sourceOnZfs = !hasPrefix "/ephemeral/" immPath;
+            };
+          };
+        })
       ];
 
       # For a host resyncing from genesis: keep serving nothing rather than

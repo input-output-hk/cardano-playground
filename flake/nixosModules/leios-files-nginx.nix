@@ -41,14 +41,24 @@ _: {
     # Publishes one compressed tarball of cardano-node state into servedDir,
     # assembled from two filesystems because w38a splits the node database:
     #
-    #   sourcePath          (ZFS)          immutable/ + leios.imm.db
-    #   volatileSourcePath  (instance store) volatile/ ledger/ gsm/ + leios.vol.db
+    #   sourcePath          (ZFS or instance store) immutable/ + leios.imm.db
+    #   volatileSourcePath  (instance store)        volatile/ ledger/ gsm/ + leios.vol.db
     #
-    # The immutable side is read from the newest rolling ZFS snapshot that the
-    # cardano-parts `profile-zfs-snapshots` module produces (<dataset>@<prefix>-*),
-    # atomic and crash-consistent without stopping the node. That covers
-    # leios.imm.db and its `-wal`/`-shm`, which ship from the snapshot as a
-    # matched set; SQLite replays the WAL on first open.
+    # The immutable side is read one of two ways, selected by sourceOnZfs:
+    #
+    #   true  (default): from the newest rolling ZFS snapshot that the
+    #     cardano-parts `profile-zfs-snapshots` module produces
+    #     (<dataset>@<prefix>-*), atomic and crash-consistent without stopping
+    #     the node. leios.imm.db and its `-wal`/`-shm` ship from the snapshot as
+    #     a matched set; SQLite replays the WAL on first open.
+    #
+    #   false: straight off the live directory, for hosts whose immutable
+    #     partition has been moved to the instance store where no snapshot
+    #     reaches it. The three files are then read at slightly different
+    #     instants rather than atomically. That is the same exposure as the
+    #     torn `cp` verified below, and SQLite rejects stale WAL frames by
+    #     salt, so a checkpoint landing mid-tar does not corrupt the result.
+    #     Weaker than the snapshot, so prefer the snapshot where one exists.
     #
     # leios.imm.db was previously excluded from the ZFS side and taken via
     # SQLite online backup as well, "so both DBs get the same treatment". That
@@ -103,8 +113,9 @@ _: {
       text = ''
         set -euo pipefail
 
-        dataset=${lib.escapeShellArg csCfg.dataset}
-        prefix=${lib.escapeShellArg csCfg.snapshotPrefix}
+        ${lib.optionalString csCfg.sourceOnZfs ''
+          dataset=${lib.escapeShellArg csCfg.dataset}
+          prefix=${lib.escapeShellArg csCfg.snapshotPrefix}''}
         src=${lib.escapeShellArg csCfg.sourcePath}
         servedDir=${lib.escapeShellArg cfg.servedDir}
 
@@ -135,45 +146,66 @@ _: {
         # (-p preserves the archived modes; the dest must be writable by the node user).
         ownerArgs=(--owner=0 --group=0)
 
-        # Newest snapshot profile-zfs-snapshots generates: exactly
-        # <dataset>@<prefix>-<UTC stamp> on <dataset> (-d 1 excludes child
-        # datasets). Exact-match so a manual/one-off snapshot that merely
-        # shares the prefix is never picked. Held ones are fine to read.
-        snap=$(${zfs} list -H -t snapshot -o name -s creation -d 1 "$dataset" 2>/dev/null \
-                 | { grep -E "@$prefix-[0-9]{8}T[0-9]{6}Z$" || true; } | tail -n1)
-        if [ -z "$snap" ]; then
-          echo "leios-chain-snapshot: no $dataset@$prefix-* snapshot found (is zfs-snapshots running here?), skipping" >&2
-          exit 0
-        fi
-        snapname=''${snap#*@}
+        ${
+          if !csCfg.sourceOnZfs
+          then ''
+            # sourceOnZfs is false: the immutable side is off-pool, so no
+            # snapshot covers it and the chain dir is tarred live. snapParent is
+            # just its parent on the live filesystem. See the sourceOnZfs option
+            # for why a torn read is acceptable here and why `.backup` is not
+            # the alternative.
+            if [ ! -d "$src" ]; then
+              echo "leios-chain-snapshot: $src absent (check chainSnapshot.sourcePath), skipping" >&2
+              exit 0
+            fi
+            snap="live:$src"
+            created=$(date -u -r "$src" +%Y-%m-%dT%H:%M:%SZ)
+            snapParent=$(dirname "$src")
+          ''
+          else ''
+            # Newest snapshot profile-zfs-snapshots generates: exactly
+            # <dataset>@<prefix>-<UTC stamp> on <dataset> (-d 1 excludes child
+            # datasets). Exact-match so a manual/one-off snapshot that merely
+            # shares the prefix is never picked. Held ones are fine to read.
+            snap=$(${zfs} list -H -t snapshot -o name -s creation -d 1 "$dataset" 2>/dev/null \
+                     | { grep -E "@$prefix-[0-9]{8}T[0-9]{6}Z$" || true; } | tail -n1)
+            if [ -z "$snap" ]; then
+              echo "leios-chain-snapshot: no $dataset@$prefix-* snapshot found (is zfs-snapshots running here?), skipping" >&2
+              exit 0
+            fi
+            snapname=''${snap#*@}
 
-        # Resolve where the dataset is mounted so we can browse its snapshot in
-        # place via the .zfs control dir (no mount/umount). findmnt works for
-        # both ZFS-property and legacy/fstab mounts (where the `mountpoint`
-        # property is "legacy", not a path); fall back to the property only if
-        # findmnt can't resolve it.
-        mp=$(findmnt -n -f -o TARGET --source "$dataset" 2>/dev/null | head -n1)
-        if [ -z "$mp" ]; then
-          mpprop=$(${zfs} get -H -o value mountpoint "$dataset" 2>/dev/null || true)
-          case "$mpprop" in
-            /*) mp=$mpprop ;;
-          esac
-        fi
-        if [ -z "$mp" ]; then
-          echo "leios-chain-snapshot: could not resolve a mount point for dataset $dataset (not mounted?), skipping" >&2
-          exit 0
-        fi
-        mp=''${mp%/}
-        rel=''${src#"$mp"}; rel=''${rel#/}
-        snapsrc="$mp/.zfs/snapshot/$snapname/$rel"
-        if [ ! -d "$snapsrc" ]; then
-          echo "leios-chain-snapshot: $snapsrc not present in $snap (check chainSnapshot.dataset/sourcePath), skipping" >&2
-          exit 0
-        fi
+            # Resolve where the dataset is mounted so we can browse its snapshot in
+            # place via the .zfs control dir (no mount/umount). findmnt works for
+            # both ZFS-property and legacy/fstab mounts (where the `mountpoint`
+            # property is "legacy", not a path); fall back to the property only if
+            # findmnt can't resolve it.
+            mp=$(findmnt -n -f -o TARGET --source "$dataset" 2>/dev/null | head -n1)
+            if [ -z "$mp" ]; then
+              mpprop=$(${zfs} get -H -o value mountpoint "$dataset" 2>/dev/null || true)
+              case "$mpprop" in
+                /*) mp=$mpprop ;;
+              esac
+            fi
+            if [ -z "$mp" ]; then
+              echo "leios-chain-snapshot: could not resolve a mount point for dataset $dataset (not mounted?), skipping" >&2
+              exit 0
+            fi
+            mp=''${mp%/}
+            rel=''${src#"$mp"}; rel=''${rel#/}
+            snapsrc="$mp/.zfs/snapshot/$snapname/$rel"
+            if [ ! -d "$snapsrc" ]; then
+              echo "leios-chain-snapshot: $snapsrc not present in $snap (check chainSnapshot.dataset/sourcePath), skipping" >&2
+              exit 0
+            fi
 
-        # Tar the chain relative to the node data dir (parent of the chain subdir)
-        # so each artifact extracts into a cardano-node data dir.
-        snapParent=$(dirname "$snapsrc")
+            created=$(${zfs} get -H -o value creation "$snap")
+
+            # Tar the chain relative to the node data dir (parent of the chain
+            # subdir) so each artifact extracts into a cardano-node data dir.
+            snapParent=$(dirname "$snapsrc")''
+        }
+
         chainName=$(basename "$src")
         chainmembers=${chainMembersArr}
 
@@ -185,7 +217,6 @@ _: {
         xformArgs=(--transform "s,^$chainName/,$artDir/," --transform "s,^$chainName$,$artDir,")
 
         mkdir -p "$servedDir"
-        created=$(${zfs} get -H -o value creation "$snap")
         now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
         stagefiles=()
@@ -269,6 +300,25 @@ _: {
         shopt -u nullglob
         mapfile -t stagefiles < <(cd "$stage" && find "$artDir" -mindepth 1 -maxdepth 1 | sort)
 
+        # When the immutable path has been moved onto the instance store the two
+        # sources are one directory, so the chain section sweeps up the volatile
+        # members the stage is about to supply and every one of them lands in the
+        # archive twice. Drop the chain-side copies and keep the staged ones,
+        # which are the consistent sqlite backups rather than a torn live read.
+        #
+        # --anchored plus the "$chainName/" prefix is what confines these to the
+        # chain section: exclude patterns apply to every -C section, and they
+        # match the name before --transform rewrites it. Unanchored, they would
+        # take the staged copies with them and publish an immutable-only
+        # artifact, which no warning here would catch.
+        excludeArgs=()
+        if [ "$(readlink -f "$src")" = "$(readlink -f "$volSrc")" ]; then
+          excludeArgs+=(--anchored)
+          for f in "''${stagefiles[@]}"; do
+            excludeArgs+=(--exclude="$chainName/$(basename "$f")")
+          done
+        fi
+
         # publish <artifact> <tar-args...>  (atomic; world-readable).
         publish() (
           art=$1; shift
@@ -276,7 +326,23 @@ _: {
           tmp=$(mktemp "$servedDir/.$art.XXXXXX")
           trap 'rm -f "$tmp"' EXIT
           # Throttled so publishing doesn't starve the node's IO/CPU.
-          nice -n 19 ionice -c3 tar -cf - "''${ownerArgs[@]}" "$@" | ${csCfg.compressor} > "$tmp"
+          #
+          # tar exit 1 is "some files differ", which here means
+          # "file changed as we read it" against the live chain dir. That is
+          # expected when reading a running node rather than a snapshot, and is
+          # the torn read the sourceOnZfs docs cover, so it is tolerated and the
+          # warning silenced. Exit 2 is a real failure and still aborts. Under
+          # the snapshot the source cannot change, so any exit 1 there would be
+          # a genuine surprise and is left fatal.
+          set +e
+          nice -n 19 ionice -c3 tar -cf - ${lib.optionalString (!csCfg.sourceOnZfs) "--warning=no-file-changed "}"''${ownerArgs[@]}" "$@" | ${csCfg.compressor} > "$tmp"
+          rc=''${PIPESTATUS[0]}
+          set -e
+          ${
+          if csCfg.sourceOnZfs
+          then ''[ "$rc" -eq 0 ] || exit "$rc"''
+          else ''[ "$rc" -le 1 ] || exit "$rc"''
+        }
           sum=$(sha256sum "$tmp" | cut -d' ' -f1)
           size=$(stat -c %s "$tmp")
           chmod 0644 "$tmp"
@@ -307,13 +373,15 @@ _: {
           echo "leios-chain-snapshot: published $art ($size bytes, sha256 $sum)"
         )
 
-        # One artifact: the immutable side from the ZFS snapshot, plus everything
-        # staged above from the non-ZFS volatile side. leios.imm.db lives inside
-        # the snapshotted dir and ships from there as-is, together with its real
-        # -wal/-shm companions — the snapshot is atomic, so the three are a
-        # matched set and SQLite replays the WAL on first open.
+        # One artifact: the immutable side from snapParent, which is either the
+        # ZFS snapshot or the live directory depending on sourceOnZfs, plus
+        # everything staged above from the volatile side. leios.imm.db ships
+        # from there as-is together with its real -wal/-shm companions, so
+        # SQLite replays the WAL on first open; under the snapshot the three are
+        # an atomic matched set, live they are merely a torn read.
         if [ ''${#stagefiles[@]} -gt 0 ]; then
           publish ${lib.escapeShellArg csCfg.artifactName} \
+            "''${excludeArgs[@]}" \
             "''${xformArgs[@]}" \
             -C "$snapParent" "''${chainmembers[@]}" \
             -C "$stage" "''${stagefiles[@]}"
@@ -334,7 +402,8 @@ _: {
     #
     # When chainSnapshot.enable is on, a timer publishes compressed tarball(s)
     # into servedDir: the chain DB cut from the rolling ZFS snapshots that the
-    # `profile-zfs-snapshots` module produces, and/or a CONSISTENT online backup
+    # `profile-zfs-snapshots` module produces, or read live when `sourceOnZfs`
+    # is off, and/or a CONSISTENT online backup
     # of the live leios SQLite DB(s). Choose any of: chain-only, chain+leios.db
     # (full), or leios.db-only — letting nodes bootstrap from a recent snapshot
     # instead of syncing from genesis. Only the consistent published artifacts
@@ -496,10 +565,12 @@ _: {
             Whether to periodically publish a compressed tarball of cardano-node
             state into servedDir. The immutable chain is cut from the newest
             rolling ZFS snapshot named `<dataset>@<snapshotPrefix>-*` (as produced
-            by the `profile-zfs-snapshots` module); the newest complete ledger
+            by the `profile-zfs-snapshots` module), or read live from
+            `sourcePath` when `sourceOnZfs` is off; the newest complete ledger
             snapshot and both leios SQLite DBs are staged live from
             `volatileSourcePath`, which is off-pool. All are consistent without
-            stopping the node. When enabled, `sourcePath` and
+            stopping the node, though the live read of the immutable side is a
+            torn rather than atomic one. When enabled, `sourcePath` and
             `volatileSourcePath` must be set.
           '';
         };
@@ -513,6 +584,30 @@ _: {
             the ZFS `dataset`. Each artifact tars the chain relative to this
             directory's parent; in-archive the directory is renamed to
             `artifactDirName` (default `db`), regardless of its on-disk name.
+          '';
+        };
+
+        sourceOnZfs = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Whether `sourcePath` sits on the ZFS `dataset`, so the immutable
+            side can be read from a rolling snapshot.
+
+            Set false when the immutable partition has been moved onto the
+            instance store, where no snapshot covers it. The chain dir is then
+            tarred from the live directory instead, which is a torn read of
+            `leios.imm.db` and its `-wal`/`-shm` rather than an atomic one.
+            That is the same exposure as the torn `cp` this module already
+            verified replays clean, and SQLite rejects stale WAL frames by
+            salt, so a checkpoint landing mid-tar does not corrupt the result.
+            It is strictly weaker than the snapshot though, so leave this true
+            wherever a snapshot is available.
+
+            Do not reach for SQLite `.backup` on this side instead: against a
+            continuously written DB it restarts on every concurrent write and
+            measured 43 min and ~55x read amplification, which is why the
+            snapshot path exists.
           '';
         };
 
@@ -553,7 +648,8 @@ _: {
             Subdirectories of `sourcePath` to include, relative to it. Empty
             (default) includes all of it, which under the w38a split layout is
             `immutable/` plus `leios.imm.db` and its `-wal`/`-shm` companions,
-            all taken directly from the ZFS snapshot.
+            all taken directly from the ZFS snapshot, or from the live
+            directory when `sourceOnZfs` is off.
           '';
         };
 
@@ -626,7 +722,8 @@ _: {
           description = ''
             Filename of the published artifact (must match `leios.*` to be
             served + indexed). One combined tarball is produced: the immutable
-            chain from the ZFS snapshot, the newest complete ledger snapshot,
+            chain from the ZFS snapshot (or live, per `sourceOnZfs`), the
+            newest complete ledger snapshot,
             and both leios SQLite DBs, so a consumer downloads and unpacks a
             single file into a cardano-node data dir.
           '';
@@ -639,6 +736,17 @@ _: {
         {
           assertion = !csCfg.enable || csCfg.sourcePath != "";
           message = "services.leios-files-nginx.chainSnapshot.sourcePath must be set when chainSnapshot.enable is true.";
+        }
+        {
+          assertion =
+            !csCfg.enable
+            || csCfg.sourcePath != csCfg.volatileSourcePath
+            || csCfg.artifactDirName != baseNameOf csCfg.sourcePath;
+          message = ''
+            services.leios-files-nginx.chainSnapshot.artifactDirName is "${csCfg.artifactDirName}", the same name as the directory sourcePath ends in, and sourcePath and volatileSourcePath are one directory.
+            The publisher deduplicates the chain section against the staged one with exclude patterns anchored to that directory name, and those patterns would match the staged members too, publishing an artifact with no volatile side.
+            Give artifactDirName a different name, or split the two paths.
+          '';
         }
       ];
 
@@ -825,7 +933,13 @@ _: {
         # DB in the snapshot, runs sqlite online backups, writes servedDir).
         (lib.mkIf csCfg.enable {
           services.leios-chain-snapshot = {
-            description = "Publish cardano-node state tarball(s) from the latest ZFS snapshot";
+            description =
+              "Publish cardano-node state tarball(s) from "
+              + (
+                if csCfg.sourceOnZfs
+                then "the latest ZFS snapshot"
+                else "the live chain directory"
+              );
             after = ["zfs-mount.service" "leios-files-nginx-setup.service"];
             requires = ["leios-files-nginx-setup.service"];
             serviceConfig = {
