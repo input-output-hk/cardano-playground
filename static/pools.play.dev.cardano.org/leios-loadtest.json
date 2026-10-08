@@ -1,0 +1,6 @@
+{
+  "name": "IOG Musashi Leios Load Test Pool",
+  "description": "Synthetic pool registered only to hold a Leios BLS committee seat for voting load tests. It does not forge and carries no pledge or stake. Please do not delegate to it.",
+  "ticker": "LTEST",
+  "homepage": "https://musashi.network"
+}
