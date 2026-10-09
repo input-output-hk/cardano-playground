@@ -1,16 +1,15 @@
 # AGENTS.md — cardano-playground
 
-Guidance for AI agents working in cardano-playground, the IOG testnet cluster repo built
-from [cardano-parts](https://github.com/input-output-hk/cardano-parts).
+Guidance for AI agents working in a Cardano cluster repo built from
+[cardano-parts](https://github.com/input-output-hk/cardano-parts).
 
 ## What this repo is
 
-A deployment of several Cardano test networks: NixOS machine configs (colmena),
-opentofu/AWS infrastructure, sops-encrypted secrets and Grafana dashboards, driven through
-`just` recipes.
+A deployment of a Cardano cluster: NixOS machine configs (colmena), opentofu/AWS
+infrastructure, and sops-encrypted secrets, driven through `just` recipes.
 
-Node environments: `mainnet`, `preprod`, `preview`, `dijkstra`, `leios`, `sanchonet`, each
-with numbered groups (`preprod1`, `leios2`, …).
+Supported node environments: `mainnet`, `preprod`, `preview`, `dijkstra`, `leios`,
+`sanchonet`, `demo`.
 
 ## Operating the cluster
 
@@ -61,9 +60,10 @@ substitution, as the Justfile does: `--signing-key-file <(sops -d path/to.skey)`
 
 This `AGENTS.md` is the canonical instructions file, read directly by Codex and by people.
 `.ai/` holds the canonical tool-neutral content; each tool gets a directory of committed
-symlinks into it, so `.claude/skills -> ../.ai/skills`. `.claude` is a real directory with
-everything else in it gitignored, because Claude Code creates isolated-agent worktrees
-under `.claude/worktrees/` and those must not land in tracked content.
+symlinks into it, so `.claude/CLAUDE.md -> ../AGENTS.md` and `.claude/skills -> ../.ai/skills`.
+`.claude` is a real directory with everything else in it gitignored, because Claude Code
+creates isolated-agent worktrees under `.claude/worktrees/` and those must not land in
+tracked content.
 
 Task-specific skills live in `.ai/skills/`; invoke the relevant one before starting that
 kind of work:
@@ -86,8 +86,9 @@ For a whole batch rather than one file, use the nu script pair. `just upstream-d
 here collects changed template files from cardano-parts and pulls the ones you keep;
 `just downstream-diff-all` in cardano-parts does the reverse, porting changes made here
 back into the template. Both annotate a candidate list for you to curate in `$EDITOR`
-before anything is copied, and both honour the matching `.upstream-diff-all.excludes` /
-`.downstream-diff-all.excludes` file.
+before anything is copied, and both honour a `.upstream-diff-all.excludes` /
+`.downstream-diff-all.excludes` file in the downstream repo if present.
 
-Do not pull `.claude` or its contents by either route: the curl fetch returns a symlink's
-target as text, replacing the link with a file containing its path.
+`.claude` holds only symlinks to `AGENTS.md` and `.ai/skills`; sync those targets directly.
+The batch differ skips symlinks automatically; don't `template-clone` `.claude/*` (curl would
+replace the link with a text file).

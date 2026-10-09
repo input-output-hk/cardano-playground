@@ -24,6 +24,7 @@ __pycache__
 /*.txsigned
 /*.vkey
 /workbench/
+
 # Claude Code keeps its runtime in .claude: worktrees for isolated agents,
 # sessions, local settings. Ignore all of it and re-include only the committed
 # leaf symlinks, so anything a future version adds there is ignored by default.
@@ -33,5 +34,4 @@ __pycache__
 .claude/*
 !.claude/CLAUDE.md
 !.claude/skills
-.ai/CLAUDE.md
 .ai/settings.local.json
