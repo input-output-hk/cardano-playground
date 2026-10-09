@@ -1,0 +1,278 @@
+<title>Leios vote load test — findings</title>
+
+<style>
+/* ---- tokens -------------------------------------------------------------
+   Page surface is the same colour the charts are plotted on, so the embedded
+   PNGs sit flush instead of floating on a contrasting card. Neutrals carry a
+   slight cool bias toward the blue accent rather than being pure grey. */
+:root {
+  --paper:      #fcfcfb;
+  --sunk:       #f2f3f1;
+  --raised:     #ffffff;
+  --ink:        #15181c;
+  --ink-2:      #4a5059;
+  --ink-mute:   #878d95;
+  --rule:       #d5d9dd;
+  --rule-soft:  #e6e9e8;
+  --base:       #2a78d6;   /* baseline / unloaded, as in the charts */
+  --load:       #eb6834;   /* loaded, as in the charts */
+  --v-real:     #b3401a;   /* verdict: real signal */
+  --v-noise:    #6b7280;   /* verdict: within noise */
+  --v-open:     #8a6d1f;   /* verdict: unresolved */
+  --measure:    68ch;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:     #15161a;
+    --sunk:      #1d1f24;
+    --raised:    #1a1c20;
+    --ink:       #f3f4f6;
+    --ink-2:     #b8bec7;
+    --ink-mute:  #858b95;
+    --rule:      #343941;
+    --rule-soft: #272b31;
+    --base:      #5e9df0;
+    --load:      #f0834f;
+    --v-real:    #f0905f;
+    --v-noise:   #9aa1ac;
+    --v-open:    #d6b35c;
+  }
+}
+:root[data-theme="dark"] {
+  --paper:     #15161a;
+  --sunk:      #1d1f24;
+  --raised:    #1a1c20;
+  --ink:       #f3f4f6;
+  --ink-2:     #b8bec7;
+  --ink-mute:  #858b95;
+  --rule:      #343941;
+  --rule-soft: #272b31;
+  --base:      #5e9df0;
+  --load:      #f0834f;
+  --v-real:    #f0905f;
+  --v-noise:   #9aa1ac;
+  --v-open:    #d6b35c;
+}
+
+/* ---- base ---------------------------------------------------------------
+   Three type roles: a system serif for headings so this reads as a report
+   rather than a product page, system sans for running text, mono for the
+   data blocks. No webfont: the CSP blocks font CDNs and inlining a face would
+   add ~200 KB to a document that is already mostly base64 PNG. */
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light dark; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink-2);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.65;
+  margin: 0;
+  padding: 0 1.5rem 7rem;
+}
+.doc, .masthead, .board, .stamp { margin-inline: auto; max-width: 980px; }
+
+h1, h2, h3, h4 {
+  color: var(--ink);
+  font-family: Charter, "Iowan Old Style", "Source Serif 4", Palatino, Georgia, serif;
+  font-weight: 650;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(1.9rem, 1.3rem + 2.2vw, 2.7rem); letter-spacing: -0.021em; margin: 0 0 1rem; }
+h2 {
+  border-top: 1px solid var(--rule);
+  font-size: clamp(1.3rem, 1.05rem + 0.9vw, 1.62rem);
+  letter-spacing: -0.013em;
+  margin: 3.4rem 0 1.1rem;
+  padding-top: 1.3rem;
+}
+h3 { font-size: 1.11rem; letter-spacing: -0.006em; margin: 2.2rem 0 0.6rem; }
+p, ul, ol { max-width: var(--measure); }
+p { margin: 0 0 1.05rem; }
+ul, ol { margin: 0 0 1.1rem; padding-left: 1.35rem; }
+li { margin-bottom: 0.4rem; }
+li::marker { color: var(--ink-mute); }
+strong { color: var(--ink); font-weight: 640; }
+em { color: var(--ink); }
+a { color: var(--base); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:focus-visible, :focus-visible { outline: 2px solid var(--base); outline-offset: 3px; border-radius: 3px; }
+hr { border: 0; border-top: 1px solid var(--rule-soft); margin: 2.6rem 0; }
+
+/* ---- masthead ----------------------------------------------------------- */
+.masthead { padding: 3.4rem 0 0; }
+.eyebrow {
+  color: var(--ink-mute);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.13em;
+  margin: 0 0 0.9rem;
+  text-transform: uppercase;
+}
+.lede { color: var(--ink-2); font-size: 1.06rem; max-width: var(--measure); }
+.stamp {
+  color: var(--ink-mute);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  margin: 0.4rem auto 2.6rem;
+}
+
+/* ---- verdict board ------------------------------------------------------
+   The document already classifies every measurement as real signal / within
+   noise / confounded / unresolved. That classification is the thing a reader
+   needs before the detail, so it leads. The stripe encodes verdict in form as
+   well as colour, so it survives greyscale and colour-blind viewing. */
+.board {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  background: var(--rule-soft);
+  border: 1px solid var(--rule-soft);
+  border-radius: 10px;
+  margin-bottom: 3rem;
+  overflow: hidden;
+}
+.card { background: var(--raised); padding: 1.15rem 1.25rem 1.3rem; }
+.card .tag {
+  align-items: center;
+  color: var(--ink-mute);
+  display: flex;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.66rem;
+  gap: 0.5rem;
+  letter-spacing: 0.11em;
+  margin-bottom: 0.7rem;
+  text-transform: uppercase;
+}
+.card .tag::before {
+  background: currentColor;
+  border-radius: 1px;
+  content: "";
+  height: 0.78rem;
+  width: 3px;
+}
+.card.real   .tag { color: var(--v-real); }
+.card.noise  .tag { color: var(--v-noise); }
+.card.open   .tag { color: var(--v-open); }
+.card h4 { color: var(--ink); font-size: 1rem; margin: 0 0 0.35rem; }
+.card p {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: none;
+}
+.card .fig {
+  color: var(--ink);
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 1.32rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.3rem;
+}
+
+/* ---- data ---------------------------------------------------------------
+   Wide content scrolls inside its own container; the page body never does. */
+code, pre, kbd {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+code {
+  background: var(--sunk);
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 0.855em;
+  padding: 0.11em 0.35em;
+}
+pre {
+  background: var(--sunk);
+  border: 1px solid var(--rule-soft);
+  border-radius: 9px;
+  font-size: 0.775rem;
+  line-height: 1.55;
+  margin: 1.3rem 0 1.8rem;
+  overflow-x: auto;
+  padding: 1.05rem 1.2rem;
+}
+pre code { background: none; font-size: inherit; padding: 0; }
+
+.tablewrap, table { overflow-x: auto; }
+table {
+  border-collapse: collapse;
+  display: block;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  margin: 1.3rem 0 1.9rem;
+  width: max-content;
+  max-width: 100%;
+}
+th, td {
+  border-bottom: 1px solid var(--rule-soft);
+  padding: 0.52rem 1.3rem 0.52rem 0;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+th {
+  border-bottom: 1.5px solid var(--rule);
+  color: var(--ink);
+  font-size: 0.74rem;
+  font-weight: 620;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+tbody tr:last-child td { border-bottom: 0; }
+
+/* ---- figures ------------------------------------------------------------
+   Charts are rendered on a light surface, so they keep a light backing in
+   dark mode rather than being inverted or left to glare at full bleed. */
+figure { margin: 2.2rem 0 2.6rem; }
+figure img {
+  background: #fcfcfb;
+  border: 1px solid var(--rule-soft);
+  border-radius: 9px;
+  display: block;
+  height: auto;
+  max-width: 100%;
+  padding: 7px;
+}
+figcaption {
+  color: var(--ink-mute);
+  font-size: 0.83rem;
+  line-height: 1.5;
+  margin-top: 0.65rem;
+  max-width: var(--measure);
+}
+
+blockquote {
+  border-left: 2px solid var(--rule);
+  color: var(--ink-mute);
+  margin: 1.3rem 0;
+  padding-left: 1.1rem;
+}
+
+@media (max-width: 640px) {
+  body { font-size: 15.5px; padding: 0 1rem 4.5rem; }
+  .masthead { padding-top: 2.2rem; }
+  pre { font-size: 0.7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+@media print {
+  body { background: #fff; color: #000; }
+  .board { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  figure, table, pre { break-inside: avoid; }
+}
+</style>
+
+<header class="masthead">
+  <p class="eyebrow">Cardano Leios &middot; playground &middot; 2026-10-09</p>
+  <h1>Leios vote load test</h1>
+  <p class="lede">750 synthetic pools voting from ten block producers, 76 BLS keys each,
+  against a 900-pool committee cap. What it cost the network, what it did not, and which
+  of those answers the evidence actually supports.</p>
+</header>

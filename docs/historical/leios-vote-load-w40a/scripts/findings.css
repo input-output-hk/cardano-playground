@@ -1,0 +1,168 @@
+/* Styling for findings.html. Tokens match the chart palette so the embedded
+   PNGs sit on the same surface as the page. */
+:root {
+  --surface:      #fcfcfb;
+  --surface-sunk: #f4f4f1;
+  --ink:          #0b0b0b;
+  --ink-2:        #52514e;
+  --ink-muted:    #898781;
+  --rule:         #c3c2b7;
+  --blue:         #2a78d6;
+  --orange:       #eb6834;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface:      #1a1a19;
+    --surface-sunk: #232321;
+    --ink:          #ffffff;
+    --ink-2:        #c3c2b7;
+    --ink-muted:    #898781;
+    --rule:         #383835;
+    --blue:         #3987e5;
+    --orange:       #d95926;
+  }
+}
+:root[data-theme="dark"] {
+  --surface:      #1a1a19;
+  --surface-sunk: #232321;
+  --ink:          #ffffff;
+  --ink-2:        #c3c2b7;
+  --ink-muted:    #898781;
+  --rule:         #383835;
+  --blue:         #3987e5;
+  --orange:       #d95926;
+}
+
+html { color-scheme: light dark; }
+body {
+  background: var(--surface);
+  color: var(--ink-2);
+  font: 16px/1.62 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  margin: 0 auto;
+  max-width: 62rem;
+  padding: 3rem 1.5rem 6rem;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.25; font-weight: 650; }
+h1 { font-size: 2.1rem; margin: 0 0 1.5rem; letter-spacing: -0.02em; }
+h2 {
+  font-size: 1.45rem;
+  margin: 3.2rem 0 1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+  letter-spacing: -0.01em;
+}
+h3 { font-size: 1.12rem; margin: 2.1rem 0 0.7rem; }
+p { margin: 0 0 1rem; }
+strong { color: var(--ink); font-weight: 650; }
+a { color: var(--blue); }
+
+/* Code and the fixed-width data blocks. These carry most of the numbers, so
+   they must stay readable and must scroll rather than push the page sideways. */
+code, pre, kbd {
+  font-family: "SF Mono", SFMono-Regular, ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+code {
+  background: var(--surface-sunk);
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 0.86em;
+  padding: 0.12em 0.36em;
+}
+pre {
+  background: var(--surface-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 1.2rem 0 1.6rem;
+  overflow-x: auto;
+  padding: 1rem 1.15rem;
+}
+pre code { background: none; font-size: inherit; padding: 0; }
+
+table {
+  border-collapse: collapse;
+  display: block;
+  font-size: 0.9rem;
+  margin: 1.2rem 0 1.7rem;
+  overflow-x: auto;
+  width: 100%;
+}
+th, td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5rem 0.9rem 0.5rem 0;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+th { color: var(--ink); font-weight: 600; border-bottom: 2px solid var(--rule); }
+tbody tr:last-child td { border-bottom: none; }
+
+figure { margin: 2rem 0 2.4rem; }
+img {
+  background: #fcfcfb;        /* the charts are rendered on this surface */
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  display: block;
+  height: auto;
+  max-width: 100%;
+  padding: 6px;
+}
+figcaption {
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  line-height: 1.45;
+}
+
+blockquote {
+  border-left: 3px solid var(--rule);
+  color: var(--ink-muted);
+  margin: 1.2rem 0;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+}
+ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+li { margin-bottom: 0.35rem; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
+
+/* pandoc --toc output */
+nav#TOC {
+  background: var(--surface-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin: 0 0 2.5rem;
+  padding: 1.1rem 1.4rem;
+}
+nav#TOC::before {
+  color: var(--ink-muted);
+  content: "Contents";
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+nav#TOC ul { list-style: none; margin: 0; padding-left: 0; }
+nav#TOC ul ul { padding-left: 0; }
+nav#TOC > ul > li > a { display: none; }   /* the document h1 repeats the page title */
+nav#TOC li { margin-bottom: 0.18rem; }
+nav#TOC a { color: var(--ink-2); text-decoration: none; }
+nav#TOC a:hover { color: var(--blue); text-decoration: underline; }
+
+@media (max-width: 640px) {
+  body { padding: 1.75rem 1rem 4rem; font-size: 15px; }
+  h1 { font-size: 1.65rem; }
+  h2 { font-size: 1.25rem; }
+  pre { font-size: 0.72rem; }
+}
+
+@media print {
+  body { max-width: none; color: #000; }
+  nav#TOC { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  figure, table, pre { break-inside: avoid; }
+}

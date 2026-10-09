@@ -1,0 +1,38 @@
+<section class="board" aria-label="Summary of findings">
+  <div class="card real">
+    <p class="tag">Measured</p>
+    <h4>Node CPU</h4>
+    <p><span class="fig">&times;1.48</span>relay mean, 0.53&ndash;0.61 cores against a
+    0.313&ndash;0.400 baseline band. Outside it every load hour.</p>
+  </div>
+  <div class="card real">
+    <p class="tag">Measured</p>
+    <h4>EB announcement lateness</h4>
+    <p><span class="fig">3.3&ndash;4.1%</span>in three of four load hours, against a
+    baseline maximum of 1.33%.</p>
+  </div>
+  <div class="card noise">
+    <p class="tag">Within noise</p>
+    <h4>Relay bandwidth</h4>
+    <p>No vote-attributable effect. Hour 4's rise is an external peer: vote-free off-hours
+    show the same rise whenever that peer is active.</p>
+  </div>
+  <div class="card noise">
+    <p class="tag">External cause</p>
+    <h4>Mux errors</h4>
+    <p>One external address is the entire rise. Excluding it, load hours sit inside the
+    1107&ndash;1227 baseline band.</p>
+  </div>
+  <div class="card open">
+    <p class="tag">Not established</p>
+    <h4>Certification rate</h4>
+    <p><span class="fig">p &asymp; 0.076</span>26.4% certified under load against 38.4%
+    unloaded. Consistent direction, three of four hours below every baseline.</p>
+  </div>
+  <div class="card open">
+    <p class="tag">Measurement trap</p>
+    <h4>Mean vote tally</h4>
+    <p>Unusable as a before/after comparator &mdash; its denominator is vote arrivals, which
+    rose 15&times;. Any reading of it across the step is an artifact.</p>
+  </div>
+</section>
