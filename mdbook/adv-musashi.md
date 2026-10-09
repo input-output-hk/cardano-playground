@@ -15,7 +15,7 @@ Compatible with the `ouroboros-leios` prototype build [`prototype-2026w39`](http
 
 ```
 NOTE:
-* Legacy tracing system is no longer available.  See additional notes below.
+* Legacy tracing system is no longer available.
 
 * Avoid connecting PeerSharing enabled nodes to a block producer using
 `InitiatorOnlyMode` as the block producer's IP will be leaked.
