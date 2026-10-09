@@ -24,4 +24,4 @@ _Use the nagivation panel on the left to explore [The Cardano Book][book]._
 
 <br />
 
-<center><sub><sup><span style="color:lightgray; font-style:italic">f02b36feb858049ba451957c57166ce3148c4072</span></sup></sub></center>
+<center><sub><sup><span style="color:lightgray; font-style:italic">2dc8c02646be56db60942b8cb457c7e4d5439acf</span></sup></sub></center>
