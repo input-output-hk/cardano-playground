@@ -2,11 +2,29 @@
   # Uncomment for node service debugging
   # flake.config.cardano-parts.pkgs.special.cardano-node-service = "${flake.inputs.cardano-node-service.outPath}/nix/nixos";
 
-  perSystem = {inputs', ...}: {
+  perSystem = {
+    config,
+    inputs',
+    ...
+  }: {
     cardano-parts = {
       shell.global = {
         defaultShell = "ops";
-        extraPkgs = [inputs'.cardano-parts.packages.pre-push];
+        extraPkgs =
+          [
+            config.packages.pre-push
+            # Reads one node's mempool over N2C and reports the tx-firehose
+            # colours it holds. Run it against a host socket over a tunnel,
+            # there is no reason to deploy it.
+            inputs'.cardano-node-leios.packages.mempool-monitor-static
+          ]
+          ++ (with inputs'.metsuke.packages; [
+            duckdb
+            metsuke
+            metsuke-allowlist
+            metsuke-fetch
+            metsuke-server
+          ]);
       };
 
       # Note that these package config assignments impact not only the devShell which utilize

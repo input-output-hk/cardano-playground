@@ -17,6 +17,34 @@ let
     type ? "SRV",
     zone_id ? zoneId
   }:  {inherit name records ttl type zone_id;};
+
+  # Adds one address to a multivalue answer record the cluster already
+  # generates from its machines, for an address no machine in this cluster
+  # owns. The generated siblings are one resource per relay, each carrying a
+  # single ip under its own set_identifier, so an extra member is just another
+  # sibling rather than a change to the generated set.
+  #
+  # multivalue_answer_routing_policy and a set_identifier distinct from every
+  # sibling's are both required: route53 refuses to hold a simple record and
+  # multivalue ones under the same name and type, so omitting either fails the
+  # apply. Name must match the siblings; the trailing dot domain carries here
+  # is normalised away.
+  #
+  # Nothing reconciles the address with reality the way an eip does for a
+  # machine, and multivalue answer only skips a member that has a health check
+  # attached, so this stays in the answer set whether or not it serves.
+  mkMultivalueA = {
+    name,
+    records ? [],
+    set_identifier,
+    ttl ? "300",
+    type ? "A",
+    zone_id ? zoneId
+  }: {
+    inherit name records set_identifier ttl type zone_id;
+    multivalue_answer_routing_policy = true;
+    allow_overwrite = true;
+  };
 in {
   # Resource attribute names must be unique for route53 resources in the cluster and therefore
   # should not be named after machines or book or group multivalue DNS names.
@@ -26,6 +54,9 @@ in {
   # Book
   cname_book = mkCname {name = "book.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
   cname_book_staging = mkCname {name = "book-staging.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
+
+  # Pool metadata for testnets
+  cname_pools = mkCname {name = "pools.${domain}"; records = ["misc1-webserver-a-1.${domain}"];};
 
   # Explorers
   cname_explorer_preprod = mkCname {name = "preprod-explorer.${domain}"; records = ["preprod1-dbsync-a-1.${domain}"];};
@@ -38,6 +69,10 @@ in {
   cname_faucet_leios = mkCname {name = "faucet.leios.${domain}"; records = ["leios1-faucet-a-1.${domain}"];};
 
   # Govtool
+
+  # Metsuke, the MusashiNet telemetry ingest. Every operator's agent is
+  # configured with this name, so it stays put if the server changes host.
+  cname_metsuke_leios = mkCname {name = "metsuke-leios.${domain}"; records = ["leios1-metsuke-a-1.${domain}"];};
 
   # Ipfs for all testnets
   cname_metadata_ipfs = mkCname {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
@@ -58,4 +93,12 @@ in {
 
   # Matomo
   cname_matomo = mkCname {name = "matomo.${domain}"; records = ["misc1-matomo-a-1.${domain}"];};
+
+  # An off cluster peer in the leios backbone answer set, alongside the
+  # leios1/2/3 relays tofu derives from the machines themselves.
+  a_leios_node_external = mkMultivalueA {
+    name = "leios-node.${domain}";
+    records = ["144.76.1.222"];
+    set_identifier = "leios-node-external-144-76-1-222";
+  };
 }

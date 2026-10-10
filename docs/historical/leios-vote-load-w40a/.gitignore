@@ -1,0 +1,9 @@
+# Raw netdata archives, ~200 MB. Too large to commit; they are in S3, see README.
+# Kept here so the upload script and any re-analysis run inside the repo's devshell,
+# which is where awscli2 and credentials are.
+data-1s/
+data-1s-wide/
+
+# Generated from findings.md by scripts/build-artifact.sh; rebuild rather than commit.
+findings.html
+findings-artifact.html

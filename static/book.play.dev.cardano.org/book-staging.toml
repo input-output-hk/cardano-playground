@@ -1,5 +1,5 @@
 [book]
-autors = ["The Cardano Authors"]
+authors = ["The Cardano Authors"]
 language = "en"
 multilingual = false
 src = "."

@@ -5,16 +5,43 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/v2026-05-14";
-    # cardano-parts.url = "path:/home/jlotoski/work/iohk/cardano-parts-wt/v2026-05-14";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/v2026-10-11";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:IntersectMBO/cardano-node/leios-prototype";
-    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/bench/leios";
-    cardano-node-set-iowait.url = "github:IntersectMBO/cardano-node/jl/set-iowait";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w40a";
+
+    # Same tree as cardano-node-leios plus a bound on the inbound governor's
+    # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
+    # the node-leios-patched import in colmena.nix, so this input and that
+    # import come out together when the bound is no longer wanted.
+    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios/jl/leios-w40a";
+
+    cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
+    leios-adversarial-tools = {
+      url = "github:input-output-hk/leios-adversarial-tools";
+      inputs = {
+        nixpkgs.follows = "nixpkgs-unstable"; # crane requires at least 26.05
+        flake-parts.follows = "flake-parts";
+      };
+    };
+
+    # Leios observability source: the shared Alloy enrichment modules
+    # (demo/proto-devnet/config/alloy-modules/*.alloy) and leios Grafana dashboards
+    # (demo/proto-devnet/config/dashboards/*.json).
+    leios-observability = {
+      # url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w36";
+      url = "github:input-output-hk/ouroboros-leios/jl/alloy-dash-enhance";
+      flake = false;
+    };
+
+    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w38a";
+    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/e48dcb6befa30cc2991fe78916b214a38e3a98b8";
+    metsuke.url = "github:input-output-hk/metsuke/server-v0.2.1";
+    metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.1";
+    metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
   };
 
   outputs = inputs: let

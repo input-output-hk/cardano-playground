@@ -5,7 +5,7 @@ set -euo pipefail
 [ -n "${DEBUG:-}" ] && set -x
 [ -z "${ENV:-}" ] && { echo "ENV var must be set"; exit 1; }
 
-[ -z "${ANCHOR_URL:-}" ] && { echo "ANCHOR_URL var must be set and should point to an ipfs://\$CIDv1 address"; exit 1; }
+[ -z "${ANCHOR_URL:-}" ] && { echo "ANCHOR_URL var must be set and should point to an ipfs://\$CIDv0 address"; exit 1; }
 [ -z "${DREP_INDEX:-}" ] && { echo "DREP_INDEX var must be set"; exit 1; }
 [ -z "${TESTNET_MAGIC:-}" ] && { echo "TESTNET_MAGIC var must be set"; exit 1; }
 [ -z "${THRESHOLD:-}" ] && { echo "THRESHOLD var must be set and most likely should remain the same as the existing threshold"; exit 1; }
@@ -38,10 +38,12 @@ PROPOSAL_ARGS=(
   "--prev-governance-action-index" "$PREV_GOV_ACTION_INDEX"
   "--check-anchor-data"
   "--threshold" "$THRESHOLD"
+  "--add-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc/init-cold/credential.plutus.hash")"
+  "--epoch" "1720"
   "--add-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc2/init-cold/credential.plutus.hash")"
-  "--epoch" "1356"
+  "--epoch" "1720"
   "--add-cc-cold-script-hash" "$(just sops-decrypt-binary "$SCRIPT_DIR/../../secrets/envs/$ENV/cc-keys/cc3/init-cold/credential.plutus.hash")"
-  "--epoch" "1356"
+  "--epoch" "1720"
 )
 
 ACTION="update-committee" \
