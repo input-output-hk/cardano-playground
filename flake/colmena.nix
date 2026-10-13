@@ -14,15 +14,25 @@ in
   with lib; {
     flake.colmena = let
       # Region defs:
+      # Frankfurt, Germany
       eu-central-1.aws.region = "eu-central-1"; # a
+      # Ireland
       eu-west-1.aws.region = "eu-west-1"; # b
+      # Ohio, USA
       us-east-2.aws.region = "us-east-2"; # c
+      # Stockholm, Sweden
       eu-north-1.aws.region = "eu-north-1"; # d
+      # Sydney, Austrailia
       ap-southeast-2.aws.region = "ap-southeast-2"; # e
+      # Sao Paulo, Brazil
       sa-east-1.aws.region = "sa-east-1"; # f
+      # Cape Town, Africa
       af-south-1.aws.region = "af-south-1"; # g
+      # Tokyo, Japan
       ap-northeast-1.aws.region = "ap-northeast-1"; # h
+      # California, USA
       us-west-1.aws.region = "us-west-1"; # i
+      # Oregon, USA
       us-west-2.aws.region = "us-west-2"; # j
 
       # Instance defs:
@@ -1545,6 +1555,16 @@ in
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
       leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+
+      # Dedicated firehose injection machines
+      # Sydney, Austrailia
+      leiosfire5-edge-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosfire5") node-leios leiosFirehose];};
+
+      # Tokyo, Japan
+      leiosfire8-edge-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosfire8") node-leios leiosFirehose];};
+
+      # California, USA
+      leiosfire9-edge-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosfire9") node-leios leiosFirehose];};
 
       # Leios Red Team nodes.
       # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
