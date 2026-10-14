@@ -150,6 +150,10 @@ in
       # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
         // {
+          environment.systemPackages = [
+            (withSystem "x86_64-linux" ({inputs', ...}: inputs'.cardano-node-leios.packages.mempool-monitor-static))
+          ];
+
           # Each leios partition now follows the node's own db paths, so
           # leios.imm.db sits beside immutable/ and leios.vol.db beside
           # volatile/. Keep the growing immutable partition on the ebs root and
@@ -450,6 +454,10 @@ in
 
       leiosRel = nixos: {
         imports = [rel];
+
+        # Tmp access during fire load test
+        aws.instance.sshIngress = true;
+        programs.auth-keys-hub.github.users = ["ch1bo"];
 
         # Ban peers stuck in a tight reconnect loop. On 2026-10-05 a single
         # InitiatorOnly peer handshook ~4600x/10m per relay, overflowing the

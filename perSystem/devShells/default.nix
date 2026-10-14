@@ -14,8 +14,7 @@
           [
             config.packages.pre-push
             # Reads one node's mempool over N2C and reports the tx-firehose
-            # colours it holds. Run it against a host socket over a tunnel,
-            # there is no reason to deploy it.
+            # colours it holds. Also in systemPackages on every leios machine.
             inputs'.cardano-node-leios.packages.mempool-monitor-static
           ]
           ++ (with inputs'.metsuke.packages; [

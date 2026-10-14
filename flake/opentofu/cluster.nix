@@ -415,9 +415,13 @@ in {
 
                 monitoring = true;
                 key_name = "\${aws_key_pair.bootstrap_${underscore region}[0].key_name}";
-                vpc_security_group_ids = [
-                  "\${aws_security_group.common_${underscore region}[0].id}"
-                ];
+                vpc_security_group_ids =
+                  [
+                    "\${aws_security_group.common_${underscore region}[0].id}"
+                  ]
+                  # Temporary special access
+                  ++ optional (node.aws.instance.sshIngress or false)
+                  "\${aws_security_group.ssh_${underscore region}[0].id}";
 
                 # Provider level `default_tags` are automatically inherited at
                 # the instance level.  Instance specific tags defined in
@@ -650,7 +654,47 @@ in {
 
                 tags = defaultTags;
               };
-            });
+            })
+            # Temporary special access
+            // mapRegions ({
+              region,
+              count,
+            }: let
+              wanted = any (
+                node: (node.aws.instance.sshIngress or false) && underscore node.aws.region == region
+              ) (attrValues nodes);
+            in
+              optionalAttrs wanted {
+                "ssh_${region}" = {
+                  inherit count;
+                  provider = awsProviderFor region;
+                  name = "ssh";
+                  description = "Allow ssh from a restricted source";
+                  lifecycle = [{create_before_destroy = true;}];
+
+                  ingress = [
+                    (mkRule {
+                      description = "Allow SSH";
+                      from_port = 22;
+                      to_port = 22;
+                      cidr_blocks = ["5.34.251.181/32"];
+                      ipv6_cidr_blocks = [];
+                      self = false;
+                    })
+                  ];
+
+                  egress = [
+                    (mkRule {
+                      description = "Allow outbound traffic";
+                      from_port = 0;
+                      to_port = 0;
+                      protocol = "-1";
+                    })
+                  ];
+
+                  tags = defaultTags;
+                };
+              });
 
           aws_route53_record =
             # Generate individual route53 node records
