@@ -146,10 +146,17 @@ in
       #   RuntimeRandomizedExtraSec = mkForce 0;
       # };
 
-      node-leios = {config, ...}:
-      # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
-        mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
+      node-leios = {config, ...}: let
+        # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
+        base = mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios";
+      in
+        base
         // {
+          # `//` replaces a key outright, so concatenate rather than assign:
+          # base.imports carries node-pre and the leios package overrides, and
+          # assigning imports here would silently drop both.
+          imports = base.imports ++ [nixosModules.leios-mempool-monitor];
+
           environment.systemPackages = [
             (withSystem "x86_64-linux" ({inputs', ...}: inputs'.cardano-node-leios.packages.mempool-monitor-static))
           ];
@@ -557,8 +564,9 @@ in
       # secrets/groups/<group>/deploy/<host>-firehose-fund.skey first, because
       # tx-firehose exits when the startup UTxO query comes back empty.
       leiosFirehose.imports = [
-        nixosModules.cardano-tx-firehose
-        nixosModules.profile-leios-tx-firehose
+        # Temporarily stop firehose for the SPO fire load test
+        # nixosModules.cardano-tx-firehose
+        # nixosModules.profile-leios-tx-firehose
       ];
 
       leiosFilesNginx.imports = [
@@ -1559,12 +1567,20 @@ in
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
-      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
+
+      # Temporarily stop centrifuge for the SPO fire load test
+      # leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
+      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios];};
+
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+
+      # Temporarily stop firehose for the SPO fire load test
+      # leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
