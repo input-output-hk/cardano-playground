@@ -1,0 +1,80 @@
+let
+  # uketsuke refuses every upload at roster_max_age_secs (3h); this fires an
+  # hour before that, after one missed hourly regeneration.
+  rosterStaleSecs = "7200";
+in {
+  namespace = "metsuke";
+  name = "metsuke";
+  rule = [
+    {
+      alert = "metsuke_server_down";
+      expr = ''node_systemd_unit_state{name="metsuke-server.service", state="active"} == 0'';
+      for = "5m";
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: metsuke-server is not active.";
+        description = "{{$labels.instance}}: metsuke-server.service has not been active for 5 minutes, so no SPO agent can submit. Check `systemctl status metsuke-server` and `journalctl -u metsuke-server`.";
+      };
+    }
+    {
+      alert = "metsuke_server_restarting";
+      expr = ''increase(node_systemd_service_restart_total{name="metsuke-server.service"}[15m]) > 3'';
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: metsuke-server restarted {{ printf \"%.0f\" $value }} times in 15 minutes.";
+        description = "{{$labels.instance}}: metsuke-server.service is restarting repeatedly. A server that refuses to start, e.g. on an unreadable roster, looks like this. Check `journalctl -u metsuke-server`.";
+      };
+    }
+    {
+      alert = "metsuke_roster_generation_failed";
+      expr = ''node_systemd_unit_state{name="metsuke-roster.service", state="failed"} == 1'';
+      for = "5m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: the last Leios key roster generation failed.";
+        description = "{{$labels.instance}}: metsuke-roster.service failed, so the previous roster stays in place until the next hourly tick. It is Requisite on cardano-node and its socket share, so a node that is down or behind the tip fails it. Check `journalctl -u metsuke-roster`; metsuke_roster_stale follows if it keeps failing.";
+      };
+    }
+    {
+      alert = "metsuke_roster_stale";
+      expr = "time() - metsuke_roster_mtime_seconds > ${rosterStaleSecs}";
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: the Leios key roster is {{ humanizeDuration $value }} old.";
+        description = "{{$labels.instance}}: /var/lib/metsuke-roster/roster.json has not been rewritten for over 2h, although the generator runs hourly. metsuke refuses pools whose rotated keys it lacks, and uketsuke refuses every upload once the roster is 3h old. Check `journalctl -u metsuke-roster` and whether cardano-node is at the tip.";
+      };
+    }
+    {
+      alert = "metsuke_roster_metrics_absent";
+      expr = ''absent(metsuke_roster_mtime_seconds{environment="leios"})'';
+      for = "20m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "leios: no Leios key roster freshness sample for 20 minutes.";
+        description = "metsuke_roster_mtime_seconds is absent, so the roster is unreadable or malformed, or metsuke-roster-metrics is not running. metsuke_roster_stale cannot fire meanwhile. Check `systemctl status metsuke-roster-metrics` and `/var/lib/metsuke-roster/roster.json` on the metsuke host.";
+      };
+    }
+    {
+      alert = "metsuke_roster_pools_dropped";
+      # Against the previous hourly roster, not a daily peak: a genuine
+      # shrink then resolves an hour later instead of firing all day.
+      expr = "metsuke_roster_pools < 0.8 * metsuke_roster_pools offset 1h";
+      for = "15m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: the Leios key roster lists {{ $value }} pools, over 20% fewer than an hour ago.";
+        description = "{{$labels.instance}}: the roster shrank sharply. Pools missing from it are refused by metsuke and uketsuke. A generator that read a partial pool-state answer looks like this; compare `jq '.pools | length' /var/lib/metsuke-roster/roster.json` with `pool-state.json` next to it.";
+      };
+    }
+    {
+      alert = "metsuke_submit_server_errors";
+      expr = ''sum by (instance) (rate(nginx_vts_filter_requests_total{filter=~"route::metsuke-.*", filter_name="submit", code="5xx"}[10m])) > 0.05 * sum by (instance) (rate(nginx_vts_filter_requests_total{filter=~"route::metsuke-.*", filter_name="submit"}[10m]))'';
+      for = "15m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: over 5% of metsuke submissions get a 5xx.";
+        description = "{{$labels.instance}}: /v1/submit answers 5xx to over 5% of submissions. Agents keep the rows spooled and retry, so nothing is lost until their spool cap. Check `journalctl -u metsuke-server` for archive PUT failures.";
+      };
+    }
+  ];
+}
