@@ -471,7 +471,15 @@ in
 
       metsukeServer.imports = [
         inputs.metsuke.nixosModules.metsuke-server
+        inputs.cardano-parts.nixosModules.module-nginx-vhost-exporter
         nixosModules.profile-metsuke-server
+      ];
+
+      # Reads the roster metsukeServer's timer writes, so only on a host with it.
+      uketsukeServer.imports = [
+        inputs.uketsuke.nixosModules.uketsuke
+        inputs.cardano-parts.nixosModules.module-nginx-vhost-exporter
+        nixosModules.profile-uketsuke-server
       ];
 
       metsukeAgent.imports = [
@@ -1544,7 +1552,7 @@ in
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
-      leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
+      leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};

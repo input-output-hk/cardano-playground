@@ -42,6 +42,7 @@
     metsuke.url = "github:input-output-hk/metsuke/server-v0.2.1";
     metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.1";
     metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
+    uketsuke.url = "github:input-output-hk/uketsuke/v1.0.0";
   };
 
   outputs = inputs: let

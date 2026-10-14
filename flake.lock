@@ -5171,6 +5171,28 @@
         "type": "github"
       }
     },
+    "floci-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "uketsuke",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791531647,
+        "narHash": "sha256-Ik/fRj15IoLqQw5q8zzKGJ+i6ZRMnTmGlCy/bYj9bSE=",
+        "owner": "imxade",
+        "repo": "floci-nix",
+        "rev": "159be03d4fb1d80172084e1df7d9ff13866f1334",
+        "type": "github"
+      },
+      "original": {
+        "owner": "imxade",
+        "repo": "floci-nix",
+        "rev": "159be03d4fb1d80172084e1df7d9ff13866f1334",
+        "type": "github"
+      }
+    },
     "gentle-introduction": {
       "flake": false,
       "locked": {
@@ -16628,6 +16650,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_40": {
+      "locked": {
+        "lastModified": 1791456040,
+        "narHash": "sha256-H83yz/do+hjOO0uujHyH8RgtIQP2v7Mw+cLwcZK/xKc=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e7439b6b14ad3cc35d05608ebca9bce01a25f5f8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_5": {
       "locked": {
         "lastModified": 1718149104,
@@ -17829,7 +17867,8 @@
         "nixpkgs-unstable": [
           "cardano-parts",
           "nixpkgs-unstable"
-        ]
+        ],
+        "uketsuke": "uketsuke"
       }
     },
     "rust-overlay": {
@@ -19822,6 +19861,26 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "uketsuke": {
+      "inputs": {
+        "floci-nix": "floci-nix",
+        "nixpkgs": "nixpkgs_40"
+      },
+      "locked": {
+        "lastModified": 1791994568,
+        "narHash": "sha256-rfaw3G7Acf/A3v3Rt/MPT/dpagblbpVORsMFv6LudZ4=",
+        "owner": "input-output-hk",
+        "repo": "uketsuke",
+        "rev": "99b057d5d7b24dff8a5d4c7bc9ecaf9bd3802f72",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "ref": "v1.0.0",
+        "repo": "uketsuke",
         "type": "github"
       }
     },
