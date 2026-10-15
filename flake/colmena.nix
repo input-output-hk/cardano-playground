@@ -230,9 +230,10 @@ in
             # restart in lockstep (thundering herd). Window 12-14h.
             # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
             # leaves room for a clean shutdown. Analysis/observer nodes opt out via
-            # nodeNoRecycle. Remove once the leak is fixed.
+            # nodeNoRecycle. Remove once the leak is fixed.  Adjust to less
+            # time while under heavy load.
             serviceConfig = {
-              RuntimeMaxSec = 12 * 3600;
+              RuntimeMaxSec = 5 * 3600;
               RuntimeRandomizedExtraSec = 2 * 3600;
             };
           };
@@ -559,12 +560,11 @@ in
       #   (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
       # ];
 
-      # Additive to centrifuge, on the same even hour window. Add to any host
+      # Continuous load, additive to centrifuge. Add to any host
       # already running a node, one instance per host, and fund
       # secrets/groups/<group>/deploy/<host>-firehose-fund.skey first, because
       # tx-firehose exits when the startup UTxO query comes back empty.
       leiosFirehose.imports = [
-        # Temporarily stop firehose for the SPO fire load test
         nixosModules.cardano-tx-firehose
         nixosModules.profile-leios-tx-firehose
       ];
