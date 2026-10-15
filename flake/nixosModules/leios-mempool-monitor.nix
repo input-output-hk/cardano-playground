@@ -17,6 +17,7 @@
   flake.nixosModules.leios-mempool-monitor = moduleWithSystem ({inputs'}: {
     config,
     lib,
+    pkgs,
     ...
   }: let
     inherit (lib) mkIf mkOption types;
@@ -122,12 +123,26 @@
         # wants rather than requisite: a node restart should not stop the
         # observer, and leios hosts restart the node on a 12h timer. The socket
         # also only appears after chunk validation and ledger replay, which is
-        # minutes after an artifact restore, so early starts are expected to
-        # fail and retry.
+        # minutes after an artifact restore, so wait for it before starting.
         wants = [nodeUnit socketUnit];
         after = [nodeUnit socketUnit];
 
+        # Runs as the same user/groups as the monitor. After= only orders
+        # service startup; it does not wait for the socket or its permissions.
+        # TimeoutStartSec bounds this wait. A connection race after the check
+        # is still handled by Restart=always.
+        preStart = ''
+          socket=${lib.escapeShellArg cfg.socketPath}
+          if [[ ! -S "$socket" || ! -w "$socket" ]]; then
+            echo "Waiting for writable node socket: $socket"
+            until [[ -S "$socket" && -w "$socket" ]]; do
+              ${pkgs.coreutils}/bin/sleep 1
+            done
+          fi
+        '';
+
         serviceConfig = {
+          TimeoutStartSec = "15min";
           SupplementaryGroups = lib.singleton config.services.cardano-node.socketGroup;
 
           ExecStart = toString (
