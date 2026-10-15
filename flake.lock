@@ -2226,17 +2226,17 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1789681607,
-        "narHash": "sha256-+uDglUbtk/SJgfOU6zQnehD7Zg6FQkkjm4ZY+tDU/bA=",
+        "lastModified": 1792089479,
+        "narHash": "sha256-2ipTsqjx1K/t5K34PzilgpxijSDic8sV/+eC2hs3GKU=",
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "e48dcb6befa30cc2991fe78916b214a38e3a98b8",
+        "rev": "df10edcfce0b75b7b7bd28579a6501735d431fa1",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "e48dcb6befa30cc2991fe78916b214a38e3a98b8",
+        "rev": "df10edcfce0b75b7b7bd28579a6501735d431fa1",
         "type": "github"
       }
     },
