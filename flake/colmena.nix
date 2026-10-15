@@ -565,8 +565,8 @@ in
       # tx-firehose exits when the startup UTxO query comes back empty.
       leiosFirehose.imports = [
         # Temporarily stop firehose for the SPO fire load test
-        # nixosModules.cardano-tx-firehose
-        # nixosModules.profile-leios-tx-firehose
+        nixosModules.cardano-tx-firehose
+        nixosModules.profile-leios-tx-firehose
       ];
 
       leiosFilesNginx.imports = [
@@ -1134,6 +1134,13 @@ in
       };
 
       leiosLogging = {
+        # Leios debug traces exceed journald's burst limit, dropping events
+        # needed for peer diagnostics and the derived Alloy streams.
+        services.journald = {
+          rateLimitInterval = "0";
+          rateLimitBurst = 0;
+        };
+
         imports = [
           # Alloy pipelines deriving the leios Loki streams from the journald
           # machine-format trace lines configured below.
@@ -1567,22 +1574,14 @@ in
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
-
       # Temporarily stop centrifuge for the SPO fire load test
       # leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios];};
-
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
-
       leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-
-      # Temporarily stop firehose for the SPO fire load test
-      # leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
-
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
-
       leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
@@ -1590,13 +1589,13 @@ in
 
       # Dedicated firehose injection machines
       # Sydney, Austrailia
-      leiosfire5-edge-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosfire5") node-leios leiosFirehose];};
+      leiosfire5-edge-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosfire5") node-leios];};
 
       # Tokyo, Japan
-      leiosfire8-edge-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosfire8") node-leios leiosFirehose];};
+      leiosfire8-edge-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosfire8") node-leios];};
 
       # California, USA
-      leiosfire9-edge-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosfire9") node-leios leiosFirehose];};
+      leiosfire9-edge-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosfire9") node-leios];};
 
       # Leios Red Team nodes.
       # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
