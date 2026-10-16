@@ -988,6 +988,11 @@ Three caveats for anyone reading it:
 
 ## Open questions
 
+Questions 1 and 2 are partly answered in [`followup-600-seats.md`](followup-600-seats.md),
+which compares the two costs across the 2026-10-15 cut from ~900 seats to ~600. Lateness did
+not move; certification is confounded there by a community load test running across the
+change, so neither is closed.
+
 1. **Does certification recover when the load stops?** The effect clears p < 0.05 but the
    loaded and unloaded block distributions overlap. A post-load period returning to the
    34–42% band would confirm the load is the cause rather than a drift across the week.

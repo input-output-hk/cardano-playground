@@ -31,6 +31,11 @@ The certification result was not expected: the synthetic seats hold negligible s
 should have added vote volume at zero weight. Two mechanisms fit the evidence and the data
 does not distinguish them, see the certification section.
 
+Seats were later cut to ~600 to see whether either cost eased.
+[`followup-600-seats.md`](followup-600-seats.md) has that comparison: relay CPU fell 13%,
+lateness did not move, and the certification comparison is confounded by a community load
+test that was running across the change.
+
 ## Scope
 
 Every number here is specific to **Leios prototype w40a** — relays on the governor-patched
@@ -42,6 +47,8 @@ build until reproduced on another.
 
 ```
 findings.md          the analysis
+followup-600-seats.md    follow-up: seats cut ~900 -> ~600 on 2026-10-15
+followup-600-seats.tsv   its per-hour series, tab separated
 charts/              three rendered PNGs, referenced from findings.md
 stats-summary.txt    derived statistics from the 1-second archive
 mimir-windows.tsv    per-window Mimir metrics, tab separated
