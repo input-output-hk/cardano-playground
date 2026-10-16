@@ -39,11 +39,11 @@ in
       # c5a-large.aws.instance.instance_type = "c5a.large";
       # c5ad-large.aws.instance.instance_type = "c5ad.large";
       c5d-2xlarge.aws.instance.instance_type = "c5d.2xlarge";
-      c6id-large.aws.instance.instance_type = "c6id.large";
+      # c6id-large.aws.instance.instance_type = "c6id.large";
       # c6id-xlarge.aws.instance.instance_type = "c6id.xlarge";
       c6id-2xlarge.aws.instance.instance_type = "c6id.2xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
-      c8id-large.aws.instance.instance_type = "c8id.large";
+      # c8id-large.aws.instance.instance_type = "c8id.large";
       c8id-xlarge.aws.instance.instance_type = "c8id.xlarge";
       c8id-2xlarge.aws.instance.instance_type = "c8id.2xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
@@ -58,6 +58,7 @@ in
       # r5d-4xlarge.aws.instance.instance_type = "r5d.4xlarge";
       r6a-large.aws.instance.instance_type = "r6a.large";
       r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
+      r8id-xlarge.aws.instance.instance_type = "r8id.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
       t3-medium.aws.instance.instance_type = "t3.medium";
@@ -1568,7 +1569,7 @@ in
       # Leios, all on custom leios prototype version
       # Remove `ccMon` until governance works in Dijkstra era
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 300) (group "leios1") node-leios leiosBp leiosTrustedPeer immOnEphemeral metsukeAgent];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosBp leiosTrustedPeer immOnEphemeral metsukeAgent];};
       leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
@@ -1578,11 +1579,13 @@ in
       # leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
-      leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
+
+      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
       leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
-      leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
+
+      leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
       leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
