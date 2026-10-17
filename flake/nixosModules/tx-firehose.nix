@@ -25,6 +25,15 @@
     options.services.${serviceName} = {
       enable = lib.mkEnableOption "tx-firehose";
 
+      continuous = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Run continuously instead of using scheduled load windows. Starts
+          with the node and disables the start/stop timers and runtime cap.
+        '';
+      };
+
       # From the same pin as the node rather than the bench pin, which trails
       # it. The generator and the node it submits into should move together.
       package = lib.mkPackageOption inputs'.cardano-node-leios.packages "tx-firehose-static" {};
@@ -191,7 +200,7 @@
     config = mkIf cfg.enable {
       services.cardano-node.shareNodeSocket = mkDefault true;
 
-      systemd.timers = {
+      systemd.timers = mkIf (!cfg.continuous) {
         ${serviceName} = {
           wantedBy = ["timers.target"];
           timerConfig = {
@@ -214,6 +223,8 @@
 
       systemd.services = {
         ${serviceName} = {
+          wantedBy = optionals cfg.continuous ["multi-user.target" nodeUnit];
+
           # Exiting and restarting is normal here, not a fault: a reject that
           # drops the last fund ends the run cleanly. Budget enough restarts to
           # cover a window while still failing visibly on a key that was never
@@ -276,7 +287,7 @@
             # systemd's disable value is "infinity", not 0, which would
             # terminate the service immediately.
             RuntimeMaxSec =
-              if cfg.maxRuntimeSeconds == 0
+              if cfg.continuous || cfg.maxRuntimeSeconds == 0
               then "infinity"
               else cfg.maxRuntimeSeconds;
 
@@ -287,7 +298,7 @@
           };
         };
 
-        "${serviceName}-stop" = {
+        "${serviceName}-stop" = mkIf (!cfg.continuous) {
           description = "Stop ${serviceName} at the end of its load window";
           serviceConfig = {
             Type = "oneshot";

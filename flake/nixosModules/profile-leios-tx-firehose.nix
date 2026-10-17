@@ -25,6 +25,7 @@ flake: {
 
     services.cardano-tx-firehose = {
       enable = true;
+      continuous = true;
 
       # One key per instance. The address is the payment key hash, with no
       # per workload derivation, so two instances sharing a key spend each

@@ -5,7 +5,7 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/v2026-10-11";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-10-12";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
@@ -38,10 +38,11 @@
     };
 
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w38a";
-    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/e48dcb6befa30cc2991fe78916b214a38e3a98b8";
+    cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/ef701738f62cfc70a1cc539e060779fa9c62048c";
     metsuke.url = "github:input-output-hk/metsuke/server-v0.2.1";
     metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.1";
     metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
+    uketsuke.url = "github:input-output-hk/uketsuke/v1.0.0";
   };
 
   outputs = inputs: let
