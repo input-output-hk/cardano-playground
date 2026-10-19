@@ -32,6 +32,7 @@ NOTE:
 - [Alonzo Genesis](environments-pre/leios/alonzo-genesis.json)
 - [Conway Genesis](environments-pre/leios/conway-genesis.json)
 - [Dijkstra Genesis](environments-pre/leios/dijkstra-genesis.json)
+- [Compiled guardrails script](environments-pre/leios/guardrails-script.plutus)
 
 #### Consensus Mode
 
