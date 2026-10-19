@@ -20,7 +20,7 @@ export NUM_CC_KEYS="3"
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
 export START_TIME="2026-02-15T00:00:00Z"
-export IPFS_GATEWAY_URI="https://ipfs.io"
+export IPFS_GATEWAY_URI="https://gateway.pinata.cloud"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
 
