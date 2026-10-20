@@ -27,6 +27,7 @@
   "LeiosDbConfig": {
     "Backend": "SQLite"
   },
+  "LeiosMinOfferLead": 1200,
   "MinNodeVersion": "11.1.0.164-prototype-2026w42",
   "Protocol": "Cardano",
   "RequiresNetworkMagic": "RequiresMagic",
