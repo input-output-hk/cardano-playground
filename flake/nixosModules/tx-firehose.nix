@@ -146,7 +146,9 @@
 
           Auto draws from about 1500 distinguishable hues and can collide, so
           set explicit colours for a run whose point is telling generators
-          apart. Set to null to submit untagged.
+          apart. Both "auto" and null omit --color, letting tx-firehose
+          derive the colour from the signing key. W42 always tags transactions;
+          omitting --color does not disable metadata.
 
           Metadata costs roughly 45 bytes per transaction, so a coloured run is
           not byte comparable with an uncoloured baseline.
@@ -259,7 +261,7 @@
               ]
               ++ optionals (cfg.stakingKeyFile != null) ["--staking-key-file" (credential "stake.skey")]
               ++ optionals (cfg.inputsPerTx != null) ["--inputs-per-tx" (toString cfg.inputsPerTx)]
-              ++ optionals (cfg.color != null) ["--color" cfg.color]
+              ++ optionals (cfg.color != null && cfg.color != "auto") ["--color" cfg.color]
               ++ cfg.extraArgs
             );
 
