@@ -3,11 +3,11 @@
     "CHaP": {
       "flake": false,
       "locked": {
-        "lastModified": 1788881079,
-        "narHash": "sha256-Pnq2SrNHxytAn9NP+0K+l7pRBm0p/h8KwCnhKsYP1OY=",
+        "lastModified": 1792090278,
+        "narHash": "sha256-aQn10VM0NFl/t9OgBQWlutPTnORj2RAcYlDp8Sxe/xo=",
         "owner": "IntersectMBO",
         "repo": "cardano-haskell-packages",
-        "rev": "a81eff6ee44116c872ec32e66c20f08ff479dbd1",
+        "rev": "7ab6953bc203c241b3712d129adc32ab8712ba75",
         "type": "github"
       },
       "original": {
@@ -2430,17 +2430,17 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1792124152,
-        "narHash": "sha256-uRJ61vq525fPo9jpo90NSbl1V01G2JqLr2v86UJRVCw=",
+        "lastModified": 1792443745,
+        "narHash": "sha256-BY853XdsvwtKlWcobAInxnaOWY+zOxfAf09RtfY2Tbw=",
         "owner": "IntersectMBO",
         "repo": "cardano-db-sync",
-        "rev": "ef701738f62cfc70a1cc539e060779fa9c62048c",
+        "rev": "72e067fa064af549a00d263c890c179989cf4f40",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
+        "ref": "leios-w42",
         "repo": "cardano-db-sync",
-        "rev": "ef701738f62cfc70a1cc539e060779fa9c62048c",
         "type": "github"
       }
     },
@@ -2611,16 +2611,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1792455728,
-        "narHash": "sha256-lgk4UcLmh+gR2cr50MzaR2qE2dgzLtQBEyAoeiVrbNg=",
+        "lastModified": 1792531186,
+        "narHash": "sha256-dyx0gS+4PjsLcjGMTf+aSuPCa5gYCRpZ+T7x7Omanps=",
         "owner": "input-output-hk",
         "repo": "cardano-faucet",
-        "rev": "02fe4824943b03f434a22d6b0a7f110549439b84",
+        "rev": "ed0151690e950c07f17b4dc625ef6b7c0b5eb3b6",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "leios-prototype-w42",
+        "ref": "leios-prototype",
         "repo": "cardano-faucet",
         "type": "github"
       }
@@ -3106,11 +3106,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1792465870,
-        "narHash": "sha256-mMrqODyjBJiPqjCsaJP4HPYSCwdFDGxwe8nuvkx8dck=",
+        "lastModified": 1792531233,
+        "narHash": "sha256-AxVdVsjZYSqx9NzrMcISgxfKDPcu09sEoZbWjP29jkY=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "96c81dad25e559bb181660eec5b7539b63b95ceb",
+        "rev": "83489a14b3825b03cf5c8e1f969bc07e3f52a1cd",
         "type": "github"
       },
       "original": {
