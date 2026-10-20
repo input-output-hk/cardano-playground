@@ -14655,11 +14655,11 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1789127356,
-        "narHash": "sha256-CuKqO3B4/dYF1gMKlaFRLaxVBY9xfcoSGxNEKF+Usyw=",
+        "lastModified": 1792534450,
+        "narHash": "sha256-TZRCFdrEaUDGJ1oY6PRfulKJ9X2QLITGOaL65GNKtn4=",
         "owner": "input-output-hk",
         "repo": "metsuke",
-        "rev": "eaa0404b85e6ed41700bb8fb4370d4eea4505816",
+        "rev": "0f9fae408179a6dccf164869953dc82e6226cb5d",
         "type": "github"
       },
       "original": {
