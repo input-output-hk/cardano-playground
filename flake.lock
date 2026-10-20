@@ -3106,14 +3106,18 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1792465822,
-        "narHash": "sha256-HAQak4xbsX5HXnUpzJyuRCEl/U8OkLAQ5KjzEB0WOSU=",
-        "path": "/home/jlotoski/ai/share/input-output-hk/cardano-parts-wt/next-2026-10-12",
-        "type": "path"
+        "lastModified": 1792465870,
+        "narHash": "sha256-mMrqODyjBJiPqjCsaJP4HPYSCwdFDGxwe8nuvkx8dck=",
+        "owner": "input-output-hk",
+        "repo": "cardano-parts",
+        "rev": "96c81dad25e559bb181660eec5b7539b63b95ceb",
+        "type": "github"
       },
       "original": {
-        "path": "/home/jlotoski/ai/share/input-output-hk/cardano-parts-wt/next-2026-10-12",
-        "type": "path"
+        "owner": "input-output-hk",
+        "ref": "next-2026-10-12",
+        "repo": "cardano-parts",
+        "type": "github"
       }
     },
     "cardano-shell": {
@@ -14651,14 +14655,18 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1792448655,
-        "narHash": "sha256-TF1nhVVhCOXLDxEs9XDb5GXuy6wpFhVqwvKuK0jbnwA=",
-        "path": "/home/jlotoski/ai/share/input-output-hk/metsuke-wt/jl/w42",
-        "type": "path"
+        "lastModified": 1789127356,
+        "narHash": "sha256-CuKqO3B4/dYF1gMKlaFRLaxVBY9xfcoSGxNEKF+Usyw=",
+        "owner": "input-output-hk",
+        "repo": "metsuke",
+        "rev": "eaa0404b85e6ed41700bb8fb4370d4eea4505816",
+        "type": "github"
       },
       "original": {
-        "path": "/home/jlotoski/ai/share/input-output-hk/metsuke-wt/jl/w42",
-        "type": "path"
+        "owner": "input-output-hk",
+        "ref": "jl/w42",
+        "repo": "metsuke",
+        "type": "github"
       }
     },
     "metsuke-client": {

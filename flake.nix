@@ -5,8 +5,7 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    # cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-10-12";
-    cardano-parts.url = "path:/home/jlotoski/ai/share/input-output-hk/cardano-parts-wt/next-2026-10-12";
+    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-10-12";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
@@ -40,7 +39,7 @@
 
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w38a";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/ef701738f62cfc70a1cc539e060779fa9c62048c";
-    metsuke.url = "path:/home/jlotoski/ai/share/input-output-hk/metsuke-wt/jl/w42";
+    metsuke.url = "github:input-output-hk/metsuke/jl/w42";
     metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.1";
     metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
     uketsuke.url = "github:input-output-hk/uketsuke/v1.0.0";
