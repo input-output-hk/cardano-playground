@@ -5,19 +5,20 @@
     nixpkgs.follows = "cardano-parts/nixpkgs";
     nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
-    cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-10-12";
+    # cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-10-12";
+    cardano-parts.url = "path:/home/jlotoski/ai/share/input-output-hk/cardano-parts-wt/next-2026-10-12";
 
     # PParams api testing
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/prototype-2026w40a";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w42";
 
     # Same tree as cardano-node-leios plus a bound on the inbound governor's
     # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
     # the node-leios-patched import in colmena.nix, so this input and that
     # import come out together when the bound is no longer wanted.
-    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios/jl/leios-w40a";
+    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios/jl/leios-w42";
 
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
@@ -39,7 +40,7 @@
 
     cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w38a";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/ef701738f62cfc70a1cc539e060779fa9c62048c";
-    metsuke.url = "github:input-output-hk/metsuke/server-v0.2.1";
+    metsuke.url = "path:/home/jlotoski/ai/share/input-output-hk/metsuke-wt/jl/w42";
     metsuke-client.url = "github:input-output-hk/metsuke/client-v0.2.1";
     metsuke-fetch.url = "github:input-output-hk/metsuke/fetch-v0.2.0";
     uketsuke.url = "github:input-output-hk/uketsuke/v1.0.0";
