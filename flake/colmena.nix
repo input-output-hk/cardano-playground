@@ -566,8 +566,8 @@ in
       # secrets/groups/<group>/deploy/<host>-firehose-fund.skey first, because
       # tx-firehose exits when the startup UTxO query comes back empty.
       leiosFirehose.imports = [
-        nixosModules.cardano-tx-firehose
-        nixosModules.profile-leios-tx-firehose
+        # nixosModules.cardano-tx-firehose
+        # nixosModules.profile-leios-tx-firehose
       ];
 
       leiosFilesNginx.imports = [
