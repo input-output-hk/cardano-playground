@@ -10,8 +10,8 @@ source scripts/bash-fns.sh
 # Basic cardano environment setup vars:
 export DEBUG="true"
 export ENV="dijkstra"
-export UNSTABLE="true"
-export UNSTABLE_LIB="true"
+export UNSTABLE="false"
+export UNSTABLE_LIB="false"
 export CARDANO_NODE_NETWORK_ID="6"
 export TESTNET_MAGIC="6"
 export USE_NODE_CONFIG_BP="false"
@@ -19,10 +19,12 @@ export NUM_GENESIS_KEYS="3"
 export NUM_CC_KEYS="3"
 export SECURITY_PARAM="432"
 export SLOT_LENGTH="1000"
-export START_TIME="2026-02-15T00:00:00Z"
+export START_TIME="2026-10-18T00:00:00Z"
 export IPFS_GATEWAY_URI="https://gateway.pinata.cloud"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
+export PROTOCOL_VERSION_MAJOR="11"
+export PROTOCOL_VERSION_MINOR="0"
 
 # Basic job directory setup vars:
 export GENESIS_DIR="workbench/custom"
@@ -35,7 +37,7 @@ export CURRENT_KES_PERIOD="0"
 export POOL_MARGIN="1.0"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
-export POOL_PLEDGE="10000000000000"
+export POOL_PLEDGE="3000000000000"
 
 # Basic secrets setup vars:
 export BULK_CREDS="$GENESIS_DIR/bulk.creds.all.json"
@@ -46,16 +48,20 @@ export USE_ENCRYPTION="false"
 export USE_DECRYPTION="false"
 
 # Modified vars from default values specific to the new network:
-export DREP_DEPOSIT="500000000"
-export GOV_ACTION_DEPOSIT="100000000000"
-export VOTING_POWER="1000000000000"
+export           DREP_DEPOSIT="500000000"
+export  GOV_ACTION_DEPOSIT="100000000000"
+export       VOTING_POWER="1000000000000"
+export  FAUCET_DELEGATION="1000000000000"
 
 # Conway constitution specifics for genesis file embedding
 # Use a final constitution copy from mainnet to indicate when we are no longer using an interim constitution.
-export SCRIPT_FILE_URL="https://book.play.dev.cardano.org/environments/preview/guardrails-script.plutus"
+export SCRIPT_FILE_URL="https://book.play.dev.cardano.org/environments-pre/leios/guardrails-script.plutus"
 export CONSTITUTION_ANCHOR_DATAHASH="2a61e2f4b63442978140c77a70daab3961b22b12b63b13949a390c097214d1c5"
 export CONSTITUTION_ANCHOR_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvclu3oli7qdyz4uhhuvmy"
-export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
+export CONSTITUTION_SCRIPT="e3172285605e502bde008a7efe2b2eec516958b7bae911947a5c9373"
+
+# Leios is now rebased on 11.1.0 so take the latest testnet-template.
+export TEMPLATE_DIR="$(nix eval --refresh --raw --impure --expr "(builtins.getFlake \"github:input-output-hk/iohk-nix/dijkstra-2026-10\").outPath")/cardano-lib/testnet-template"
 
 # Create the basic cardano network config and secrets
 nix run .#job-gen-custom-node-config-data-ng
@@ -97,13 +103,46 @@ jq -S '. += {
   }
 }' < "$DATA_DIR/conway-genesis.json" | sponge "$DATA_DIR/conway-genesis.json"
 
-# Update the conway hash in node config after modifying the genesis file.
-HASH_CONWAY=$(cardano-cli-ng latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
+# Adjust shelley genesis to set minPoolCost and maxBlockBodySize to current
+# network standards.
+jq -S \
+  --argjson major "$PROTOCOL_VERSION_MAJOR" \
+  --argjson minor "$PROTOCOL_VERSION_MINOR" \
+  '.protocolParams += {
+  "minPoolCost": 170000000,
+  "maxBlockBodySize": 90112,
+  "protocolVersion": {"minor": $minor, "major": $major}
+}' < "$DATA_DIR/shelley-genesis.json" | sponge "$DATA_DIR/shelley-genesis.json"
+
+
+# The old fashioned way -- don't worry about the cost model until we submit on-chain gov action
+# Adjust alonzo genesis to set execution unit limits and cost models closer to mainnet
+jq -S '. += {
+   "maxBlockExUnits": {
+     "exUnitsMem": 72000000,
+     "exUnitsSteps": 20000000000
+   },
+   "maxTxExUnits": {
+     "exUnitsMem": 16500000,
+     "exUnitsSteps": 10000000000
+   }
+}' < "$DATA_DIR/alonzo-genesis.json" | sponge "$DATA_DIR/alonzo-genesis.json"
+
+# Update genesis hashes in node config after modifying the genesis files.
+HASH_CONWAY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
+HASH_SHELLEY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/shelley-genesis.json")
+HASH_ALONZO=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/alonzo-genesis.json")
 jq --sort-keys \
   --arg hashConway "$HASH_CONWAY" \
+  --arg hashShelley "$HASH_SHELLEY" \
+  --arg hashAlonzo "$HASH_ALONZO" \
+  --argjson snapInterval "$SECURITY_PARAM" \
   '. += {
     ConwayGenesisHash: $hashConway,
-  }' \
+    ShelleyGenesisHash: $hashShelley,
+    AlonzoGenesisHash: $hashAlonzo,
+  } | .LedgerDB.Snapshots.SnapshotInterval = ($snapInterval * 40)
+  ' \
   < "$DATA_DIR/node-config.json" \
   | sponge "$DATA_DIR/node-config.json"
 
@@ -190,12 +229,11 @@ INDEX="0" \
   nix run .#job-register-drep
 wait-for-mempool
 
-# If both cost model and Plomin hard fork proposal are submitted in the same
-# epoch, the cost model will fail to take effect and PlutusV2 will be
-# missing.  We'll delay submission of Plutus HF proposal by one epoch to
-# allow for ratification of the cost model first.
-echo "Submitting a Plomin prep cost model action..."
-PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/mainnet-plutusv3-pv10-prep.json")
+# If both cost model and hard fork proposal are submitted in the same epoch, the
+# cost model will fail to take effect. We'll delay submission of any HF proposal
+# by one epoch to allow for ratification of the cost model first.
+echo "Submitting a cost model governance action..."
+PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/vanrossem-parameters-pv11-prep.json")
 ACTION="create-protocol-parameters-update" \
   STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
   nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
@@ -218,151 +256,7 @@ for i in $(seq 1 "$NUM_CC_KEYS"); do
   echo
 done
 
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 1
-echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((86400 - 595 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
-cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
-
-# Example output:
-# [
-#   "PlutusV1",
-#   "PlutusV2",
-#   "PlutusV3"
-# ]
-
-# In epoch 1, submit a Plomin hard fork
-echo "Submitting a Plomin hard fork action..."
-PROPOSAL_ARGS=("--protocol-major-version" "10" "--protocol-minor-version" "0")
-ACTION="create-hardfork" \
-  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
-  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-wait-for-mempool
-
-export ACTION_TX_ID=$(
-  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
-    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
-)
-
-for i in $(seq 1 "$NUM_CC_KEYS"); do
-  echo "Submitting the CC$i vote for the Plomin hard fork..."
-  DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-$i-hot" \
-    nix run .#job-submit-vote
-  wait-for-mempool
-  echo
-done
-
-echo "Submitting the pool 1 vote for the Plomin hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 2 vote for the Plomin hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 3 vote for the Plomin hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 2
-echo "Synthesize blocks until just before the Plomin hard fork ratifies, epoch 2"
-synth-slots $((86053 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 2 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epcoh 2, verify the Plomin hard fork has ratified:
-cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
-
-# Example output:
-# {
-#   "major": 10,
-#   "minor": 0
-# }
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 3
-echo "Synthesize blocks until just before the Plomin hard fork enacts, epoch 3"
-synth-slots $((86300 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 3 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epcoh 3, verify the Plomin hard fork has enacted:
-cardano-cli query protocol-parameters | jq .protocolVersion
-
-# Example output:
-# {
-#   "major": 10,
-#   "minor": 0
-# }
-
-# Submit a parameter change action to adjust network parameters to better match other networks
-echo "Submitting a ParameterChange action..."
-PREV_GOV_ACTION=$(cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" | jq -r '.nextRatifyState.nextEnactState.prevGovActionIds.PParamUpdate')
-PREV_GOV_ACTION_TX_ID=$(jq '.txId' <<< "$PREV_GOV_ACTION")
-PREV_GOV_ACTION_INDEX=$(jq '.govActionIx' <<< "$PREV_GOV_ACTION")
-PROPOSAL_ARGS=(
-  "--prev-governance-action-tx-id" "$PREV_GOV_ACTION_TX_ID"
-  "--prev-governance-action-index" "$PREV_GOV_ACTION_INDEX"
-  "--max-block-body-size" "90112"
-  # The steps are expected to be declared first, followed by the memory in the tuple ordering
-  "--max-block-execution-units" "\(20000000000,72000000\)"
-  "--max-tx-execution-units" "\(10000000000,16500000\)"
-  "--min-pool-cost" "170000000"
-)
-ACTION="create-protocol-parameters-update" \
-  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
-  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-wait-for-mempool
-
-export ACTION_TX_ID=$(
-  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
-    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
-)
-
-for i in $(seq 1 "$NUM_CC_KEYS"); do
-  echo "Submitting the CC$i vote for the parameter update..."
-  DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-$i-hot" \
-    nix run .#job-submit-vote
-  wait-for-mempool
-  echo
-done
-
-echo "Submitting the pool 1 vote for the parameter update..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 2 vote for the parameter update..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 3 vote for the parameter update..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
+# REQUIRED if starting in PV10 or later
 echo "Submitting the drep-0 vote for the parameter update..."
   DECISION=yes \
   ROLE=drep \
@@ -371,71 +265,101 @@ echo "Submitting the drep-0 vote for the parameter update..."
 wait-for-mempool
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 4
-echo "Synthesize blocks until just before the parameter change ratifies, epoch 4"
-synth-slots $((85987 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 4 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+# Start 1m before epoch 1
+echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
+# due to broken db-synthesizer 4.2.1.0 (node 11.1.3) we use 5.1.0.2 (node 11.2.0)
+UNSTABLE=true synth-slots $((85567 - 60))
+# do not run back-to-back
+run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
-# Ensure the parameter change has ratified once epoch 4 is reached:
-cardano-cli latest query gov-state \
-  | jq '.futurePParams.contents | {maxBlockBodySize,maxBlockExecutionUnits,maxTxExecutionUnits,minPoolCost}'
+# After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
+cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
 
-# Example
-# {
-#   "maxBlockBodySize": 90112,
-#   "maxBlockExecutionUnits": {
-#     "memory": 72000000,
-#     "steps": 20000000000
-#   },
-#   "maxTxExecutionUnits": {
-#     "memory": 16500000,
-#     "steps": 10000000000
-#   },
-#   "minPoolCost": 170000000
-# }
+# Expected output:
+# [
+#   "PlutusV1",
+#   "PlutusV2",
+#   "PlutusV3"
+# ]
 
 # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 5
-echo "Synthesize blocks until just before the parameter change enacts, epoch 5"
-synth-slots $((86298 - 180))
-run-node-faketime "$(date -u -d "$START_TIME + 5 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+echo "Synthesize blocks until realtime plus desired offset"
+# This brings us to epoch 1 + 1 = 2
+UNSTABLE=true synth-slots $((86084 - 60))
+# do not run back-to-back
+# run 2 epochs after the start
+run-node-faketime "$(date -u -d "$START_TIME + 2 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
 
-# Ensure the parameter change has enacted once epoch 5 is reached:
-cardano-cli latest query protocol-parameters \
-  | jq '{maxBlockBodySize,maxBlockExecutionUnits,maxTxExecutionUnits,minPoolCost}'
+# After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
+icdiff \
+  <(jq -S < scripts/cost-models/vanrossem-parameters-pv11-prep.json) \
+  <(cardano-cli query protocol-parameters | jq .costModels)
 
-# Example
-# {
-#   "maxBlockBodySize": 90112,
-#   "maxBlockExecutionUnits": {
-#     "memory": 72000000,
-#     "steps": 20000000000
-#   },
-#   "maxTxExecutionUnits": {
-#     "memory": 16500000,
-#     "steps": 10000000000
-#   },
-#   "minPoolCost": 170000000
-# }
+# Faucet:
+#
+FAUCET_MNEMONIC=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.mnemonic)
+FAUCET_ADDR=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.addr)
+UTXO_NUM="10000"
+jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
+  '[range($n) | { ($addr): 10000200000 }]'  | jq '.' > rewards.json
 
-# Synth to real time
-# First get to next epoch threshold (no 3 minute substraction back from the epoch boundary):
-synth-slots 86293
+NOMENU=true scripts/distribute.py \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --signing-key-file "$PAYMENT_KEY.skey" \
+  --address "$(cat "$PAYMENT_KEY.addr")" \
+  --payments-json rewards.json
 
-# Then synth the number of epochs to get the current day, UTC
-synth-epochs 13
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned | less
 
-# Finally, synth to slightly ahead of real time, using the number of hours in
-# the current day UTC to prepare for a push to the remote machines -- 3 hours in
-# this example.
-synth-slots $((3 * 3600))
+# shellcheck disable=SC2045
+for i in $(ls -tr1 tx-payments*.txsigned); do
+  echo "Submitting: $i"
+  cardano-cli latest transaction submit --tx-file "$i"
+  echo
+done
 
-# Start the node for a moment at it's current near-future (shortly after now)
-# tip time in order to allow node to process all the volatile state into
-# immutable and ledger as required.  Once that is complete, node can be stopped
-# and the state can be tgz packaged or similar in prep for a push to the remote
-# backbone machines.
-run-node-faketime '2026-01-20 03:00:00Z'
+watch 'cardano-cli query tip; echo; cardano-cli query tx-mempool info'
+cardano-cli query utxo --address "$FAUCET_ADDR" | jq length
+rm ./*.txsigned
 
-# See docs/explain/new-network.md for details on migrating this prepared chain
-# state from a local preparation environment to the full remote machine cluster.
+UTXO_NUM="500"
+jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
+  '[range($n) | { ($addr): 10000000 }]'  | jq '.' > delegation.json
+
+NOMENU=true scripts/distribute.py \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --signing-key-file "$PAYMENT_KEY.skey" \
+  --address "$(cat "$PAYMENT_KEY.addr")" \
+  --payments-json delegation.json
+
+cardano-cli debug transaction view --tx-file tx-payments-0-99.txsigned | less
+
+# shellcheck disable=SC2045
+for i in $(ls -tr1 tx-payments*.txsigned); do
+  echo "Submitting: $i"
+  cardano-cli latest transaction submit --tx-file "$i"
+  echo
+done
+
+watch 'cardano-cli query tip; echo; cardano-cli query tx-mempool info'
+cardano-cli query utxo --address "$FAUCET_ADDR" | jq length
+rm ./*.txsigned
+
+# Setup the faucet stakepool delegation
+NOMENU=true scripts/setup-delegation-accounts.py \
+  --testnet-magic "$TESTNET_MAGIC" \
+  --signing-key-file "$PAYMENT_KEY.skey" \
+  --wallet-mnemonic <(echo "$FAUCET_MNEMONIC") \
+  --num-accounts "500" \
+  --delegation-amount "$FAUCET_DELEGATION"
+
+cardano-cli query utxo --whole-utxo \
+  | jq --argjson faucetDeleg "$FAUCET_DELEGATION" \
+    'to_entries | map(select(.value.value.lovelace == $faucetDeleg)) | length'
+rm ./*.txsigned
+
+# deploy until
+# Wed, 21 Oct 2026 13:43:50 +0200 (in an hour)
+# we forward this to future realtime in hopes that the deploy happens before this.
+run-node-faketime 2026-10-21T14:40:00+00:00
+

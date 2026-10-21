@@ -90,7 +90,7 @@ in
         # Apply group wide common imports
         imports =
           optionals (hasPrefix "buildkite" name) [buildkite]
-          ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
+          ++ optionals (hasPrefix "dijkstra" name) [node-dijkstra amiZfs]
           ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots leiosSnapRetention]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
@@ -260,6 +260,27 @@ in
             };
           }
         ];
+      };
+
+      dbsync-dijkstra = {
+        cardano-parts.perNode.pkgs.cardano-db-sync = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
+      };
+
+      node-dijkstra = {
+        services.cardano-node.extraNodeConfig = {
+          ConsensusMode = "PraosMode";
+          TraceOptions = {
+            "ChainDB.AddBlockEvent.AddBlockValidation" = {
+              "severity" = "Debug";
+              "detail" = "DDetailed";
+            };
+
+            "ChainDB.AddBlockEvent" = {
+              "severity" = "Debug";
+              "detail" = "DDetailed";
+            };
+          };
+        };
       };
 
       # Same as node-leios, but the cardano-node binary is rebuilt with
@@ -1555,14 +1576,20 @@ in
       # Dijkstra, all on pre-release tag
       dijkstra1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node bp ccMon];};
       dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node rel];};
-      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync smash dijkstraSmash census];};
+      dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node rel];};
+      dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node rel];};
+      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync dbsync-dijkstra smash dijkstraSmash census];};
       dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node faucet faucetReleasePin dijkstraFaucet];};
 
-      dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
-      dijkstra2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel];};
+      dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node bp];};
+      dijkstra2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node rel];};
+      dijkstra2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node rel];};
+      dijkstra2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node rel];};
 
-      dijkstra3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre bp traceMp];};
-      dijkstra3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel traceMp ccfg];};
+      dijkstra3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node bp traceMp];};
+      dijkstra3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node rel traceMp];};
+      dijkstra3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node rel traceMp];};
+      dijkstra3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node rel traceMp];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------

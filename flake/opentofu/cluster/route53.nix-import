@@ -105,4 +105,11 @@ in {
     records = ["144.76.1.222"];
     set_identifier = "leios-node-external-144-76-1-222";
   };
+
+  aaaa_leios_node_external = mkMultivalueA {
+    type = "AAAA";
+    name = "leios-node.${domain}";
+    records = ["2a01:4f8:190:71cc::2"];
+    set_identifier = "leios-node-external-2a01-4f8-190-71cc-2";
+  };
 }
