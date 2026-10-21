@@ -73,7 +73,6 @@ in {
       services = {
         kubo = {
           enable = true;
-          package = inputs.nixpkgs-unstable.legacyPackages.${system}.kubo;
 
           enableGC = true;
           autoMount = true;
