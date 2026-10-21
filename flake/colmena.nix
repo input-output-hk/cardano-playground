@@ -269,17 +269,17 @@ in
       node-dijkstra = {
         services.cardano-node.extraNodeConfig = {
           ConsensusMode = "PraosMode";
-          TraceOptions = {
-            "ChainDB.AddBlockEvent.AddBlockValidation" = {
-              "severity" = "Debug";
-              "detail" = "DDetailed";
-            };
+          # TraceOptions = {
+          #   "ChainDB.AddBlockEvent.AddBlockValidation" = {
+          #     "severity" = "Debug";
+          #     "detail" = "DDetailed";
+          #   };
 
-            "ChainDB.AddBlockEvent" = {
-              "severity" = "Debug";
-              "detail" = "DDetailed";
-            };
-          };
+          #   "ChainDB.AddBlockEvent" = {
+          #     "severity" = "Debug";
+          #     "detail" = "DDetailed";
+          #   };
+          # };
         };
       };
 
