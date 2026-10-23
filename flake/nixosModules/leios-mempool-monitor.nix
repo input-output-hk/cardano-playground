@@ -32,9 +32,8 @@
     # One node per host, matching cardano-tx-firehose.
     nodeUnit = "cardano-node.service";
 
-    # Makes the node socket group readable, and is WantedBy the node. Pulled in
-    # rather than required, since a node already running from before this was
-    # deployed never picked up that want.
+    # Makes the node socket group readable and is started by the node.
+    # Only order after it: pulling it in would indirectly start the node.
     socketUnit = "cardano-node-socket-share.service";
   in {
     options.services.${serviceName} = {
@@ -118,13 +117,10 @@
       services.cardano-node.shareNodeSocket = lib.mkDefault true;
 
       systemd.services.${serviceName} = {
-        wantedBy = ["multi-user.target"];
-
-        # wants rather than requisite: a node restart should not stop the
-        # observer, and leios hosts restart the node on a 12h timer. The socket
-        # also only appears after chunk validation and ledger replay, which is
-        # minutes after an artifact restore, so wait for it before starting.
-        wants = [nodeUnit socketUnit];
+        # The node starts the observer, never the other way round. PartOf
+        # propagates explicit node stops/restarts, including Piranha switches.
+        wantedBy = [nodeUnit];
+        partOf = [nodeUnit];
         after = [nodeUnit socketUnit];
 
         # Runs as the same user/groups as the monitor. After= only orders
@@ -141,7 +137,17 @@
           fi
         '';
 
+        # The node socket is unavailable for minutes after a restore, so allow
+        # a long retry run rather than tripping the default rate limit.
+        startLimitBurst = 20;
+        startLimitIntervalSec = 3600;
+
         serviceConfig = {
+          # Skip independent activation while the node is down. Requisite
+          # instead reports a failed job during NixOS activation ordering races.
+          # Query as root: the transient DynamicUser identity can fail to
+          # authenticate to the system bus. The monitor itself stays unprivileged.
+          ExecCondition = "+${pkgs.systemd}/bin/systemctl is-active --quiet ${nodeUnit}";
           TimeoutStartSec = "15min";
           SupplementaryGroups = lib.singleton config.services.cardano-node.socketGroup;
 
@@ -168,11 +174,6 @@
 
           Restart = "always";
           RestartSec = 30;
-
-          # The node socket is unavailable for minutes after a restore, so allow
-          # a long retry run rather than tripping the default rate limit.
-          startLimitBurst = 20;
-          startLimitIntervalSec = 3600;
         };
       };
     };
