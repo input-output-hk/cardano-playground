@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.follows = "cardano-parts/nixpkgs";
-    nixpkgs-unstable.follows = "cardano-parts/nixpkgs-unstable";
     flake-parts.follows = "cardano-parts/flake-parts";
     cardano-parts.url = "github:input-output-hk/cardano-parts/next-2026-10-12";
 
@@ -23,7 +22,7 @@
     leios-adversarial-tools = {
       url = "github:input-output-hk/leios-adversarial-tools";
       inputs = {
-        nixpkgs.follows = "nixpkgs-unstable"; # crane requires at least 26.05
+        nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
       };
     };
