@@ -22,7 +22,7 @@ in
       us-east-2.aws.region = "us-east-2"; # c
       # Stockholm, Sweden
       eu-north-1.aws.region = "eu-north-1"; # d
-      # Sydney, Austrailia
+      # Sydney, Australia
       ap-southeast-2.aws.region = "ap-southeast-2"; # e
       # Sao Paulo, Brazil
       sa-east-1.aws.region = "sa-east-1"; # f
@@ -1593,7 +1593,7 @@ in
       leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
 
       # Dedicated firehose injection machines
-      # Sydney, Austrailia
+      # Sydney, Australia
       leiosfire5-edge-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosfire5") node-leios leiosFirehose];};
 
       # Tokyo, Japan
