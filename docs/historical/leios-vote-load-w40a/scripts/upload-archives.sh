@@ -7,12 +7,12 @@
 # PSI — keyed by hostname and netdata chart name. No addresses, no peer identities,
 # no credentials. Hostnames already appear in this repo's colmena config.
 #
-# Four archives, ~1.5 GB in total, living outside the repo:
+# Four archives, ~3.0 GB in total, living outside the repo:
 #
 #   data-1s           interface throughput, six 1-hour windows on 10-09
 #   data-1s-wide      ~100 charts per host, the same six windows
 #   data-weekend      interface throughput, 58 continuous hours to 10-12 00:00
-#   data-weekend-wide ~100 charts per host, the same 58 hours. 1.3 GB on its own.
+#   data-weekend-wide ~100 charts per host, the same 58 hours. 2.7 GB on its own.
 #
 # Point SRC at the directory holding them:
 #
@@ -71,9 +71,12 @@ for d in $ARCHIVES; do
     --exclude "*" --include "*.csv.gz" --include "README.md" --include "MANIFEST.txt" \
     --only-show-errors
 done
-aws s3 cp "$SRC/data-1s/stats-summary.txt" "$DEST/stats-summary.txt" $EXTRA --only-show-errors
-aws s3 cp "$SRC/data-1s/mimir-windows.tsv" "$DEST/mimir-windows.tsv" $EXTRA --only-show-errors
-[ -f "$SRC/MANIFEST.txt" ] && aws s3 cp "$SRC/MANIFEST.txt" "$DEST/MANIFEST.txt" $EXTRA --only-show-errors
+# These summaries live at the archive root and may be absent from a subset.
+for metadata in stats-summary.txt mimir-windows.tsv MANIFEST.txt; do
+  if [ -f "$SRC/$metadata" ]; then
+    aws s3 cp "$SRC/$metadata" "$DEST/$metadata" $EXTRA --only-show-errors
+  fi
+done
 
 echo
 echo "verify:"

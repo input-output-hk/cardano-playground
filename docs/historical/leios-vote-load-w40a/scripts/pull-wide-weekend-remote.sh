@@ -9,7 +9,7 @@
 #
 # CHUNKS uses @ as the separator because ISO timestamps contain colons, and must be a
 # single line because it is interpolated into a remote "for ...; do".
-set -uo pipefail
+set -euo pipefail
 HOST=$(hostname)
 ND=localhost:19999
 
@@ -23,7 +23,7 @@ FILTER="$FILTER"'|^ipv4\.(tcpsock|tcpopens|tcperrors|tcphandshake|sockstat_tcp_m
 FILTER="$FILTER"'|^disk\.|^disk_ops\.|^disk_util\.|^disk_await\.|^disk_backlog\.|^disk_svctm\.|^disk_qops\.'
 FILTER="$FILTER"'|^app\.cardano'
 
-CHARTS=$(curl -s "$ND/api/v1/charts" | jq -r '.charts|keys[]' | grep -E "$FILTER" | sort)
+CHARTS=$(curl --fail --silent --show-error --connect-timeout 10 --max-time 300 "$ND/api/v1/charts" | jq -r '.charts|keys[]' | grep -E "$FILTER" | sort)
 
 {
 for w in $CHUNKS; do
@@ -31,15 +31,18 @@ for w in $CHUNKS; do
   S=${R%@*}; E=${R#*@}
   A=$(date -u -d "$S" +%s); B=$(date -u -d "$E" +%s)
   for c in $CHARTS; do
-    curl -s "$ND/api/v1/data?chart=$c&after=$A&before=$B&format=json&options=seconds" \
+    curl --fail --silent --show-error --connect-timeout 10 --max-time 300 "$ND/api/v1/data?chart=$c&after=$A&before=$B&format=json&options=seconds" \
     | jq -r --arg w "$L" --arg h "$HOST" --arg c "$c" '
-        (.labels // []) as $l
-        | (.data // [])[]
+        if (.labels | type) != "array" or (.data | type) != "array"
+           or (.labels | length) < 2 or (.data | length) == 0
+        then error("missing Netdata labels/data") else . end
+        | .labels as $l
+        | .data[]
         | . as $r
         | range(1; ($l|length))
         | select($r[.] != null)
         | [$w, $h, $c, ($l[.]|gsub(",";";")), $r[0], $r[.]]
-        | @csv' 2>/dev/null
+        | @csv'
   done
 done
 } | gzip -9

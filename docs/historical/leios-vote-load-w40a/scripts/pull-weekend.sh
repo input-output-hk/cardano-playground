@@ -9,7 +9,7 @@
 # 2026-10-12 the actual span ran 8d22h to 21d8h across these hosts. Check the first
 # row's timestamp of any output file to confirm the early hours really came back at
 # 1s rather than aggregated from a coarser tier.
-set -uo pipefail
+set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT="${OUT:-data-weekend}"; mkdir -p "$OUT"
 GZ="${GZIP:-$(command -v gzip || echo /nix/store/yr6ar7lsk3yfas4d464z1ysaxwcq2gc5-gzip-1.14/bin/gzip)}"
@@ -23,30 +23,34 @@ HOSTS="${HOSTS:-leios1-rel-a-1 leios1-rel-a-2 leios1-rel-a-3 leios2-rel-b-1 leio
 # all on one line because this string is interpolated into a remote "for ...; do".
 CHUNKS="d09@2026-10-09T14:00:00Z@2026-10-10T00:00:00Z d10@2026-10-10T00:00:00Z@2026-10-11T00:00:00Z d11@2026-10-11T00:00:00Z@2026-10-12T00:00:00Z"
 
+valid_archive() {
+  "$GZ" -t "$1" 2>/dev/null &&
+    [ "$("$GZ" -cd "$1" | wc -l)" -eq 208801 ]
+}
+failed=0
 for h in $HOSTS; do
   f="$OUT/$h.csv.gz"
-  [ -s "$f" ] && { echo "skip $h (exists)"; continue; }
+  [ -s "$f" ] && valid_archive "$f" && { echo "skip $h (complete)"; continue; }
+  part=$(mktemp "$f.part.XXXXXX")
   echo "pulling $h ..."
-  timeout 900 bash /tmp/sshw "$h" "
-    IF=\$(curl -s localhost:19999/api/v1/charts | jq -r '.charts|keys[]|select(test(\"^net\\\\.\"))' | head -1)
+  if timeout 900 bash /tmp/sshw "$h" "
+    set -euo pipefail
+    IF=\$(curl --fail --silent --show-error --connect-timeout 10 --max-time 300 localhost:19999/api/v1/charts | jq -r '.charts|keys[]|select(test(\"^net\\\\.\"))' | sed -n '1p')
     for c in $CHUNKS; do
       L=\${c%%@*}; R=\${c#*@}
       S=\${R%@*}; E=\${R#*@}
       A=\$(date -u -d \"\$S\" +%s); B=\$(date -u -d \"\$E\" +%s)
-      curl -s \"localhost:19999/api/v1/data?chart=\$IF&after=\$A&before=\$B&format=csv&options=seconds\" \
+      curl --fail --silent --show-error --connect-timeout 10 --max-time 300 \"localhost:19999/api/v1/data?chart=\$IF&after=\$A&before=\$B&format=csv&options=seconds\" \
         | tail -n +2 | sed \"s|^|\$L,$h,\$IF,|\"
     done | gzip -9
-  " 2>/dev/null > "$f"
-  # A dropped ControlMaster truncates the stream mid-record, producing a file that is
-  # large and plausible but short. Require a complete gzip stream and the full row count
-  # (58 x 3600 + 1; the API returns both range endpoints) rather than a loose floor.
-  if ! "$GZ" -t "$f" 2>/dev/null; then
-    echo "  TRUNCATED gzip stream, removing"; rm -f "$f"; continue
-  fi
-  n=$($GZ -cd "$f" | wc -l)
-  if [ "$n" -ne 208801 ]; then echo "  $n rows, expected 208801, removing"; rm -f "$f"; else
-    first=$($GZ -cd "$f" | head -1 | cut -d, -f4)
-    echo "  $n rows, $(stat -c%s "$f") bytes, earliest $(date -u -d @"$first" +%F\ %T)"
+  " > "$part" && valid_archive "$part"; then
+    mv "$part" "$f"
+    echo "  verified 208801 rows for $h"
+  else
+    echo "ERROR: $h request failed or archive is incomplete" >&2
+    rm -f "$part"
+    failed=1
   fi
 done
+[ "$failed" -eq 0 ] || exit 1
 echo WEEKENDDONE

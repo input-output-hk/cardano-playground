@@ -147,8 +147,8 @@ incrementing, so they are not a key count.
   weekend on-hours. Every sampled hour clears the unloaded band.
 - **EB announcement late fraction:** unloaded 0.00–1.33%, loaded 2.8–6.1%, sustained for
   58 hours.
-- **Certification rate is down.** Certified EBs per forged EB: 31.9% loaded (253 of 794)
-  against 38.1% unloaded (261 of 685), z ≈ 2.51, **p ≈ 0.012**.
+- **Certification rate is down.** Certified EBs per forged EB: 32.5% loaded (230 of 707)
+  against 38.1% unloaded (261 of 685), z ≈ 2.17, **p ≈ 0.030**.
 
 **Relay bandwidth shows no vote-attributable effect.** Comparing each statistic against its
 own kind across the 29 loaded on-hours: hourly means run 73.9–136.5 Mbit/s against unloaded
@@ -567,7 +567,7 @@ Sun 20:05        0.5707       6.078     7.422
 |---|---|---|---|
 | Relay CPU, mean cores | 0.313–0.400 | 0.50–0.64 | **Real signal** |
 | EB announce late, % | 0.00–1.33 | 2.8–6.1 | **Real signal** |
-| Certified per forged EB, % | 38.1 pooled | 31.9 pooled | **Real signal**, p ≈ 0.012 |
+| Certified per forged EB, % | 38.1 pooled | 32.5 pooled | **Real signal**, p ≈ 0.030 |
 | Fleet egress mean, Mbit/s | 86.8, 118.0 (2 hourly means) | 73.9–136.5 (range of 29 hourly means) | **Within noise** |
 | Remote mux errors, events/h | 1107–1227 | 1154–1479 excluding one peer | **Within noise** |
 | Declines per 1000 votes | 87–163 | 3.0–7.4 | **Improved ~25×** |
@@ -633,23 +633,24 @@ events per block; the ratio is dimensionless.
 | Wed pm | 58 | 137 | 42.3% | unloaded |
 | Thu pm | 55 | 144 | 38.2% | unloaded |
 | Fri on-hours (5) | 43 | 112 | 38.4% | unloaded |
-| Fri load hours (4) | 23 | 87 | 26.4% | **loaded** |
+| Fri load hours (4), subset of Fri pm; excluded from pool | 23 | 87 | 26.4% | **loaded** |
 | Fri pm | 39 | 147 | 26.5% | **loaded** |
 | Sat am | 46 | 139 | 33.1% | **loaded** |
 | Sat pm | 53 | 140 | 37.9% | **loaded** |
 | Sun am | 38 | 140 | 27.1% | **loaded** |
 | Sun pm | 54 | 141 | 38.3% | **loaded** |
 
-Pooled: **253 certified of 794 forged under load (31.9%)** against **261 of 685 unloaded
-(38.1%)**. A two-proportion test gives z ≈ 2.51, **p ≈ 0.012** — a 6.2 point absolute drop.
+The Friday load-hours row overlaps Friday pm and is excluded from the pooled counts.
+
+Pooled: **230 certified of 707 forged under load (32.5%)** against **261 of 685 unloaded
+(38.1%)**. A two-proportion test gives z ≈ 2.17, **p ≈ 0.030** — a 5.6 point absolute drop.
 
 Forging is unaffected: 137–150 EBs forged per 12-hour block in every state.
 
 ### What can and cannot be said
 
-Can be said: the certified fraction is 6.2 points lower under load, the effect clears
-p < 0.05 on 794 loaded and 685 unloaded forged EBs, and no loaded 12-hour block reaches the
-unloaded mean.
+Can be said: the certified fraction is 5.6 points lower under load, the effect clears
+p < 0.05 on 707 loaded and 685 unloaded forged EBs. Individual loaded and unloaded blocks overlap.
 
 Cannot be said: which mechanism. Loaded blocks span 26.5–38.3% and unloaded 34.0–42.3%, so
 the distributions overlap; the separation is in the pooled means, not in every block.

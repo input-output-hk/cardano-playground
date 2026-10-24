@@ -23,7 +23,7 @@ Unloaded is the two pre-load on-hours of 10-09; loaded spans the 29 on-hours thr
 | Relay bandwidth | within noise, at both 5-minute and 1-second resolution |
 | Relay node CPU, mean cores | real signal, 0.313-0.400 unloaded to 0.50-0.64 loaded |
 | EB announcement lateness | real signal, 0.00-1.33% unloaded to 2.8-6.1% loaded |
-| Certified EBs per forged EB | real signal, 38.1% unloaded to 31.9% loaded, p = 0.012 |
+| Certified EBs per forged EB | real signal, 38.1% unloaded to 32.5% loaded, p = 0.030 |
 | Declines per 1000 votes | improved ~25x, 87-163 unloaded to 3.0-7.4 loaded |
 | Mean vote tally | invalid comparator under this load, see findings |
 

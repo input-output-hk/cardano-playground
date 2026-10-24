@@ -134,7 +134,7 @@ Regime-matched C vs D is a 5.17-point drop, z = 2.83, **p = 0.0047**. It is not 
 of pooling: the per-hour ratios agree, Welch p = 0.021 and Mann-Whitney p = 0.013.
 
 That arithmetic is sound and should still not be read as a seat effect. The first two rows
-differ by **+7.3 points with seat count held constant** — larger than the 6.2 points the
+differ by **+7.3 points with seat count held constant** — larger than the 5.6 points the
 original test attributed to the vote load, and larger than the 5.2 attributed here to the
 cut. A metric that swings that far on a change in the *character* of the transaction load
 cannot carry an attribution to seats across a window where the load character also changed.
