@@ -216,8 +216,7 @@ flake @ {
                   jq
                   lsof
                   nano
-                  # For nix >= 2.24 build compatibility
-                  self.inputs.nixpkgs-unstable.legacyPackages.${system}.neovim
+                  neovim
                   ncdu
                   ripgrep
                   smem

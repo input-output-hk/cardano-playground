@@ -72,7 +72,7 @@ export SLOT_LENGTH="1000"
 #
 #   Total: 8 <= x <= 12 epochs
 export START_TIME="2026-09-07T00:00:00Z"
-export IPFS_GATEWAY_URI="https://ipfs.io"
+export IPFS_GATEWAY_URI="https://gateway.pinata.cloud"
 export USE_GUARDRAILS="true"
 export ERA_CMD=conway
 

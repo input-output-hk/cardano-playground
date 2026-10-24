@@ -10,7 +10,7 @@ set -euo pipefail
 [ -z "${TESTNET_MAGIC:-}" ] && { echo "TESTNET_MAGIC var must be set"; exit 1; }
 [ -z "${THRESHOLD:-}" ] && { echo "THRESHOLD var must be set and most likely should remain the same as the existing threshold"; exit 1; }
 
-export IPFS_GATEWAY_URI="https://ipfs.io"
+export IPFS_GATEWAY_URI="https://gateway.pinata.cloud"
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")

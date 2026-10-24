@@ -11,6 +11,7 @@
 - [Advanced](advanced.md)
   - [Preview pre-release](adv-preview.md)
   - [Pre-production pre-release](adv-preprod.md)
+  - [Dijkstra Testnet](adv-dijkstra.md)
   - [MusashiNet prototype](adv-musashi.md)
 - [Cost Model](cost-model.md)
   - [2024-07-30](cm-2024-07-30.md)

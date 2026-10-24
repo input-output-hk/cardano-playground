@@ -1,33 +1,35 @@
 <section class="board" aria-label="Summary of findings">
   <div class="card real">
-    <p class="tag">Measured</p>
+    <p class="tag">Real signal</p>
     <h4>Node CPU</h4>
-    <p><span class="fig">&times;1.48</span>relay mean, 0.53&ndash;0.61 cores against a
-    0.313&ndash;0.400 baseline band. Outside it every load hour.</p>
+    <p><span class="fig">0.50&ndash;0.64</span>relay mean in cores across sampled weekend
+    on-hours, against a 0.313&ndash;0.400 unloaded band. Every sampled hour clears it.</p>
   </div>
   <div class="card real">
-    <p class="tag">Measured</p>
+    <p class="tag">Real signal</p>
     <h4>EB announcement lateness</h4>
-    <p><span class="fig">3.3&ndash;4.1%</span>in three of four load hours, against a
-    baseline maximum of 1.33%.</p>
+    <p><span class="fig">2.8&ndash;6.1%</span>against an unloaded 0.00&ndash;1.33%, and
+    sustained across all 58 hours rather than a single window.</p>
+  </div>
+  <div class="card real">
+    <p class="tag">Real signal</p>
+    <h4>Certification rate</h4>
+    <p><span class="fig">p &asymp; 0.030</span>32.5% of forged EBs certified under load
+    (230 of 707) against 38.1% unloaded (261 of 685). The mechanism is not established.</p>
   </div>
   <div class="card noise">
     <p class="tag">Within noise</p>
     <h4>Relay bandwidth</h4>
-    <p>No vote-attributable effect. Hour 4's rise is an external peer: vote-free off-hours
-    show the same rise whenever that peer is active.</p>
+    <p>No vote-attributable effect at either resolution. 1-second fleet peaks reach
+    1304&ndash;2048 Mbit/s loaded against 1776 and 2278 unloaded &mdash; the largest burst
+    in the whole test falls in an <em>unloaded</em> hour, despite 29 loaded hours in which
+    to beat it.</p>
   </div>
   <div class="card noise">
     <p class="tag">External cause</p>
     <h4>Mux errors</h4>
-    <p>One external address is the entire rise. Excluding it, load hours sit inside the
-    1107&ndash;1227 baseline band.</p>
-  </div>
-  <div class="card open">
-    <p class="tag">Not established</p>
-    <h4>Certification rate</h4>
-    <p><span class="fig">p &asymp; 0.076</span>26.4% certified under load against 38.4%
-    unloaded. Consistent direction, three of four hours below every baseline.</p>
+    <p>One external address accounts for the entire rise. Excluding it, loaded hours sit at
+    1154&ndash;1479 against a 1107&ndash;1227 baseline.</p>
   </div>
   <div class="card open">
     <p class="tag">Measurement trap</p>

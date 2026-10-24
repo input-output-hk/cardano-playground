@@ -222,7 +222,7 @@ in {
                 }
                 {
                   name = "tag:version";
-                  values = ["25.11.*"];
+                  values = ["26.05.*"];
                 }
               ];
             };
@@ -313,6 +313,21 @@ in {
         #   });
 
         resource = {
+          terraform_data = mapRegions ({region, ...}: {
+            "vpc_ipv6_cidr_block_associations_${region}" = {
+              lifecycle.precondition = [
+                {
+                  condition = "\${length(tolist(data.aws_vpc.${region}.ipv6_cidr_block_associations)) == 1}";
+                  error_message = ''
+                    The default VPC in ${underscore region}
+                    must have exactly one IPv6 CIDR block association
+                    because our OpenTofu code assumes so.
+                  '';
+                }
+              ];
+            };
+          });
+
           aws_default_route_table = mapRegions (
             {
               region,
@@ -375,9 +390,9 @@ in {
                 # Dynamically calculate the subnet bits in case the default
                 # CIDR block allocation changes from /56 in the future.
                 ipv6_cidr_block = let
-                  ipv6CidrBlock = "data.aws_vpc.${region}.ipv6_cidr_block";
+                  ipv6CidrBlock = "tolist(data.aws_vpc.${region}.ipv6_cidr_block_associations)[0].ipv6_cidr_block";
                 in
-                  "\${data.aws_vpc.${region}.ipv6_cidr_block == \"\" ? null :"
+                  "\${length(tolist(data.aws_vpc.${region}.ipv6_cidr_block_associations)) == 0 ? null :"
                   + " cidrsubnet(${ipv6CidrBlock}, ${toString ipv6SubnetCidrBits} - parseint(tolist(regex(\"/([0-9]+)$\", ${ipv6CidrBlock}))[0], 10), each.key)}";
 
                 availability_zone = "\${each.value.availability_zone}";
@@ -415,9 +430,13 @@ in {
 
                 monitoring = true;
                 key_name = "\${aws_key_pair.bootstrap_${underscore region}[0].key_name}";
-                vpc_security_group_ids = [
-                  "\${aws_security_group.common_${underscore region}[0].id}"
-                ];
+                vpc_security_group_ids =
+                  [
+                    "\${aws_security_group.common_${underscore region}[0].id}"
+                  ]
+                  # Temporary special access
+                  ++ optional (node.aws.instance.sshIngress or false)
+                  "\${aws_security_group.ssh_${underscore region}[0].id}";
 
                 # Provider level `default_tags` are automatically inherited at
                 # the instance level.  Instance specific tags defined in
@@ -448,11 +467,11 @@ in {
               }
               # Use declared ipv6 if set
               // optionalAttrs (node.aws.instance ? ipv6) {
-                ipv6_addresses = "\${data.aws_vpc.${underscore region}.ipv6_cidr_block == \"\" ? null : tolist([\"${node.aws.instance.ipv6}\"])}";
+                ipv6_addresses = "\${length(tolist(data.aws_vpc.${underscore region}.ipv6_cidr_block)) == 0 ? null : tolist([\"${node.aws.instance.ipv6}\"])}";
               }
               # Otherwise use aws ipv6 auto-assignment
               // optionalAttrs (!(node.aws.instance ? ipv6)) {
-                ipv6_address_count = "\${data.aws_vpc.${underscore region}.ipv6_cidr_block == \"\" ? null : 1}";
+                ipv6_address_count = "\${length(tolist(data.aws_vpc.${underscore region}.ipv6_cidr_block_associations)) == 0 ? null : 1}";
               }
           );
 
@@ -650,7 +669,47 @@ in {
 
                 tags = defaultTags;
               };
-            });
+            })
+            # Temporary special access
+            // mapRegions ({
+              region,
+              count,
+            }: let
+              wanted = any (
+                node: (node.aws.instance.sshIngress or false) && underscore node.aws.region == region
+              ) (attrValues nodes);
+            in
+              optionalAttrs wanted {
+                "ssh_${region}" = {
+                  inherit count;
+                  provider = awsProviderFor region;
+                  name = "ssh";
+                  description = "Allow ssh from a restricted source";
+                  lifecycle = [{create_before_destroy = true;}];
+
+                  ingress = [
+                    (mkRule {
+                      description = "Allow SSH";
+                      from_port = 22;
+                      to_port = 22;
+                      cidr_blocks = ["5.34.251.181/32"];
+                      ipv6_cidr_blocks = [];
+                      self = false;
+                    })
+                  ];
+
+                  egress = [
+                    (mkRule {
+                      description = "Allow outbound traffic";
+                      from_port = 0;
+                      to_port = 0;
+                      protocol = "-1";
+                    })
+                  ];
+
+                  tags = defaultTags;
+                };
+              });
 
           aws_route53_record =
             # Generate individual route53 node records

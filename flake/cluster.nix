@@ -34,6 +34,10 @@ with lib; {
     };
 
     infra.generic = {
+      # See nixpkgsUpgrade in cardano-parts' flake/nixosModules/profile-common.nix
+      # for the current upgrade workarounds and criteria for disabling this flag.
+      nixpkgsUpgrade = true;
+
       organization = "ioe";
       tribe = "coretech";
       function = "cardano-parts";
@@ -104,6 +108,9 @@ with lib; {
       // (mkGroup "leios1" "leios" "leios-node.${dns}" "leios1-node.${dns}" false false)
       // (mkGroup "leios2" "leios" "leios-node.${dns}" "leios2-node.${dns}" false false)
       // (mkGroup "leios3" "leios" "leios-node.${dns}" "leios3-node.${dns}" false false)
+      // (mkGroup "leiosfire5" "leios" null null false false)
+      // (mkGroup "leiosfire8" "leios" null null false false)
+      // (mkGroup "leiosfire9" "leios" null null false false)
       // (mkGroup "leiosred1" "leios" "leiosred-node.${dns}" "leiosred1-node.${dns}" false false)
       // (mkGroup "leiosred2" "leios" "leiosred-node.${dns}" "leiosred2-node.${dns}" false false)
       // (mkGroup "leiosred3" "leios" "leiosred-node.${dns}" "leiosred3-node.${dns}" false false)

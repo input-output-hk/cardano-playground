@@ -5,13 +5,13 @@ the Ouroboros Leios protocol extension.  It is an advanced environment intended
 for testing and not for production use.
 
 The latest version available is the `ouroboros-leios` prototype build
-[`prototype-2026w40a`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w40a).
+[`rc-2026w42`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w42).
 
 Network magic: `164`
 
 #### Configuration files
 
-Compatible with the `ouroboros-leios` prototype build [`prototype-2026w40a`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/prototype-2026w40a)
+Compatible with the `ouroboros-leios` prototype build [`rc-2026w42`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w42)
 
 ```
 NOTE:
@@ -32,6 +32,7 @@ NOTE:
 - [Alonzo Genesis](environments-pre/leios/alonzo-genesis.json)
 - [Conway Genesis](environments-pre/leios/conway-genesis.json)
 - [Dijkstra Genesis](environments-pre/leios/dijkstra-genesis.json)
+- [Compiled guardrails script](environments-pre/leios/guardrails-script.plutus)
 
 #### Consensus Mode
 

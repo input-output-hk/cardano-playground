@@ -37,6 +37,9 @@ keys:
   - &leios2-bp-b-1 age1lt8a78g53sgpspgtnce3w5v2fswdhhr7cnkl3eg4gkepd7gdd9lqcpy95c
   - &leios2-rel-b-2 age16f699d46dehey3zpw0704uncck5r92vydz8js6gp58naddcqj94qk73fzr
   - &leios3-bp-c-1 age1pn8tx5ehm7hejphk6ewlvlmpmg4ujq4gc92mtudhsqpapj3q4apscyjwcy
+  - &leiosfire5-edge-e-1 age12qe0nexq23v79mfe52k72zec9w6ee8vfs3st2p490cu8rqeapadsdu3aw2
+  - &leiosfire8-edge-h-1 age1c9qta70z7vkv94mvy9csljpd79czn0v8gr3x00lgdq8ne64cgduq72rj5k
+  - &leiosfire9-edge-i-1 age17ef6stjlen38xeru9fkp2zt3ehcasf5z48627chwq3fa7j9rfpfqs5jqh5
   - &leiosred1-bp-a-1 age1x9rklez6g95grqhgm5rlfyu3nt2gmtptnmh3c0uu9nw46r22mchqhj54fk
   - &leiosred2-bp-b-1 age1ew7xmm6ypqtn6c8jl9chrctk3ghgju2zfgnvy8kjm46eyzs5vvusr4emcu
   - &leiosred3-bp-c-1 age100j4usae4uwn89vh6x336d94vw8n2x7qcqmpjgdra20f7kzztyeqwa66t9
@@ -208,6 +211,24 @@ creation_rules:
     - age:
       - *sre
       - *leios3-bp-c-1
+
+  - path_regex: secrets/groups/leiosfire5/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosfire5-edge-e-1
+
+  - path_regex: secrets/groups/leiosfire8/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosfire8-edge-h-1
+
+  - path_regex: secrets/groups/leiosfire9/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosfire9-edge-i-1
 
   - path_regex: secrets/groups/leiosred1/deploy/leiosred1-bp-a-1.*$
     key_groups:

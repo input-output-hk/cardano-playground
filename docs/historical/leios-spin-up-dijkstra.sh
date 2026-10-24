@@ -4,7 +4,7 @@
 # This script is meant more as a guide than an actual straight executable.
 # It requires interactivity with node starts, stops, block synthesis and time feedback.
 
-# Updated for leios-prototype-2026w35
+# Updated for rc-2026w42
 
 # Source bash helper functions
 # TODO: Unify the dual approach of alias and default shell bins between bash-fns.sh and nix jobs
@@ -65,14 +65,11 @@ export NUM_CC_KEYS="3"
 export SECURITY_PARAM="108"
 export SLOT_LENGTH="1000"
 
-# At 6 hr epochs, there are 4 epochs per day:
-#   4 are required for standard spin up procedure below to get to Dijkstra
-#   ~4 are required for Dijkstra era pool re-registration for BLS keys
-#   <= 4 are required for rounding to the next full day at 00:00 UTC
-#
-#   Total: 8 <= x <= 12 epochs
-export START_TIME="2026-09-07T00:00:00Z"
-export IPFS_GATEWAY_URI="https://ipfs.io"
+# At 6 hr epochs, there are 4 epochs per day.
+# Also consider that after registering pools with BLS keys, at least 2 epoch
+# rollovers need to over before leios EBs can be certified
+export START_TIME="2026-10-18T00:00:00Z"
+export IPFS_GATEWAY_URI="https://gateway.pinata.cloud"
 export USE_GUARDRAILS="true"
 export ERA_CMD=dijkstra
 
@@ -94,11 +91,11 @@ export POOL_MARGIN="1.0"
 export POOL_METADATA_BASE_URL="https://pools.play.dev.cardano.org"
 export POOL_RELAY="$ENV-node.play.dev.cardano.org"
 export POOL_RELAY_PORT="3001"
-# For now, faucet will be:
-#   10000200000 lovelace (10k ADA) funding utxos @ 5000 count,
+# For now, faucet will be (addnl 500k for fire load tests if needed):
+#   10000200000 lovelace (10k ADA) funding utxos @ 10000 count,
 #   1000000000000 (1M ADA) Faucet delegation,
 export FAUCET_DELEGATION="1000000000000"
-#   10000000 (10 ADA) delegation UTxO @ 500 count for 500 SPO delegations
+#   10000000 (10 ADA) delegation UTxO @ 500 count for up to 500 SPO delegations
 
 # For stability, our pool pledge will be 10M ADA
 export POOL_PLEDGE="10000000000000"
@@ -119,10 +116,10 @@ export VOTING_POWER="1000000000000"
 
 # Conway constitution specifics for genesis file embedding
 # Use a final constitution copy from mainnet to indicate when we are no longer using an interim constitution.
-export SCRIPT_FILE_URL="https://book.play.dev.cardano.org/environments/preview/guardrails-script.plutus"
+export SCRIPT_FILE_URL="https://book.play.dev.cardano.org/environments-pre/leios/guardrails-script.plutus"
 export CONSTITUTION_ANCHOR_DATAHASH="2a61e2f4b63442978140c77a70daab3961b22b12b63b13949a390c097214d1c5"
 export CONSTITUTION_ANCHOR_URL="ipfs://bafkreiazhhawe7sjwuthcfgl3mmv2swec7sukvclu3oli7qdyz4uhhuvmy"
-export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d4a64"
+export CONSTITUTION_SCRIPT="e3172285605e502bde008a7efe2b2eec516958b7bae911947a5c9373"
 
 # New Leios required env vars:
 # The old leios at 10.5.1 glibc required faketime adjustment.
@@ -130,7 +127,7 @@ export CONSTITUTION_SCRIPT="fa24fb305126805cf2164c161d852a0e7330cf988f1fe558cf7d
 # export FAKETIME_FLAKE="github:nixos/nixpkgs/nixos-23.05"
 
 # Leios is now rebased on 11.1.0 so take the latest testnet-template.
-export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/node-11.1\"; in f.outPath")/cardano-lib/testnet-template"
+export TEMPLATE_DIR="$(nix eval --raw --impure --expr "let f = builtins.getFlake \"github:input-output-hk/iohk-nix/jl/node-11.2\"; in f.outPath")/cardano-lib/testnet-template"
 
 nix run .#job-gen-custom-node-config-data-ng
 
@@ -180,10 +177,6 @@ jq -S '.protocolParams += {
 
 # Adjust alonzo genesis to include to set execution unit limits and cost models
 # to van Rossem network standard.
-#
-# This will become available once
-# https://github.com/IntersectMBO/cardano-ledger/pull/6030 is merged and in
-# use, likely available for w37.
 jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.json '. += {
   "maxBlockExUnits": {
     "exUnitsMem": 72000000,
@@ -203,7 +196,6 @@ jq -S --slurpfile costModels scripts/cost-models/vanrossem-parameters-pv11-prep.
 #
 jq -S --argjson snapInterval "$((40 * SECURITY_PARAM))" \
   '.ExperimentalHardForksEnabled = true
-  | .MempoolCapacityBytesOverride = 500000
   | .LedgerDB.Snapshots.SnapshotInterval = $snapInterval
   | .TestDijkstraHardForkAtEpoch = 0
   | .TraceOptions *= {
@@ -216,17 +208,23 @@ jq -S --argjson snapInterval "$((40 * SECURITY_PARAM))" \
   | sponge "$DATA_DIR/node-config.json"
 
 # Update genesis hashes in node config after modifying the genesis files.
+#
+# NOTE - Forking directly into dijkstra locks in the format of the genesis file.
+# If it needs to be changed, change it now!!!
 HASH_CONWAY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/conway-genesis.json")
 HASH_SHELLEY=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/shelley-genesis.json")
 HASH_ALONZO=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/alonzo-genesis.json")
+HASH_DIJKSTRA=$(cardano-cli latest genesis hash --genesis "$DATA_DIR/dijkstra-genesis.json")
 jq --sort-keys \
   --arg hashConway "$HASH_CONWAY" \
   --arg hashShelley "$HASH_SHELLEY" \
   --arg hashAlonzo "$HASH_ALONZO" \
+  --arg hashDijkstra "$HASH_DIJKSTRA" \
   '. += {
     ConwayGenesisHash: $hashConway,
     ShelleyGenesisHash: $hashShelley,
     AlonzoGenesisHash: $hashAlonzo,
+    DijkstraGenesisHash: $hashDijkstra,
   }' \
   < "$DATA_DIR/node-config.json" \
   | sponge "$DATA_DIR/node-config.json"
@@ -239,13 +237,16 @@ exit 0
 # Start the node 30 seconds before the chain is scheduled to start forging.
 # Note that if you run older versions of node, the libfaketime will need to
 # match the glibc version.
-run-node-faketime "$(date -u -d "$START_TIME - 30 seconds" "+%Y-%m-%dT%H:%M:%SZ")"
+run-node-faketime "$(date -u -d "$START_TIME - 30 seconds" "+%Y-%m-%dT%H:%M:%SZ")" | tee -a node-leios.log
 
 # Continue operations in another shell window.
 # Source the same bash helper functions given above in the new window.
 # Export all the same env vars given above in the new window.
 
 # Note: This defaults to 10M ADA pool pledge; see note above
+
+# Examine pool state with:
+#   cardano-cli query pool-state --all-stake-pools
 echo "Registering stake pools..."
 POOL_NAMES="${ENV}1-bp-a-1" \
   STAKE_POOL_DIR="$GENESIS_DIR/groups/${ENV}1" \
@@ -290,6 +291,8 @@ BOOTSTRAP_POOL_DIR="$KEY_DIR/bootstrap-pool" \
 wait-for-mempool
 
 # Authorize the constitutional committee hot keys
+# Examine cc state with:
+#   cardano-cli dijkstra query committee-state
 for i in $(seq 1 "$NUM_CC_KEYS"); do
   echo "Authorizing CC$i member's hot credentials..."
   INDEX="$i" \
@@ -298,6 +301,8 @@ for i in $(seq 1 "$NUM_CC_KEYS"); do
   echo
 done
 
+# Examine drep state with:
+#   cardano-cli dijkstra query drep-state --all-dreps
 echo "Creating and registering drep-0"
 export POOL_DELEG_ID=$(cat "$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-pool.id")
 INDEX="0" \
@@ -305,87 +310,105 @@ INDEX="0" \
   nix run .#job-register-drep
 wait-for-mempool
 
-
-# TODO: Below needs updating after the proper costModel at epoch 0 is verified
-# to be in effect.
-
-# If both cost model and hard fork proposal are submitted in the same
-# epoch, the cost model will fail to take effect.  We'll delay submission of
-# any HF proposal by one epoch to allow for ratification of the cost model
-# first.
-echo "Submitting a cost model governance action..."
-PROPOSAL_ARGS=("--cost-model-file" "scripts/cost-models/vanrossem-parameters-pv11-prep.json")
-ACTION="create-protocol-parameters-update" \
-  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
-  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-wait-for-mempool
-
-# NOTE:
-#   When in PV9, only the CC members need to approve the cost model, but both
-#   CCs and SPOs need to approve the HF.
-#
-#     - Drep votes are disallowed during Conway bootstrapping.
-#
-#   When at PV10 or later, both CC members and drep need to approve the cost model.
-export ACTION_TX_ID=$(
-  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
-    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
-)
-
-for i in $(seq 1 "$NUM_CC_KEYS"); do
-  echo "Submitting the CC$i vote for the cost model..."
-    DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-$i-hot" \
-    nix run .#job-submit-vote
-  wait-for-mempool
-  echo
-done
-
-# REQUIRED if starting in PV10 or later
-echo "Submitting the drep-0 vote for the parameter update..."
-  DECISION=yes \
-  ROLE=drep \
-  VOTE_KEY="$DREP_DIR/drep-0" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 1
-echo "Synthesize blocks until just before the cost model proposal ratifies, epoch 1"
-synth-slots $((85823 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 1 day - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epoch 1, verify the gov-state shows PlutusV2 available:
-cardano-cli latest query gov-state | jq '.futurePParams.contents.costModels | keys'
-
-# Example output:
-# [
-#   "PlutusV1",
-#   "PlutusV2",
-#   "PlutusV3"
-# ]
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-echo "Synthesize blocks until realtime plus desired offset"
-# This brings us to epoch 1 + 1 = 2
-synth-slots $((86363 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 2 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epoch 2, verify the gov-state is what is desired, example:
-icdiff \
+# Verify the proper cost model is in effect starting in epoch 0 as expected.
+# Only plutus v4 is expected to differ as van Rossem only had plutus v3
+vi -d \
   <(jq -S < scripts/cost-models/vanrossem-parameters-pv11-prep.json) \
-  <(cardano-cli query protocol-parameters | jq .costModels)
+  <(cardano-cli query protocol-parameters | jq -S .costModels)
 
-# Fill the faucet and centrifuge while still in van Rossem as once in Dijkstra
-# Tx construction and submission tools are not yet available, and if Leios
-# activates, db-synthesizer will cease to function.
+# OPTIONAL: Test a pparams update to exercise a new guardrails script prior to live network push
+# echo "Submitting a Dijkstra protocol parameters update action..."
+# PROPOSAL_ARGS=("--max-endorser-block-txs-size" "3000000" "--max-endorser-block-references-size" "300000")
+# ACTION="create-protocol-parameters-update" \
+#   STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
+#   nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
+# wait-for-mempool
 #
-# Faucet:
+# export ACTION_TX_ID=$(
+#   cardano-cli dijkstra query gov-state --testnet-magic "$TESTNET_MAGIC" \
+#     | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "ParameterChange")) | .[0].actionId.txId'
+# )
 #
+# for i in $(seq 1 "$NUM_CC_KEYS"); do
+#   echo "Submitting the CC$i vote for the Dijkstra hard fork..."
+#   DECISION=yes \
+#     ROLE=cc \
+#     VOTE_KEY="$CC_DIR/cc-$i-hot" \
+#     nix run .#job-submit-vote
+#   wait-for-mempool
+#   echo
+# done
+#
+# echo "Submitting the drep-0 vote for the Dijkstra hard fork..."
+#   DECISION=yes \
+#   ROLE=drep \
+#   VOTE_KEY="$DREP_DIR/drep-0" \
+#   nix run .#job-submit-vote
+# wait-for-mempool
+#
+# echo "Submitting the pool 1 vote for the Dijkstra hard fork..."
+# DECISION=yes \
+#   ROLE=spo \
+#   VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
+#   nix run .#job-submit-vote
+# wait-for-mempool
+#
+# echo "Submitting the pool 2 vote for the Dijkstra hard fork..."
+# DECISION=yes \
+#   ROLE=spo \
+#   VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
+#   nix run .#job-submit-vote
+# wait-for-mempool
+#
+# echo "Submitting the pool 3 vote for the Dijkstra hard fork..."
+# DECISION=yes \
+#   ROLE=spo \
+#   VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
+#   nix run .#job-submit-vote
+# wait-for-mempool
+#
+# # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
+# # Start 1m before epoch 1
+# echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 3"
+# synth-slots $((16460 - 60))
+# run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+#
+# # After the epoch rollover into epoch 1, verify there are new future protocol parameters:
+# cardano-cli latest query gov-state | jq '.futurePParams'
+#
+# # Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
+# # Start 1m before epoch 2
+# echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 4"
+# synth-slots $((21502 - 60))
+# run-node-faketime "$(date -u -d "$START_TIME + 12 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
+#
+# # After the epoch rollover into epoch 2, verify the Dijkstra protocol parameters have enacted:
+# cardano-cli query protocol-parameters
+
+# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
+# Synthesize epochs until leios certification by the backbone pools is possible
+# and then confirm with faucet and centrifuge fill transactions.
+#
+# Check leios committee state with:
+#   cardano-cli dijkstra query leios-committee
+#
+# Allow forging 2 epochs before pushing to the live network so that leios EB
+# certification is not delayed.  Note that this would not be required for a dijkstra only respin.
+echo "Synthesize blocks until just before epoch 1"
+synth-slots $((21154 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 6 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")" | tee -a node-leios.log
+
+echo "Synthesize blocks until just before epoch 2"
+synth-slots $((21568 - 60))
+run-node-faketime "$(date -u -d "$START_TIME + 12 hours - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")" | tee -a node-leios.log
+
+# If switching to a bulk bls key load and direct timestamp start is required, do:
+# run-node-faketime "2026-10-18T12:12:02Z" | tee -a node-leios.log
+
+# Fill the faucet and centrifuge
 FAUCET_MNEMONIC=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.mnemonic)
 FAUCET_ADDR=$(just sops-decrypt-binary secrets/envs/"$ENV"/utxo-keys/faucet.addr)
-UTXO_NUM="5000"
+UTXO_NUM="10000"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
   '[range($n) | { ($addr): 10000200000 }]'  | jq '.' > rewards.json
 
@@ -404,9 +427,11 @@ for i in $(ls -tr1 tx-payments*.txsigned); do
   echo
 done
 
-rm ./*.txsigned
+watch cardano-cli query tx-mempool info
+cardano-cli query utxo --address "$FAUCET_ADDR" | jq length
+rm ./*.{txsigned,txbody}
 
-UTXO_NUM="100"
+UTXO_NUM="500"
 jq -nc --arg addr "$FAUCET_ADDR" --argjson n "$UTXO_NUM" \
   '[range($n) | { ($addr): 10000000 }]'  | jq '.' > delegation.json
 
@@ -425,15 +450,20 @@ for i in $(ls -tr1 tx-payments*.txsigned); do
   echo
 done
 
-rm ./*.txsigned
+watch cardano-cli query tx-mempool info
+cardano-cli query utxo --address "$FAUCET_ADDR" | jq length
+rm ./*.{txsigned,txbody}
 
 NOMENU=true scripts/setup-delegation-accounts.py \
   --testnet-magic "$TESTNET_MAGIC" \
   --signing-key-file "$PAYMENT_KEY.skey" \
   --wallet-mnemonic <(echo "$FAUCET_MNEMONIC") \
-  --num-accounts 100
+  --delegation-amount "$FAUCET_DELEGATION" \
+  --num-accounts 500
 
-rm ./*.txsigned
+watch cardano-cli query tx-mempool info
+cardano-cli dijkstra query utxo --whole-utxo | fx
+rm ./*.{txsigned,txbody}
 
 # Centrifuge
 #
@@ -448,86 +478,8 @@ NOMENU=true scripts/playground/fund-centrifuge.nu send-funds \
   --utxo-count 50000 \
   --utxo-lovelace 10000000000
 
-# In epoch 2, submit a Dijkstra hard fork
-echo "Submitting a Dijkstra hard fork action..."
-PROPOSAL_ARGS=("--protocol-major-version" "12" "--protocol-minor-version" "0")
-ACTION="create-hardfork" \
-  STAKE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-owner-stake" \
-  nix run .#job-submit-gov-action -- "${PROPOSAL_ARGS[@]}"
-wait-for-mempool
-
-export ACTION_TX_ID=$(
-  cardano-cli latest query gov-state --testnet-magic "$TESTNET_MAGIC" \
-    | jq -r '.proposals | map(select(.proposalProcedure.govAction.tag == "HardForkInitiation")) | .[0].actionId.txId'
-)
-
-for i in $(seq 1 "$NUM_CC_KEYS"); do
-  echo "Submitting the CC$i vote for the Dijkstra hard fork..."
-  DECISION=yes \
-    ROLE=cc \
-    VOTE_KEY="$CC_DIR/cc-$i-hot" \
-    nix run .#job-submit-vote
-  wait-for-mempool
-  echo
-done
-
-echo "Submitting the drep-0 vote for the Dijkstra hard fork..."
-  DECISION=yes \
-  ROLE=drep \
-  VOTE_KEY="$DREP_DIR/drep-0" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 1 vote for the Dijkstra hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}1/no-deploy/${ENV}1-bp-a-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 2 vote for the Dijkstra hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}2/no-deploy/${ENV}2-bp-b-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-echo "Submitting the pool 3 vote for the Dijkstra hard fork..."
-DECISION=yes \
-  ROLE=spo \
-  VOTE_KEY="$GENESIS_DIR/groups/${ENV}3/no-deploy/${ENV}3-bp-c-1-cold" \
-  nix run .#job-submit-vote
-wait-for-mempool
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 2
-echo "Synthesize blocks until just before the Dijkstra hard fork ratifies, epoch 3"
-synth-slots $((84803 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 3 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epcoh 3, verify the Dijkstra hard fork has ratified:
-cardano-cli latest query gov-state | jq '.futurePParams.contents.protocolVersion'
-
-# Example output:
-# {
-#   "major": 12,
-#   "minor": 0
-# }
-
-# Let a few blocks forge and then obtain slotsToEpochEnd from `cardano-cli latest query tip`
-# Start 1m before epoch 3
-echo "Synthesize blocks until just before the Dijkstra hard fork enacts, epoch 4"
-synth-slots $((86339 - 60))
-run-node-faketime "$(date -u -d "$START_TIME + 4 days - 1 minute" "+%Y-%m-%dT%H:%M:%SZ")"
-
-# After the epoch rollover into epoch 4, verify the Dijkstra hard fork has enacted:
-cardano-cli query protocol-parameters | jq .protocolVersion
-
-# Example output:
-# {
-#   "major": 12,
-#   "minor": 0
-# }
+watch cardano-cli query tx-mempool info
+cardano-cli query utxo --address "$CENTRIFUGE_ADDR" | jq length
 
 # Note the current point of the chain; take a backup if desired.
 # ❯ cardano-cli query tip
@@ -547,4 +499,26 @@ cardano-cli query protocol-parameters | jq .protocolVersion
 #
 # The datetime provided in the command is the timepoint your want to start
 # accelerated forging.
-faketime-fast-at "2026-06-01T23:55:00Z" "100"
+# faketime-fast-at "2026-06-01T23:55:00Z" "100"
+
+# Calculate slots to realtime + offset and synthesize:
+# Datetime of last logline converted to timestamp
+# [2026-10-18 12:25:29.0034Z]
+date -d '2026-10-18T18:43:19Z' +%s
+1792348999
+
+# Target realtime + offset to migrate state to remote machines
+date -d '2026-10-19T19:45:00Z' +%s
+1792439100
+
+# Slots to synth:
+echo $((1792439100 - 1792348999))
+90101
+
+synth-slots 90101
+
+# Test slightly before the target tip and verify the tip is there by seeing
+# `current tip is in the future` msgs.
+run-node-faketime "2026-10-19T19:43:00Z"
+
+# Migrate state to remote target(s) and continue the respin.
