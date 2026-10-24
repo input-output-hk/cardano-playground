@@ -525,62 +525,39 @@ in
         nixosModules.profile-metsuke-agent
       ];
 
-      # leiosCentrifuge.imports = [
-      #   # nodeNoRecycle
-      #   nixosModules.cardano-tx-centrifuge
-      #   nixosModules.profile-leios-tx-centrifuge
-      #   # w38a dropped LeiosDbConfig.Filepath from the node config, but
-      #   # tx-centrifuge comes from cardano-node-leios-bench, still pinned to
-      #   # IntersectMBO/cardano-node jl/leios-prototype-w36, whose parser
-      #   # requires that key under Backend=SQLite and rejects the whole file:
-      #   #   AesonException "Error in $.LeiosDbConfig: key \"Filepath\" not found"
-      #   # tx-centrifuge never reads LeiosDbConfig -- it parses the node config
-      #   # only to reach ncProtocolConfig -- so restoring the key is inert. This
-      #   # patches centrifuge's own copy of the config; the node reads a separate
-      #   # file and is untouched. Drop once the bench input tracks w38a.
-      #   ({
-      #     config,
-      #     pkgs,
-      #     ...
-      #   }: {
-      #     services.cardano-tx-centrifuge.settings.nodeConfig = let
-      #       nodeCfg = config.services.cardano-node.nodeConfig;
-      #     in
-      #       pkgs.writers.writeJSON "node-config.json" (
-      #         nodeCfg
-      #         // {
-      #           LeiosDbConfig =
-      #             (nodeCfg.LeiosDbConfig or {Backend = "SQLite";})
-      #             // {Filepath = "leios.db";};
-      #         }
-      #       );
-      #   })
-      #   {
-      #     services = {
-      #       cardano-tx-centrifuge.settings = {
-      #         rate_limit.params.tps = 100;
-      #         # observers.local-follower.params.confirmation_depth = 3;
-      #         workloads.synthetic-chain.targets = {
-      #           leios1-rel-a-1 = {
-      #             addr = "leios1-rel-a-1.play.dev.cardano.org";
-      #             port = 3001;
-      #           };
+      leiosCentrifuge.imports = [
+        # nodeNoRecycle
+        nixosModules.cardano-tx-centrifuge
+        nixosModules.profile-leios-tx-centrifuge
+        {
+          services.cardano-tx-centrifuge = {
+            # Even UTC hours on, odd UTC hours off.
+            startOnCalendar = "00/2:00:00";
+            stopOnCalendar = "01/2:00:00";
+            settings = {
+              rate_limit.params.tps = 100;
+              # observers.local-follower.params.confirmation_depth = 3;
+              workloads.synthetic-chain.targets = {
+                leios1-rel-a-1 = {
+                  addr = "leios1-rel-a-1.play.dev.cardano.org";
+                  port = 3001;
+                };
 
-      #           leios2-rel-b-1 = {
-      #             addr = "leios2-rel-b-1.play.dev.cardano.org";
-      #             port = 3001;
-      #           };
+                leios2-rel-b-1 = {
+                  addr = "leios2-rel-b-1.play.dev.cardano.org";
+                  port = 3001;
+                };
 
-      #           leios3-rel-c-1 = {
-      #             addr = "leios3-rel-c-1.play.dev.cardano.org";
-      #             port = 3001;
-      #           };
-      #         };
-      #       };
-      #     };
-      #   }
-      #   (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
-      # ];
+                leios3-rel-c-1 = {
+                  addr = "leios3-rel-c-1.play.dev.cardano.org";
+                  port = 3001;
+                };
+              };
+            };
+          };
+        }
+        (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
+      ];
 
       # Continuous load, additive to centrifuge. Add to any host
       # already running a node, one instance per host, and fund
@@ -1602,9 +1579,7 @@ in
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
-      # Disabled pending a centrifuge update.
-      # leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
-      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios];};
+      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
