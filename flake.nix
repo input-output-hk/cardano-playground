@@ -36,7 +36,7 @@
       flake = false;
     };
 
-    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-prototype-w38a";
+    cardano-node-leios-bench.url = "github:IntersectMBO/cardano-node/jl/leios-cent-w42";
     cardano-db-sync-leios.url = "github:IntersectMBO/cardano-db-sync/leios-w42";
     cardano-db-sync-dijkstra.url = "github:IntersectMBO/cardano-db-sync/jl/13.7.3.0-init-fund";
     metsuke.url = "github:input-output-hk/metsuke/jl/w42";
