@@ -489,20 +489,44 @@ in
         aws.instance.sshIngress = true;
         programs.auth-keys-hub.github.users = ["ch1bo"];
 
-        # Ban peers stuck in a tight reconnect loop. On 2026-10-05 a single
-        # InitiatorOnly peer handshook ~4600x/10m per relay, overflowing the
-        # accept queue and starving the local ping. Legit peers peaked at 27/10m.
-        services.fail2ban.jails.cnode-flood = {
-          filter = {
+        # IncludeConnection carries explicit Inbound/Outbound provenance;
+        # HandshakeSuccess and the local port do not distinguish direction.
+        services.cardano-node.extraNodeConfig.TraceOptions.
+          "Net.ConnectionManager.Remote.IncludeConnection".severity = "Debug";
+
+        services.fail2ban.jails = let
+          inboundFilter = {
             Init.journalmatch = "_SYSTEMD_UNIT=cardano-node.service";
-            Definition.failregex = ''"ns":"Net\.ConnectionManager\.Remote\.ConnectionHandler\.HandshakeSuccess".*"remoteAddress":\{"address":"<HOST>"'';
+            Definition.failregex = ''"ns"\s*:\s*"Net\.ConnectionManager\.Remote\.IncludeConnection"(?=.*"provenance"\s*:\s*"Inbound").*"remoteAddress"\s*:\s*\{"address"\s*:\s*"<HOST>"'';
           };
-          settings = {
-            backend = "systemd";
+          inboundSettings = {
+            # The node's UID logs land in user-*.journal, excluded by
+            # SYSTEM_ONLY. Keep the node-unit journalmatch while reading both.
+            backend = "systemd[journalflags=0]";
             port = nixos.config.cardano-parts.perNode.meta.cardanoNodePort;
-            findtime = 600;
-            maxretry = 300;
             bantime = 3600;
+          };
+        in {
+          # Sustained inbound reconnects: 300 accepts in ten minutes.
+          cnode-flood = {
+            filter = inboundFilter;
+            settings =
+              inboundSettings
+              // {
+                findtime = 600;
+                maxretry = 300;
+              };
+          };
+          # Short bursts: 30 accepts in 30 seconds. Separate jail names give
+          # independent firewall chains so expiry in one cannot undo the other.
+          cnode-burst = {
+            filter = inboundFilter;
+            settings =
+              inboundSettings
+              // {
+                findtime = 30;
+                maxretry = 30;
+              };
           };
         };
       };
