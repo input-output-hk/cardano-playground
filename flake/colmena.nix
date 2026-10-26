@@ -262,6 +262,24 @@ in
         ];
       };
 
+      # Opt selected hosts into the next Leios release while retaining shared settings.
+      # Priority 40 overrides the base node-leios package selections.
+      node-leios-ng = {
+        imports = [
+          node-leios
+          {
+            cardano-parts.perNode.pkgs = let
+              next = inputs.cardano-node-leios-ng.inputs.cardano-node-leios.packages.x86_64-linux;
+            in {
+              cardano-cli = lib.mkOverride 40 next.cardano-cli;
+              cardano-node = lib.mkOverride 40 next.cardano-node;
+              cardano-submit-api = lib.mkOverride 40 next.cardano-submit-api;
+              cardano-tracer = lib.mkOverride 40 next.cardano-tracer;
+            };
+          }
+        ];
+      };
+
       dbsync-dijkstra = {
         cardano-parts.perNode.pkgs.cardano-db-sync = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
       };
@@ -1608,8 +1626,8 @@ in
 
       leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
-      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-ng leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-ng leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
