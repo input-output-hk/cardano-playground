@@ -36,7 +36,7 @@ with lib; {
     infra.generic = {
       # See nixpkgsUpgrade in cardano-parts' flake/nixosModules/profile-common.nix
       # for the current upgrade workarounds and criteria for disabling this flag.
-      nixpkgsUpgrade = true;
+      nixpkgsUpgrade = false;
 
       organization = "ioe";
       tribe = "coretech";
