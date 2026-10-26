@@ -11,6 +11,7 @@
 
     # Extra pins
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w42";
+    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w43";
 
     # Same tree as cardano-node-leios plus a bound on the inbound governor's
     # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
