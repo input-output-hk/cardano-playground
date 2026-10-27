@@ -1624,7 +1624,7 @@ in
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
-      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
+      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios-ng leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
       leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-ng leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-ng leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
