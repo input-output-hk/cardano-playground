@@ -89,8 +89,7 @@ in
       group = name: {
         # Apply group wide common imports
         imports =
-          optionals (hasPrefix "buildkite" name) [buildkite]
-          ++ optionals (hasPrefix "dijkstra" name) [node-dijkstra amiZfs]
+          optionals (hasPrefix "dijkstra" name) [node-dijkstra amiZfs]
           ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots leiosSnapRetention]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
@@ -1271,53 +1270,6 @@ in
       #   ];
       # };
 
-      buildkite = {imports = [nixosModules.buildkite-agent-containers];};
-
-      bkCfg = queue: count: {
-        lib,
-        config,
-        ...
-      }: let
-        cfg = config.services.buildkite-containers;
-        hostIdSuffix = "1";
-        bkTags =
-          {
-            system = "x86_64-linux";
-          }
-          // {inherit queue;};
-      in {
-        # We don't need to purge 10 MB daily from the nix store by default.
-        nix.gc.automatic = lib.mkForce false;
-
-        services.auto-gc = {
-          # Apply some auto and hourly gc thresholds
-          nixAutoMaxFreedGB = 150;
-          nixAutoMinFreeGB = 90;
-          nixHourlyMaxFreedGB = 600;
-          nixHourlyMinFreeGB = 150;
-
-          # The auto and hourly gc should negate the need for a weekly full gc.
-          nixWeeklyGcFull = false;
-        };
-
-        services.buildkite-containers = {
-          inherit hostIdSuffix;
-
-          # There should be enough space on these machines to cache dir purges.
-          weeklyCachePurge = false;
-
-          containerList = let
-            mkContainer = n: prio: {
-              containerName = "ci${cfg.hostIdSuffix}-${toString n}";
-              guestIp = "10.254.1.1${toString n}";
-              inherit prio;
-              tags = bkTags;
-            };
-          in
-            map (n: mkContainer n (toString (10 - n))) (lib.range 1 count);
-        };
-      };
-
       amiZfs = {imports = [nixosModules.ami];};
       # legacyT = {services.cardano-node.useLegacyTracing = true;};
       noBPerf = {services.blockperf.enable = false;};
@@ -1667,18 +1619,6 @@ in
       misc1-wg-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel disableAlertCount];};
       misc1-wg-b-1 = {imports = [eu-north-1 t3-medium (ebs 80) (group "misc1") nixosModules.wg-r2-tunnel disableAlertCount];};
       misc1-matomo-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "misc1") nixosModules.matomo disableAlertCount];};
-      # ---------------------------------------------------------------------------------------------------------
-
-      # ---------------------------------------------------------------------------------------------------------
-      # Buildkite temporary machines
-      # Stopped machines until the `-eu` variant can run the jobs properly
-      buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-af" 1) disableAlertCount];};
-      buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-ap" 1) disableAlertCount];};
-      buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-sa" 1) disableAlertCount];};
-
-      # Temporary buildkite linux queue until migration completes -- re-use the QA tmp regional server in EU
-      # buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-eu" 1)];};
-      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "daedalus" 3)];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------

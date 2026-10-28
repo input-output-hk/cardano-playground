@@ -18,8 +18,7 @@ with lib; {
         us-west-2 = true;
         ap-northeast-1 = true;
 
-        # Temporary machine usage in these regions for buildkite one-off tests
-        # and wireguard CF tunnel tests.
+        # Temporary machine usage in these regions for wireguard CF tunnel tests.
         af-south-1 = true;
         ap-southeast-2 = true;
         eu-north-1 = true;
@@ -123,7 +122,6 @@ with lib; {
       // (mkGroup "leiosred10" "leios" "leiosred-node.${dns}" "leiosred10-node.${dns}" false false)
       // (mkGroup "mainnet1" "mainnet" null null false false)
       // (mkGroup "misc1" "misc" null null false false)
-      // (mkGroup "buildkite1" "buildkite" null null false false)
       // (mkGroup "sanchonet1" "sanchonet" "sanchonet-node.${dns}" "sanchonet1-node.${dns}" false false);
   };
 }
