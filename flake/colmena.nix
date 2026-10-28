@@ -1011,7 +1011,7 @@ in
         ];
       });
 
-      preprodFaucet = {
+      faucetNginxPolicy = {
         config,
         pkgs,
         name,
@@ -1021,9 +1021,7 @@ in
         opsLib = flake.config.flake.cardano-parts.lib.opsLib pkgs;
         policy = "cardano-faucet-nginx-policy.conf";
       in {
-        services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];
-
-        # keyName carries "faucet" so the preprod1 faucet sops rule encrypts it to
+        # keyName carries "faucet" so the group's faucet sops rule encrypts it to
         # this host. NixOS runs nginx as the nginx user, which must be able to read it.
         sops.secrets = opsLib.mkSopsSecret {
           inherit name;
@@ -1058,7 +1056,14 @@ in
           '';
         };
       };
-      previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
+      preprodFaucet = {
+        imports = [faucetNginxPolicy];
+        services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];
+      };
+      previewFaucet = {
+        imports = [faucetNginxPolicy];
+        services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];
+      };
       dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
       leiosFaucet = moduleWithSystem ({system}: _: {
         imports = [
