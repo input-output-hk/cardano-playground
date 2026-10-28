@@ -3305,16 +3305,16 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1792187242,
-        "narHash": "sha256-y2/POPsXBXiYFFVBMNAPTDTtxFl34/H/a8fZi3J1hVA=",
+        "lastModified": 1793007667,
+        "narHash": "sha256-CQVxMdPXhksekPsJGvsRYFiiO6DVsvm/sMgCSJdJ0lc=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "49f7c4a2c37577e187e562d196cf8876815918a5",
+        "rev": "63d75a54f76bbdde507fe28cdf0079530cb9ff2a",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "refs/tags/rc-2026w42",
+        "ref": "refs/tags/rc-2026w43",
         "repo": "ouroboros-leios",
         "type": "github"
       }
@@ -3426,16 +3426,16 @@
         "pre-commit-hooks": "pre-commit-hooks_8"
       },
       "locked": {
-        "lastModified": 1792451545,
-        "narHash": "sha256-zgkC8CfnzDGbE3KlmzJIQpKxWozabEpmaKUccH6Ffgo=",
+        "lastModified": 1793007667,
+        "narHash": "sha256-CQVxMdPXhksekPsJGvsRYFiiO6DVsvm/sMgCSJdJ0lc=",
         "owner": "input-output-hk",
         "repo": "ouroboros-leios",
-        "rev": "92720a460bf49829dab47cfa07454b5f008d7618",
+        "rev": "63d75a54f76bbdde507fe28cdf0079530cb9ff2a",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/leios-w42",
+        "ref": "refs/tags/rc-2026w43",
         "repo": "ouroboros-leios",
         "type": "github"
       }
@@ -3462,11 +3462,11 @@
         "utils": "utils_4"
       },
       "locked": {
-        "lastModified": 1792173117,
-        "narHash": "sha256-IJkmnmLgkJdDKIaloYVCKmodtHgEhjEmEt2Dzncoums=",
+        "lastModified": 1793007618,
+        "narHash": "sha256-JZK75lRf0vuLkx9pL9BY1GHoLmmZbypwmnhF85c+f1I=",
         "owner": "intersectmbo",
         "repo": "cardano-node",
-        "rev": "2d6a2a66415cc1d58c18ed3ee83ce719713fc97d",
+        "rev": "65dd69d103e41a749d428ffd05de153ef7c2ab45",
         "type": "github"
       },
       "original": {
@@ -3569,16 +3569,16 @@
         "utils": "utils_12"
       },
       "locked": {
-        "lastModified": 1792450759,
-        "narHash": "sha256-tF0YDUX7c3JcHGFyPhCJPm2KkaFcefiO/tCoth3yZbs=",
+        "lastModified": 1793007618,
+        "narHash": "sha256-JZK75lRf0vuLkx9pL9BY1GHoLmmZbypwmnhF85c+f1I=",
         "owner": "intersectmbo",
         "repo": "cardano-node",
-        "rev": "0f74e57e35ee67d47f5282134402a1adf5df035c",
+        "rev": "65dd69d103e41a749d428ffd05de153ef7c2ab45",
         "type": "github"
       },
       "original": {
         "owner": "intersectmbo",
-        "ref": "jl/leios-w42",
+        "ref": "leios-prototype",
         "repo": "cardano-node",
         "type": "github"
       }
