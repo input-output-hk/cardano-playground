@@ -2,18 +2,21 @@
 
 The Dijkstra testnet is an advanced environment for testing Dijkstra features.
 
-It is currently in Conway protocol version 11 for a short time, during which
-cardano-node `11.1.3` can be used to sync to it.  When cardano-node `11.2.0` is
-pre-released, the dijkstra network config will be updated and re-published with
-a hard fork to Dijkstra protocol version 12 to follow shortly after.
+It is currently in Conway protocol version 11 for a short time, but users
+should upgrade to cardano-node pre-release `11.2.0` using the configuration
+files below in preparation for hard-fork to Dijkstra.
+
+The latest version available is cardano-node release `11.2.0`.
 
 #### Configuration files
 
-Compatible with cardano-node release [11.1.3](https://github.com/IntersectMBO/cardano-node/releases/tag/11.1.3)
+Compatible with cardano-node release [11.2.0](https://github.com/IntersectMBO/cardano-node/releases/tag/11.2.0)
 
 ```
 NOTE:
-* Legacy tracing system is no longer available.
+* Node config now ships in the enveloped cardano-config format by default.
+  Legacy flat configurations remain supported and can be converted with
+  `cardano-node config migrate`.  See the 11.2.0 release notes for more detail.
 
 * Avoid connecting PeerSharing enabled nodes to a block producer using
 `InitiatorOnlyMode` as the block producer's IP will be leaked.

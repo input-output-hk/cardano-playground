@@ -1,16 +1,19 @@
 ## Advanced Configuration: Preview Testnet
 
-There is currently no pre-release version available for the preview environment.
+Users wanting to test a cardano-node pre-release version on the preview
+environment may obtain compatible configuration files below.
 
-The latest version available is cardano-node release `11.1.3`.
+The latest version available is cardano-node release `11.2.0`.
 
 #### Configuration files
 
-Compatible with cardano-node release [11.1.3](https://github.com/IntersectMBO/cardano-node/releases/tag/11.1.3)
+Compatible with cardano-node release [11.2.0](https://github.com/IntersectMBO/cardano-node/releases/tag/11.2.0)
 
 ```
 NOTE:
-* Legacy tracing system is no longer available.
+* Node config now ships in the enveloped cardano-config format by default.
+  Legacy flat configurations remain supported and can be converted with
+  `cardano-node config migrate`.  See the 11.2.0 release notes for more detail.
 
 * Avoid connecting PeerSharing enabled nodes to a block producer using
 `InitiatorOnlyMode` as the block producer's IP will be leaked.

@@ -5,13 +5,13 @@ the Ouroboros Leios protocol extension.  It is an advanced environment intended
 for testing and not for production use.
 
 The latest version available is the `ouroboros-leios` prototype build
-[`rc-2026w42`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w42).
+[`rc-2026w43`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w43).
 
 Network magic: `164`
 
 #### Configuration files
 
-Compatible with the `ouroboros-leios` prototype build [`rc-2026w42`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w42)
+Compatible with the `ouroboros-leios` prototype build [`rc-2026w43`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w43)
 
 ```
 NOTE:
