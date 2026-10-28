@@ -28104,16 +28104,16 @@
         "nixpkgs": "nixpkgs_54"
       },
       "locked": {
-        "lastModified": 1791994568,
-        "narHash": "sha256-rfaw3G7Acf/A3v3Rt/MPT/dpagblbpVORsMFv6LudZ4=",
+        "lastModified": 1793182747,
+        "narHash": "sha256-R+03vPhp6U7obgD7kZ8NPB8weZBt8vbRR/4dapte1qw=",
         "owner": "input-output-hk",
         "repo": "uketsuke",
-        "rev": "99b057d5d7b24dff8a5d4c7bc9ecaf9bd3802f72",
+        "rev": "8195c1338f62baec8d521b6fcd55c6c8d808ab55",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v1.0.0",
+        "ref": "v1.2.0",
         "repo": "uketsuke",
         "type": "github"
       }
