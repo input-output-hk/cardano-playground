@@ -226,45 +226,39 @@ in
           };
         };
 
-      # Same as node-leios, but the node packages come from the
-      # cardano-node-leios-patched input, which bounds the inbound governor's
-      # MuxFinished await. mkOverride 40 beats the mkForce that mkCustomNodePre
-      # applies. Carrying it as its own input keeps both builds in the lock at
-      # once, so a deploy picks the right binary per host with nothing to
-      # toggle. Drop this and the input together.
-      node-leios-patched = {
-        imports = [
-          node-leios
-          {
-            cardano-parts.perNode.pkgs = let
-              patched = inputs.cardano-node-leios-patched.inputs.cardano-node-leios.packages.x86_64-linux;
-            in {
-              cardano-cli = lib.mkOverride 40 patched.cardano-cli;
-              cardano-node = lib.mkOverride 40 patched.cardano-node;
-              cardano-submit-api = lib.mkOverride 40 patched.cardano-submit-api;
-              cardano-tracer = lib.mkOverride 40 patched.cardano-tracer;
-            };
-          }
-        ];
-      };
+      # Parked W42 inbound-governor diagnostic override now that hosts use W43.
+      # node-leios-patched = {
+      #   imports = [
+      #     node-leios
+      #     {
+      #       cardano-parts.perNode.pkgs = let
+      #         patched = inputs.cardano-node-leios-patched.inputs.cardano-node-leios.packages.x86_64-linux;
+      #       in {
+      #         cardano-cli = lib.mkOverride 40 patched.cardano-cli;
+      #         cardano-node = lib.mkOverride 40 patched.cardano-node;
+      #         cardano-submit-api = lib.mkOverride 40 patched.cardano-submit-api;
+      #         cardano-tracer = lib.mkOverride 40 patched.cardano-tracer;
+      #       };
+      #     }
+      #   ];
+      # };
 
-      # Opt selected hosts into the next Leios release while retaining shared settings.
-      # Priority 40 overrides the base node-leios package selections.
-      node-leios-ng = {
-        imports = [
-          node-leios
-          {
-            cardano-parts.perNode.pkgs = let
-              next = inputs.cardano-node-leios-ng.inputs.cardano-node-leios.packages.x86_64-linux;
-            in {
-              cardano-cli = lib.mkOverride 40 next.cardano-cli;
-              cardano-node = lib.mkOverride 40 next.cardano-node;
-              cardano-submit-api = lib.mkOverride 40 next.cardano-submit-api;
-              cardano-tracer = lib.mkOverride 40 next.cardano-tracer;
-            };
-          }
-        ];
-      };
+      # Parked next-release override; all hosts currently use node-leios.
+      # node-leios-ng = {
+      #   imports = [
+      #     node-leios
+      #     {
+      #       cardano-parts.perNode.pkgs = let
+      #         next = inputs.cardano-node-leios-ng.inputs.cardano-node-leios.packages.x86_64-linux;
+      #       in {
+      #         cardano-cli = lib.mkOverride 40 next.cardano-cli;
+      #         cardano-node = lib.mkOverride 40 next.cardano-node;
+      #         cardano-submit-api = lib.mkOverride 40 next.cardano-submit-api;
+      #         cardano-tracer = lib.mkOverride 40 next.cardano-tracer;
+      #       };
+      #     }
+      #   ];
+      # };
 
       dbsync-dijkstra = {
         cardano-parts.perNode.pkgs.cardano-db-sync = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
@@ -1604,23 +1598,23 @@ in
       # Remove `ccMon` until governance works in Dijkstra era
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
       leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosBp leiosTrustedPeer immOnEphemeral metsukeAgent];};
-      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
-      leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
-      leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
+      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+      leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
+      leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
-      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios-ng leiosBp leiosTrustedPeer];};
-      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-ng leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
-      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-ng leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
+      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
+      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
-      leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
-      leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
-      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+      leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
+      leios3-rel-c-2 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
 
       # Dedicated firehose injection machines
       # Sydney, Australia
