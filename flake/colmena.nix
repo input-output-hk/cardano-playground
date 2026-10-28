@@ -141,12 +141,6 @@ in
         ];
       };
 
-      # Opt a leios node OUT of the 2-day recycle below.
-      # nodeNoRecycle.systemd.services.cardano-node.serviceConfig = {
-      #   RuntimeMaxSec = mkForce "infinity";
-      #   RuntimeRandomizedExtraSec = mkForce 0;
-      # };
-
       node-leios = {config, ...}: let
         # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         base = mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios";
@@ -223,19 +217,11 @@ in
             #   fi
             # ''';
 
-            # Temporary mitigation for the under-investigation leios cardano-node
-            # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
-            # host RAM in <1 day): recycle the service every ~12 hours so memory
-            # can't grow unbounded. RuntimeMaxSec caps runtime;
-            # RuntimeRandomizedExtraSec adds 0..N jitter so the fleet doesn't
-            # restart in lockstep (thundering herd). Window 12-14h.
-            # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
-            # leaves room for a clean shutdown. Analysis/observer nodes opt out via
-            # nodeNoRecycle. Remove once the leak is fixed.  Adjust to less
-            # time while under heavy load.
+            # Disable periodic recycling to observe whether recent builds still
+            # leak memory until OOM. Keep normal restart-on-failure behavior.
             serviceConfig = {
-              RuntimeMaxSec = 5 * 3600;
-              RuntimeRandomizedExtraSec = 2 * 3600;
+              RuntimeMaxSec = "infinity";
+              RuntimeRandomizedExtraSec = 0;
             };
           };
         };
@@ -306,7 +292,6 @@ in
       # node-leios-ipe = {
       #   imports = [
       #     node-leios
-      #     nodeNoRecycle # profiling build: let the heap grow for leak analysis
       #     {
       #       cardano-parts.perNode.pkgs.cardano-node = lib.mkOverride 40 (
       #         (inputs.cardano-node-leios.inputs.cardano-node-leios.project.x86_64-linux.appendModule {
@@ -331,7 +316,6 @@ in
       # node-leios-ghc-debug = {
       #   imports = [
       #     node-leios
-      #     nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
       #     {
       #       cardano-parts.perNode.pkgs.cardano-node =
       #         lib.mkOverride 40
@@ -568,7 +552,6 @@ in
       ];
 
       leiosCentrifuge.imports = [
-        # nodeNoRecycle
         nixosModules.cardano-tx-centrifuge
         nixosModules.profile-leios-tx-centrifuge
         {
