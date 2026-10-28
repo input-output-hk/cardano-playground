@@ -34,9 +34,8 @@
         '';
       };
 
-      # From the same pin as the node rather than the bench pin, which trails
-      # it. The generator and the node it submits into should move together.
-      package = lib.mkPackageOption inputs'.cardano-node-leios.packages "tx-firehose-static" {};
+      # Custom W43 generators share the bench pin and support minimum tx sizing.
+      package = lib.mkPackageOption inputs'.cardano-node-leios-bench.packages "tx-firehose" {};
 
       socketPath = mkOption {
         type = types.path;
@@ -89,16 +88,17 @@
 
       fee = mkOption {
         type = types.ints.unsigned;
-        default = 200000;
+        default = 1000000;
         description = ''
           Fixed fee per transaction. tx-firehose does no fee calculation, so
-          this must clear the protocol minimum for the transaction shape that
-          outputsPerTx produces. At minFeeA 44 and minFeeB 155381 a one in one
-          out transaction needs 165413, and a coloured one 167393.
+          this must clear the protocol minimum for the transaction shape and
+          txSize padding. At minFeeA 44 and minFeeB 155381, 1024 bytes needs
+          200437 lovelace, just above the old 200000 default. One ADA covers
+          even 16384 bytes at those parameters (876277 lovelace).
 
           Fee is also the entire burn rate, since every transaction returns its
           inputs less this amount to the same address. At 100 tps this spends
-          20 ada per second of load.
+          100 ada per second of load.
         '';
       };
 
@@ -152,6 +152,19 @@
 
           Metadata costs roughly 45 bytes per transaction, so a coloured run is
           not byte comparable with an uncoloured baseline.
+        '';
+      };
+
+      txSize = mkOption {
+        type = types.nullOr types.ints.positive;
+        default = 1024;
+        description = ''
+          Minimum full signed transaction CBOR size in bytes, padded with
+          metadata. CBOR overhead may make the result slightly larger;
+          naturally larger transactions keep their size. Null disables padding.
+          The fixed fee must cover the resulting size, and the target must
+          fit the node's maxTxSize. Restart after protocol parameter changes
+          to refresh the generator's cached size and fee limits.
         '';
       };
 
@@ -262,6 +275,7 @@
               ++ optionals (cfg.stakingKeyFile != null) ["--staking-key-file" (credential "stake.skey")]
               ++ optionals (cfg.inputsPerTx != null) ["--inputs-per-tx" (toString cfg.inputsPerTx)]
               ++ optionals (cfg.color != null && cfg.color != "auto") ["--color" cfg.color]
+              ++ optionals (cfg.txSize != null) ["--tx-size" (toString cfg.txSize)]
               ++ cfg.extraArgs
             );
 
