@@ -475,6 +475,9 @@ in
             ];
             netClusterPort = 9100;
           };
+
+          # Red-team machines must not ban peers during adversarial testing.
+          fail2ban.enable = mkForce false;
         };
       };
 
