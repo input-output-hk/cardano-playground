@@ -259,10 +259,6 @@ in
       #   ];
       # };
 
-      dbsync-dijkstra = {
-        cardano-parts.perNode.pkgs.cardano-db-sync = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
-      };
-
       node-dijkstra = {
         services.cardano-node = {
           configFormat = "enveloped";
@@ -1542,7 +1538,7 @@ in
       dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
-      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-pre dbsync-dijkstra smash dijkstraSmash census];};
+      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-pre smash dijkstraSmash census];};
       dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet faucetReleasePin dijkstraFaucet];};
 
       dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
