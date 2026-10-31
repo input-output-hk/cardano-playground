@@ -72,6 +72,52 @@ def test-dry-run [] {
   assert (not ("result" | path exists))
   assert (calls | all {|c| $c.0 != "just" and "build" not-in $c and "sign" not-in $c and "submit" not-in $c })
 }
+def funding-fixture [] {
+  {
+    "largest#0": {
+      value: {lovelace: 1000000000000}
+    }
+    "medium#0": {
+      value: {lovelace: 100002000000}
+    }
+    "small#0": {
+      value: {lovelace: 100000000001}
+    }
+    "collateral#0": {
+      value: {lovelace: 10000000}
+    }
+    "tokens#0": {
+      value: {lovelace: 100001000000, asset: 1}
+    }
+    "datum#0": {
+      value: {lovelace: 100001000000}
+      datumhash: abc
+    }
+  } | to json | save utxos.json
+}
+def test-smallest-funding [] {
+  funding-fixture
+  run-tool | ignore
+  let builds = calls | where {|c| "build" in $c and "transaction" in $c }
+  assert equal ($builds | length) 1
+  assert equal (flag-value ($builds | first) "--tx-in") "small#0"
+  assert equal (flag-value ($builds | first) "--tx-in-collateral") "collateral#0"
+}
+def test-funding-retries [] {
+  funding-fixture
+  {"small#0": "The transaction does not balance in its use of assets. The net balance of the transaction is negative: -200000", "medium#0": "The transaction does balance in its use of ada, however the net balance does not meet the minimum UTxO threshold."} | to json | save build-errors.json
+  run-tool | ignore
+  let builds = calls | where {|c| "build" in $c and "transaction" in $c }
+  assert equal ($builds | each {|c| flag-value $c "--tx-in" }) ["small#0", "medium#0", "largest#0"]
+  assert equal (calls | where {|c| "sign" in $c } | length) 1
+}
+def test-funding-fatal [] {
+  funding-fixture
+  {"small#0": "guardrails validation failed"} | to json | save build-errors.json
+  run-tool --fails | ignore
+  assert equal (calls | where {|c| "build" in $c and "transaction" in $c } | length) 1
+  assert (calls | all {|c| "sign" not-in $c and "submit" not-in $c })
+}
 def test-default-build [] {
   run-tool [--max-endorser-block-txs-size, "2000000", --max-endorser-block-references-size, "308000"] | ignore
   let create = calls | where {|c| "create-protocol-parameters-update" in $c and "--out-file" in $c } | first
@@ -212,6 +258,18 @@ def run-case [test: record] {
 }
 def main []: nothing -> nothing {
   let tests = [
+    {
+      name: smallest-funding
+      run: { test-smallest-funding }
+    }
+    {
+      name: funding-retries
+      run: { test-funding-retries }
+    }
+    {
+      name: funding-fatal
+      run: { test-funding-fatal }
+    }
     {
       name: dry-run
       run: { test-dry-run }

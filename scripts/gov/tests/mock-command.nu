@@ -38,6 +38,10 @@ def --wrapped main [name: string, ...args: string] {
         open gov-state.json | do $emit $in
       }
       utxo => {
+        if ("utxos.json" | path exists) {
+          open utxos.json | do $emit $in
+          return
+        }
         do $emit {
           "a#0": {
             value: {
@@ -73,6 +77,13 @@ def --wrapped main [name: string, ...args: string] {
   } else if "--out-file" in $args {
     if ($env.MOCK_BUILD_FAIL? | default "") == "1" and "build" in $args {
       error make {msg: "guardrails validation failed"}
+    }
+    if "build" in $args and ("build-errors.json" | path exists) {
+      let reason = open build-errors.json | get -o (do $value "--tx-in")
+      if ($reason | is-not-empty) {
+        print --stderr $reason
+        exit 1
+      }
     }
     "{}" | save --force (do $value "--out-file")
   } else {

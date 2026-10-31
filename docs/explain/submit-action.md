@@ -67,7 +67,10 @@ scripts/gov/submit-action.nu --help
 - A new constitution's script hash is an action-specific
   `--constitution-script-hash` flag; it is not the guardrails witness for a
   parameter change.
-- The payer needs a plain ADA UTxO covering the deposit and fee. Guardrails also
+- Funding tries plain ADA UTxOs from smallest to largest, selecting the first
+  that the CLI can balance with the deposit, actual fee, and valid change. Only
+  insufficient-balance/change errors trigger another attempt; other errors stop
+  the workflow. The selected input and amount are printed. Guardrails also
   require a separate plain ADA collateral UTxO of at least 10 ADA. The script
   does not consolidate funds or automatically select token-bearing outputs.
 - `--anchor-url` accepts a URL or bare CID. IPFS uses `IPFS_GATEWAY_URI`, default

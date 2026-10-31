@@ -295,14 +295,12 @@ def --wrapped main [
       # Choose ADA-only inputs: avoid spending tokens, inline datums or reference scripts.
       let available = $utxos | transpose txin output | where {|u|
         ($u.output.value | columns) == [lovelace] and ($u.output.inlineDatum? | is-empty) and ($u.output.datumhash? | is-empty) and ($u.output.referenceScript? | is-empty)
-      } | sort-by { |u| $u.output.value.lovelace } --reverse
+      } | sort-by { |u| $u.output.value.lovelace }
       if ($available | is-empty) { fail "No plain ADA funding UTxO available." }
-      let funding = $available | first
-      if $funding.output.value.lovelace <= ($deposit | into int) { fail "Largest plain ADA UTxO cannot cover the deposit plus fees; consolidate/refill the payer." }
+      let candidates = $available | where {|u| $u.output.value.lovelace > ($deposit | into int) }
+      if ($candidates | is-empty) { fail "No single plain ADA UTxO can cover the deposit plus fees; consolidate/refill the payer." }
       mut script_args = []
       if ($guard | is-not-empty) {
-        let collateral = $available | skip 1 | where {|u| $u.output.value.lovelace >= 10000000 } | last 1
-        if ($collateral | is-empty) { fail "Guardrails need a separate plain ADA collateral UTxO of at least 10 ADA." }
         let script_copy = $output | path join 'guardrails.plutus'
         cp $guard $script_copy
         let redeemer = if ($guardrails_redeemer | is-empty) { [--proposal-redeemer-value, '{}'] } else {
@@ -310,14 +308,37 @@ def --wrapped main [
           cp $guardrails_redeemer $dest
           [--proposal-redeemer-file, $dest]
         }
-        $script_args = ([
-          --tx-in-collateral
-          ($collateral | first | get txin)
-          --proposal-script-file
-          $script_copy
-        ] | append $redeemer)
+        $script_args = ([--proposal-script-file, $script_copy] | append $redeemer)
       }
-      ^$cli $era transaction build ...$net --tx-in $funding.txin --change-address $address --witness-override 1 --proposal-file $action_file ...$script_args --out-file $body
+      # Let the CLI calculate actual fees and minimum change, rather than
+      # reserving an arbitrary fee buffer that might skip a sufficient input.
+      mut funding = null
+      for candidate in $candidates {
+        mut collateral_args = []
+        if ($guard | is-not-empty) {
+          let collateral = $available | where {|u| $u.txin != $candidate.txin and $u.output.value.lovelace >= 10000000 } | first 1
+          if ($collateral | is-empty) { continue }
+          $collateral_args = [
+            --tx-in-collateral
+            ($collateral | first | get txin)
+          ]
+        }
+        let built = ^$cli $era transaction build ...$net --tx-in $candidate.txin --change-address $address --witness-override 1 --proposal-file $action_file ...$script_args ...$collateral_args --out-file $body | complete
+        if $built.exit_code == 0 {
+          if ($built.stdout | is-not-empty) { print --no-newline $built.stdout }
+          if ($built.stderr | is-not-empty) { print --stderr --no-newline $built.stderr }
+          $funding = $candidate
+          break
+        }
+        let diagnostic = $built.stdout + $built.stderr
+        # Only funding/change-balance errors justify trying a larger input.
+        # Script failures and other errors must remain fatal.
+        if $diagnostic =~ '(?is)(The net balance of the transaction is negative|balance does not meet the minimum UTxO threshold)' {
+          print --stderr $"Funding UTxO ($candidate.txin) is too small after fees/change; trying the next larger input."
+        } else { fail $diagnostic }
+      }
+      if ($funding | is-empty) { fail "No single plain ADA UTxO can fund this action with fees, valid change and any required separate collateral; consolidate/refill the payer." }
+      print $"Funding UTxO: ($funding.txin) \(($funding.output.value.lovelace / 1000000) ADA\)"
       print "Transaction review:"
       ^$cli debug transaction view --tx-body-file $body
       let payment_skey = key-file $"($payer).skey" $tmp
