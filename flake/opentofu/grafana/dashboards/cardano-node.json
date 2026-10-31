@@ -30,8 +30,8 @@
         "iconColor": "light-orange",
         "name": "Restarts",
         "target": {
-          "expr": "cardano_node_metrics_node_start_time_int{environment=\"$environment\",instance=~\"$instance\"} * 1000",
-          "interval": "",
+          "expr": "max_over_time((count_values without () (\"restart_time\", cardano_node_metrics_node_start_time_int{environment=\"$environment\",instance=~\"$instance\"}) * ignoring (restart_time) group_left () cardano_node_metrics_node_start_time_int{environment=\"$environment\",instance=~\"$instance\"})[$__rate_interval:1m]) * 1000",
+          "interval": "1m",
           "refId": "Anno"
         },
         "textFormat": "{{instance}}",
@@ -49,12 +49,13 @@
         "name": "Version Changes",
         "tagKeys": "revision,version",
         "target": {
-          "expr": "cardano_node_metrics_cardano_build_info{environment=\"$environment\",instance=~\"$instance\"} unless (cardano_node_metrics_cardano_build_info{environment=\"$environment\",instance=~\"$instance\"} offset 4m)",
+          "expr": "max_over_time((min_over_time(timestamp(cardano_node_metrics_cardano_build_info{environment=\"$environment\",instance=~\"$instance\"})[4m:1m]) unless (cardano_node_metrics_cardano_build_info{environment=\"$environment\",instance=~\"$instance\"} offset 4m))[$__rate_interval:1m]) * 1000",
           "interval": "2m",
           "refId": "Anno"
         },
         "textFormat": "{{instance}}",
-        "titleFormat": "Version Change"
+        "titleFormat": "Version Change",
+        "useValueForTime": true
       }
     ]
   },
