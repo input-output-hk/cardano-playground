@@ -29,6 +29,92 @@
     };
   };
 
+  # An IAM user that adds objects under objectArn and reads them back. It
+  # never creates a bucket and never deletes an object, so neither appears.
+  #
+  # A user rather than a role on ec2Profile: metsuke-server and uketsuke take
+  # credentials from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in their
+  # environment and make no instance-metadata call, so neither can assume the
+  # instance role. Beads metsuke-4zo.125 in the metsuke repo is the change that
+  # would let these become roles.
+  #
+  # Read the key out with `just tofu bootstrap output -raw <name>_access_key_id`
+  # and `<name>_secret_access_key` into the sops EnvironmentFile the service's
+  # module is handed.
+  s3WriterUser = {
+    name,
+    bucketArn,
+    objectArn,
+    costCenter,
+  }: {
+    data.aws_iam_policy_document."iam_user_policy-${name}".statement = [
+      {
+        effect = "Allow";
+        actions = [
+          "s3:GetObject"
+          "s3:PutObject"
+        ];
+        resources = [objectArn];
+      }
+      {
+        # Bucket-wide on purpose. metsuke lists its archive. uketsuke never
+        # lists, but without this a HEAD on a missing key answers 403 instead
+        # of 404, and that check carries no s3:prefix a condition could match.
+        effect = "Allow";
+        actions = ["s3:ListBucket"];
+        resources = [bucketArn];
+      }
+      {
+        effect = "Allow";
+        actions = [
+          "kms:Decrypt"
+          "kms:DescribeKey"
+          "kms:GenerateDataKey"
+        ];
+
+        # Scoped the way aws_iam_policy.kms_user in the cluster workspace
+        # scopes it: any key the shared alias currently points at.
+        resources = ["arn:aws:kms:*:${infra.aws.orgId}:key/*"];
+        condition = {
+          test = "ForAnyValue:StringLike";
+          variable = "kms:ResourceAliases";
+          values = ["alias/kmsKey"];
+        };
+      }
+    ];
+
+    resource = {
+      # No spend of its own, tagged so the identity is attributed with the
+      # bucket it writes to.
+      aws_iam_user.${name} = {
+        provider = awsProviderFor infra.aws.region;
+        inherit name;
+        tags = {inherit costCenter;};
+      };
+
+      aws_iam_user_policy.${name} = {
+        provider = awsProviderFor infra.aws.region;
+        inherit name;
+        user = "\${aws_iam_user.${name}.name}";
+        policy = "\${data.aws_iam_policy_document.iam_user_policy-${name}.minified_json}";
+      };
+
+      aws_iam_access_key.${name} = {
+        provider = awsProviderFor infra.aws.region;
+        user = "\${aws_iam_user.${name}.name}";
+      };
+    };
+
+    output = {
+      "${name}_access_key_id".value = "\${aws_iam_access_key.${name}.id}";
+
+      "${name}_secret_access_key" = {
+        value = "\${aws_iam_access_key.${name}.secret}";
+        sensitive = true;
+      };
+    };
+  };
+
   unmanagedBuckets = ["rain_artifacts"];
 
   workspace = "bootstrap";
@@ -441,54 +527,10 @@ in {
         };
       }
 
-      # The metsuke submission archive and the identity that writes to it.
-      #
-      # An IAM user rather than a role on ec2Profile: metsuke-server takes its
-      # credentials from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in its
-      # process environment and makes no instance-metadata call, so it cannot
-      # assume the instance role. Beads metsuke-4zo.125 in the metsuke repo is
-      # the change that would let this become a role.
+      # The metsuke submission archive.
       {
-        data.aws_iam_policy_document = {
-          s3_bucket_policy-metsuke.statement =
-            bucketPolicyStatementSecureTransport "\${aws_s3_bucket.metsuke.arn}";
-
-          # The server only ever adds an object and reads it back. It never
-          # creates a bucket and never deletes an object, so neither appears
-          # here.
-          iam_user_policy-metsuke.statement = [
-            {
-              effect = "Allow";
-              actions = [
-                "s3:GetObject"
-                "s3:PutObject"
-              ];
-              resources = ["\${aws_s3_bucket.metsuke.arn}/*"];
-            }
-            {
-              effect = "Allow";
-              actions = ["s3:ListBucket"];
-              resources = ["\${aws_s3_bucket.metsuke.arn}"];
-            }
-            {
-              effect = "Allow";
-              actions = [
-                "kms:Decrypt"
-                "kms:DescribeKey"
-                "kms:GenerateDataKey"
-              ];
-
-              # Scoped the way aws_iam_policy.kms_user in the cluster workspace
-              # scopes it: any key the shared alias currently points at.
-              resources = ["arn:aws:kms:*:${infra.aws.orgId}:key/*"];
-              condition = {
-                test = "ForAnyValue:StringLike";
-                variable = "kms:ResourceAliases";
-                values = ["alias/kmsKey"];
-              };
-            }
-          ];
-        };
+        data.aws_iam_policy_document.s3_bucket_policy-metsuke.statement =
+          bucketPolicyStatementSecureTransport "\${aws_s3_bucket.metsuke.arn}";
 
         resource = {
           # No force_destroy: the archive is the only copy of a submission.
@@ -542,39 +584,25 @@ in {
             ignore_public_acls = true;
             restrict_public_buckets = true;
           };
-
-          # No spend of its own, tagged so the identity is attributed with the
-          # bucket it writes to.
-          aws_iam_user.metsuke = {
-            provider = awsProviderFor infra.aws.region;
-            name = "metsuke";
-            tags.costCenter = "\${var.tag_costCenterLeios}";
-          };
-
-          aws_iam_user_policy.metsuke = {
-            provider = awsProviderFor infra.aws.region;
-            name = "metsuke";
-            user = "\${aws_iam_user.metsuke.name}";
-            policy = "\${data.aws_iam_policy_document.iam_user_policy-metsuke.minified_json}";
-          };
-
-          # Read out with `just tofu bootstrap output -raw <name>` and put both
-          # into the sops EnvironmentFile the metsuke-server module is handed.
-          aws_iam_access_key.metsuke = {
-            provider = awsProviderFor infra.aws.region;
-            user = "\${aws_iam_user.metsuke.name}";
-          };
-        };
-
-        output = {
-          metsuke_access_key_id.value = "\${aws_iam_access_key.metsuke.id}";
-
-          metsuke_secret_access_key = {
-            value = "\${aws_iam_access_key.metsuke.secret}";
-            sensitive = true;
-          };
         };
       }
+
+      (s3WriterUser {
+        name = "metsuke";
+        bucketArn = "\${aws_s3_bucket.metsuke.arn}";
+        objectArn = "\${aws_s3_bucket.metsuke.arn}/*";
+        costCenter = "\${var.tag_costCenterLeios}";
+      })
+
+      # The uketsuke report inbox archives into the metsuke bucket under its own
+      # uketsuke/ prefix, with an identity of its own so it cannot write
+      # metsuke's v1/ tree.
+      (s3WriterUser {
+        name = "uketsuke";
+        bucketArn = "\${aws_s3_bucket.metsuke.arn}";
+        objectArn = "\${aws_s3_bucket.metsuke.arn}/uketsuke/*";
+        costCenter = "\${var.tag_costCenterLeios}";
+      })
     ];
   };
 }

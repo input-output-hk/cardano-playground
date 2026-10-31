@@ -37,6 +37,9 @@ keys:
   - &leios2-bp-b-1 age1lt8a78g53sgpspgtnce3w5v2fswdhhr7cnkl3eg4gkepd7gdd9lqcpy95c
   - &leios2-rel-b-2 age16f699d46dehey3zpw0704uncck5r92vydz8js6gp58naddcqj94qk73fzr
   - &leios3-bp-c-1 age1pn8tx5ehm7hejphk6ewlvlmpmg4ujq4gc92mtudhsqpapj3q4apscyjwcy
+  - &leiosfire5-edge-e-1 age12qe0nexq23v79mfe52k72zec9w6ee8vfs3st2p490cu8rqeapadsdu3aw2
+  - &leiosfire8-edge-h-1 age1c9qta70z7vkv94mvy9csljpd79czn0v8gr3x00lgdq8ne64cgduq72rj5k
+  - &leiosfire9-edge-i-1 age17ef6stjlen38xeru9fkp2zt3ehcasf5z48627chwq3fa7j9rfpfqs5jqh5
   - &leiosred1-bp-a-1 age1x9rklez6g95grqhgm5rlfyu3nt2gmtptnmh3c0uu9nw46r22mchqhj54fk
   - &leiosred2-bp-b-1 age1ew7xmm6ypqtn6c8jl9chrctk3ghgju2zfgnvy8kjm46eyzs5vvusr4emcu
   - &leiosred3-bp-c-1 age100j4usae4uwn89vh6x336d94vw8n2x7qcqmpjgdra20f7kzztyeqwa66t9
@@ -53,12 +56,6 @@ keys:
 
   # Mainnet, non-prod testing machines
   - &mainnet1-rel-a-1 age16m0sd0pyme79ds8jd380ctuc23p570djl0rnrp6xt28tce5ltvyql4hdgn
-
-  # Buildkite
-  - &buildkite1-ap-southeast-2-1 age1q4nfkghxujn8xfxrwaazvjjunfjnrnt4wfzx57zas6cvkde3m4tscfutt9
-  - &buildkite1-eu-central-1-1 age1lsn2rs6gd0yeyq7dr25xmmxa3mh5fefgy5rttlfqzd66n37qgfmsyx3lsu
-  - &buildkite1-sa-east-1-1 age1f8ljwl7pauzfqpqjnxvz9cp0ln4ptldvjlyp3p6882klcrtswp5s30qkz7
-  - &buildkite-af-south-1-1 age1mznysjmhug030jh7sgvp4tueurzwzvvl07cpnx9lp5n25xvmdfgspyjzpv
 
 creation_rules:
   # -------------------------------------------------------
@@ -209,6 +206,24 @@ creation_rules:
       - *sre
       - *leios3-bp-c-1
 
+  - path_regex: secrets/groups/leiosfire5/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosfire5-edge-e-1
+
+  - path_regex: secrets/groups/leiosfire8/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosfire8-edge-h-1
+
+  - path_regex: secrets/groups/leiosfire9/deploy/.*$
+    key_groups:
+    - age:
+      - *sre
+      - *leiosfire9-edge-i-1
+
   - path_regex: secrets/groups/leiosred1/deploy/leiosred1-bp-a-1.*$
     key_groups:
     - age:
@@ -303,16 +318,6 @@ creation_rules:
     - age:
       - *sre
       - *misc1-wg-b-1
-
-  # Temporary buildkite testing
-  - path_regex: secrets/buildkite/.*$
-    key_groups:
-    - age:
-      - *sre
-      - *buildkite1-ap-southeast-2-1
-      - *buildkite1-eu-central-1-1
-      - *buildkite1-sa-east-1-1
-      - *buildkite-af-south-1-1
 
   # Nix config file that sets access-tokens
   - path_regex: secrets/nix-access-tokens.conf$
