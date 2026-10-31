@@ -151,6 +151,22 @@ def --wrapped main [
   if $dry_run and $submit { fail "Choose --dry-run or --submit, not both." }
   let command = $actions | get -o $action | default $action
   if $command not-in ($actions | values) { fail $"Unsupported action: ($action)" }
+  let uses_guardrails = $command in [create-protocol-parameters-update, create-treasury-withdrawal]
+  if not $uses_guardrails {
+    let unused = [
+      {
+        flag: '--guardrails-file'
+        value: $guardrails_file
+      }
+      {
+        flag: '--guardrails-redeemer'
+        value: $guardrails_redeemer
+      }
+    ] | where {|option| $option.value | is-not-empty } | get flag
+    if ($unused | is-not-empty) {
+      print --stderr $"WARNING: ($unused | str join ', ') ignored: guardrails are not applicable to ($action)."
+    }
+  }
   # These are managed here, so an accidental duplicate cannot override review.
   let reserved = [
     --out-file
@@ -218,7 +234,7 @@ def --wrapped main [
     }
     mut guard = ''
     mut policy = ''
-    if $command in [create-protocol-parameters-update, create-treasury-withdrawal] {
+    if $uses_guardrails {
       let constitution = ^$cli $era query constitution ...$net | from json
       if 'script' not-in ($constitution | columns) { fail "Unrecognized constitution JSON: expected the script field." }
       $policy = ($constitution.script | default '')
@@ -242,7 +258,8 @@ def --wrapped main [
       }
     }
     print $"\n(ansi green_bold)($node_env): ($command)(ansi reset)"
-    print {era: $era, epoch: $tip.epoch, deposit_ADA: (($deposit | into int) / 1000000), payment_key: $payer, deposit_return_key: $stake, anchor: $url, anchor_hash: $hash, guardrails: $guard, previous: ($parent | to nuon), changes: ($action_args | to nuon)}
+    let guard_summary = if $uses_guardrails { $guard } else { $"not applicable to ($action)" }
+    print {era: $era, epoch: $tip.epoch, deposit_ADA: (($deposit | into int) / 1000000), payment_key: $payer, deposit_return_key: $stake, anchor: $url, anchor_hash: $hash, guardrails: $guard_summary, previous: ($parent | to nuon), changes: ($action_args | to nuon)}
     if $command == 'create-protocol-parameters-update' {
       let eb = $pparams | select -o maxEndorserBlockTxsSize maxEndorserBlockReferencesSize
       if ($eb | is-not-empty) {
