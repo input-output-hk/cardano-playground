@@ -1515,7 +1515,46 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash census];};
+      preview1-dbsync-a-1 = nixos: {
+        imports = [
+          eu-central-1
+          r6a-large
+          (ebs 250)
+          (group "preview1")
+          dbsync
+          smash
+          previewSmash
+          census
+          # ccfg # Uncomment for test 2 below.
+        ];
+
+        # Test 1: db-sync 13.8 with the historical logging config and legacy node config.
+        # Restore the keys stripped by cardano-parts and omit its new TraceOptions,
+        # so the deployment tests db-sync's own compatibility/default behavior.
+        # Remove these two overrides before enabling test 2 below.
+        services.cardano-db-sync = {
+          explorerConfig =
+            builtins.intersectAttrs {
+              defaultBackends = null;
+              defaultScribes = null;
+              minSeverity = null;
+              options = null;
+              rotation = null;
+              setupBackends = null;
+              setupScribes = null;
+            }
+            nixos.config.services.cardano-db-sync.environment.dbSyncConfig;
+          logConfig = lib.mkForce {};
+        };
+
+        # Test 2: switch to dbsync-pre, enable ccfg and pass an enveloped node config to db-sync too.
+        # db-sync reads its own node config; ccfg only wraps the node service's file.
+        # services.cardano-db-sync.explorerConfig.NodeConfigFile = let
+        #   nodeCfg = nixos.config.services.cardano-node;
+        # in
+        #   builtins.toFile "dbsync-preview-node-config-enveloped.json"
+        #   (builtins.toJSON (nodeCfg.cardanoNodePackages.cardanoLib.mkEnvelope nodeCfg.nodeConfig));
+      };
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet faucetReleasePin previewFaucet];};
 
       # Lsm and in-mem pre-release backend testing
