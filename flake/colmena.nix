@@ -140,6 +140,8 @@ in
         ];
       };
 
+      node-pre-mem-opt = mkCustomNodePre "cardano-node-11-2-0-memOpt";
+
       node-leios = {config, ...}: let
         # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
         base = mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios";
@@ -1610,10 +1612,9 @@ in
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnetSmash dbsyncPub (openFwTcp 5432) traceMp census {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg smash mainnet2Smash traceMp {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable ccMon logGc traceMp];};
-
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001) traceMp];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre ccfg lsm ram8gib (openFwTcp 3001) traceMp];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre ccfg logGc (openFwTcp 3001) traceMp];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre-mem-opt ccfg logGc (openFwTcp 3001) traceMp];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------

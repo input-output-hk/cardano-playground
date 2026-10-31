@@ -10,6 +10,7 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
+    cardano-node-11-2-0-memOpt.url = "github:IntersectMBO/cardano-node/jl/11.2.0-memOpt";
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w43";
     cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w43";
 
