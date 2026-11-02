@@ -4040,11 +4040,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1793391210,
-        "narHash": "sha256-Oav0idlPq11J59EbcGwUxRQYRIVApoXg4rr9EfajvX8=",
+        "lastModified": 1793582305,
+        "narHash": "sha256-SZihu2kb57QSuepmiOG0yTMeVl9mI1EeJ1jgA/wiNSo=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "2adb27dcf3cb825be9e538b1a77a541f4ff59866",
+        "rev": "57074dbb64762a32dbe77b939131f739c77281c2",
         "type": "github"
       },
       "original": {
