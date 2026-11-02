@@ -34,7 +34,7 @@
         '';
       };
 
-      # Custom W43 generators share the bench pin and support minimum tx sizing.
+      # Custom generators share the bench pin and support minimum tx sizing.
       package = lib.mkPackageOption inputs'.cardano-node-leios-bench.packages "tx-firehose" {};
 
       socketPath = mkOption {
@@ -82,7 +82,58 @@
           Submission rate ceiling. tx-firehose holds one transaction in flight
           and sleeps 1/tps after each reply, so the achieved rate is bounded by
           the round trip as well, and raising this past that bound changes
-          nothing. Add instances on separate keys to go faster.
+          nothing. Add instances on separate keys to go faster. A nonempty
+          tpsSchedule overrides this fixed rate.
+        '';
+      };
+
+      tpsSchedule = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            seconds = mkOption {
+              type = types.addCheck types.number (value: value >= 0);
+              description = "Seconds since the schedule started; must strictly increase between points.";
+            };
+            tps = mkOption {
+              type = types.addCheck types.number (value: value > 0);
+              description = "Positive submission rate ceiling at this point.";
+            };
+          };
+        });
+        default = [];
+        example = [
+          {
+            seconds = 0;
+            tps = 20;
+          }
+          {
+            seconds = 3600;
+            tps = 250;
+          }
+        ];
+        description = ''
+          Optional rate schedule, requiring the W44 or newer tx-firehose.
+          Rates interpolate linearly between points; the first rate is held
+          before the first point and the last rate after the final point.
+          Empty keeps the fixed tps rate and omits --tps-schedule.
+
+          This schedule does not repeat and rates must be positive. Keep the
+          start/stop timers for the one-hour on/off duty cycle. Unless
+          scheduleStart is set, each process start (including a restart)
+          starts a fresh rate schedule.
+        '';
+      };
+
+      scheduleStart = mkOption {
+        type = types.nullOr types.ints.unsigned;
+        default = null;
+        example = 1793577600;
+        description = ''
+          Optional schedule origin as Unix time in seconds, passed as
+          --schedule-start. Requires a nonempty tpsSchedule. A fixed origin
+          lets restarts and later load windows resume the same schedule;
+          it does not reset at each timer window or delay service startup.
+          Null starts the schedule at each process startup.
         '';
       };
 
@@ -213,6 +264,19 @@
     };
 
     config = mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = lib.all (value: value) (lib.imap0
+            (index: point: index == 0 || (builtins.elemAt cfg.tpsSchedule (index - 1)).seconds < point.seconds)
+            cfg.tpsSchedule);
+          message = "services.cardano-tx-firehose.tpsSchedule seconds must strictly increase.";
+        }
+        {
+          assertion = cfg.scheduleStart == null || cfg.tpsSchedule != [];
+          message = "services.cardano-tx-firehose.scheduleStart requires a nonempty tpsSchedule.";
+        }
+      ];
+
       services.cardano-node.shareNodeSocket = mkDefault true;
 
       systemd.timers = mkIf (!cfg.continuous) {
@@ -272,6 +336,11 @@
                 "--max-consecutive-errors"
                 (toString cfg.maxConsecutiveErrors)
               ]
+              ++ optionals (cfg.tpsSchedule != []) [
+                "--tps-schedule"
+                (lib.concatMapStringsSep "," (point: "${toString point.seconds}:${toString point.tps}") cfg.tpsSchedule)
+              ]
+              ++ optionals (cfg.scheduleStart != null) ["--schedule-start" (toString cfg.scheduleStart)]
               ++ optionals (cfg.stakingKeyFile != null) ["--staking-key-file" (credential "stake.skey")]
               ++ optionals (cfg.inputsPerTx != null) ["--inputs-per-tx" (toString cfg.inputsPerTx)]
               ++ optionals (cfg.color != null && cfg.color != "auto") ["--color" cfg.color]
