@@ -4,14 +4,14 @@ The Musashi Testnet (MusashiNet) is a prototype environment for evaluating
 the Ouroboros Leios protocol extension.  It is an advanced environment intended
 for testing and not for production use.
 
-The latest version available is the `ouroboros-leios` prototype build
-[`rc-2026w43`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w43).
+The latest version available is the `ouroboros-leios` release candidate build
+[`rc-2026w44`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w44).
 
 Network magic: `164`
 
 #### Configuration files
 
-Compatible with the `ouroboros-leios` prototype build [`rc-2026w43`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w43)
+Compatible with the `ouroboros-leios` release candidate build [`rc-2026w44`](https://github.com/input-output-hk/ouroboros-leios/releases/tag/rc-2026w44)
 
 ```
 NOTE:
