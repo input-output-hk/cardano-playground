@@ -878,6 +878,36 @@ in
         ];
       };
 
+      dbsync-dijkstra = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          (nixos: {
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+
+            cardano-parts.perNode = {
+              pkgs = {
+                cardano-db-sync = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
+                cardano-db-tool = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-tool:exe:cardano-db-tool";
+                cardano-db-sync-pkgs = mkForce {
+                  inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+                  cardanoDbSyncHaskellPackages.cardano-db-tool.components.exes.cardano-db-tool = nixos.config.cardano-parts.perNode.pkgs.cardano-db-tool;
+                  # This pin remains the same and doesn't need to be updated
+                  schema = "${inputs.cardano-db-sync-dijkstra}/schema";
+                };
+              };
+            };
+          })
+          (eRel ["dijkstra1-rel-a-1" "dijkstra2-rel-b-1" "dijkstra3-rel-c-1"])
+          pre
+        ];
+      };
       # ogmios = {
       #   imports = [
       #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-ogmios-service
@@ -1572,7 +1602,7 @@ in
       dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
-      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-pre smash dijkstraSmash census];};
+      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-dijkstra smash dijkstraSmash census];};
       dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet dijkstraFaucet];};
 
       dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
