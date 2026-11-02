@@ -167,27 +167,6 @@ in
             volatileDatabasePath = "/ephemeral/cardano-node/${config.services.cardano-node.dbPrefix 0}";
           };
 
-          services.cardano-node.extraNodeConfig = {
-            ConsensusMode = "PraosMode";
-
-            # Additional cfg to debug network issues
-            TraceOptions = {
-              "BlockFetch.Client".severity = "Info";
-              "BlockFetch.Decision" = {
-                severity = "Debug";
-                maxFrequency = 2.0;
-              };
-              "ChainSync.Client".severity = "Debug";
-              "ChainSync.ServerHeader" = {
-                severity = "Info";
-                maxFrequency = 2.0;
-              };
-              "ChainDB.AddBlockEvent".severity = "Debug";
-              "ChainDB.AddBlockEvent.PoppedBlockFromQueue".maxFrequency = 2.0;
-              "ChainDB.AddBlockEvent.AddBlockValidation".severity = "Info";
-            };
-          };
-
           systemd.services.cardano-node = {
             # Dropped for w38a: the db is now split into leios.imm.db and
             # leios.vol.db under the node's own db paths, so the single Filepath
@@ -1222,62 +1201,26 @@ in
             services = {
               cardano-node.extraNodeConfig = {
                 TraceOptions = {
-                  "" = {
-                    backends = [
-                      "EKGBackend"
-                      "Forwarder"
-                      "PrometheusSimple suffix 127.0.0.1 12798"
-                      "Stdout MachineFormat"
-                    ];
-                    detail = "DNormal";
-                    severity = "Notice";
-                  };
-
-                  "LeiosNotify.Remote" = {
+                  # Preserve ChainSel call timings and allocations for the call-trace dashboard.
+                  "ChainDB.AddBlockEvent.TraceAddBlockCall" = {
                     severity = "Debug";
                     maxFrequency = 0;
                   };
 
-                  "LeiosFetch.Remote" = {
-                    severity = "Debug";
-                    maxFrequency = 0;
-                  };
-
-                  "Consensus.LeiosKernel" = {
-                    severity = "Debug";
-                    maxFrequency = 0;
-                  };
-
-                  "Consensus.LeiosPeer" = {
-                    severity = "Debug";
-                    maxFrequency = 0;
-                  };
-
-                  # DIAGNOSTIC for the inbound governor wedge, remove once the
-                  # stuck responder is identified.
-                  #
-                  # The governor blocks in `atomically (Mux.stopped csMux)`,
-                  # which cannot return until every mini-protocol thread on
-                  # that mux has finished. Naming the one that never returns
-                  # needs per-protocol start events.
-                  #
-                  # Bearer and Channel are per message, not per protocol, and
-                  # are 99% of the volume. Measured on leios2-rel-b-3
-                  # 2026-09-26, Net.Mux.Remote at Debug alone emitted 28271
-                  # lines a minute, of which 28024 were those two and 289 were
-                  # the start and stop events wanted here. Holding them at Info
-                  # leaves the diagnostic intact.
-                  "Net.Mux.Remote" = {
-                    severity = "Debug";
-                  };
-
-                  "Net.Mux.Remote.Bearer" = {
-                    severity = "Info";
-                  };
-
-                  "Net.Mux.Remote.Channel" = {
-                    severity = "Info";
-                  };
+                  # Extra debug logging when needed:
+                  # "BlockFetch.Client".severity = "Info";
+                  # "BlockFetch.Decision" = {
+                  #   severity = "Debug";
+                  #   maxFrequency = 2.0;
+                  # };
+                  # "ChainSync.Client".severity = "Debug";
+                  # "ChainSync.ServerHeader" = {
+                  #   severity = "Info";
+                  #   maxFrequency = 2.0;
+                  # };
+                  # "ChainDB.AddBlockEvent".severity = "Debug";
+                  # "ChainDB.AddBlockEvent.PoppedBlockFromQueue".maxFrequency = 2.0;
+                  # "ChainDB.AddBlockEvent.AddBlockValidation".severity = "Info";
                 };
               };
             };
