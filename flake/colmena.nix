@@ -1041,15 +1041,27 @@ in
           '';
         };
       };
+
       preprodFaucet = {
         imports = [faucetNginxPolicy];
         services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];
       };
+
       previewFaucet = {
         imports = [faucetNginxPolicy];
         services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];
       };
-      dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
+
+      dijkstraFaucet = moduleWithSystem ({system}: _: {
+        imports = [
+          {
+            cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: mkForce config.cardano-parts.pkgs.cardano-faucet-ng);
+            services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];
+          }
+          (eRel ["dijkstra1-rel-a-1" "dijkstra2-rel-b-1" "dijkstra3-rel-c-1"])
+        ];
+      });
+
       leiosFaucet = moduleWithSystem ({system}: _: {
         imports = [
           {
@@ -1561,7 +1573,7 @@ in
       dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-pre smash dijkstraSmash census];};
-      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet faucetReleasePin dijkstraFaucet];};
+      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet dijkstraFaucet];};
 
       dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
       dijkstra2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel];};
