@@ -11,14 +11,14 @@
 
     # Extra pins
     cardano-node-11-2-0-memOpt.url = "github:IntersectMBO/cardano-node/jl/11.2.0-memOpt";
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w43";
-    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w43";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
+    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
 
     # Same tree as cardano-node-leios plus a bound on the inbound governor's
     # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
     # the node-leios-patched import in colmena.nix, so this input and that
     # import come out together when the bound is no longer wanted.
-    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w43";
+    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
 
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/prototype-debug";
     leios-adversarial-tools = {
