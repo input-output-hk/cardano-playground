@@ -8,6 +8,7 @@ title = "The Cardano Operations Book"
 build-dir = "../static/book-staging.play.dev.cardano.org"
 
 [output.html]
+sidebar-header-nav = false
 edit-url-template = "https://github.com/input-output-hk/cardano-playground/edit/main/docs/{path}"
 git-repository-icon = "fab-github"
 git-repository-url = "https://github.com/input-output-hk/cardano-playground"
