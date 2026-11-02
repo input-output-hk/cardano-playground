@@ -20,6 +20,7 @@
     # import come out together when the bound is no longer wanted.
     cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
 
+    # IPE/eventlog and ghc-debug builds for selected diagnostic relays only.
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/leios-w44-debug";
     leios-adversarial-tools = {
       url = "github:input-output-hk/leios-adversarial-tools";

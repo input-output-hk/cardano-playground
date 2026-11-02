@@ -266,7 +266,7 @@ in
       };
 
       # Opt in per host to capture both IPE eventlogs and ghc-debug snapshots.
-      # No host imports this profile by default.
+      # Only the selected diagnostic relays import this profile.
       node-leios-ghc-debug = {
         imports = [node-leios nixosModules.profile-leios-heap-debug];
       };
@@ -1495,8 +1495,8 @@ in
       # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
       leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosBp leiosTrustedPeer immOnEphemeral metsukeAgent];};
       leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
-      leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
-      leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
+      leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
+      leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
@@ -1509,8 +1509,8 @@ in
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
-      leios3-rel-c-2 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
-      leios3-rel-c-3 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+      leios3-rel-c-2 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
 
       # Dedicated firehose injection machines
       # Sydney, Australia
