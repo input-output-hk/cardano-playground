@@ -265,81 +265,11 @@ in
         };
       };
 
-      # Same as node-leios, but the cardano-node binary is rebuilt with
-      # info-table-provenance (IPE) flags for low-overhead `+RTS -hi` profiling.
-      # node-leios-ipe = {
-      #   imports = [
-      #     node-leios
-      #     {
-      #       cardano-parts.perNode.pkgs.cardano-node = lib.mkOverride 40 (
-      #         (inputs.cardano-node-leios.inputs.cardano-node-leios.project.x86_64-linux.appendModule {
-      #           modules = [{
-      #             ghcOptions = ["-finfo-table-map" "-fdistinct-constructor-tables"];
-      #             packages.plutus-core.components.library.ghcOptions = ["-finfo-table-map" "-fdistinct-constructor-tables"];
-      #           }];
-      #         }).exes.cardano-node
-      #       );
-      #     }
-      #   ];
-      # };
-
-      # Same as node-leios-ipe, but the node is ALSO built with the ghc-debug
-      # stub, so its live heap can be snapshotted on demand for offline retainer
-      # analysis (to find what retains the growing ARR_WORDS / STACK closures the
-      # -hi profile can only name, not attribute).
-      #
-      # `+RTS -hi` heap profiling comes along for free and is enabled below:
-      # one node run yields BOTH the continuous -hi eventlog and on-demand
-      # ghc-debug snapshots.
-      # node-leios-ghc-debug = {
-      #   imports = [
-      #     node-leios
-      #     {
-      #       cardano-parts.perNode.pkgs.cardano-node =
-      #         lib.mkOverride 40
-      #         inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-node-debug;
-
-      #       # The ghc-debug stub serves here; the snapshot client reads the same
-      #       # path. /run/cardano-node is the node's RuntimeDirectory -- writable
-      #       # by the cardano-node user and ephemeral across restarts.
-      #       systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
-
-      #       # IPE "free extra": continuous low-overhead info-table (-hi) heap
-      #       # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
-      #       # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
-      #       # default would be far too aggressive. rts_flags_override appends, so
-      #       # the compiled-in -N2/-A16m/etc. are preserved.
-      #       #
-      #       # `-l-agu` trims the eventlog to what eventlog2html needs: it comes
-      #       # after the service's `-l`, and its class mods apply cumulatively --
-      #       # `-a` disables every event class, then `g`/`u` re-enable GC/heap
-      #       # and user events (heap-profile samples + IPE map still included).
-      #       # Without it, scheduler events dominate and a multi-day -hi run
-      #       # produces a multi-GB eventlog (6.4GB in 14h observed).
-      #       #
-      #       # The flush interval forces buffered events to disk periodically:
-      #       # eventlog writes sit in ~2MB per-capability buffers that only
-      #       # flush when full, and with the slim -l-agu classes that can take
-      #       # tens of minutes -- without it the on-disk log lags far behind and
-      #       # a mid-run copy is missing the newest samples.
-      #       services.cardano-node = {
-      #         eventlog = true;
-      #         profiling = "space-info";
-      #         rts_flags_override = ["-i30" "-l-agu" "--eventlog-flush-interval=300"];
-      #       };
-
-      #       # Headless snapshot client on the host PATH. Capture EARLY (moderate
-      #       # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
-      #       # pauses the node for its duration:
-      #       #   cardano-ghc-debug-snapshot \
-      #       #     heap.snapshot \
-      #       #     "$GHC_DEBUG_SOCKET"
-      #       environment.systemPackages = [
-      #         inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-debug
-      #       ];
-      #     }
-      #   ];
-      # };
+      # Opt in per host to capture both IPE eventlogs and ghc-debug snapshots.
+      # No host imports this profile by default.
+      node-leios-ghc-debug = {
+        imports = [node-leios nixosModules.profile-leios-heap-debug];
+      };
 
       eRel = relList: {
         imports = [
