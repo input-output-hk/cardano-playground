@@ -10,6 +10,8 @@
     cardano-node-pparams-api.url = "github:johnalotoski/cardano-node-pparams-api";
 
     # Extra pins
+    # Temporary release-branch testing on mainnet1-rel-a-1 only.
+    cardano-node-11-2-x.url = "github:IntersectMBO/cardano-node/release/11.2.x";
     cardano-node-11-2-0-memOpt.url = "github:IntersectMBO/cardano-node/jl/11.2.0-memOpt";
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
     cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
