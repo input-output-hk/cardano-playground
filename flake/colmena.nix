@@ -399,6 +399,13 @@ in
       leiosRel = nixos: {
         imports = [rel];
 
+        # NixOS tracks jail settings but not custom filters for activation.
+        # Reload on filter changes so the running jails use the deployed regex.
+        systemd.services.fail2ban.reloadTriggers =
+          map
+          (jail: nixos.config.environment.etc."fail2ban/filter.d/${jail}.conf".source)
+          ["cnode-burst" "cnode-flood"];
+
         # Tmp access during fire load test
         aws.instance.sshIngress = true;
         programs.auth-keys-hub.github.users = ["ch1bo"];
