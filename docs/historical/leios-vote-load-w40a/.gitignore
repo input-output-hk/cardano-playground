@@ -8,6 +8,5 @@ data-1s/
 data-1s-wide/
 data-*/
 
-# Generated from findings.md by scripts/build-artifact.sh; rebuild rather than commit.
-findings.html
-findings-artifact.html
+# Published HTML reports are committed; regenerate with scripts/build-findings.sh
+# and scripts/build-artifact.sh after updating findings.md or the shared fragments.
