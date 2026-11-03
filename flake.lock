@@ -7628,28 +7628,6 @@
         "type": "github"
       }
     },
-    "floci-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "uketsuke",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791531647,
-        "narHash": "sha256-Ik/fRj15IoLqQw5q8zzKGJ+i6ZRMnTmGlCy/bYj9bSE=",
-        "owner": "imxade",
-        "repo": "floci-nix",
-        "rev": "159be03d4fb1d80172084e1df7d9ff13866f1334",
-        "type": "github"
-      },
-      "original": {
-        "owner": "imxade",
-        "repo": "floci-nix",
-        "rev": "159be03d4fb1d80172084e1df7d9ff13866f1334",
-        "type": "github"
-      }
-    },
     "gentle-introduction": {
       "flake": false,
       "locked": {
@@ -32140,20 +32118,19 @@
     },
     "uketsuke": {
       "inputs": {
-        "floci-nix": "floci-nix",
         "nixpkgs": "nixpkgs_59"
       },
       "locked": {
-        "lastModified": 1793182747,
-        "narHash": "sha256-R+03vPhp6U7obgD7kZ8NPB8weZBt8vbRR/4dapte1qw=",
+        "lastModified": 1793690984,
+        "narHash": "sha256-jL0o/saqmdN+yTxWWcBp7lLg5RR5VwjsResNAR6f2m0=",
         "owner": "input-output-hk",
         "repo": "uketsuke",
-        "rev": "8195c1338f62baec8d521b6fcd55c6c8d808ab55",
+        "rev": "7ba81d95fcb207a22ff878c55659a392f6d28dad",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "v1.2.0",
+        "ref": "v1.2.1",
         "repo": "uketsuke",
         "type": "github"
       }
