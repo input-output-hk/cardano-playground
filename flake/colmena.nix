@@ -411,7 +411,8 @@ in
         services.fail2ban.jails = let
           inboundFilter = {
             Init.journalmatch = "_SYSTEMD_UNIT=cardano-node.service";
-            Definition.failregex = ''"ns"\s*:\s*"Net\.ConnectionManager\.Remote\.IncludeConnection"(?=.*"provenance"\s*:\s*"Inbound").*"remoteAddress"\s*:\s*\{"address"\s*:\s*"<HOST>"'';
+            # Node versions use either addr or address for this event's IP field.
+            Definition.failregex = ''"ns"\s*:\s*"Net\.ConnectionManager\.Remote\.IncludeConnection"(?=.*"provenance"\s*:\s*"Inbound").*"remoteAddress"\s*:\s*\{\s*"addr(?:ess)?"\s*:\s*"<HOST>"'';
           };
           inboundSettings = {
             # The node's UID logs land in user-*.journal, excluded by
