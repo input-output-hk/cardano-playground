@@ -208,7 +208,8 @@
 
       txSize = mkOption {
         type = types.nullOr types.ints.positive;
-        default = 1024;
+        # No filler padding; firehose still includes its mandatory colour tag.
+        default = null;
         description = ''
           Minimum full signed transaction CBOR size in bytes, padded with
           metadata. CBOR overhead may make the result slightly larger;

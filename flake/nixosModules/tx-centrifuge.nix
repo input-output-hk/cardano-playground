@@ -148,13 +148,9 @@
               outputs_per_tx = lib.mkDefault 1;
               fee = lib.mkDefault 1000000;
 
-              # Minimum full signed CBOR size, padded with metadata. Actual size
-              # may be slightly larger; naturally larger transactions retain
-              # their size. tx_size and metadata_bytes are mutually exclusive.
-              # Size/fee limits are queried at startup; restart after pparam changes.
-              # Conway CBOR includes a one-byte validity flag excluded from
-              # ledger/db-sync size, so target 1025 to report at least 1024 bytes.
-              tx_size = lib.mkDefault 1025;
+              # Minimum-size transactions without filler metadata. Remove this
+              # setting before using tx_size; the two are mutually exclusive.
+              metadata_bytes = lib.mkDefault 0;
             };
           };
 
