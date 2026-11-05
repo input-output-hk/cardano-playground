@@ -2,9 +2,8 @@
 
 The Dijkstra testnet is an advanced environment for testing Dijkstra features.
 
-It is currently in Conway protocol version 11 for a short time, but users
-should upgrade to cardano-node pre-release `11.2.0` using the configuration
-files below in preparation for hard-fork to Dijkstra.
+Dijkstra testnet forked to dijkstra era on November 1st 2026 at 00:00 UTC,
+epoch 14.
 
 The latest version available is cardano-node release `11.2.0`.
 
