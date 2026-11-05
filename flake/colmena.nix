@@ -1012,6 +1012,7 @@ in
 
       leiosFaucet = moduleWithSystem ({system}: _: {
         imports = [
+          faucetNginxPolicy
           {
             cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: mkForce config.cardano-parts.pkgs.cardano-faucet-ng);
             services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
