@@ -140,8 +140,8 @@ in
         ];
       };
 
-      node-pre-mem-opt = mkCustomNodePre "cardano-node-11-2-0-memOpt";
-      node-pre-11-2-x = mkCustomNodePre "cardano-node-11-2-x";
+      # node-pre-mem-opt = mkCustomNodePre "cardano-node-11-2-0-memOpt";
+      # node-pre-11-2-x = mkCustomNodePre "cardano-node-11-2-x";
 
       node-leios = {config, ...}: let
         # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
@@ -224,22 +224,22 @@ in
       #   ];
       # };
 
-      # Parked next-release override; all hosts currently use node-leios.
-      # node-leios-ng = {
-      #   imports = [
-      #     node-leios
-      #     {
-      #       cardano-parts.perNode.pkgs = let
-      #         next = inputs.cardano-node-leios-ng.inputs.cardano-node-leios.packages.x86_64-linux;
-      #       in {
-      #         cardano-cli = lib.mkOverride 40 next.cardano-cli;
-      #         cardano-node = lib.mkOverride 40 next.cardano-node;
-      #         cardano-submit-api = lib.mkOverride 40 next.cardano-submit-api;
-      #         cardano-tracer = lib.mkOverride 40 next.cardano-tracer;
-      #       };
-      #     }
-      #   ];
-      # };
+      # Leios next-release override
+      node-leios-ng = {
+        imports = [
+          node-leios
+          {
+            cardano-parts.perNode.pkgs = let
+              next = inputs.cardano-node-leios-ng.inputs.cardano-node-leios.packages.x86_64-linux;
+            in {
+              cardano-cli = lib.mkOverride 40 next.cardano-cli;
+              cardano-node = lib.mkOverride 40 next.cardano-node;
+              cardano-submit-api = lib.mkOverride 40 next.cardano-submit-api;
+              cardano-tracer = lib.mkOverride 40 next.cardano-tracer;
+            };
+          }
+        ];
+      };
 
       node-dijkstra = {
         services.cardano-node = {
@@ -1502,8 +1502,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
       # Remove `ccMon` until governance works in Dijkstra era
-      # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosBp leiosTrustedPeer immOnEphemeral metsukeAgent];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios-ng leiosBp ccMon leiosTrustedPeer immOnEphemeral metsukeAgent];};
       leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
@@ -1512,7 +1511,7 @@ in
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
-      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
+      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios-ng leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
       leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
@@ -1556,10 +1555,10 @@ in
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnetSmash dbsyncPub (openFwTcp 5432) traceMp census {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg smash mainnet2Smash traceMp {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre-11-2-x ccfg bp mithrilSignerDisable ccMon logGc traceMp];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre ccfg bp mithrilSignerDisable ccMon logGc traceMp];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001) traceMp];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre ccfg lsm ram8gib (openFwTcp 3001) traceMp];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre-mem-opt ccfg logGc (openFwTcp 3001) traceMp];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre ccfg logGc (openFwTcp 3001) traceMp];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
