@@ -188,7 +188,10 @@ in {
                         /status => (match $env.REQUEST_METHOD {
                           GET => {
                             $status = 200
-                            systemctl is-active $unit_piranha | collect
+                            systemctl is-active $unit_piranha
+                            | complete
+                            | get stdout
+                            | str trim --char "\n"
                           }
                           PUT | POST => {
                             $status = 204

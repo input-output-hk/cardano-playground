@@ -15,9 +15,6 @@ with lib; {
       # A sampling of cluster machines to build in CI to validate new work
       # isn't breaking them.
       machineBuildList = [
-        # Buildkite
-        "buildkite1-eu-central-1-1"
-
         # Mainnet, PraosMode, edge, relay and bp configs
         "mainnet1-dbsync-a-1"
         "mainnet1-rel-a-1"

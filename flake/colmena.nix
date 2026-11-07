@@ -14,26 +14,36 @@ in
   with lib; {
     flake.colmena = let
       # Region defs:
+      # Frankfurt, Germany
       eu-central-1.aws.region = "eu-central-1"; # a
+      # Ireland
       eu-west-1.aws.region = "eu-west-1"; # b
+      # Ohio, USA
       us-east-2.aws.region = "us-east-2"; # c
+      # Stockholm, Sweden
       eu-north-1.aws.region = "eu-north-1"; # d
+      # Sydney, Australia
       ap-southeast-2.aws.region = "ap-southeast-2"; # e
+      # Sao Paulo, Brazil
       sa-east-1.aws.region = "sa-east-1"; # f
+      # Cape Town, Africa
       af-south-1.aws.region = "af-south-1"; # g
+      # Tokyo, Japan
       ap-northeast-1.aws.region = "ap-northeast-1"; # h
+      # California, USA
       us-west-1.aws.region = "us-west-1"; # i
+      # Oregon, USA
       us-west-2.aws.region = "us-west-2"; # j
 
       # Instance defs:
       # c5a-large.aws.instance.instance_type = "c5a.large";
       # c5ad-large.aws.instance.instance_type = "c5ad.large";
       c5d-2xlarge.aws.instance.instance_type = "c5d.2xlarge";
-      c6id-large.aws.instance.instance_type = "c6id.large";
+      # c6id-large.aws.instance.instance_type = "c6id.large";
       # c6id-xlarge.aws.instance.instance_type = "c6id.xlarge";
       c6id-2xlarge.aws.instance.instance_type = "c6id.2xlarge";
       # c6i-12xlarge.aws.instance.instance_type = "c6i.12xlarge";
-      c8id-large.aws.instance.instance_type = "c8id.large";
+      # c8id-large.aws.instance.instance_type = "c8id.large";
       c8id-xlarge.aws.instance.instance_type = "c8id.xlarge";
       c8id-2xlarge.aws.instance.instance_type = "c8id.2xlarge";
       # i7ie-2xlarge.aws.instance.instance_type = "i7ie.2xlarge";
@@ -48,6 +58,7 @@ in
       # r5d-4xlarge.aws.instance.instance_type = "r5d.4xlarge";
       r6a-large.aws.instance.instance_type = "r6a.large";
       r6a-xlarge.aws.instance.instance_type = "r6a.xlarge";
+      r8id-xlarge.aws.instance.instance_type = "r8id.xlarge";
       # t3a-micro.aws.instance.instance_type = "t3a.micro";
       # t3a-small.aws.instance.instance_type = "t3a.small";
       t3-medium.aws.instance.instance_type = "t3.medium";
@@ -78,8 +89,7 @@ in
       group = name: {
         # Apply group wide common imports
         imports =
-          optionals (hasPrefix "buildkite" name) [buildkite]
-          ++ optionals (hasPrefix "dijkstra" name) [noBPerf amiZfs]
+          optionals (hasPrefix "dijkstra" name) [node-dijkstra amiZfs]
           ++ optionals (hasPrefix "leios" name) [amiZfs leiosLogging inputs.cardano-parts.nixosModules.profile-zfs-snapshots leiosSnapRetention]
           ++ optionals (hasPrefix "preview" name) [hiConn]
           ++ optionals (hasPrefix "preprod" name) [hiConn]
@@ -130,16 +140,24 @@ in
         ];
       };
 
-      # Opt a leios node OUT of the 2-day recycle below.
-      # nodeNoRecycle.systemd.services.cardano-node.serviceConfig = {
-      #   RuntimeMaxSec = mkForce "infinity";
-      #   RuntimeRandomizedExtraSec = mkForce 0;
-      # };
+      # node-pre-mem-opt = mkCustomNodePre "cardano-node-11-2-0-memOpt";
+      # node-pre-11-2-x = mkCustomNodePre "cardano-node-11-2-x";
 
-      node-leios = {config, ...}:
-      # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
-        mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios"
+      node-leios = {config, ...}: let
+        # Ouroboros leios makes leios prototype packages available through its cardano-node-leios input
+        base = mkCustomNodePre "cardano-node-leios.inputs.cardano-node-leios";
+      in
+        base
         // {
+          # `//` replaces a key outright, so concatenate rather than assign:
+          # base.imports carries node-pre and the leios package overrides, and
+          # assigning imports here would silently drop both.
+          imports = base.imports ++ [nixosModules.leios-mempool-monitor];
+
+          environment.systemPackages = [
+            (withSystem "x86_64-linux" ({inputs', ...}: inputs'.cardano-node-leios.packages.mempool-monitor-static))
+          ];
+
           # Each leios partition now follows the node's own db paths, so
           # leios.imm.db sits beside immutable/ and leios.vol.db beside
           # volatile/. Keep the growing immutable partition on the ebs root and
@@ -148,27 +166,6 @@ in
           services.cardano-node = {
             immutableDatabasePath = config.services.cardano-node.databasePath 0;
             volatileDatabasePath = "/ephemeral/cardano-node/${config.services.cardano-node.dbPrefix 0}";
-          };
-
-          services.cardano-node.extraNodeConfig = {
-            ConsensusMode = "PraosMode";
-
-            # Additional cfg to debug network issues
-            TraceOptions = {
-              "BlockFetch.Client".severity = "Info";
-              "BlockFetch.Decision" = {
-                severity = "Debug";
-                maxFrequency = 2.0;
-              };
-              "ChainSync.Client".severity = "Debug";
-              "ChainSync.ServerHeader" = {
-                severity = "Info";
-                maxFrequency = 2.0;
-              };
-              "ChainDB.AddBlockEvent".severity = "Debug";
-              "ChainDB.AddBlockEvent.PoppedBlockFromQueue".maxFrequency = 2.0;
-              "ChainDB.AddBlockEvent.AddBlockValidation".severity = "Info";
-            };
           };
 
           systemd.services.cardano-node = {
@@ -201,121 +198,79 @@ in
             #   fi
             # ''';
 
-            # Temporary mitigation for the under-investigation leios cardano-node
-            # heap leak (root-caused to unpruned LeiosVoteState growth; exhausts
-            # host RAM in <1 day): recycle the service every ~12 hours so memory
-            # can't grow unbounded. RuntimeMaxSec caps runtime;
-            # RuntimeRandomizedExtraSec adds 0..N jitter so the fleet doesn't
-            # restart in lockstep (thundering herd). Window 12-14h.
-            # Restart=always (cardano-parts) brings the node back; TimeoutStopSec=600
-            # leaves room for a clean shutdown. Analysis/observer nodes opt out via
-            # nodeNoRecycle. Remove once the leak is fixed.
+            # Disable periodic recycling to observe whether recent builds still
+            # leak memory until OOM. Keep normal restart-on-failure behavior.
             serviceConfig = {
-              RuntimeMaxSec = 12 * 3600;
-              RuntimeRandomizedExtraSec = 2 * 3600;
+              RuntimeMaxSec = "infinity";
+              RuntimeRandomizedExtraSec = 0;
             };
           };
         };
 
-      # Same as node-leios, but the node packages come from the
-      # cardano-node-leios-patched input, which bounds the inbound governor's
-      # MuxFinished await. mkOverride 40 beats the mkForce that mkCustomNodePre
-      # applies. Carrying it as its own input keeps both builds in the lock at
-      # once, so a deploy picks the right binary per host with nothing to
-      # toggle. Drop this and the input together.
-      node-leios-patched = {
+      # Parked W42 inbound-governor diagnostic override now that hosts use W43.
+      # node-leios-patched = {
+      #   imports = [
+      #     node-leios
+      #     {
+      #       cardano-parts.perNode.pkgs = let
+      #         patched = inputs.cardano-node-leios-patched.inputs.cardano-node-leios.packages.x86_64-linux;
+      #       in {
+      #         cardano-cli = lib.mkOverride 40 patched.cardano-cli;
+      #         cardano-node = lib.mkOverride 40 patched.cardano-node;
+      #         cardano-submit-api = lib.mkOverride 40 patched.cardano-submit-api;
+      #         cardano-tracer = lib.mkOverride 40 patched.cardano-tracer;
+      #       };
+      #     }
+      #   ];
+      # };
+
+      # Leios next-release override
+      node-leios-ng = {
         imports = [
           node-leios
           {
             cardano-parts.perNode.pkgs = let
-              patched = inputs.cardano-node-leios-patched.inputs.cardano-node-leios.packages.x86_64-linux;
+              next = inputs.cardano-node-leios-ng.inputs.cardano-node-leios.packages.x86_64-linux;
             in {
-              cardano-cli = lib.mkOverride 40 patched.cardano-cli;
-              cardano-node = lib.mkOverride 40 patched.cardano-node;
-              cardano-submit-api = lib.mkOverride 40 patched.cardano-submit-api;
-              cardano-tracer = lib.mkOverride 40 patched.cardano-tracer;
+              cardano-cli = lib.mkOverride 40 next.cardano-cli;
+              cardano-node = lib.mkOverride 40 next.cardano-node;
+              cardano-submit-api = lib.mkOverride 40 next.cardano-submit-api;
+              cardano-tracer = lib.mkOverride 40 next.cardano-tracer;
             };
           }
         ];
       };
 
-      # Same as node-leios, but the cardano-node binary is rebuilt with
-      # info-table-provenance (IPE) flags for low-overhead `+RTS -hi` profiling.
-      # node-leios-ipe = {
-      #   imports = [
-      #     node-leios
-      #     nodeNoRecycle # profiling build: let the heap grow for leak analysis
-      #     {
-      #       cardano-parts.perNode.pkgs.cardano-node = lib.mkOverride 40 (
-      #         (inputs.cardano-node-leios.inputs.cardano-node-leios.project.x86_64-linux.appendModule {
-      #           modules = [{
-      #             ghcOptions = ["-finfo-table-map" "-fdistinct-constructor-tables"];
-      #             packages.plutus-core.components.library.ghcOptions = ["-finfo-table-map" "-fdistinct-constructor-tables"];
-      #           }];
-      #         }).exes.cardano-node
-      #       );
-      #     }
-      #   ];
-      # };
+      node-dijkstra = {
+        services.cardano-node = {
+          configFormat = "enveloped";
+          extraNodeConfig = {
+            # While the general network config is genesis mode, maintain
+            # internal stability with praos as 3 big ledger peers are
+            # configured required for genesis syncing, so if our own pool
+            # groups go down, genesis mode may become problematic for our own
+            # recovery.
+            ConsensusMode = "PraosMode";
+            # TraceOptions = {
+            #   "ChainDB.AddBlockEvent.AddBlockValidation" = {
+            #     "severity" = "Debug";
+            #     "detail" = "DDetailed";
+            #   };
 
-      # Same as node-leios-ipe, but the node is ALSO built with the ghc-debug
-      # stub, so its live heap can be snapshotted on demand for offline retainer
-      # analysis (to find what retains the growing ARR_WORDS / STACK closures the
-      # -hi profile can only name, not attribute).
-      #
-      # `+RTS -hi` heap profiling comes along for free and is enabled below:
-      # one node run yields BOTH the continuous -hi eventlog and on-demand
-      # ghc-debug snapshots.
-      # node-leios-ghc-debug = {
-      #   imports = [
-      #     node-leios
-      #     nodeNoRecycle # ghc-debug build: let the heap grow for leak analysis
-      #     {
-      #       cardano-parts.perNode.pkgs.cardano-node =
-      #         lib.mkOverride 40
-      #         inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-node-debug;
+            #   "ChainDB.AddBlockEvent" = {
+            #     "severity" = "Debug";
+            #     "detail" = "DDetailed";
+            #   };
+            # };
+          };
+        };
+      };
 
-      #       # The ghc-debug stub serves here; the snapshot client reads the same
-      #       # path. /run/cardano-node is the node's RuntimeDirectory -- writable
-      #       # by the cardano-node user and ephemeral across restarts.
-      #       systemd.services.cardano-node.environment.GHC_DEBUG_SOCKET = "/run/cardano-node/ghc-debug.socket";
-
-      #       # IPE "free extra": continuous low-overhead info-table (-hi) heap
-      #       # profile written to the eventlog (`eventlog` -> -l, `space-info` ->
-      #       # -hi). `-i30` keeps the heap census cheap on a large heap; the 0.1s
-      #       # default would be far too aggressive. rts_flags_override appends, so
-      #       # the compiled-in -N2/-A16m/etc. are preserved.
-      #       #
-      #       # `-l-agu` trims the eventlog to what eventlog2html needs: it comes
-      #       # after the service's `-l`, and its class mods apply cumulatively --
-      #       # `-a` disables every event class, then `g`/`u` re-enable GC/heap
-      #       # and user events (heap-profile samples + IPE map still included).
-      #       # Without it, scheduler events dominate and a multi-day -hi run
-      #       # produces a multi-GB eventlog (6.4GB in 14h observed).
-      #       #
-      #       # The flush interval forces buffered events to disk periodically:
-      #       # eventlog writes sit in ~2MB per-capability buffers that only
-      #       # flush when full, and with the slim -l-agu classes that can take
-      #       # tens of minutes -- without it the on-disk log lags far behind and
-      #       # a mid-run copy is missing the newest samples.
-      #       services.cardano-node = {
-      #         eventlog = true;
-      #         profiling = "space-info";
-      #         rts_flags_override = ["-i30" "-l-agu" "--eventlog-flush-interval=300"];
-      #       };
-
-      #       # Headless snapshot client on the host PATH. Capture EARLY (moderate
-      #       # heap), NOT at the OOM ceiling -- a snapshot is ~heap-sized and
-      #       # pauses the node for its duration:
-      #       #   cardano-ghc-debug-snapshot \
-      #       #     heap.snapshot \
-      #       #     "$GHC_DEBUG_SOCKET"
-      #       environment.systemPackages = [
-      #         inputs.cardano-node-leios-ghc-debug.inputs.cardano-node-leios.packages.x86_64-linux.cardano-debug
-      #       ];
-      #     }
-      #   ];
-      # };
+      # Opt in per host to capture both IPE eventlogs and ghc-debug snapshots.
+      # Only the selected diagnostic relays import this profile.
+      node-leios-ghc-debug = {
+        imports = [node-leios nixosModules.profile-leios-heap-debug];
+      };
 
       eRel = relList: {
         imports = [
@@ -435,33 +390,80 @@ in
             ];
             netClusterPort = 9100;
           };
+
+          # Red-team machines must not ban peers during adversarial testing.
+          fail2ban.enable = mkForce false;
         };
       };
 
       leiosRel = nixos: {
         imports = [rel];
 
-        # Ban peers stuck in a tight reconnect loop. On 2026-10-05 a single
-        # InitiatorOnly peer handshook ~4600x/10m per relay, overflowing the
-        # accept queue and starving the local ping. Legit peers peaked at 27/10m.
-        services.fail2ban.jails.cnode-flood = {
-          filter = {
+        # NixOS tracks jail settings but not custom filters for activation.
+        # Reload on filter changes so the running jails use the deployed regex.
+        systemd.services.fail2ban.reloadTriggers =
+          map
+          (jail: nixos.config.environment.etc."fail2ban/filter.d/${jail}.conf".source)
+          ["cnode-burst" "cnode-flood"];
+
+        # Tmp access during fire load test
+        aws.instance.sshIngress = true;
+        programs.auth-keys-hub.github.users = ["ch1bo"];
+
+        # IncludeConnection carries explicit Inbound/Outbound provenance;
+        # HandshakeSuccess and the local port do not distinguish direction.
+        services.cardano-node.extraNodeConfig.TraceOptions.
+          "Net.ConnectionManager.Remote.IncludeConnection".severity = "Debug";
+
+        services.fail2ban.jails = let
+          inboundFilter = {
             Init.journalmatch = "_SYSTEMD_UNIT=cardano-node.service";
-            Definition.failregex = ''"ns":"Net\.ConnectionManager\.Remote\.ConnectionHandler\.HandshakeSuccess".*"remoteAddress":\{"address":"<HOST>"'';
+            # Node versions use either addr or address for this event's IP field.
+            Definition.failregex = ''"ns"\s*:\s*"Net\.ConnectionManager\.Remote\.IncludeConnection"(?=.*"provenance"\s*:\s*"Inbound").*"remoteAddress"\s*:\s*\{\s*"addr(?:ess)?"\s*:\s*"<HOST>"'';
           };
-          settings = {
-            backend = "systemd";
+          inboundSettings = {
+            # The node's UID logs land in user-*.journal, excluded by
+            # SYSTEM_ONLY. Keep the node-unit journalmatch while reading both.
+            backend = "systemd[journalflags=0]";
             port = nixos.config.cardano-parts.perNode.meta.cardanoNodePort;
-            findtime = 600;
-            maxretry = 300;
             bantime = 3600;
+          };
+        in {
+          # Sustained inbound reconnects: 300 accepts in ten minutes.
+          cnode-flood = {
+            filter = inboundFilter;
+            settings =
+              inboundSettings
+              // {
+                findtime = 600;
+                maxretry = 300;
+              };
+          };
+          # Short bursts: 30 accepts in 30 seconds. Separate jail names give
+          # independent firewall chains so expiry in one cannot undo the other.
+          cnode-burst = {
+            filter = inboundFilter;
+            settings =
+              inboundSettings
+              // {
+                findtime = 30;
+                maxretry = 30;
+              };
           };
         };
       };
 
       metsukeServer.imports = [
         inputs.metsuke.nixosModules.metsuke-server
+        inputs.cardano-parts.nixosModules.module-nginx-vhost-exporter
         nixosModules.profile-metsuke-server
+      ];
+
+      # Reads the roster metsukeServer's timer writes, so only on a host with it.
+      uketsukeServer.imports = [
+        inputs.uketsuke.nixosModules.uketsuke
+        inputs.cardano-parts.nixosModules.module-nginx-vhost-exporter
+        nixosModules.profile-uketsuke-server
       ];
 
       metsukeAgent.imports = [
@@ -470,38 +472,14 @@ in
       ];
 
       leiosCentrifuge.imports = [
-        # nodeNoRecycle
         nixosModules.cardano-tx-centrifuge
         nixosModules.profile-leios-tx-centrifuge
-        # w38a dropped LeiosDbConfig.Filepath from the node config, but
-        # tx-centrifuge comes from cardano-node-leios-bench, still pinned to
-        # IntersectMBO/cardano-node jl/leios-prototype-w36, whose parser
-        # requires that key under Backend=SQLite and rejects the whole file:
-        #   AesonException "Error in $.LeiosDbConfig: key \"Filepath\" not found"
-        # tx-centrifuge never reads LeiosDbConfig -- it parses the node config
-        # only to reach ncProtocolConfig -- so restoring the key is inert. This
-        # patches centrifuge's own copy of the config; the node reads a separate
-        # file and is untouched. Drop once the bench input tracks w38a.
-        ({
-          config,
-          pkgs,
-          ...
-        }: {
-          services.cardano-tx-centrifuge.settings.nodeConfig = let
-            nodeCfg = config.services.cardano-node.nodeConfig;
-          in
-            pkgs.writers.writeJSON "node-config.json" (
-              nodeCfg
-              // {
-                LeiosDbConfig =
-                  (nodeCfg.LeiosDbConfig or {Backend = "SQLite";})
-                  // {Filepath = "leios.db";};
-              }
-            );
-        })
         {
-          services = {
-            cardano-tx-centrifuge.settings = {
+          services.cardano-tx-centrifuge = {
+            # Even UTC hours on, odd UTC hours off.
+            startOnCalendar = "00/2:00:00";
+            stopOnCalendar = "01/2:00:00";
+            settings = {
               rate_limit.params.tps = 100;
               # observers.local-follower.params.confirmation_depth = 3;
               workloads.synthetic-chain.targets = {
@@ -526,7 +504,7 @@ in
         (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
       ];
 
-      # Additive to centrifuge, on the same even hour window. Add to any host
+      # Continuous load, additive to centrifuge. Add to any host
       # already running a node, one instance per host, and fund
       # secrets/groups/<group>/deploy/<host>-firehose-fund.skey first, because
       # tx-firehose exits when the startup UTxO query comes back empty.
@@ -818,6 +796,36 @@ in
         ];
       };
 
+      dbsync-dijkstra = {
+        imports = [
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-tracer-service-ng
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-db-sync-service
+          inputs.cardano-parts.nixosModules.profile-cardano-db-sync
+          inputs.cardano-parts.nixosModules.profile-cardano-node-group
+          inputs.cardano-parts.nixosModules.profile-cardano-custom-metrics
+          inputs.cardano-parts.nixosModules.profile-cardano-postgres
+          (nixos: {
+            services.cardano-node.shareNodeSocket = true;
+            services.cardano-postgres.enablePsqlrc = true;
+
+            cardano-parts.perNode = {
+              pkgs = {
+                cardano-db-sync = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-sync:exe:cardano-db-sync";
+                cardano-db-tool = mkForce inputs.cardano-db-sync-dijkstra.packages.x86_64-linux."cardano-db-tool:exe:cardano-db-tool";
+                cardano-db-sync-pkgs = mkForce {
+                  inherit (nixos.config.cardano-parts.perNode.lib) cardanoLib;
+                  cardanoDbSyncHaskellPackages.cardano-db-tool.components.exes.cardano-db-tool = nixos.config.cardano-parts.perNode.pkgs.cardano-db-tool;
+                  # This pin remains the same and doesn't need to be updated
+                  schema = "${inputs.cardano-db-sync-dijkstra}/schema";
+                };
+              };
+            };
+          })
+          (eRel ["dijkstra1-rel-a-1" "dijkstra2-rel-b-1" "dijkstra3-rel-c-1"])
+          pre
+        ];
+      };
       # ogmios = {
       #   imports = [
       #     config.flake.cardano-parts.cluster.groups.default.meta.cardano-ogmios-service
@@ -936,7 +944,7 @@ in
         ];
       });
 
-      preprodFaucet = {
+      faucetNginxPolicy = {
         config,
         pkgs,
         name,
@@ -946,9 +954,7 @@ in
         opsLib = flake.config.flake.cardano-parts.lib.opsLib pkgs;
         policy = "cardano-faucet-nginx-policy.conf";
       in {
-        services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];
-
-        # keyName carries "faucet" so the preprod1 faucet sops rule encrypts it to
+        # keyName carries "faucet" so the group's faucet sops rule encrypts it to
         # this host. NixOS runs nginx as the nginx user, which must be able to read it.
         sops.secrets = opsLib.mkSopsSecret {
           inherit name;
@@ -983,10 +989,30 @@ in
           '';
         };
       };
-      previewFaucet = {services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];};
-      dijkstraFaucet = {services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];};
+
+      preprodFaucet = {
+        imports = [faucetNginxPolicy];
+        services.cardano-faucet.serverAliases = ["faucet.preprod.${domain}" "faucet.preprod.world.dev.cardano.org"];
+      };
+
+      previewFaucet = {
+        imports = [faucetNginxPolicy];
+        services.cardano-faucet.serverAliases = ["faucet.preview.${domain}" "faucet.preview.world.dev.cardano.org"];
+      };
+
+      dijkstraFaucet = moduleWithSystem ({system}: _: {
+        imports = [
+          {
+            cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: mkForce config.cardano-parts.pkgs.cardano-faucet-ng);
+            services.cardano-faucet.serverAliases = ["faucet.dijkstra.${domain}"];
+          }
+          (eRel ["dijkstra1-rel-a-1" "dijkstra2-rel-b-1" "dijkstra3-rel-c-1"])
+        ];
+      });
+
       leiosFaucet = moduleWithSystem ({system}: _: {
         imports = [
+          faucetNginxPolicy
           {
             cardano-parts.perNode.pkgs.cardano-faucet = withSystem system ({config, ...}: mkForce config.cardano-parts.pkgs.cardano-faucet-ng);
             services.cardano-faucet.serverAliases = ["faucet.leios.${domain}"];
@@ -1100,6 +1126,13 @@ in
       };
 
       leiosLogging = {
+        # Leios debug traces exceed journald's burst limit, dropping events
+        # needed for peer diagnostics and the derived Alloy streams.
+        services.journald = {
+          rateLimitInterval = "0";
+          rateLimitBurst = 0;
+        };
+
         imports = [
           # Alloy pipelines deriving the leios Loki streams from the journald
           # machine-format trace lines configured below.
@@ -1108,62 +1141,26 @@ in
             services = {
               cardano-node.extraNodeConfig = {
                 TraceOptions = {
-                  "" = {
-                    backends = [
-                      "EKGBackend"
-                      "Forwarder"
-                      "PrometheusSimple suffix 127.0.0.1 12798"
-                      "Stdout MachineFormat"
-                    ];
-                    detail = "DNormal";
-                    severity = "Notice";
-                  };
-
-                  "LeiosNotify.Remote" = {
+                  # Preserve ChainSel call timings and allocations for the call-trace dashboard.
+                  "ChainDB.AddBlockEvent.TraceAddBlockCall" = {
                     severity = "Debug";
                     maxFrequency = 0;
                   };
 
-                  "LeiosFetch.Remote" = {
-                    severity = "Debug";
-                    maxFrequency = 0;
-                  };
-
-                  "Consensus.LeiosKernel" = {
-                    severity = "Debug";
-                    maxFrequency = 0;
-                  };
-
-                  "Consensus.LeiosPeer" = {
-                    severity = "Debug";
-                    maxFrequency = 0;
-                  };
-
-                  # DIAGNOSTIC for the inbound governor wedge, remove once the
-                  # stuck responder is identified.
-                  #
-                  # The governor blocks in `atomically (Mux.stopped csMux)`,
-                  # which cannot return until every mini-protocol thread on
-                  # that mux has finished. Naming the one that never returns
-                  # needs per-protocol start events.
-                  #
-                  # Bearer and Channel are per message, not per protocol, and
-                  # are 99% of the volume. Measured on leios2-rel-b-3
-                  # 2026-09-26, Net.Mux.Remote at Debug alone emitted 28271
-                  # lines a minute, of which 28024 were those two and 289 were
-                  # the start and stop events wanted here. Holding them at Info
-                  # leaves the diagnostic intact.
-                  "Net.Mux.Remote" = {
-                    severity = "Debug";
-                  };
-
-                  "Net.Mux.Remote.Bearer" = {
-                    severity = "Info";
-                  };
-
-                  "Net.Mux.Remote.Channel" = {
-                    severity = "Info";
-                  };
+                  # Extra debug logging when needed:
+                  # "BlockFetch.Client".severity = "Info";
+                  # "BlockFetch.Decision" = {
+                  #   severity = "Debug";
+                  #   maxFrequency = 2.0;
+                  # };
+                  # "ChainSync.Client".severity = "Debug";
+                  # "ChainSync.ServerHeader" = {
+                  #   severity = "Info";
+                  #   maxFrequency = 2.0;
+                  # };
+                  # "ChainDB.AddBlockEvent".severity = "Debug";
+                  # "ChainDB.AddBlockEvent.PoppedBlockFromQueue".maxFrequency = 2.0;
+                  # "ChainDB.AddBlockEvent.AddBlockValidation".severity = "Info";
                 };
               };
             };
@@ -1203,53 +1200,6 @@ in
       #     })
       #   ];
       # };
-
-      buildkite = {imports = [nixosModules.buildkite-agent-containers];};
-
-      bkCfg = queue: count: {
-        lib,
-        config,
-        ...
-      }: let
-        cfg = config.services.buildkite-containers;
-        hostIdSuffix = "1";
-        bkTags =
-          {
-            system = "x86_64-linux";
-          }
-          // {inherit queue;};
-      in {
-        # We don't need to purge 10 MB daily from the nix store by default.
-        nix.gc.automatic = lib.mkForce false;
-
-        services.auto-gc = {
-          # Apply some auto and hourly gc thresholds
-          nixAutoMaxFreedGB = 150;
-          nixAutoMinFreeGB = 90;
-          nixHourlyMaxFreedGB = 600;
-          nixHourlyMinFreeGB = 150;
-
-          # The auto and hourly gc should negate the need for a weekly full gc.
-          nixWeeklyGcFull = false;
-        };
-
-        services.buildkite-containers = {
-          inherit hostIdSuffix;
-
-          # There should be enough space on these machines to cache dir purges.
-          weeklyCachePurge = false;
-
-          containerList = let
-            mkContainer = n: prio: {
-              containerName = "ci${cfg.hostIdSuffix}-${toString n}";
-              guestIp = "10.254.1.1${toString n}";
-              inherit prio;
-              tags = bkTags;
-            };
-          in
-            map (n: mkContainer n (toString (10 - n))) (lib.range 1 count);
-        };
-      };
 
       amiZfs = {imports = [nixosModules.ami];};
       # legacyT = {services.cardano-node.useLegacyTracing = true;};
@@ -1405,6 +1355,8 @@ in
           }
         ];
       };
+
+      ccfg = {services.cardano-node.configFormat = "enveloped";};
       #
       # profiled = {
       #   services.cardano-node = {
@@ -1476,10 +1428,10 @@ in
       preprod2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig mithrilRelay (declMSigner "preprod2-bp-b-1")];};
       preprod2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node rel preprodRelMig tcpTxOpt];};
 
-      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre bp traceMp mithrilRelease mithrilSignerStack (declMRel "preprod3-rel-c-1")];};
-      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel traceMp preprodRelMig];};
-      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel traceMp preprodRelMig];};
-      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre rel traceMp preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
+      preprod3-bp-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre ccfg bp traceMp mithrilRelease mithrilSignerStack (declMRel "preprod3-rel-c-1")];};
+      preprod3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre ccfg rel traceMp preprodRelMig];};
+      preprod3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre ccfg rel traceMp preprodRelMig];};
+      preprod3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod3") node-pre ccfg rel traceMp preprodRelMig mithrilRelay (declMSigner "preprod3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -1488,61 +1440,96 @@ in
       preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node rel tcpTxOpt];};
-      preview1-dbsync-a-1 = {imports = [eu-central-1 r6a-large (ebs 250) (group "preview1") dbsync smash previewSmash census];};
+      preview1-dbsync-a-1 = nixos: {
+        imports = [
+          eu-central-1
+          r6a-large
+          (ebs 250)
+          (group "preview1")
+          dbsync-pre
+          smash
+          previewSmash
+          census
+          ccfg
+        ];
+
+        # Test 2: db-sync 13.8 with an enveloped node config and normal TraceOptions.
+        # db-sync reads its own node config; ccfg only wraps the node service's file.
+        services.cardano-db-sync.explorerConfig.NodeConfigFile = let
+          nodeCfg = nixos.config.services.cardano-node;
+        in
+          builtins.toFile "dbsync-preview-node-config-enveloped.json"
+          (builtins.toJSON (nodeCfg.cardanoNodePackages.cardanoLib.mkEnvelope nodeCfg.nodeConfig));
+      };
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node faucet faucetReleasePin previewFaucet];};
 
       # Lsm and in-mem pre-release backend testing
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre lsm noBPerf];};
-      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre noBPerf amiZfs logGc submit-api];};
-      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre submit-api lsm noBPerf amiZfs];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg lsm noBPerf];};
+      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg noBPerf amiZfs logGc submit-api];};
+      preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg submit-api lsm noBPerf amiZfs];};
 
-      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre bp mithrilRelease (declMRel "preview2-rel-b-1") ccMon];};
-      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel];};
-      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel mithrilRelay (declMSigner "preview2-bp-b-1")];};
-      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre rel tcpTxOpt];};
+      preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre ccfg bp mithrilRelease (declMRel "preview2-rel-b-1") ccMon];};
+      preview2-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre ccfg rel];};
+      preview2-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre ccfg rel mithrilRelay (declMSigner "preview2-bp-b-1")];};
+      preview2-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre ccfg rel tcpTxOpt];};
 
-      preview3-bp-c-1 = {imports = [us-east-2 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview3") node-pre bp lsm traceMp mithrilRelease (declMRel "preview3-rel-c-1")];};
-      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel traceMp];};
-      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel traceMp];};
-      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre rel traceMp mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
+      preview3-bp-c-1 = {imports = [us-east-2 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview3") node-pre ccfg bp lsm traceMp mithrilRelease (declMRel "preview3-rel-c-1")];};
+      preview3-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre ccfg rel traceMp];};
+      preview3-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre ccfg rel traceMp];};
+      preview3-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview3") node-pre ccfg rel traceMp mithrilRelay (declMSigner "preview3-bp-c-1") tcpTxOpt];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Dijkstra, all on pre-release tag
-      dijkstra1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node bp ccMon];};
-      dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node rel];};
-      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync smash dijkstraSmash census];};
-      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node faucet faucetReleasePin dijkstraFaucet];};
+      dijkstra1-bp-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre bp ccMon];};
+      dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
+      dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
+      dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
+      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-dijkstra smash dijkstraSmash census];};
+      dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet dijkstraFaucet];};
 
       dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
       dijkstra2-rel-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel];};
+      dijkstra2-rel-b-2 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel];};
+      dijkstra2-rel-b-3 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre rel];};
 
       dijkstra3-bp-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre bp traceMp];};
       dijkstra3-rel-c-1 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel traceMp];};
+      dijkstra3-rel-c-2 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel traceMp];};
+      dijkstra3-rel-c-3 = {imports = [us-east-2 t3a-medium (ebs 80) (group "dijkstra3") node-pre rel traceMp];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
       # Remove `ccMon` until governance works in Dijkstra era
-      # leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 80) (group "leios1") node-leios leiosBp ccMon];};
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-large (ebs 300) (group "leios1") node-leios leiosBp leiosTrustedPeer immOnEphemeral metsukeAgent];};
-      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel immOnEphemeral leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
-      leios1-rel-a-2 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
-      leios1-rel-a-3 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
-      leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios-ng leiosBp ccMon leiosTrustedPeer immOnEphemeral metsukeAgent];};
+      leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
+      leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
+      leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
+      leios1-dbsync-a-1 = {imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];};
       leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
-      leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
+      leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
-      leios2-bp-b-1 = {imports = [eu-west-1 c6id-large (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
-      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
-      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
+      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios-ng leiosBp leiosTrustedPeer];};
+      leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
-      leios3-bp-c-1 = {imports = [us-east-2 c8id-large (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
-      leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
-      leios3-rel-c-2 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
-      leios3-rel-c-3 = {imports = [us-east-2 c8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-patched leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+      leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
+      leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
+      leios3-rel-c-2 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
+      leios3-rel-c-3 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
+
+      # Dedicated firehose injection machines
+      # Sydney, Australia
+      leiosfire5-edge-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosfire5") node-leios leiosFirehose];};
+
+      # Tokyo, Japan
+      leiosfire8-edge-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosfire8") node-leios leiosFirehose];};
+
+      # California, USA
+      leiosfire9-edge-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosfire9") node-leios leiosFirehose];};
 
       # Leios Red Team nodes.
       # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
@@ -1567,12 +1554,11 @@ in
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
       mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync smash mainnetSmash dbsyncPub (openFwTcp 5432) traceMp census {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre smash mainnet2Smash traceMp];};
-      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node bp mithrilSignerDisable ccMon logGc traceMp];};
-
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg smash mainnet2Smash traceMp {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre ccfg bp mithrilSignerDisable ccMon logGc traceMp];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node lsm ram8gib (openFwTcp 3001) traceMp];};
-      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre lsm ram8gib (openFwTcp 3001) traceMp];};
-      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre logGc (openFwTcp 3001) traceMp];};
+      mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre ccfg lsm ram8gib (openFwTcp 3001) traceMp];};
+      mainnet1-rel-a-4 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre ccfg logGc (openFwTcp 3001) traceMp];};
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
@@ -1585,22 +1571,10 @@ in
       # ---------------------------------------------------------------------------------------------------------
 
       # ---------------------------------------------------------------------------------------------------------
-      # Buildkite temporary machines
-      # Stopped machines until the `-eu` variant can run the jobs properly
-      buildkite1-af-south-1-1 = {imports = [af-south-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-af" 1) disableAlertCount];};
-      buildkite1-ap-southeast-2-1 = {imports = [ap-southeast-2 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-ap" 1) disableAlertCount];};
-      buildkite1-sa-east-1-1 = {imports = [sa-east-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-sa" 1) disableAlertCount];};
-
-      # Temporary buildkite linux queue until migration completes -- re-use the QA tmp regional server in EU
-      # buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "core-tech-bench-eu" 1)];};
-      buildkite1-eu-central-1-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "buildkite1") (bkCfg "daedalus" 3)];};
-      # ---------------------------------------------------------------------------------------------------------
-
-      # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node bp];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync-pre smash sanchonetSmash ccMon census];};
-      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre rel traceMp sanchoPeers];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync-pre ccfg smash sanchonetSmash ccMon census];};
+      sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre ccfg rel traceMp sanchoPeers ccfg];};
       # ---------------------------------------------------------------------------------------------------------
     };
 

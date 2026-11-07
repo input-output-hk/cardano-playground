@@ -74,6 +74,10 @@ in {
   # configured with this name, so it stays put if the server changes host.
   cname_metsuke_leios = mkCname {name = "metsuke-leios.${domain}"; records = ["leios1-metsuke-a-1.${domain}"];};
 
+  # Uketsuke, the signed one-off report inbox. It reads metsuke's key roster,
+  # so it lives on the same host.
+  cname_uketsuke_leios = mkCname {name = "uketsuke-leios.${domain}"; records = ["leios1-metsuke-a-1.${domain}"];};
+
   # Ipfs for all testnets
   cname_metadata_ipfs = mkCname {name = "ipfs.${domain}"; records = ["misc1-metadata-a-1.${domain}"];};
 
@@ -100,5 +104,12 @@ in {
     name = "leios-node.${domain}";
     records = ["144.76.1.222"];
     set_identifier = "leios-node-external-144-76-1-222";
+  };
+
+  aaaa_leios_node_external = mkMultivalueA {
+    type = "AAAA";
+    name = "leios-node.${domain}";
+    records = ["2a01:4f8:190:71cc::2"];
+    set_identifier = "leios-node-external-2a01-4f8-190-71cc-2";
   };
 }

@@ -146,9 +146,9 @@ def find-pool-id-files [group: string] {
   glob $"($nd)/*-pool.id" | sort
 }
 # ─── Query functions ─────────────────────────────────────────────────────────
-def query-pool-stake [pool_id: string, net_args: list<string>] {
-  debug-cmd "cardano-cli" (["latest", "query", "stake-snapshot", "--stake-pool-id", $pool_id] | append $net_args)
-  let data = (^cardano-cli latest query stake-snapshot --stake-pool-id $pool_id ...$net_args | from json)
+def query-pool-stake [pool_id: string, net_args: list<string>, --era: string] {
+  debug-cmd "cardano-cli" ([$era, "query", "stake-snapshot", "--stake-pool-id", $pool_id] | append $net_args)
+  let data = (^cardano-cli $era query stake-snapshot --stake-pool-id $pool_id ...$net_args | from json)
   # Pool stake is nested under pools.<hex-key-hash>; extract the first (only) entry
   let pool_data = (
     $data | get pools | transpose _hash info | first | get info
@@ -159,28 +159,28 @@ def query-pool-stake [pool_id: string, net_args: list<string>] {
     go: ($pool_data | get -o stakeGo | default 0)
   }
 }
-def query-drep-info [vkey_path: string, net_args: list<string>] {
+def query-drep-info [vkey_path: string, net_args: list<string>, --era: string] {
   let f_vkey = (^mktemp --suffix .vkey | str trim)
   try {
     sops-decrypt $vkey_path | save --force $f_vkey
     debug-cmd "cardano-cli" [
-      "latest"
+      $era
       "governance"
       "drep"
       "id"
       "--drep-verification-key-file"
       $f_vkey
     ]
-    let drep_id = (^cardano-cli latest governance drep id --drep-verification-key-file $f_vkey | str trim)
+    let drep_id = (^cardano-cli $era governance drep id --drep-verification-key-file $f_vkey | str trim)
     debug-cmd "cardano-cli" ([
-      "latest"
+      $era
       "query"
       "drep-state"
       "--drep-verification-key-file"
       $f_vkey
       "--include-stake"
     ] | append $net_args)
-    let state = (^cardano-cli latest query drep-state --drep-verification-key-file $f_vkey --include-stake ...$net_args | from json)
+    let state = (^cardano-cli $era query drep-state --drep-verification-key-file $f_vkey --include-stake ...$net_args | from json)
     rm --force $f_vkey
     if ($state | is-empty) {
       return {
@@ -204,10 +204,10 @@ def query-drep-info [vkey_path: string, net_args: list<string>] {
 }
 # ─── Network-wide distribution queries ───────────────────────────────────────
 # Query DRep stake distribution and state for network-wide totals
-def query-drep-totals [epoch: int, net_args: list<string>] {
+def query-drep-totals [epoch: int, net_args: list<string>, --era: string] {
   # drep-stake-distribution includes expired dreps and system dreps (alwaysAbstain, alwaysNoConfidence)
-  debug-cmd "cardano-cli" (["latest", "query", "drep-stake-distribution", "--all-dreps"] | append $net_args)
-  let drep_dist = (^cardano-cli latest query drep-stake-distribution --all-dreps ...$net_args | from json)
+  debug-cmd "cardano-cli" ([$era, "query", "drep-stake-distribution", "--all-dreps"] | append $net_args)
+  let drep_dist = (^cardano-cli $era query drep-stake-distribution --all-dreps ...$net_args | from json)
   let dist_entries = ($drep_dist | transpose key value)
   let always_abstain = (
     $dist_entries | where key == "drep-alwaysAbstain" | get -o value | safe-sum
@@ -217,8 +217,8 @@ def query-drep-totals [epoch: int, net_args: list<string>] {
   )
   let stake_total = ($dist_entries | get value | safe-sum)
   # drep-state with --include-stake gives per-drep expiry and stake (excludes system dreps)
-  debug-cmd "cardano-cli" (["latest", "query", "drep-state", "--all-dreps", "--include-stake"] | append $net_args)
-  let drep_state = (^cardano-cli latest query drep-state --all-dreps --include-stake ...$net_args | from json)
+  debug-cmd "cardano-cli" ([$era, "query", "drep-state", "--all-dreps", "--include-stake"] | append $net_args)
+  let drep_state = (^cardano-cli $era query drep-state --all-dreps --include-stake ...$net_args | from json)
   let active_stake = (
     $drep_state | where { |e| ($e | get 1 | get -o expiry | default 0) >= $epoch } | each { |e| $e | get 1 | get -o stake | default 0 } | safe-sum
   )
@@ -238,9 +238,9 @@ def query-drep-totals [epoch: int, net_args: list<string>] {
   }
 }
 # Query SPO stake distribution for network-wide totals
-def query-pool-totals [net_args: list<string>] {
-  debug-cmd "cardano-cli" (["latest", "query", "spo-stake-distribution", "--all-spos"] | append $net_args)
-  let pool_dist = (^cardano-cli latest query spo-stake-distribution --all-spos ...$net_args | from json)
+def query-pool-totals [net_args: list<string>, --era: string] {
+  debug-cmd "cardano-cli" ([$era, "query", "spo-stake-distribution", "--all-spos"] | append $net_args)
+  let pool_dist = (^cardano-cli $era query spo-stake-distribution --all-spos ...$net_args | from json)
   let stake_total = ($pool_dist | each { |e| $e | get 1 } | safe-sum)
   let abstain_total = (
     $pool_dist | where { |e| ($e | get -o 2) == "drep-alwaysAbstain" } | each { |e| $e | get 1 } | safe-sum
@@ -288,8 +288,10 @@ def main [
   print $"(ansi green_bold)Querying delegation for: ($env_name)(ansi reset)"
   print ""
   let tip = (check-node-synced $env_name $net)
+  # The CLI latest alias can still be Conway on a Dijkstra-capable build.
+  let era = $tip.era | str downcase
   let current_epoch = ($tip.epoch)
-  print $"  Epoch: ($current_epoch)  Slot: ($tip.slot)  Sync: ($tip.syncProgress)%"
+  print $"  Era: ($era)  Epoch: ($current_epoch)  Slot: ($tip.slot)  Sync: ($tip.syncProgress)%"
   print ""
   # ── Our Pools ─────────────────────────────────────────────────────────────
   let groups = (find-groups $env_name)
@@ -304,11 +306,7 @@ def main [
         let pool_name = ($pf | path basename | str replace '-pool.id' '')
         print -n $"  Querying ($pool_name)...\r"
         let pool_id = (sops-decrypt $pf | str trim)
-        let stake = (try {
-          query-pool-stake $pool_id $net
-        } catch {
-          {mark: 0, set: 0, go: 0}
-        })
+        let stake = query-pool-stake $pool_id $net --era $era
         $our_pool_mark_total = $our_pool_mark_total + $stake.mark
         $pool_rows = ($pool_rows | append {
                     Group:               $group
@@ -330,11 +328,7 @@ def main [
   mut our_drep_stake: int = 0
   if ($drep_vkey | path exists) {
     print -n "  Querying DRep...\r"
-    let drep = (try {
-      query-drep-info $drep_vkey $net
-    } catch {
-      {drep_id: "query failed", stake: 0, expiry: null}
-    })
+    let drep = query-drep-info $drep_vkey $net --era $era
     $our_drep_stake = $drep.stake
     print "                          "
     let drep_row = [
@@ -353,30 +347,9 @@ def main [
   print $"(ansi green_bold)Querying network-wide distributions...(ansi reset)"
   print ""
   print -n "  Querying DRep distribution...\r"
-  let drep_totals = (try {
-    query-drep-totals $current_epoch $net
-  } catch {
-    {
-      stake_total: 0
-      active_stake: 0
-      expired_stake: 0
-      always_abstain: 0
-      always_noconf: 0
-      active_count: 0
-      expired_count: 0
-    }
-  })
+  let drep_totals = query-drep-totals $current_epoch $net --era $era
   print -n "  Querying SPO distribution...\r"
-  let pool_totals = (try {
-    query-pool-totals $net
-  } catch {
-    {
-      stake_total: 0
-      abstain_total: 0
-      noconf_total: 0
-      pool_count: 0
-    }
-  })
+  let pool_totals = query-pool-totals $net --era $era
   print "                                        "
   # ── DRep voting denominator ───────────────────────────────────────────────
   # Denominator = active DRep stake + alwaysNoConfidence (alwaysAbstain and expired are excluded)
@@ -455,13 +428,13 @@ def main [
   print "  Pool Governance Summary:"
   print ($pool_summary | table)
   # ── Voting thresholds from protocol parameters ────────────────────────────
-  debug-cmd "cardano-cli" (["latest", "query", "protocol-parameters"] | append $net)
-  let pparams = (^cardano-cli latest query protocol-parameters ...$net | from json)
+  debug-cmd "cardano-cli" ([$era, "query", "protocol-parameters"] | append $net)
+  let pparams = (^cardano-cli $era query protocol-parameters ...$net | from json)
   let dvt = ($pparams | get dRepVotingThresholds)
   let pvt = ($pparams | get poolVotingThresholds)
   # Committee threshold from gov-state
-  debug-cmd "cardano-cli" (["latest", "query", "gov-state"] | append $net)
-  let gov_state = (^cardano-cli latest query gov-state ...$net | from json)
+  debug-cmd "cardano-cli" ([$era, "query", "gov-state"] | append $net)
+  let gov_state = (^cardano-cli $era query gov-state ...$net | from json)
   let cc_threshold_raw = (
     $gov_state | get -o committee | get -o threshold | default 0
   )

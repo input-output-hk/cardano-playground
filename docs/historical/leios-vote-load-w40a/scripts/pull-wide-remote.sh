@@ -4,6 +4,10 @@
 #
 #   window,host,chart,dimension,unix_time,value
 #
+# WINDOWS entries are label@start@end with full ISO timestamps, so a window may span
+# days. @ rather than : because ISO timestamps contain colons, and the list must stay
+# on one line because callers interpolate it into a remote "for ...; do".
+#
 # No `points` parameter is sent, so each chart comes back at its own collection
 # interval (1s for most, 2s for the PSI charts, 5s for system.load) rather than being
 # resampled to a common grid. Check the timestamps, do not assume 1s.
@@ -11,10 +15,10 @@ set -uo pipefail
 HOST=$(hostname)
 ND=localhost:19999
 
-WINDOWS="${WIN_ONLY:-base_11:10:05:11:05 base_13:12:05:13:05 load1:14:05:15:05 load2:16:05:17:05 load3:18:05:19:05}"
+WINDOWS="${WIN_ONLY:-base_11@2026-10-09T10:05:00Z@2026-10-09T11:05:00Z base_13@2026-10-09T12:05:00Z@2026-10-09T13:05:00Z load1@2026-10-09T14:05:00Z@2026-10-09T15:05:00Z load2@2026-10-09T16:05:00Z@2026-10-09T17:05:00Z load3@2026-10-09T18:05:00Z@2026-10-09T19:05:00Z}"
 
-# Chart families worth keeping for this investigation. Deliberately wide: netdata's
-# 1s tier expires in ~96h and a second pull after that is impossible.
+# Chart families worth keeping for this investigation. Deliberately wide: a second pull
+# means another full sweep of every host, so take everything that bears on the test now.
 FILTER='^net\.|^net_packets\.|^net_drops\.|^net_errors\.|^net_carrier\.'
 FILTER="$FILTER"'|^system\.(cpu|load|io|ram|intr|ctxt|processes|processes_state|net|ipv4|uptime|softirqs|softnet_stat)$'
 FILTER="$FILTER"'|^system\..*pressure'
@@ -27,9 +31,9 @@ CHARTS=$(curl -s "$ND/api/v1/charts" | jq -r '.charts|keys[]' | grep -E "$FILTER
 
 {
 for w in $WINDOWS; do
-  L=${w%%:*}; R=${w#*:}
-  S=$(echo "$R" | cut -d: -f1-2); E=$(echo "$R" | cut -d: -f3-4)
-  A=$(date -u -d "2026-10-09T$S:00Z" +%s); B=$(date -u -d "2026-10-09T$E:00Z" +%s)
+  L=${w%%@*}; R=${w#*@}
+  S=${R%@*}; E=${R#*@}
+  A=$(date -u -d "$S" +%s); B=$(date -u -d "$E" +%s)
   for c in $CHARTS; do
     curl -s "$ND/api/v1/data?chart=$c&after=$A&before=$B&format=json&options=seconds" \
     | jq -r --arg w "$L" --arg h "$HOST" --arg c "$c" '
