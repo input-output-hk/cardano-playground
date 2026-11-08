@@ -11,8 +11,8 @@
 
     # Extra pins
     # Temporary release-branch testing on mainnet1-rel-a-1 only.
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
-    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w45";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w45";
+    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios/jl/leios-w45a-rc";
 
     # Same tree as cardano-node-leios plus a bound on the inbound governor's
     # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
