@@ -1502,7 +1502,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Leios, all on custom leios prototype version
       # Remove `ccMon` until governance works in Dijkstra era
-      leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios-ng leiosBp ccMon leiosTrustedPeer immOnEphemeral metsukeAgent];};
+      leios1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosBp ccMon leiosTrustedPeer immOnEphemeral metsukeAgent];};
       leios1-rel-a-1 = {imports = [eu-central-1 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel leiosFilesNginx (eRel ["leios2-rel-b-1" "leios3-rel-c-1"])];};
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
@@ -1511,12 +1511,12 @@ in
       leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
-      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios-ng leiosBp leiosTrustedPeer];};
+      leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
       leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
-      leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
+      leios3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leios3") node-leios-ng leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leios3-rel-c-1 = {imports = [us-east-2 m8id-xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios2-rel-b-1"])];};
       leios3-rel-c-2 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (eRel ["leios1-rel-a-2" "leios2-rel-b-2"])];};
       leios3-rel-c-3 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios3") node-leios-ghc-debug leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios2-rel-b-3"])];};
@@ -1541,7 +1541,7 @@ in
       leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 300) (group "leiosred4") node-leios leiosRedTeamBp];};
       leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosred5") node-leios leiosRedTeamBp];};
       leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-2xlarge (ebs 300) (group "leiosred6") node-leios leiosRedTeamBp];};
-      leiosred7-bp-g-1 = {imports = [af-south-1 c5d-2xlarge (ebs 300) (group "leiosred7") node-leios leiosRedTeamBp];};
+      leiosred7-bp-g-1 = {imports = [af-south-1 c5d-2xlarge (ebs 300) (group "leiosred7") node-leios-ng leiosRedTeamBp];};
       leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosred8") node-leios leiosRedTeamBp];};
       leiosred9-bp-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosred9") node-leios leiosRedTeamBp];};
       leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 300) (group "leiosred10") node-leios leiosRedTeamBp];};
