@@ -365,8 +365,14 @@
             # A restart re-queries the chain, whose UTxO the previous
             # incarnation's mempool transactions already spend. Waiting lets
             # those drain, otherwise every submit rejects as
-            # AllInputsAreSpent.
+            # AllInputsAreSpent. A saturated network can take tens of minutes
+            # to drain, so back off from 60 s to a 180 s cap rather than spend
+            # the start limit at one restart a minute. The cap stays low enough
+            # that a key that was never funded, which exits immediately, still
+            # reaches startLimitBurst inside the interval and fails visibly.
             RestartSec = 60;
+            RestartSteps = 3;
+            RestartMaxDelaySec = 180;
 
             RestartPreventExitStatus = "SIGTERM";
 
