@@ -5,17 +5,17 @@ The Dijkstra testnet is an advanced environment for testing Dijkstra features.
 Dijkstra testnet forked to dijkstra era on November 1st 2026 at 00:00 UTC,
 epoch 14.
 
-The latest version available is cardano-node release `11.2.0`.
+The latest version available is cardano-node release `11.2.1`.
 
 #### Configuration files
 
-Compatible with cardano-node release [11.2.0](https://github.com/IntersectMBO/cardano-node/releases/tag/11.2.0)
+Compatible with cardano-node release [11.2.1](https://github.com/IntersectMBO/cardano-node/releases/tag/11.2.1)
 
 ```
 NOTE:
 * Node config now ships in the enveloped cardano-config format by default.
   Legacy flat configurations remain supported and can be converted with
-  `cardano-node config migrate`.  See the 11.2.0 release notes for more detail.
+  `cardano-node config migrate`.  See the 11.2.1 release notes for more detail.
 
 * Avoid connecting PeerSharing enabled nodes to a block producer using
 `InitiatorOnlyMode` as the block producer's IP will be leaked.
