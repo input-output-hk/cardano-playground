@@ -3373,16 +3373,16 @@
         "utils": "utils_6"
       },
       "locked": {
-        "lastModified": 1793647599,
-        "narHash": "sha256-JRW5hJMswuyYDaCO+7ZGGGuYLGrlmWN+lbLdxT2pwag=",
+        "lastModified": 1794423264,
+        "narHash": "sha256-VDJ9dIC/2i8LmlIlPTLWRCJ8harmS0BCG2lNP5LNO3c=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "2b96ed97129a43d9ebac895bbccad94e043dd500",
+        "rev": "bbd319c83e4898041dc651d31e868a55a419c897",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "jl/leios-w44",
+        "ref": "jl/leios-w45",
         "repo": "cardano-node",
         "type": "github"
       }
