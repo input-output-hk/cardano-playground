@@ -1507,21 +1507,24 @@ in
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {
-        imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census];
-        # Allow for the larger in-memory UTxO set while reserving RAM for
-        # db-sync, node overhead and the OS on this 16 GiB host.
+        imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census (lsmPath "/ephemeral/cardano-node/lsm/")];
+        # Keep both ledger UTxO tables on disk as the testnet UTxO set grows.
+        # db-sync defaults to <stateDir>/lsm, separate from the node's LSM
+        # session and retained with its snapshots on persistent storage.
         services.cardano-db-sync = {
+          explorerConfig.ledger_backend = "lsm";
+          # Retain the existing budgets while measuring LSM memory usage.
           nodeRamAvailableMiB = 6144;
           postgresRamAvailableMiB = 6144;
         };
       };
-      leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet];};
-      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge];};
+      leios1-faucet-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios faucet leiosFaucet (lsmPath "/ephemeral/cardano-node/lsm/")];};
+      leios1-centrifuge-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios leiosCentrifuge (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leios1-metsuke-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leios1") node-leios metsukeServer uketsukeServer (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       leios2-bp-b-1 = {imports = [eu-west-1 r8id-xlarge (ebs 300) (group "leios2") node-leios leiosBp leiosTrustedPeer];};
       leios2-rel-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFilesNginx (eRel ["leios1-rel-a-1" "leios3-rel-c-1"])];};
-      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel nixosModules.leios-firehose-growth (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
+      leios2-rel-b-2 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel leiosFirehose (eRel ["leios1-rel-a-2" "leios3-rel-c-2"])];};
       leios2-rel-b-3 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios2") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios1-rel-a-3" "leios3-rel-c-3"])];};
 
       leios3-bp-c-1 = {imports = [us-east-2 c8id-2xlarge (ebs 300) (group "leios3") node-leios-ng leiosBp leiosTrustedPeer (lsmPath "/ephemeral/cardano-node/lsm/")];};
@@ -1534,7 +1537,7 @@ in
       leiosfire5-edge-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosfire5") node-leios leiosFirehose];};
 
       # Tokyo, Japan
-      leiosfire8-edge-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosfire8") node-leios leiosFirehose];};
+      leiosfire8-edge-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosfire8") node-leios leiosFirehose (lsmPath "/ephemeral/cardano-node/lsm/")];};
 
       # California, USA
       leiosfire9-edge-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosfire9") node-leios leiosFirehose];};
@@ -1543,16 +1546,16 @@ in
       # These can remotely be switched between the normal haskell node and the red team "piranha" attacker node.
       # They don't go through a relay.
       # Regions for which only older generation machines with ephemeral NVMe are available are sized up to avoid compute deficiency.
-      leiosred1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leiosred1") node-leios leiosRedTeamBp];};
+      leiosred1-bp-a-1 = {imports = [eu-central-1 c8id-xlarge (ebs 300) (group "leiosred1") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leiosred2-bp-b-1 = {imports = [eu-west-1 c6id-2xlarge (ebs 300) (group "leiosred2") node-leios leiosRedTeamBp];};
-      leiosred3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leiosred3") node-leios leiosRedTeamBp];};
-      leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 300) (group "leiosred4") node-leios leiosRedTeamBp];};
+      leiosred3-bp-c-1 = {imports = [us-east-2 c8id-xlarge (ebs 300) (group "leiosred3") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
+      leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 300) (group "leiosred4") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosred5") node-leios leiosRedTeamBp];};
       leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-2xlarge (ebs 300) (group "leiosred6") node-leios leiosRedTeamBp];};
       leiosred7-bp-g-1 = {imports = [af-south-1 c5d-2xlarge (ebs 300) (group "leiosred7") node-leios-ng leiosRedTeamBp];};
-      leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosred8") node-leios leiosRedTeamBp];};
+      leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosred8") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leiosred9-bp-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosred9") node-leios leiosRedTeamBp];};
-      leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 300) (group "leiosred10") node-leios leiosRedTeamBp];};
+      leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 300) (group "leiosred10") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       # ---------------------------------------------------------------------------------------------------------
       #
       # ---------------------------------------------------------------------------------------------------------
