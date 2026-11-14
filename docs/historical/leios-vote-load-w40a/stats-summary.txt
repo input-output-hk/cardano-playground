@@ -3,13 +3,15 @@
 
 ## Fleet total egress (sum of the 9 relays at each second)
 all values Mbit/s; pk/mean is a ratio
+Percentiles and max are of the 3600 per-second fleet sums, not combined from per-host
+statistics. Only the mean is the same under both orderings.
 window         mean       p50       p95       p99       max   pk/mean
-base_11       118.0      28.8     443.6     914.5    2277.7      19.3
-base_13        86.8      19.2     380.5     767.1    1504.5      17.3
-load1          89.4      30.1     381.9     751.1     985.2      11.0
-load2          80.2      24.0     347.9     715.1    1109.6      13.8
-load3          93.5      29.1     412.3     765.1    1130.5      12.1
-load4         136.5      63.1     481.9     857.2    1713.1      12.6
+base_11       118.0      31.1     637.3    1253.5    2277.7      19.3
+base_13        86.8      19.9     447.0    1100.3    1776.4      20.5
+load1          89.4      30.4     402.8     805.9    1303.7      14.6
+load2          80.2      24.2     359.1     758.7    1447.7      18.1
+load3          93.5      29.8     445.0     871.4    1396.4      14.9
+load4         136.5      64.4     540.1    1062.6    1724.2      12.6
 
 ## Fleet total ingress (9 relays)
 all values Mbit/s; pk/mean is a ratio

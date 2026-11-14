@@ -6,4 +6,5 @@ Advanced environment configuration files available are:
 
 - [Preview Testnet](adv-preview.html)
 - [Pre-production Testnet](adv-preprod.html)
+- [Dijkstra Testnet](adv-dijkstra.html)
 - [Musashi Testnet](adv-musashi.html)

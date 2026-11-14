@@ -9,6 +9,9 @@
   --rule:         #c3c2b7;
   --blue:         #2a78d6;
   --orange:       #eb6834;
+  --v-real:       #b3401a;
+  --v-noise:      #6b7280;
+  --v-open:       #8a6d1f;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -20,6 +23,9 @@
     --rule:         #383835;
     --blue:         #3987e5;
     --orange:       #d95926;
+    --v-real:       #f0905f;
+    --v-noise:      #9aa1ac;
+    --v-open:       #d6b35c;
   }
 }
 :root[data-theme="dark"] {
@@ -31,6 +37,9 @@
   --rule:         #383835;
   --blue:         #3987e5;
   --orange:       #d95926;
+  --v-real:       #f0905f;
+  --v-noise:      #9aa1ac;
+  --v-open:       #d6b35c;
 }
 
 html { color-scheme: light dark; }
@@ -166,3 +175,60 @@ nav#TOC a:hover { color: var(--blue); text-decoration: underline; }
   h2 { break-after: avoid; }
   figure, table, pre { break-inside: avoid; }
 }
+
+/* ---- verdict board ------------------------------------------------------
+   The same summary cards the published artifact leads with. The document
+   classifies every measurement as real signal / within noise / confounded /
+   unresolved, and that classification is what a reader needs before the
+   detail. The stripe before each tag encodes the verdict in form as well as
+   colour, so it survives greyscale and colour-blind viewing. */
+.board {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  margin: 0 0 3rem;
+  overflow: hidden;
+}
+.card { background: var(--surface); padding: 1.1rem 1.2rem 1.25rem; }
+.card .tag {
+  align-items: center;
+  color: var(--ink-muted);
+  display: flex;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.66rem;
+  gap: 0.5rem;
+  letter-spacing: 0.11em;
+  margin: 0 0 0.7rem;
+  text-transform: uppercase;
+}
+.card .tag::before {
+  background: currentColor;
+  border-radius: 1px;
+  content: "";
+  height: 0.78rem;
+  width: 3px;
+}
+.card.real  .tag { color: var(--v-real); }
+.card.noise .tag { color: var(--v-noise); }
+.card.open  .tag { color: var(--v-open); }
+.card h4 { color: var(--ink); font-size: 1rem; margin: 0 0 0.35rem; }
+.card p {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: none;
+}
+.card .fig {
+  color: var(--ink);
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.3rem;
+}
+@media print { .board { break-inside: avoid; } }

@@ -107,14 +107,26 @@ in {
         description = "{{$labels.instance}}: cardano-node has an incoming connection count > 450 which is close to the hard limit of 512.  Consider scaling or taking other action.";
       };
     }
+    # Preprod and preview nodes run the hiConn profile in flake/colmena.nix,
+    # which raises the hard limit from 512 to 1024. Keep these in step with it.
     {
       alert = "cardano_connection_count_high_new_tracing";
-      expr = ''cardano_node_metrics_connectionManager_inboundConns_int > 450'';
+      expr = ''cardano_node_metrics_connectionManager_inboundConns_int{environment!~"preprod|preview"} > 450'';
       for = "10m";
       labels.severity = "page";
       annotations = {
         summary = "{{$labels.instance}}: cardano-node has a high number of connections.";
         description = "{{$labels.instance}}: cardano-node has an incoming connection count > 450 which is close to the hard limit of 512.  Consider scaling or taking other action.";
+      };
+    }
+    {
+      alert = "cardano_connection_count_high_new_tracing_hi_conn";
+      expr = ''cardano_node_metrics_connectionManager_inboundConns_int{environment=~"preprod|preview"} > 900'';
+      for = "10m";
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: cardano-node has a high number of connections.";
+        description = "{{$labels.instance}}: cardano-node has an incoming connection count > 900 which is close to the hard limit of 1024.  Consider scaling or taking other action.";
       };
     }
   ];

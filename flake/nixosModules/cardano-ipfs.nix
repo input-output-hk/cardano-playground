@@ -1,11 +1,7 @@
-flake @ {
-  inputs,
-  moduleWithSystem,
-  ...
-}: let
+flake: let
   inherit (flake.config.flake.cardano-parts.cluster.infra.aws) domain;
 in {
-  flake.nixosModules.cardano-ipfs = moduleWithSystem ({system}: {
+  flake.nixosModules.cardano-ipfs = {
     config,
     pkgs,
     name,
@@ -73,7 +69,6 @@ in {
       services = {
         kubo = {
           enable = true;
-          package = inputs.nixpkgs-unstable.legacyPackages.${system}.kubo;
 
           enableGC = true;
           autoMount = true;
@@ -410,5 +405,5 @@ in {
         fileGroup = "nginx";
       };
     };
-  });
+  };
 }

@@ -6,7 +6,7 @@ A comma-separated list of the most notable changes, kept under ~80 characters. U
 
 Example titles:
 - Node `10.6.2`, ng `10.7.0`, zfs AMI, dijkstra respin
-- Node `10.6.4`, Dbsync `13.6.0.8`/`13.7.0.2`, zfs ARC cache, buildkite updates
+- Node `10.6.4`, Dbsync `13.6.0.8`/`13.7.0.2`, zfs ARC cache
 - Node `10.7.1`, Dbsync `13.7.0.4`, Leios testnet
 
 ## Description
@@ -39,7 +39,7 @@ This pull request updates cardano-node to release `10.6.4`, while cardano-db-syn
 * Bump cardano-node to `10.6.3`, then `10.6.4` with release environment deployments
 * Update cardano-db-sync to `13.6.0.8` and pre-release to `13.7.0.2` with dbsync deployments
 * Extend ZFS AMI module with `boot.zfs.zfsArcPct` option for percentage-based cache configuration
-* Resolve buildkite NixOS container startup race condition involving sops
+* Resolve NixOS container startup race condition involving sops
 * Add CPU/memory usage monitoring panels and totals to Grafana dashboards
 * Update cardano-book documentation for `10.6.3` and `10.6.4` releases
 * Execute governance vote on preview network for Van Rossem PV11 cost model update

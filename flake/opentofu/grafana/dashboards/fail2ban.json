@@ -1,0 +1,1393 @@
+{
+  "uid": "fail2ban",
+  "title": "Fail2ban: Jail activity",
+  "description": "Fleet view of fail2ban. Filter environment, group, host and jail. Trends aggregate by jail; tables provide host detail. An UP daemon with no matches may still have broken log ingestion. Counts are not unique IPs.",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": true,
+  "timezone": "utc",
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "tags": [
+    "security",
+    "fail2ban"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(up{job=\"integrations/fail2ban\"}, environment)",
+        "definition": "label_values(up{job=\"integrations/fail2ban\"}, environment)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "group",
+        "label": "Group",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(up{job=\"integrations/fail2ban\",environment=~\"$environment\"}, group)",
+        "definition": "label_values(up{job=\"integrations/fail2ban\",environment=~\"$environment\"}, group)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "instance",
+        "label": "Host",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\"}, instance)",
+        "definition": "label_values(up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "jail",
+        "label": "Jail",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(f2b_jail_banned_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}, jail)",
+        "definition": "label_values(f2b_jail_banned_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}, jail)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Monitored hosts",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Hosts with a current exporter scrape target. Hosts absent from monitoring entirely cannot be counted here.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"})",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Unhealthy hosts",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Hosts with failed scrapes, failed socket pings, or missing socket-health metrics. UP does not establish that jail filters are working.",
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(1 - ((up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"} * on(environment, instance) f2b_up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}) or on(environment, instance) (0 * up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"})))",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Selected jails reporting",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Number of reporting host/jail pairs, not unique jail names.",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(f2b_jail_banned_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"})",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Active bans \u00b7 host/jail total",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Sum across selected hosts and jails. The same IP can be counted on multiple hosts and by multiple jails; this is not a unique-IP count.",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(f2b_jail_banned_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"})",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "title": "New bans \u00b7 selected period",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Estimated count over the selected time range, accounting for counter resets. Includes repeat bans and overlapping jails.",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(f2b_jail_banned_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__range]))",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Active bans by jail",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Fleet totals per jail; no per-host series. Repeated IPs across hosts remain separate bans.",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (jail) (f2b_jail_banned_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"})",
+          "legendFormat": "{{jail}}",
+          "instant": false,
+          "range": true,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Matched events / second by jail",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Aggregate match rate across selected hosts and peers. Different jails can match the same event. This is not a per-IP rate and cannot be compared to maxretry.",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (jail) (rate(f2b_jail_failed_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__rate_interval]))",
+          "legendFormat": "{{jail}}",
+          "instant": false,
+          "range": true,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "New bans / minute by jail",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Aggregated counter rates; resets are accounted for before summing.",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "60 * sum by (jail) (rate(f2b_jail_banned_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__rate_interval]))",
+          "legendFormat": "{{jail}}",
+          "instant": false,
+          "range": true,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Exporter errors / second by type",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Aggregate socket connection and request errors across the selected fleet.",
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (type) (rate(f2b_errors{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "{{type}}",
+          "instant": false,
+          "range": true,
+          "editorMode": "code",
+          "interval": "1m"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Top 10 hosts \u00b7 matched events",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Instant ranking over the selected time range; zero-activity hosts are omitted. Counts may be fractional due to Prometheus extrapolation. Multiple matching jails can count the same event.",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.width",
+                "value": 330
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "label_join((topk(10, (sum by (environment, instance) (increase(f2b_jail_failed_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__range]))) > 0)), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "enablePagination": true,
+        "sortBy": [
+          {
+            "displayName": "Matches",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "row",
+                "Value"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "row": 0,
+              "Value": 1
+            },
+            "renameByName": {
+              "row": "Host",
+              "Value": "Matches"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Top 10 hosts \u00b7 new bans",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Instant ranking over the selected time range; zero-activity hosts are omitted. Counts may be fractional due to Prometheus extrapolation. Multiple matching jails can count the same event.",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.width",
+                "value": 330
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "label_join((topk(10, (sum by (environment, instance) (increase(f2b_jail_banned_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__range]))) > 0)), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "enablePagination": true,
+        "sortBy": [
+          {
+            "displayName": "Bans",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "row",
+                "Value"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "row": 0,
+              "Value": 1
+            },
+            "renameByName": {
+              "row": "Host",
+              "Value": "Bans"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Host health \u00b7 unhealthy first",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "All selected scrape targets, including failures. Missing metrics show a dash, not a healthy zero. Host health ignores the jail filter. Use column filters and sorting to investigate individual machines.",
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 24,
+        "h": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "\u2014",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.width",
+                "value": 330
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Health"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "DOWN",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "UP",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Scrape"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "DOWN",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "UP",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Socket"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "DOWN",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "UP",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "label_join((((up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"} * on(environment, instance) f2b_up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}) or on(environment, instance) (0 * up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}))), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "label_join((up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "label_join((f2b_up{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "label_join((f2b_jail_count{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "label_join((sum by (environment, instance) (increase(f2b_errors{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))), \"row\", \" / \", \"environment\", \"instance\")",
+          "legendFormat": "{{jail}}",
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "interval": "1m",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "enablePagination": true,
+        "sortBy": [
+          {
+            "displayName": "Health",
+            "desc": false
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "row",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "row",
+                "Value #A",
+                "Value #B",
+                "Value #C",
+                "Value #D",
+                "Value #E"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "row": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5
+            },
+            "renameByName": {
+              "row": "Host",
+              "Value #A": "Health",
+              "Value #B": "Scrape",
+              "Value #C": "Socket",
+              "Value #D": "Jails",
+              "Value #E": "Errors in period"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Per-host / per-jail detail \u00b7 expand and filter as needed",
+      "type": "row",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": true,
+      "panels": [
+        {
+          "id": 14,
+          "title": "Jail activity",
+          "type": "table",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "description": "One row per host/jail. Period counts account for resets. Current failures are not a per-IP threshold measurement.",
+          "gridPos": {
+            "x": 0,
+            "y": 42,
+            "w": 24,
+            "h": 14
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "\u2014",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "decimals": 0,
+              "custom": {
+                "align": "right",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "inspect": false
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Host / jail"
+                },
+                "properties": [
+                  {
+                    "id": "custom.align",
+                    "value": "left"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 400
+                  }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "label_join((f2b_jail_banned_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            },
+            {
+              "refId": "B",
+              "expr": "label_join((increase(f2b_jail_failed_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__range])), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            },
+            {
+              "refId": "C",
+              "expr": "label_join((increase(f2b_jail_banned_total{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}[$__range])), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            },
+            {
+              "refId": "D",
+              "expr": "label_join((f2b_jail_failed_current{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            }
+          ],
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "enablePagination": true,
+            "sortBy": [
+              {
+                "displayName": "Active bans",
+                "desc": true
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "row",
+                "mode": "outerTabular"
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "row",
+                    "Value #A",
+                    "Value #B",
+                    "Value #C",
+                    "Value #D"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "indexByName": {
+                  "row": 0,
+                  "Value #A": 1,
+                  "Value #B": 2,
+                  "Value #C": 3,
+                  "Value #D": 4
+                },
+                "renameByName": {
+                  "row": "Host / jail",
+                  "Value #A": "Active bans",
+                  "Value #B": "Matches in period",
+                  "Value #C": "Bans in period",
+                  "Value #D": "Current failures"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "title": "Jail configuration",
+          "type": "table",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "description": "Compare configuration across hosts using table filters; no repeated stat tiles.",
+          "gridPos": {
+            "x": 0,
+            "y": 56,
+            "w": 24,
+            "h": 12
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "\u2014",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "decimals": 0,
+              "custom": {
+                "align": "right",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "inspect": false
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Host / jail"
+                },
+                "properties": [
+                  {
+                    "id": "custom.align",
+                    "value": "left"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 400
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Window"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Ban duration"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "label_join((f2b_config_jail_find_time{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            },
+            {
+              "refId": "B",
+              "expr": "label_join((f2b_config_jail_max_retries{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            },
+            {
+              "refId": "C",
+              "expr": "label_join((f2b_config_jail_ban_time{job=\"integrations/fail2ban\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",jail=~\"$jail\"}), \"row\", \" / \", \"environment\", \"instance\", \"jail\")",
+              "legendFormat": "{{jail}}",
+              "instant": true,
+              "range": false,
+              "editorMode": "code",
+              "interval": "1m",
+              "format": "table"
+            }
+          ],
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "enablePagination": true,
+            "sortBy": [
+              {
+                "displayName": "Window",
+                "desc": true
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "row",
+                "mode": "outerTabular"
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "row",
+                    "Value #A",
+                    "Value #B",
+                    "Value #C"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "indexByName": {
+                  "row": 0,
+                  "Value #A": 1,
+                  "Value #B": 2,
+                  "Value #C": 3
+                },
+                "renameByName": {
+                  "row": "Host / jail",
+                  "Value #A": "Window",
+                  "Value #B": "Threshold / IP",
+                  "Value #C": "Ban duration"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "annotations": {
+    "list": []
+  }
+}
