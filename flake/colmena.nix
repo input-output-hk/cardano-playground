@@ -207,23 +207,6 @@ in
           };
         };
 
-      # Parked W42 inbound-governor diagnostic override now that hosts use W43.
-      # node-leios-patched = {
-      #   imports = [
-      #     node-leios
-      #     {
-      #       cardano-parts.perNode.pkgs = let
-      #         patched = inputs.cardano-node-leios-patched.inputs.cardano-node-leios.packages.x86_64-linux;
-      #       in {
-      #         cardano-cli = lib.mkOverride 40 patched.cardano-cli;
-      #         cardano-node = lib.mkOverride 40 patched.cardano-node;
-      #         cardano-submit-api = lib.mkOverride 40 patched.cardano-submit-api;
-      #         cardano-tracer = lib.mkOverride 40 patched.cardano-tracer;
-      #       };
-      #     }
-      #   ];
-      # };
-
       # Leios next-release override
       node-leios-ng = {
         imports = [

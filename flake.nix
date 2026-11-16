@@ -14,12 +14,6 @@
     cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w46";
     cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w46";
 
-    # Same tree as cardano-node-leios plus a bound on the inbound governor's
-    # MuxFinished await, a diagnostic for the relay wedge. Hosts opt in through
-    # the node-leios-patched import in colmena.nix, so this input and that
-    # import come out together when the bound is no longer wanted.
-    cardano-node-leios-patched.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w44";
-
     # IPE/eventlog and ghc-debug builds for selected diagnostic relays only.
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/leios-w44-debug";
     leios-adversarial-tools = {
