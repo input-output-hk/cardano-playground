@@ -459,9 +459,7 @@ in
         nixosModules.profile-leios-tx-centrifuge
         {
           services.cardano-tx-centrifuge = {
-            # Even UTC hours on, odd UTC hours off.
-            startOnCalendar = "00/2:00:00";
-            stopOnCalendar = "01/2:00:00";
+            continuous = true;
             settings = {
               rate_limit.params.tps = 100;
               # observers.local-follower.params.confirmation_depth = 3;

@@ -14,6 +14,12 @@
     options.services.${serviceName} = {
       enable = lib.mkEnableOption "tx-centrifuge";
 
+      continuous = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Run at boot without load-window timers or a runtime limit.";
+      };
+
       package = lib.mkPackageOption inputs'.cardano-node-leios-bench.packages "tx-centrifuge" {};
 
       useLocalCardanoNode = {
@@ -163,7 +169,7 @@
           max_batch_size = lib.mkDefault 10;
         };
 
-        systemd.timers = {
+        systemd.timers = lib.mkIf (!cfg.continuous) {
           # Started by the timer below, not at boot: a boot inside an odd hour
           # must not put load on the network until the next even hour.
           ${serviceName} = {
@@ -190,6 +196,7 @@
         systemd.services = {
           ${serviceName} = {
             enableStrictShellChecks = true;
+            wantedBy = lib.optionals cfg.continuous ["multi-user.target"];
 
             # Restart on failure: up to 3 retries, 1 minute apart. After 3
             # failed retries within the 10-minute window the unit stays in
@@ -228,7 +235,7 @@
               # disable value is "infinity", not 0 (0 would terminate the
               # service immediately).
               RuntimeMaxSec =
-                if cfg.maxRuntimeSeconds == 0
+                if cfg.continuous || cfg.maxRuntimeSeconds == 0
                 then "infinity"
                 else cfg.maxRuntimeSeconds;
 
@@ -241,7 +248,7 @@
             };
           };
 
-          "${serviceName}-stop" = {
+          "${serviceName}-stop" = lib.mkIf (!cfg.continuous) {
             description = "Stop ${serviceName} at the end of its load window";
             serviceConfig = {
               Type = "oneshot";
@@ -278,6 +285,7 @@
         };
 
         systemd.services.${serviceName} = {
+          wantedBy = lib.optionals cfg.continuous ["cardano-node.service"];
           requisite = ["cardano-node.service"];
 
           # The socket share unit is WantedBy the node, so a node already
