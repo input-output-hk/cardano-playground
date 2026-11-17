@@ -1,0 +1,604 @@
+{
+  "uid": "cardano-submit-api",
+  "title": "Cardano Submit API",
+  "description": "Submit-api Prometheus endpoint health, accepted and failed transaction submissions, and service logs.",
+  "tags": [
+    "cardano",
+    "submit-api"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(up{job=\"integrations/cardano-submit-api\"}, environment)",
+        "definition": "label_values(up{job=\"integrations/cardano-submit-api\"}, environment)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "group",
+        "label": "Group",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\"}, group)",
+        "definition": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\"}, group)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "instance",
+        "label": "Host",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "query": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\"}, instance)",
+        "definition": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Scope and interpretation",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [],
+      "options": {
+        "mode": "markdown",
+        "content": "Submit-api host monitoring \u00b7 UTC \u00b7 1-minute refresh/scrape. **Scrape up means only the metrics endpoint is reachable**, not that the node can accept transactions. Successful submissions mean local-node acceptance, not on-chain inclusion. Failed submissions count the instrumented failure path; malformed HTTP requests and other exceptions may not be included. No latency, transaction-size, or build-version metric is exported. An idle service should expose zero counters; missing data is not treated as zero. If the metrics port is occupied, submit-api can move to a higher port while Alloy still targets the configured port\u2014check logs below."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Scraped endpoints",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Number of reachable metrics endpoints.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"})",
+          "legendFormat": "",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Unreachable endpoints",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Configured targets currently failing scrapes. Disappeared targets are not counted.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(1 - up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"})",
+          "legendFormat": "",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Accepted submissions \u00b7 range",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Estimated counter increase over the selected range; resets accounted for.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "legendFormat": "",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Failed submissions \u00b7 range",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Estimated instrumented failures over the selected range; resets accounted for.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "legendFormat": "",
+          "range": false,
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Metrics endpoint availability by host",
+      "type": "state-timeline",
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Reachability of the configured Prometheus endpoint. Missing series stay missing.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Down",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Up",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "mergeValues": true,
+        "rowHeight": 0.8
+      }
+    },
+    {
+      "id": 7,
+      "title": "Accepted submissions per minute by host",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:tx/min",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(instance)(rate(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Failed submissions per minute by host",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:tx/min",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Instrumented submission failure percentage by host",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "Failed / (accepted + failed). Idle periods have no percentage; this is not an HTTP-wide error rate.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(100 * sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) / (sum by(instance)(rate(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) + sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])))) and ((sum by(instance)(rate(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) + sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval]))) > 0)",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Accepted and failed submissions by host \u00b7 selected range",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(instance)(increase(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "legendFormat": "Accepted",
+          "range": false,
+          "editorMode": "code",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by(instance)(increase(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "legendFormat": "Failed",
+          "range": false,
+          "editorMode": "code",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "instance",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true
+            },
+            "renameByName": {
+              "instance": "Host",
+              "Value #A": "Accepted",
+              "Value #B": "Failed"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Submit-api logs",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 24,
+        "h": 12
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\",systemd_unit=\"cardano-submit-api.service\"}",
+          "queryType": "range",
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    }
+  ]
+}

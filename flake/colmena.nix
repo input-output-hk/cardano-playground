@@ -558,13 +558,12 @@ in
         ];
       };
 
-      # Once node 11.1 is released this imports content can be uncommented and utilized.
       submit-api = {
         imports = [
           # The service module config default is cardanoLib submitApiConfig, so
           # no explicit config override is required here.
-          # config.flake.cardano-parts.cluster.groups.default.meta.cardano-submit-api-service-ng
-          # inputs.cardano-parts.nixosModules.profile-cardano-submit-api
+          config.flake.cardano-parts.cluster.groups.default.meta.cardano-submit-api-service-ng
+          inputs.cardano-parts.nixosModules.profile-cardano-submit-api
         ];
       };
 
@@ -709,7 +708,7 @@ in
 
       rel = {imports = [inputs.cardano-parts.nixosModules.role-relay topoRel];};
 
-      #deadnix: skip
+      # deadnix: skip
       dbsync = {
         imports = [
           config.flake.cardano-parts.cluster.groups.default.meta.cardano-node-service
@@ -1403,7 +1402,7 @@ in
       preprod1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre ccfg rel preprodRelMig mithrilRelay (declMSigner "preprod1-bp-a-1")];};
       preprod1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre ccfg rel preprodRelMig];};
       preprod1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre ccfg rel preprodRelMig tcpTxOpt];};
-      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync-pre ccfg smash preprodSmash census];};
+      preprod1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 200) (group "preprod1") dbsync-pre ccfg smash preprodSmash census submit-api];};
       preprod1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod1") node-pre ccfg faucet faucetReleasePin preprodFaucet];};
 
       preprod2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preprod2") node-pre ccfg bp mithrilRelease mithrilSignerStack (declMRel "preprod2-rel-b-1")];};
@@ -1432,6 +1431,7 @@ in
           dbsync-pre
           smash
           previewSmash
+          submit-api
           census
           ccfg
         ];
@@ -1468,7 +1468,7 @@ in
       dijkstra1-rel-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-2 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
       dijkstra1-rel-a-3 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre rel];};
-      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-dijkstra smash dijkstraSmash census];};
+      dijkstra1-dbsync-a-1 = {imports = [eu-central-1 t3a-medium (ebs 250) (group "dijkstra1") dbsync-dijkstra smash dijkstraSmash census submit-api];};
       dijkstra1-faucet-a-1 = {imports = [eu-central-1 t3a-medium (ebs 80) (group "dijkstra1") node-pre faucet dijkstraFaucet];};
 
       dijkstra2-bp-b-1 = {imports = [eu-west-1 t3a-medium (ebs 80) (group "dijkstra2") node-pre bp];};
@@ -1490,7 +1490,7 @@ in
       leios1-rel-a-2 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-2" "leios3-rel-c-2"])];};
       leios1-rel-a-3 = {imports = [eu-central-1 c8id-2xlarge (ebs 300) (nodeRamPct 70) (group "leios1") node-leios leiosRel (lsmPath "/ephemeral/cardano-node/lsm/") (eRel ["leios2-rel-b-3" "leios3-rel-c-3"])];};
       leios1-dbsync-a-1 = {
-        imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios smash dbsyncPub (openFwTcp 5432) census (lsmPath "/ephemeral/cardano-node/lsm/")];
+        imports = [eu-central-1 c8id-2xlarge (ebs 400) (group "leios1") node-leios dbsync-leios submit-api smash dbsyncPub (openFwTcp 5432) census (lsmPath "/ephemeral/cardano-node/lsm/")];
         # Keep both ledger UTxO tables on disk as the testnet UTxO set grows.
         # db-sync defaults to <stateDir>/lsm, separate from the node's LSM
         # session and retained with its snapshots on persistent storage.
@@ -1567,7 +1567,7 @@ in
       # ---------------------------------------------------------------------------------------------------------
       # Sanchonet temporary machines, for disaster recovery testing with the community
       sanchonet1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre ccfg bp];};
-      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync-pre ccfg smash sanchonetSmash ccMon census];};
+      sanchonet1-dbsync-a-1 = {imports = [eu-central-1 r6a-xlarge (ebs 250) (group "sanchonet1") dbsync-pre ccfg smash sanchonetSmash ccMon census submit-api];};
       sanchonet1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "sanchonet1") node-pre ccfg rel traceMp sanchoPeers ccfg];};
       # ---------------------------------------------------------------------------------------------------------
     };
