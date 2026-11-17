@@ -1547,8 +1547,8 @@ in
       # Rel-a-{2,3} lsm and mdb fault tests
       # Rel-a-4 addnl current release tests
       # Dbsync-a-2 is kept in stopped state unless actively needed for testing and excluded from the machine count alert
-      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg smash mainnetSmash dbsyncPub (openFwTcp 5432) traceMp census {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
-      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg smash mainnet2Smash traceMp {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-1 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg submit-api smash mainnetSmash dbsyncPub (openFwTcp 5432) traceMp census {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
+      mainnet1-dbsync-a-2 = {imports = [eu-central-1 r5-2xlarge (ebs 1000) (group "mainnet1") dbsync-pre ccfg submit-api smash mainnet2Smash traceMp {services.cardano-db-sync.nodeRamAvailableMiB = 20480;}];};
       mainnet1-rel-a-1 = {imports = [eu-central-1 r5-xlarge (ebs 400) (group "mainnet1") node-pre ccfg bp mithrilSignerDisable ccMon logGc traceMp];};
       mainnet1-rel-a-2 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre ccfg lsm ram8gib (openFwTcp 3001) traceMp];};
       mainnet1-rel-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 400) (group "mainnet1") node-pre ccfg lsm ram8gib (openFwTcp 3001) traceMp];};

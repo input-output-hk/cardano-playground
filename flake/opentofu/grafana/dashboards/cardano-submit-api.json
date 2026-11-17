@@ -25,18 +25,26 @@
           "type": "prometheus",
           "uid": "mimir"
         },
-        "query": "label_values(up{job=\"integrations/cardano-submit-api\"}, environment)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(up{job=\"integrations/cardano-submit-api\"}, environment)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "definition": "label_values(up{job=\"integrations/cardano-submit-api\"}, environment)",
-        "refresh": 1,
+        "refresh": 2,
         "sort": 1,
         "multi": true,
         "includeAll": true,
         "allValue": ".*",
         "current": {
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
-        "options": []
+        "options": [],
+        "regex": "",
+        "allowCustomValue": false
       },
       {
         "name": "group",
@@ -46,18 +54,26 @@
           "type": "prometheus",
           "uid": "mimir"
         },
-        "query": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\"}, group)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\"}, group)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "definition": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\"}, group)",
-        "refresh": 1,
+        "refresh": 2,
         "sort": 1,
         "multi": true,
         "includeAll": true,
         "allValue": ".*",
         "current": {
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
-        "options": []
+        "options": [],
+        "regex": "",
+        "allowCustomValue": false
       },
       {
         "name": "instance",
@@ -67,18 +83,26 @@
           "type": "prometheus",
           "uid": "mimir"
         },
-        "query": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\"}, instance)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\"}, instance)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "definition": "label_values(up{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\"}, instance)",
-        "refresh": 1,
+        "refresh": 2,
         "sort": 1,
         "multi": true,
         "includeAll": true,
         "allValue": ".*",
         "current": {
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
-        "options": []
+        "options": [],
+        "regex": "",
+        "allowCustomValue": false
       }
     ]
   },
@@ -229,7 +253,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "expr": "sum(increase(cardano_submit_api_metrics_tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
           "legendFormat": "",
           "range": false,
           "editorMode": "code",
@@ -274,7 +298,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "expr": "sum(increase(cardano_submit_api_metrics_tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
           "legendFormat": "",
           "range": false,
           "editorMode": "code",
@@ -377,7 +401,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by(instance)(rate(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "expr": "sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) * 60",
           "legendFormat": "{{instance}}",
           "range": true,
           "editorMode": "code"
@@ -423,7 +447,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "expr": "sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) * 60",
           "legendFormat": "{{instance}}",
           "range": true,
           "editorMode": "code"
@@ -470,7 +494,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(100 * sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) / (sum by(instance)(rate(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) + sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])))) and ((sum by(instance)(rate(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) + sum by(instance)(rate(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval]))) > 0)",
+          "expr": "(100 * sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) / (sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) + sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])))) and ((sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval])) + sum by(instance)(rate(cardano_submit_api_metrics_tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__rate_interval]))) > 0)",
           "legendFormat": "{{instance}}",
           "range": true,
           "editorMode": "code"
@@ -516,7 +540,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by(instance)(increase(tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "expr": "sum by(instance)(increase(cardano_submit_api_metrics_tx_submit_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
           "legendFormat": "Accepted",
           "range": false,
           "editorMode": "code",
@@ -525,7 +549,7 @@
         },
         {
           "refId": "B",
-          "expr": "sum by(instance)(increase(tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
+          "expr": "sum by(instance)(increase(cardano_submit_api_metrics_tx_submit_fail_counter{job=\"integrations/cardano-submit-api\",environment=~\"$environment\",group=~\"$group\",instance=~\"$instance\"}[$__range]))",
           "legendFormat": "Failed",
           "range": false,
           "editorMode": "code",
