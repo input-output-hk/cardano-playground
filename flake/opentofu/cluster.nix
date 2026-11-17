@@ -625,6 +625,11 @@ in {
                     to_port = 3001;
                   })
                   (mkRule {
+                    description = "Allow DMQ";
+                    from_port = 6161;
+                    to_port = 6161;
+                  })
+                  (mkRule {
                     description = "Allow Forwarding Proxy";
                     from_port = 3132;
                     to_port = 3132;

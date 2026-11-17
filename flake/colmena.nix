@@ -449,6 +449,90 @@ in
         nixosModules.profile-uketsuke-server
       ];
 
+      # dmq-node on Mithril's pre-release-preview DMQ network, beside the
+      # host's cardano-node. Network values are from the pre-release-preview
+      # row of Mithril's networks matrix; the relay/bp split follows Mithril's
+      # "production" signer deployment.
+      dmqPreviewPort = 6161;
+      dmqPreviewRelays = ["preview1-test-a-1" "preview1-test-a-2"];
+      dmqLocalRoot = {
+        advertise,
+        trustable,
+      }: accessPoints: {
+        inherit accessPoints advertise trustable;
+        valency = length accessPoints;
+      };
+      dmqPreviewPeers = hosts:
+        dmqLocalRoot {
+          advertise = false;
+          trustable = true;
+        } (map (host: {
+            address = "${host}.${domain}";
+            port = dmqPreviewPort;
+          })
+          hosts);
+      dmqPreview = {config, ...}: {
+        imports = [inputs.dmq-node.nixosModules.dmq-node];
+        # The node socket is 0755 by default; dmq-node connects through the
+        # cardano-node group, which needs write permission on the socket.
+        services.cardano-node.shareNodeSocket = true;
+        services.dmq-node = {
+          enable = true;
+          networkMagic = 2147483650;
+          port = dmqPreviewPort;
+          cardanoNodeConfig = config.services.cardano-node.nodeConfig;
+          cardanoNodeSocketPath = config.services.cardano-node.socketPath 0;
+          cardanoNodeSocketGroup = config.services.cardano-node.socketGroup;
+          hostAddr = "0.0.0.0";
+          topology = {
+            publicRoots = [];
+            useLedgerAfterSlot = -1;
+          };
+          extraSettings.PeerSelectionCounters = true;
+          traceOptions."" = {
+            backends = ["Stdout MachineFormat"];
+            severity = "Info";
+          };
+        };
+      };
+
+      # Public dmq relay: Mithril's bootstrap peers plus the other playground
+      # dmq relays.
+      dmqPreviewRelay = {name, ...}: {
+        imports = [dmqPreview];
+        services.dmq-node = {
+          openFirewall = true;
+          topology.localRoots = [
+            (dmqLocalRoot {
+                advertise = true;
+                trustable = false;
+              } (map (port: {
+                address = "34.76.22.193";
+                inherit port;
+              }) [6161 11002]))
+            (dmqPreviewPeers (remove name dmqPreviewRelays))
+          ];
+          extraSettings.PeerSharing = true;
+        };
+      };
+
+      # Block producer dmq-node: dials only the playground dmq relays, accepts
+      # no inbound peers, and is what the host's mithril-signer publishes its
+      # signatures to.
+      dmqPreviewBp = {config, ...}: {
+        imports = [dmqPreview];
+        services.dmq-node = {
+          topology.localRoots = [(dmqPreviewPeers dmqPreviewRelays)];
+          extraSettings.PeerSharing = false;
+        };
+        # The signer derives the DMQ magic from its NETWORK, and falls back to
+        # the aggregator when publishing to DMQ fails.
+        systemd.services.mithril-signer = {
+          environment.DMQ_NODE_SOCKET_PATH = config.services.dmq-node.socketPath;
+          serviceConfig.SupplementaryGroups = [config.services.dmq-node.group];
+        };
+      };
+
       metsukeAgent.imports = [
         inputs.metsuke.nixosModules.metsuke
         nixosModules.profile-metsuke-agent
@@ -1416,7 +1500,7 @@ in
 
       # ---------------------------------------------------------------------------------------------------------
       # Preview, one-third on release tag, two-thirds on pre-release tag
-      preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg bp mithrilRelease (declMRel "preview1-rel-a-1") ccMon];};
+      preview1-bp-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg bp mithrilRelease (declMRel "preview1-rel-a-1") ccMon dmqPreviewBp];};
       preview1-rel-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg rel mithrilRelay (declMSigner "preview1-bp-a-1")];};
       preview1-rel-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg rel];};
       preview1-rel-c-1 = {imports = [us-east-2 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg rel tcpTxOpt];};
@@ -1445,8 +1529,8 @@ in
       preview1-faucet-a-1 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg faucet faucetReleasePin previewFaucet];};
 
       # Lsm and in-mem pre-release backend testing
-      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg lsm noBPerf];};
-      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg noBPerf amiZfs logGc submit-api];};
+      preview1-test-a-1 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg lsm noBPerf dmqPreviewRelay];};
+      preview1-test-a-2 = {imports = [eu-central-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg noBPerf amiZfs logGc submit-api dmqPreviewRelay];};
       preview1-test-a-3 = {imports = [eu-central-1 m5ad-xlarge (ebs 80) (nodeRamPct 70) (group "preview1") node-pre ccfg submit-api lsm noBPerf amiZfs];};
 
       preview2-bp-b-1 = {imports = [eu-west-1 r6a-large (ebs 80) (nodeRamPct 70) (group "preview2") node-pre ccfg bp mithrilRelease (declMRel "preview2-rel-b-1") ccMon];};
