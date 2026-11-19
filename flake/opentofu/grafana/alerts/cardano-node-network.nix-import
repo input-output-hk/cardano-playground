@@ -1,4 +1,7 @@
 let
+  # Match node uptime across legacy and new tracing. Missing uptime keeps these
+  # delay alerts suppressed; node availability/restart alerts remain independent.
+  restartMask = "and on (environment, instance) (time() - max by (environment, instance) (cardano_node_metrics_node_start_time_int or cardano_node_metrics_nodeStartTime_int) >= 3600)";
   highBlockUtilization = toString 95; # Alert if blocks are above that % full.
 in {
   namespace = "cardano";
@@ -15,9 +18,11 @@ in {
         description = "{{$labels.instance}}: Cardano average ping latency over 5 minutes has been above 500 milliseconds for the last hour.";
       };
     }
+    # Exclude startup samples inside the lookback too, so they cannot keep
+    # adoption alerts firing after the one-hour grace period has elapsed.
     {
       alert = "blocks_adoption_delay_too_high";
-      expr = "avg by (environment, instance) (quantile_over_time(0.95, cardano_node_metrics_blockadoption_forgeDelay_real[6h])) >= 4.5";
+      expr = "avg by (environment, instance) (quantile_over_time(0.95, (cardano_node_metrics_blockadoption_forgeDelay_real ${restartMask})[6h:1m])) >= 4.5 ${restartMask}";
       for = "1m";
       labels.severity = "page";
       annotations = {
@@ -27,7 +32,7 @@ in {
     }
     {
       alert = "blocks_adoption_delay_too_high_new_tracing";
-      expr = "avg by (environment, instance) (quantile_over_time(0.95, cardano_node_metrics_blockfetchclient_blockdelay_real[6h])) >= 4.5";
+      expr = "avg by (environment, instance) (quantile_over_time(0.95, (cardano_node_metrics_blockfetchclient_blockdelay_real ${restartMask})[6h:1m])) >= 4.5 ${restartMask}";
       for = "1m";
       labels.severity = "page";
       annotations = {
@@ -59,7 +64,7 @@ in {
     }
     {
       alert = "cardano_blockfetchclient_blockdelay_high";
-      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive < 0.90'';
+      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive < 0.90 ${restartMask}'';
       for = "10m";
       labels.severity = "page";
       annotations = {
@@ -69,7 +74,7 @@ in {
     }
     {
       alert = "cardano_blockfetchclient_blockdelay_high_new_tracing";
-      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive_real < 0.90'';
+      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive_real < 0.90 ${restartMask}'';
       for = "10m";
       labels.severity = "page";
       annotations = {
@@ -79,7 +84,7 @@ in {
     }
     {
       alert = "cardano_blockfetchclient_blockdelay_critical";
-      expr = "cardano_node_metrics_blockfetchclient_blockdelay_cdfFive < 0.50";
+      expr = "cardano_node_metrics_blockfetchclient_blockdelay_cdfFive < 0.50 ${restartMask}";
       for = "10m";
       labels.severity = "page";
       annotations = {
@@ -89,7 +94,7 @@ in {
     }
     {
       alert = "cardano_blockfetchclient_blockdelay_critical_new_tracing";
-      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive_real < 0.50'';
+      expr = ''cardano_node_metrics_blockfetchclient_blockdelay_cdfFive_real < 0.50 ${restartMask}'';
       for = "10m";
       labels.severity = "page";
       annotations = {
