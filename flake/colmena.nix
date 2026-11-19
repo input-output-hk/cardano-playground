@@ -1617,7 +1617,7 @@ in
       leiosred4-bp-d-1 = {imports = [eu-north-1 c8id-xlarge (ebs 300) (group "leiosred4") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leiosred5-bp-e-1 = {imports = [ap-southeast-2 c6id-2xlarge (ebs 300) (group "leiosred5") node-leios leiosRedTeamBp];};
       leiosred6-bp-f-1 = {imports = [sa-east-1 c6id-2xlarge (ebs 300) (group "leiosred6") node-leios leiosRedTeamBp];};
-      leiosred7-bp-g-1 = {imports = [af-south-1 c5d-2xlarge (ebs 300) (group "leiosred7") node-leios-ng leiosRedTeamBp];};
+      leiosred7-bp-g-1 = {imports = [af-south-1 c5d-2xlarge (ebs 300) (group "leiosred7") node-leios-ng leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leiosred8-bp-h-1 = {imports = [ap-northeast-1 c8id-xlarge (ebs 300) (group "leiosred8") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
       leiosred9-bp-i-1 = {imports = [us-west-1 c5d-2xlarge (ebs 300) (group "leiosred9") node-leios leiosRedTeamBp];};
       leiosred10-bp-j-1 = {imports = [us-west-2 c8id-xlarge (ebs 300) (group "leiosred10") node-leios leiosRedTeamBp (lsmPath "/ephemeral/cardano-node/lsm/")];};
