@@ -173,11 +173,11 @@
     "CHaP_16": {
       "flake": false,
       "locked": {
-        "lastModified": 1794827134,
-        "narHash": "sha256-oPRhm/PM76RDiU1UWDHMby+kXn++uOKZWf1HUgaFY+8=",
+        "lastModified": 1795032900,
+        "narHash": "sha256-nPRiumr6VoO9MVjTlAfRPPAqqaEfP8NORWoVLbVIBbU=",
         "owner": "intersectmbo",
         "repo": "cardano-haskell-packages",
-        "rev": "bbdf5aed94bc635683a6fb06f00c997c7f8bae6e",
+        "rev": "484a8168474e6f1a6ad3bbfa74306564308adf02",
         "type": "github"
       },
       "original": {
@@ -2666,12 +2666,12 @@
         "hackageNix": "hackageNix_14",
         "haskellNix": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "haskellNix"
         ],
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "nixpkgs"
         ]
       },
@@ -2982,7 +2982,7 @@
         "iohkNix": "iohkNix_17",
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "cardano-dev",
           "haskellNix",
           "nixpkgs-unstable"
@@ -3078,7 +3078,7 @@
         "type": "github"
       }
     },
-    "cardano-node-11-2-2": {
+    "cardano-node-11-2-3": {
       "inputs": {
         "CHaP": "CHaP_16",
         "cardano-automation": "cardano-automation_5",
@@ -3093,23 +3093,23 @@
         "mithril": "mithril_5",
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "haskellNix",
           "nixpkgs-unstable"
         ],
         "utils": "utils_12"
       },
       "locked": {
-        "lastModified": 1794857732,
-        "narHash": "sha256-SnYdd7w8BI4OZEPC5BGj4vbcJ12uiqp46N7MlMyKwY4=",
+        "lastModified": 1795041690,
+        "narHash": "sha256-HWYnGz+ujlXf6NSoDY69v7ppBQy5ueSzJijM3ubvMtw=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "92568ce1f5f7c0c0c293e1fbf362868fa69dca70",
+        "rev": "aa2c7767e6b009307c87794d01752431f460c98b",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "koslambrou/release-11.2.2",
+        "ref": "koslambrou/release-11.2.3-bump-cardano-protocol-0.2.0.2",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -3444,16 +3444,16 @@
     "cardano-node-service-ng": {
       "flake": false,
       "locked": {
-        "lastModified": 1794857732,
-        "narHash": "sha256-SnYdd7w8BI4OZEPC5BGj4vbcJ12uiqp46N7MlMyKwY4=",
+        "lastModified": 1795041690,
+        "narHash": "sha256-HWYnGz+ujlXf6NSoDY69v7ppBQy5ueSzJijM3ubvMtw=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "92568ce1f5f7c0c0c293e1fbf362868fa69dca70",
+        "rev": "aa2c7767e6b009307c87794d01752431f460c98b",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "koslambrou/release-11.2.2",
+        "ref": "koslambrou/release-11.2.3-bump-cardano-protocol-0.2.0.2",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -3489,7 +3489,7 @@
         "cardano-faucet": "cardano-faucet",
         "cardano-faucet-leios": "cardano-faucet-leios",
         "cardano-metadata-service": "cardano-metadata-service",
-        "cardano-node-11-2-2": "cardano-node-11-2-2",
+        "cardano-node-11-2-3": "cardano-node-11-2-3",
         "cardano-node-service": "cardano-node-service",
         "cardano-node-service-ng": "cardano-node-service-ng",
         "cardano-ogmios-service": "cardano-ogmios-service",
@@ -3513,11 +3513,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1795029152,
-        "narHash": "sha256-IHgfvEXcRRkKNg9x1E/UuLpnqIOvgrWeZo5KD5vNZ2Y=",
+        "lastModified": 1795042263,
+        "narHash": "sha256-D7JzDx5blmMPa3ed8hyzUbJnGXPrnk+TqHFFHRPG4YA=",
         "owner": "input-output-hk",
         "repo": "cardano-parts",
-        "rev": "81623da7b2e1258ba75a686f20c9e430573f71c6",
+        "rev": "76029f7a104af6dcb9e8dfe6d3351a1cb947e07f",
         "type": "github"
       },
       "original": {
@@ -3947,16 +3947,16 @@
     "cardano-submit-api-service-ng": {
       "flake": false,
       "locked": {
-        "lastModified": 1794857732,
-        "narHash": "sha256-SnYdd7w8BI4OZEPC5BGj4vbcJ12uiqp46N7MlMyKwY4=",
+        "lastModified": 1795041690,
+        "narHash": "sha256-HWYnGz+ujlXf6NSoDY69v7ppBQy5ueSzJijM3ubvMtw=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "92568ce1f5f7c0c0c293e1fbf362868fa69dca70",
+        "rev": "aa2c7767e6b009307c87794d01752431f460c98b",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "koslambrou/release-11.2.2",
+        "ref": "koslambrou/release-11.2.3-bump-cardano-protocol-0.2.0.2",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -3981,16 +3981,16 @@
     "cardano-tracer-service-ng": {
       "flake": false,
       "locked": {
-        "lastModified": 1794857732,
-        "narHash": "sha256-SnYdd7w8BI4OZEPC5BGj4vbcJ12uiqp46N7MlMyKwY4=",
+        "lastModified": 1795041690,
+        "narHash": "sha256-HWYnGz+ujlXf6NSoDY69v7ppBQy5ueSzJijM3ubvMtw=",
         "owner": "IntersectMBO",
         "repo": "cardano-node",
-        "rev": "92568ce1f5f7c0c0c293e1fbf362868fa69dca70",
+        "rev": "aa2c7767e6b009307c87794d01752431f460c98b",
         "type": "github"
       },
       "original": {
         "owner": "IntersectMBO",
-        "ref": "koslambrou/release-11.2.2",
+        "ref": "koslambrou/release-11.2.3-bump-cardano-protocol-0.2.0.2",
         "repo": "cardano-node",
         "type": "github"
       }
@@ -8720,7 +8720,7 @@
         "iserv-proxy": "iserv-proxy_23",
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "cardano-dev",
           "haskellNix",
           "nixpkgs-unstable"
@@ -8758,7 +8758,7 @@
         "flake-compat": "flake-compat_49",
         "hackage": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "hackageNix"
         ],
         "hackage-for-stackage": "hackage-for-stackage_20",
@@ -8781,7 +8781,7 @@
         "iserv-proxy": "iserv-proxy_24",
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "nixpkgs"
         ],
         "nixpkgs-2305": "nixpkgs-2305_24",
@@ -16311,7 +16311,7 @@
         "cardano-config": "cardano-config",
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "nixpkgs"
         ],
         "secp256k1": "secp256k1_21",
@@ -23570,7 +23570,7 @@
       "inputs": {
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "mithril",
           "nixpkgs"
         ]
@@ -25789,7 +25789,7 @@
       "inputs": {
         "nixpkgs": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "mithril",
           "nixpkgs"
         ]
@@ -25951,7 +25951,7 @@
       "inputs": {
         "systems": [
           "cardano-parts",
-          "cardano-node-11-2-2",
+          "cardano-node-11-2-3",
           "cardano-dev",
           "systems"
         ]
