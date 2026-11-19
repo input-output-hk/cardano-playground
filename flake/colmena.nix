@@ -471,27 +471,50 @@ in
             port = dmqPreviewPort;
           })
           hosts);
-      dmqPreview = {config, ...}: {
+      # Loopback only: alloy is the sole reader. cardano-node takes 12798 and,
+      # with a second instance, 12799.
+      dmqMetricsPort = 12800;
+      dmqPreview = {
+        config,
+        options,
+        ...
+      }: {
         imports = [inputs.dmq-node.nixosModules.dmq-node];
-        # The node socket is 0755 by default; dmq-node connects through the
-        # cardano-node group, which needs write permission on the socket.
-        services.cardano-node.shareNodeSocket = true;
-        services.dmq-node = {
-          enable = true;
-          networkMagic = 2147483650;
-          port = dmqPreviewPort;
-          cardanoNodeConfig = config.services.cardano-node.nodeConfig;
-          cardanoNodeSocketPath = config.services.cardano-node.socketPath 0;
-          cardanoNodeSocketGroup = config.services.cardano-node.socketGroup;
-          hostAddr = "0.0.0.0";
-          topology = {
-            publicRoots = [];
-            useLedgerAfterSlot = -1;
+        services = {
+          alloy = {
+            systemdUnitInclude = "${options.services.alloy.systemdUnitInclude.default}|(^dmq-node.*)";
+            extraAlloyConfig = ''
+              prometheus.scrape "integrations_dmq_node" {
+                targets = [{
+                  __address__ = "127.0.0.1:${toString dmqMetricsPort}",
+                  ${concatStringsSep ",\n    " (mapAttrsToList (n: v: "${n} = \"${v}\"") config.services.alloy.labels)},
+                }]
+                forward_to = [prometheus.remote_write.integrations.receiver]
+                job_name = "integrations/dmq-node"
+                metrics_path = "/metrics"
+              }
+            '';
           };
-          extraSettings.PeerSelectionCounters = true;
-          traceOptions."" = {
-            backends = ["Stdout MachineFormat"];
-            severity = "Info";
+          # The node socket is 0755 by default; dmq-node connects through the
+          # cardano-node group, which needs write permission on the socket.
+          cardano-node.shareNodeSocket = true;
+          dmq-node = {
+            enable = true;
+            networkMagic = 2147483650;
+            port = dmqPreviewPort;
+            cardanoNodeConfig = config.services.cardano-node.nodeConfig;
+            cardanoNodeSocketPath = config.services.cardano-node.socketPath 0;
+            cardanoNodeSocketGroup = config.services.cardano-node.socketGroup;
+            hostAddr = "0.0.0.0";
+            topology = {
+              publicRoots = [];
+              useLedgerAfterSlot = -1;
+            };
+            extraSettings.PeerSelectionCounters = true;
+            traceOptions."" = {
+              backends = ["Stdout MachineFormat" "PrometheusSimple suffix 127.0.0.1 ${toString dmqMetricsPort}"];
+              severity = "Info";
+            };
           };
         };
       };
