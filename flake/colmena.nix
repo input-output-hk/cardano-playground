@@ -566,7 +566,11 @@ in
         nixosModules.profile-leios-tx-centrifuge
         {
           services.cardano-tx-centrifuge = {
-            continuous = true;
+            # Two hours on, two hours off, aligned with all firehoses in UTC.
+            continuous = false;
+            startOnCalendar = "00/4:00:00 UTC";
+            stopOnCalendar = "02/4:00:00 UTC";
+            maxRuntimeSeconds = 7800; # Two-hour window plus a ten-minute backstop.
             settings = {
               rate_limit.params.tps = 100;
               # observers.local-follower.params.confirmation_depth = 3;
@@ -592,7 +596,7 @@ in
         (eRel ["leios1-rel-a-1" "leios2-rel-b-1" "leios3-rel-c-1"])
       ];
 
-      # Continuous load, additive to centrifuge. Add to any host
+      # Scheduled load, aligned with centrifuge. Add to any host
       # already running a node, one instance per host, and fund
       # secrets/groups/<group>/deploy/<host>-firehose-fund.skey first, because
       # tx-firehose exits when the startup UTxO query comes back empty.
