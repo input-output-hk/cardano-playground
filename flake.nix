@@ -11,8 +11,8 @@
 
     # Extra pins
     # Temporary release-branch testing on mainnet1-rel-a-1 only.
-    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w46";
-    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w46";
+    cardano-node-leios.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w47";
+    cardano-node-leios-ng.url = "github:input-output-hk/ouroboros-leios?ref=refs/tags/rc-2026w47";
 
     # IPE/eventlog and ghc-debug builds for selected diagnostic relays only.
     cardano-node-leios-ghc-debug.url = "github:input-output-hk/ouroboros-leios/jl/leios-w44-debug";
