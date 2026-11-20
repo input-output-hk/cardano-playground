@@ -1,0 +1,1799 @@
+{
+  "uid": "dmq-node",
+  "title": "DMQ Node",
+  "description": "dmq-node signature diffusion, the mithril-signer's local submissions, peers and connections.",
+  "tags": [
+    "dmq",
+    "mithril"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "utc",
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "links": [],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "label": "instance",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mimir"
+        },
+        "definition": "label_values(up{job=\"integrations/dmq-node\"}, instance)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(up{job=\"integrations/dmq-node\"}, instance)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {},
+        "regex": "",
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Health",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Hot peers",
+      "description": "Peers dmq-node exchanges signatures with now. Zero isolates the node.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_Hot_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "instant": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Sigs accepted from peers",
+      "description": "Signatures received from peers and added to the local mempool over the dashboard range.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (increase(dmq_node_txSubmission_txsAccepted_int{instance=~\"$instance\"}[$__range]))",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "instant": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Signer sigs accepted",
+      "description": "Signatures the local mithril-signer submitted and dmq-node accepted over the dashboard range. Only block producers have a signer.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (instance) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.Local.SigSubmission.Server.TraceSubmitAccept\"` [$__range]))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "maxDataPoints": 30,
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "dmq-node restarts",
+      "description": "systemd restarts of dmq-node.service over the dashboard range. dmq-node exits whenever its cardano-node restarts.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (increase(node_systemd_service_restart_total{instance=~\"$instance\", name=\"dmq-node.service\"}[$__range]))",
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "instant": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 5
+    },
+    {
+      "type": "state-timeline",
+      "title": "dmq-node.service",
+      "description": "Whether dmq-node.service is active on each host.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (node_systemd_unit_state{instance=~\"$instance\", name=\"dmq-node.service\", state=\"active\"})",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "active",
+                  "color": "green",
+                  "index": 0
+                },
+                "0": {
+                  "text": "not active",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "mergeValues": true,
+        "rowHeight": 0.8,
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 5
+      },
+      "id": 6
+    },
+    {
+      "type": "row",
+      "title": "Signatures from peers",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 1
+      },
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "Accepted per minute",
+      "description": "Signature bodies from peers added to the local mempool.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txsAccepted_int{instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 8,
+        "h": 8
+      },
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "Rejected, omitted, late per minute",
+      "description": "Rejected: failed mempool validation. Omitted: requested but missing from the reply. Late: arrived after another peer already delivered it.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txsRejected_int{instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}} rejected",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txsOmitted_int{instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}} omitted",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_lateBodies_int{instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}} late",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 11,
+        "w": 8,
+        "h": 8
+      },
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "Invalid sigs by reason per bar",
+      "description": "Net.Sig.Validation failures on signatures from peers. dmq-node disconnects the peer that sent one.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (instance, reason) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.Sig.Validation.SigValidation\"` | json reason=\"data.reason.reason\" | label_format reason=`{{ regexReplaceAll \" .*\" .reason \"\" }}` [$__interval]))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}} {{reason}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 11,
+        "w": 8,
+        "h": 8
+      },
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Sig ids and bodies received per minute",
+      "description": "Ids announced by peers, and bodies fetched for the ids this node did not have.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txIdsReceived_int{instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}} ids",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txsReceived_int{instance=~\"$instance\"}[$__rate_interval])) * 60",
+          "legendFormat": "{{instance}} bodies",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Sig-submission peers by state",
+      "description": "Mean number of inbound signature-submission peers idle, waiting for new ids, or fetching requested bodies.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txIdBlockingWaitMs_int{instance=~\"$instance\"}[$__rate_interval])) / 1000",
+          "legendFormat": "{{instance}} idle",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txPipelineWaitMs_int{instance=~\"$instance\"}[$__rate_interval])) / 1000",
+          "legendFormat": "{{instance}} fetching",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Mempool add time",
+      "description": "Share of wall-clock time spent adding received signatures to the mempool. Growth means mempool backpressure.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "sum by (instance) (rate(dmq_node_txSubmission_txSubmissionWaitMs_int{instance=~\"$instance\"}[$__rate_interval])) / 1000",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
+      "id": 13
+    },
+    {
+      "type": "row",
+      "title": "Signer submissions",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 1
+      },
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Signer submissions per bar",
+      "description": "Local submissions over the dmq-node socket, as accepted or by rejection reason. The signer falls back to the aggregator when dmq-node rejects.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (instance) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.Local.SigSubmission.Server.TraceSubmitAccept\"` [$__interval]))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}} accepted",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (instance, reason) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.Local.SigSubmission.Server.TraceSubmitFailure\"` | json reason=\"data.event.error\" | label_format reason=`{{ regexReplaceAll \" .*\" .reason \"\" }}` [$__interval]))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}} {{reason}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "id": 15
+    },
+    {
+      "type": "logs",
+      "title": "Signer submission failures",
+      "description": "Local submissions dmq-node refused.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.Local.SigSubmission.Server.TraceSubmitFailure\"`",
+          "queryType": "range",
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "id": 16
+    },
+    {
+      "type": "row",
+      "title": "Peers",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 1
+      },
+      "id": 17
+    },
+    {
+      "type": "timeseries",
+      "title": "Peers by state",
+      "description": "Peer selection's hot (exchanging signatures), warm (connected) and cold (known) peers.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_Hot_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} hot",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_Warm_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} warm",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_Cold_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} cold",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 8,
+        "h": 8
+      },
+      "id": 18
+    },
+    {
+      "type": "timeseries",
+      "title": "Local roots",
+      "description": "Topology local roots known, established and active. A block producer dials only local roots, so active below known means a relay is unreachable.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_KnownLocalRootPeers_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} known",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_EstablishedLocalRootPeers_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} established",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_peerSelection_ActiveLocalRootPeers_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} active",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 37,
+        "w": 8,
+        "h": 8
+      },
+      "id": 19
+    },
+    {
+      "type": "timeseries",
+      "title": "Peer status changes per bar",
+      "description": "Net.PeerSelection.Actions.StatusChanged events. A steady rate means peers keep cycling through promotion and demotion.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (instance) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.PeerSelection.Actions.StatusChanged\"` [$__interval]))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 37,
+        "w": 8,
+        "h": 8
+      },
+      "id": 20
+    },
+    {
+      "type": "row",
+      "title": "Connections",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 1
+      },
+      "id": 21
+    },
+    {
+      "type": "timeseries",
+      "title": "Node-to-node connections",
+      "description": "Connection manager counts. Full duplex connections carry both directions.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_connectionManager_inboundConns_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} inbound",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_connectionManager_outboundConns_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} outbound",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_connectionManager_fullDuplexConns_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} full duplex",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 8,
+        "h": 8
+      },
+      "id": 22
+    },
+    {
+      "type": "timeseries",
+      "title": "Inbound peers by state",
+      "description": "Inbound governor view of remote peers.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_inboundGovernor_hot_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} hot",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_inboundGovernor_warm_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} warm",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_inboundGovernor_cold_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} cold",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_inboundGovernor_idle_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} idle",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 46,
+        "w": 8,
+        "h": 8
+      },
+      "id": 23
+    },
+    {
+      "type": "timeseries",
+      "title": "Connection errors by reason per bar",
+      "description": "Remote connections torn down by an error. SigValidationException: the peer sent an invalid signature. IOException: the socket failed.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (instance, reason) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.ConnectionManager.Remote.ConnectionHandler.Error\"` | json reason=\"data.connectionHandler.reason\" | label_format reason=`{{ regexReplaceAll \" .*\" .reason \"\" }}` [$__interval]))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}} {{reason}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 46,
+        "w": 8,
+        "h": 8
+      },
+      "id": 24
+    },
+    {
+      "type": "timeseries",
+      "title": "Local clients",
+      "description": "Clients on the dmq-node socket, such as mithril-signer, as the local inbound governor counts them.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_localInboundGovernor_hot_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} hot",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "expr": "max by (instance) (dmq_node_localInboundGovernor_idle_int{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}} idle",
+          "range": true,
+          "instant": false,
+          "editorMode": "code",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 54,
+        "w": 8,
+        "h": 8
+      },
+      "id": 25
+    },
+    {
+      "type": "bargauge",
+      "title": "Connection errors by peer",
+      "description": "Remote connection errors over the dashboard range, by local host and remote address.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "topk(15, sum by (instance, remote) (count_over_time({instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |= `\"ns\":\"Net.ConnectionManager.Remote.ConnectionHandler.Error\"` | json remote=\"data.connectionId.remoteAddress.address\" [$__range])))",
+          "queryType": "range",
+          "editorMode": "code",
+          "legendFormat": "{{instance}} ← {{remote}}",
+          "refId": "A"
+        }
+      ],
+      "maxDataPoints": 30,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "left",
+        "sizing": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 54,
+        "w": 16,
+        "h": 8
+      },
+      "id": 26
+    },
+    {
+      "type": "row",
+      "title": "Logs",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 62,
+        "w": 24,
+        "h": 1
+      },
+      "id": 27
+    },
+    {
+      "type": "logs",
+      "title": "Warnings and errors",
+      "description": "dmq-node traces at Warning severity or above.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} |~ `\"sev\":\"(Warning|Error|Critical|Alert|Emergency)\"`",
+          "queryType": "range",
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 63,
+        "w": 12,
+        "h": 12
+      },
+      "id": 28
+    },
+    {
+      "type": "logs",
+      "title": "All dmq-node logs",
+      "description": "Everything dmq-node.service wrote, counter snapshots excluded.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{instance=~\"$instance\", systemd_unit=\"dmq-node.service\"} != \"Counters\"",
+          "queryType": "range",
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 63,
+        "w": 12,
+        "h": 12
+      },
+      "id": 29
+    }
+  ]
+}

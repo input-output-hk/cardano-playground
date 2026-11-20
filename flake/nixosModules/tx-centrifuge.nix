@@ -14,6 +14,12 @@
     options.services.${serviceName} = {
       enable = lib.mkEnableOption "tx-centrifuge";
 
+      continuous = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Run at boot without load-window timers or a runtime limit.";
+      };
+
       package = lib.mkPackageOption inputs'.cardano-node-leios-bench.packages "tx-centrifuge" {};
 
       useLocalCardanoNode = {
@@ -148,30 +154,9 @@
               outputs_per_tx = lib.mkDefault 1;
               fee = lib.mkDefault 1000000;
 
-              # Bytes of filler metadata per transaction, the way to make
-              # transactions bigger without changing how many inputs they
-              # consume or outputs they produce, so the utxo set neither grows
-              # nor shrinks. The ledger caps a metadata byte string at 64, so
-              # the payload goes on the wire as a list of 64 byte chunks and
-              # costs about 3% more than the figure here, plus roughly 40 bytes
-              # for the headers and the auxiliary data hash.
-              #
-              # 256 is four whole chunks and measures 506 bytes on chain, from a
-              # 200 byte base, against a maxTxSize of 16384. Plenty of room to
-              # go bigger. Fee is not calculated, but 1000000 covers even a
-              # maxTxSize transaction, which needs 44 * 16384 + 155381 = 876277.
-              #
-              # Transaction size and tps together set the offered load, so
-              # changing one without the other changes how much traffic this
-              # puts on the network. At 100 tps this is about 51 KB/s against
-              # the 20 KB/s that bare transactions were offering.
-              #
-              # It also moves which endorser block cap binds. At 200 bytes the
-              # limit was maxEndorserBlockReferencesSize, 150000 over 36 byte
-              # references, so 4166 transactions and only 833 KB of payload. At
-              # 506 bytes maxEndorserBlockTxsSize binds instead, a measured 2941
-              # transactions for the full 1500000.
-              metadata_bytes = lib.mkDefault 256;
+              # Minimum-size transactions without filler metadata. Remove this
+              # setting before using tx_size; the two are mutually exclusive.
+              metadata_bytes = lib.mkDefault 0;
             };
           };
 
@@ -184,7 +169,7 @@
           max_batch_size = lib.mkDefault 10;
         };
 
-        systemd.timers = {
+        systemd.timers = lib.mkIf (!cfg.continuous) {
           # Started by the timer below, not at boot: a boot inside an odd hour
           # must not put load on the network until the next even hour.
           ${serviceName} = {
@@ -211,6 +196,7 @@
         systemd.services = {
           ${serviceName} = {
             enableStrictShellChecks = true;
+            wantedBy = lib.optionals cfg.continuous ["multi-user.target"];
 
             # Restart on failure: up to 3 retries, 1 minute apart. After 3
             # failed retries within the 10-minute window the unit stays in
@@ -249,7 +235,7 @@
               # disable value is "infinity", not 0 (0 would terminate the
               # service immediately).
               RuntimeMaxSec =
-                if cfg.maxRuntimeSeconds == 0
+                if cfg.continuous || cfg.maxRuntimeSeconds == 0
                 then "infinity"
                 else cfg.maxRuntimeSeconds;
 
@@ -262,7 +248,7 @@
             };
           };
 
-          "${serviceName}-stop" = {
+          "${serviceName}-stop" = lib.mkIf (!cfg.continuous) {
             description = "Stop ${serviceName} at the end of its load window";
             serviceConfig = {
               Type = "oneshot";
@@ -299,6 +285,7 @@
         };
 
         systemd.services.${serviceName} = {
+          wantedBy = lib.optionals cfg.continuous ["cardano-node.service"];
           requisite = ["cardano-node.service"];
 
           # The socket share unit is WantedBy the node, so a node already

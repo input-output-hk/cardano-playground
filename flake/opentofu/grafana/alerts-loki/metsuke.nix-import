@@ -1,0 +1,45 @@
+let
+  accepted = ''{systemd_unit="metsuke-server.service"} |= "accepted v1/"'';
+  submittingPools = range: ''count(sum by (pool) (count_over_time(${accepted} | regexp `-(?P<pool>pool1[0-9a-z]+)-` ${range})))'';
+in {
+  namespace = "metsuke";
+  name = "metsuke-logs";
+  interval = "1m";
+  rule = [
+    {
+      # Agents upload at least hourly, so two quiet hours is the whole fleet.
+      alert = "metsuke_no_accepted_submissions";
+      expr = "absent_over_time(${accepted} [2h])";
+      for = "10m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "metsuke-server has accepted no submission for 2 hours.";
+        description = "No `accepted v1/` line from metsuke-server.service in 2 hours, although agents upload at least hourly. Check metsuke_server_down, the metsuke-leios vhost, and `journalctl -u metsuke-server` for refusals.";
+      };
+    }
+    {
+      # Pool count over the last hour against the same hour a day earlier,
+      # which rides out the daily rhythm of operators bringing agents up.
+      alert = "metsuke_submitting_pools_dropped";
+      expr = "${submittingPools "[1h]"} < 0.7 * ${submittingPools "[1h] offset 1d"}";
+      for = "30m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "Pools submitting to metsuke dropped to {{ $value }}, over 30% fewer than a day ago.";
+        description = "Distinct pools in metsuke-server `accepted` lines over the past hour fell by over 30% against the same hour yesterday. A roster or allowlist change refusing pools, or an agent release that stopped uploading, looks like this. Check `journalctl -u metsuke-server | grep refused`.";
+      };
+    }
+    {
+      # A pool that registered a new Leios key is refused until the hourly
+      # roster picks it up; two hours of refusals is longer than that.
+      alert = "metsuke_roster_missing_leios_key";
+      expr = ''sum by (pool) (count_over_time({systemd_unit="metsuke-server.service"} |= "the key roster lists no such Leios key" | regexp `for pool (?P<pool>pool1[0-9a-z]+)` [30m])) > 0'';
+      for = "2h";
+      labels.severity = "warning";
+      annotations = {
+        summary = "metsuke has refused {{$labels.pool}} for 2 hours: its Leios key is not in the roster.";
+        description = "metsuke-server keeps refusing {{$labels.pool}} because the roster lists no such Leios key, for longer than an hourly regeneration takes to pick up a rotation. Check whether the pool registered the key on chain (`cardano-cli dijkstra query pool-state`) or whether the roster is stale (metsuke_roster_stale).";
+      };
+    }
+  ];
+}

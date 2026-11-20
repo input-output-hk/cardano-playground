@@ -25,9 +25,17 @@
     options.services.${serviceName} = {
       enable = lib.mkEnableOption "tx-firehose";
 
-      # From the same pin as the node rather than the bench pin, which trails
-      # it. The generator and the node it submits into should move together.
-      package = lib.mkPackageOption inputs'.cardano-node-leios.packages "tx-firehose-static" {};
+      continuous = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Run continuously instead of using scheduled load windows. Starts
+          with the node and disables the start/stop timers and runtime cap.
+        '';
+      };
+
+      # Custom generators share the bench pin and support minimum tx sizing.
+      package = lib.mkPackageOption inputs'.cardano-node-leios-bench.packages "tx-firehose" {};
 
       socketPath = mkOption {
         type = types.path;
@@ -74,22 +82,74 @@
           Submission rate ceiling. tx-firehose holds one transaction in flight
           and sleeps 1/tps after each reply, so the achieved rate is bounded by
           the round trip as well, and raising this past that bound changes
-          nothing. Add instances on separate keys to go faster.
+          nothing. Add instances on separate keys to go faster. A nonempty
+          tpsSchedule overrides this fixed rate.
+        '';
+      };
+
+      tpsSchedule = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            seconds = mkOption {
+              type = types.addCheck types.number (value: value >= 0);
+              description = "Seconds since the schedule started; must strictly increase between points.";
+            };
+            tps = mkOption {
+              type = types.addCheck types.number (value: value > 0);
+              description = "Positive submission rate ceiling at this point.";
+            };
+          };
+        });
+        default = [];
+        example = [
+          {
+            seconds = 0;
+            tps = 20;
+          }
+          {
+            seconds = 3600;
+            tps = 250;
+          }
+        ];
+        description = ''
+          Optional rate schedule, requiring the W44 or newer tx-firehose.
+          Rates interpolate linearly between points; the first rate is held
+          before the first point and the last rate after the final point.
+          Empty keeps the fixed tps rate and omits --tps-schedule.
+
+          This schedule does not repeat and rates must be positive. Keep the
+          start/stop timers for the one-hour on/off duty cycle. Unless
+          scheduleStart is set, each process start (including a restart)
+          starts a fresh rate schedule.
+        '';
+      };
+
+      scheduleStart = mkOption {
+        type = types.nullOr types.ints.unsigned;
+        default = null;
+        example = 1793577600;
+        description = ''
+          Optional schedule origin as Unix time in seconds, passed as
+          --schedule-start. Requires a nonempty tpsSchedule. A fixed origin
+          lets restarts and later load windows resume the same schedule;
+          it does not reset at each timer window or delay service startup.
+          Null starts the schedule at each process startup.
         '';
       };
 
       fee = mkOption {
         type = types.ints.unsigned;
-        default = 200000;
+        default = 1000000;
         description = ''
           Fixed fee per transaction. tx-firehose does no fee calculation, so
-          this must clear the protocol minimum for the transaction shape that
-          outputsPerTx produces. At minFeeA 44 and minFeeB 155381 a one in one
-          out transaction needs 165413, and a coloured one 167393.
+          this must clear the protocol minimum for the transaction shape and
+          txSize padding. At minFeeA 44 and minFeeB 155381, 1024 bytes needs
+          200437 lovelace, just above the old 200000 default. One ADA covers
+          even 16384 bytes at those parameters (876277 lovelace).
 
           Fee is also the entire burn rate, since every transaction returns its
           inputs less this amount to the same address. At 100 tps this spends
-          20 ada per second of load.
+          100 ada per second of load.
         '';
       };
 
@@ -137,10 +197,26 @@
 
           Auto draws from about 1500 distinguishable hues and can collide, so
           set explicit colours for a run whose point is telling generators
-          apart. Set to null to submit untagged.
+          apart. Both "auto" and null omit --color, letting tx-firehose
+          derive the colour from the signing key. W42 always tags transactions;
+          omitting --color does not disable metadata.
 
           Metadata costs roughly 45 bytes per transaction, so a coloured run is
           not byte comparable with an uncoloured baseline.
+        '';
+      };
+
+      txSize = mkOption {
+        type = types.nullOr types.ints.positive;
+        # No filler padding; firehose still includes its mandatory colour tag.
+        default = null;
+        description = ''
+          Minimum full signed transaction CBOR size in bytes, padded with
+          metadata. CBOR overhead may make the result slightly larger;
+          naturally larger transactions keep their size. Null disables padding.
+          The fixed fee must cover the resulting size, and the target must
+          fit the node's maxTxSize. Restart after protocol parameter changes
+          to refresh the generator's cached size and fee limits.
         '';
       };
 
@@ -189,9 +265,22 @@
     };
 
     config = mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = lib.all (value: value) (lib.imap0
+            (index: point: index == 0 || (builtins.elemAt cfg.tpsSchedule (index - 1)).seconds < point.seconds)
+            cfg.tpsSchedule);
+          message = "services.cardano-tx-firehose.tpsSchedule seconds must strictly increase.";
+        }
+        {
+          assertion = cfg.scheduleStart == null || cfg.tpsSchedule != [];
+          message = "services.cardano-tx-firehose.scheduleStart requires a nonempty tpsSchedule.";
+        }
+      ];
+
       services.cardano-node.shareNodeSocket = mkDefault true;
 
-      systemd.timers = {
+      systemd.timers = mkIf (!cfg.continuous) {
         ${serviceName} = {
           wantedBy = ["timers.target"];
           timerConfig = {
@@ -214,6 +303,8 @@
 
       systemd.services = {
         ${serviceName} = {
+          wantedBy = optionals cfg.continuous ["multi-user.target" nodeUnit];
+
           # Exiting and restarting is normal here, not a fault: a reject that
           # drops the last fund ends the run cleanly. Budget enough restarts to
           # cover a window while still failing visibly on a key that was never
@@ -246,9 +337,15 @@
                 "--max-consecutive-errors"
                 (toString cfg.maxConsecutiveErrors)
               ]
+              ++ optionals (cfg.tpsSchedule != []) [
+                "--tps-schedule"
+                (lib.concatMapStringsSep "," (point: "${toString point.seconds}:${toString point.tps}") cfg.tpsSchedule)
+              ]
+              ++ optionals (cfg.scheduleStart != null) ["--schedule-start" (toString cfg.scheduleStart)]
               ++ optionals (cfg.stakingKeyFile != null) ["--staking-key-file" (credential "stake.skey")]
               ++ optionals (cfg.inputsPerTx != null) ["--inputs-per-tx" (toString cfg.inputsPerTx)]
-              ++ optionals (cfg.color != null) ["--color" cfg.color]
+              ++ optionals (cfg.color != null && cfg.color != "auto") ["--color" cfg.color]
+              ++ optionals (cfg.txSize != null) ["--tx-size" (toString cfg.txSize)]
               ++ cfg.extraArgs
             );
 
@@ -268,15 +365,21 @@
             # A restart re-queries the chain, whose UTxO the previous
             # incarnation's mempool transactions already spend. Waiting lets
             # those drain, otherwise every submit rejects as
-            # AllInputsAreSpent.
+            # AllInputsAreSpent. A saturated network can take tens of minutes
+            # to drain, so back off from 60 s to a 180 s cap rather than spend
+            # the start limit at one restart a minute. The cap stays low enough
+            # that a key that was never funded, which exits immediately, still
+            # reaches startLimitBurst inside the interval and fails visibly.
             RestartSec = 60;
+            RestartSteps = 3;
+            RestartMaxDelaySec = 180;
 
             RestartPreventExitStatus = "SIGTERM";
 
             # systemd's disable value is "infinity", not 0, which would
             # terminate the service immediately.
             RuntimeMaxSec =
-              if cfg.maxRuntimeSeconds == 0
+              if cfg.continuous || cfg.maxRuntimeSeconds == 0
               then "infinity"
               else cfg.maxRuntimeSeconds;
 
@@ -287,7 +390,7 @@
           };
         };
 
-        "${serviceName}-stop" = {
+        "${serviceName}-stop" = mkIf (!cfg.continuous) {
           description = "Stop ${serviceName} at the end of its load window";
           serviceConfig = {
             Type = "oneshot";

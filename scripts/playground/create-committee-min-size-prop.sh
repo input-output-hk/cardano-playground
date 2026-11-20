@@ -10,7 +10,7 @@ set -euo pipefail
 [ -z "${TESTNET_MAGIC:-}" ] && { echo "TESTNET_MAGIC var must be set"; exit 1; }
 [ -z "${COMMITTEE_MIN_SIZE:-}" ] && { echo "COMMITTEE_MIN_SIZE var must be set"; exit 1; }
 
-export IPFS_GATEWAY_URI="https://ipfs.io"
+export IPFS_GATEWAY_URI="https://gateway.pinata.cloud"
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")

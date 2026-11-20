@@ -1,6 +1,7 @@
 flake: {
   flake.nixosModules.profile-metsuke-server = {
     config,
+    options,
     lib,
     pkgs,
     name,
@@ -50,8 +51,54 @@ flake: {
     # terminal and reseals identically, so the same body is refused until its
     # spool cap drops those rows.
     maxBodyBytes = 4194304;
+
+    inherit (config.services.alloy) textfileCollectorDirectory;
+    rosterFile = config.services.metsuke-server.roster.file;
+
+    # A failed generator run leaves the previous roster in place, so the unit
+    # state alone does not say how stale the roster has become; its mtime does.
+    # On an unreadable or malformed roster the samples are omitted rather than
+    # left stale, so the series goes absent.
+    rosterMetrics = pkgs.writeShellApplication {
+      name = "metsuke-roster-metrics";
+      runtimeInputs = [pkgs.coreutils pkgs.jq];
+      text = ''
+        OUT=${textfileCollectorDirectory}/metsuke-roster.prom
+        TMP="$OUT.tmp"
+        labels='environment="${groupCfg.meta.environmentName}",group="${groupName}"'
+
+        {
+          echo "# HELP metsuke_roster_mtime_seconds When the Leios key roster file was last written."
+          echo "# TYPE metsuke_roster_mtime_seconds gauge"
+          echo "# HELP metsuke_roster_epoch Epoch of the tip the roster was taken at."
+          echo "# TYPE metsuke_roster_epoch gauge"
+          echo "# HELP metsuke_roster_slot Slot of the tip the roster was taken at."
+          echo "# TYPE metsuke_roster_slot gauge"
+          echo "# HELP metsuke_roster_pools Pools the roster lists a Leios key for."
+          echo "# TYPE metsuke_roster_pools gauge"
+          # The select emits nothing for a roster missing a field or holding
+          # one of the wrong type, and -e turns that empty output into a
+          # failure, so no sample is ever written without its value.
+          if mtime=$(stat -c %Y ${rosterFile}) \
+            && IFS=$'\t' read -r epoch slot pools < <(jq -er '
+              select((.epoch | type) == "number" and (.slot | type) == "number" and (.pools | type) == "object")
+              | [.epoch, .slot, (.pools | length)] | @tsv' ${rosterFile}); then
+            echo "metsuke_roster_mtime_seconds{$labels} $mtime"
+            echo "metsuke_roster_epoch{$labels} $epoch"
+            echo "metsuke_roster_slot{$labels} $slot"
+            echo "metsuke_roster_pools{$labels} $pools"
+          fi
+        } > "$TMP"
+
+        mv "$TMP" "$OUT"
+      '';
+    };
   in {
     assertions = [
+      {
+        assertion = textfileCollectorDirectory != null;
+        message = "${name} publishes roster metrics through the node-exporter textfile collector, so services.alloy.textfileCollectorDirectory has to be set.";
+      }
       {
         assertion = allowlist != {};
         message = "flake/nixosModules/metsuke-allowlist.toml and metsuke-allowlist-manual.toml hold no pools between them, and an empty allowlist refuses every submission. Generate the first with metsuke-allowlist, as its header says.";
@@ -201,13 +248,49 @@ flake: {
     # group alone is not enough: a run before that lands finds the socket there
     # and unwritable. Requisite rather than wants, so a tick that is too early
     # fails at once and the timer takes the next one.
-    systemd.services.metsuke-roster = rec {
-      requisite = [
-        "cardano-node.service"
-        "cardano-node-socket-share.service"
-      ];
-      after = requisite;
+    systemd = {
+      services.metsuke-roster = rec {
+        requisite = [
+          "cardano-node.service"
+          "cardano-node-socket-share.service"
+        ];
+        after = requisite;
+      };
+
+      services.metsuke-roster-metrics = {
+        description = "Publish Leios key roster freshness for the node-exporter textfile collector";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = lib.getExe rosterMetrics;
+          DynamicUser = true;
+          # The roster is 0640 to the generator's group.
+          SupplementaryGroups = ["node-textfile" "metsuke-roster"];
+          ReadWritePaths = [textfileCollectorDirectory];
+          ProtectSystem = "strict";
+          NoNewPrivileges = true;
+          PrivateTmp = true;
+          TimeoutStartSec = "30s";
+        };
+      };
+
+      timers.metsuke-roster-metrics = {
+        wantedBy = ["timers.target"];
+        timerConfig.OnCalendar = "*:0/5";
+      };
     };
+
+    services.alloy = {
+      extraPrometheusRelabelNodeKeepRegex = ["^metsuke_roster_.*$"];
+
+      # One string for the whole host, so it lives here rather than also in
+      # profile-uketsuke-server, which only runs alongside this profile. acme
+      # covers certificate renewal for both vhosts.
+      systemdUnitInclude = "${options.services.alloy.systemdUnitInclude.default}|(^metsuke.*)|(^uketsuke.*)|(^acme-.*)";
+    };
+
+    # Per-vhost request, status and latency metrics for both this server and
+    # uketsuke, which share this nginx.
+    services.nginx-vhost-exporter.enable = true;
 
     security.acme = {
       acceptTerms = true;
@@ -232,6 +315,15 @@ flake: {
         limit_req_zone $binary_remote_addr zone=metsukeSubmit:10m rate=60r/m;
         limit_conn_status 429;
         limit_req_status 429;
+
+        # A fixed set of route names for the vts filter below; keying on $uri
+        # would make every archived object path its own series.
+        map $uri $metsukeRoute {
+          /v1/submit submit;
+          ~^/v1/(object|submissions) archive;
+          ~^/files/ download;
+          default other;
+        }
       '';
 
       virtualHosts.${serverName} = {
@@ -243,7 +335,10 @@ flake: {
         # one connection, and several agents behind one egress address upload on
         # a jittered hourly cadence. This is what keeps one address off those
         # permits; the request limit above is not.
-        extraConfig = "limit_conn metsukeConn 8;";
+        extraConfig = ''
+          limit_conn metsukeConn 8;
+          vhost_traffic_status_filter_by_set_key $metsukeRoute route::$server_name;
+        '';
 
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString listenPort}";

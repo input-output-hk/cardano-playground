@@ -23,7 +23,7 @@ for h in $HOSTS; do
   fi
   w="data-1s-wide/$h.csv.gz"
   if [ -s "$w" ] && ! $GZ -cd "$w" | grep -qm1 "^\"$W\""; then
-    timeout 420 bash /tmp/sshw "$h" "WIN_ONLY='$W:$S:$E' bash -s" < scripts/pull-wide-remote.sh 2>/dev/null >> "$w"
+    timeout 420 bash /tmp/sshw "$h" "WIN_ONLY='$W@2026-10-09T$S:00Z@2026-10-09T$E:00Z' bash -s" < scripts/pull-wide-remote.sh 2>/dev/null >> "$w"
     echo "  wide   $h: $($GZ -cd "$w" | grep -c "^\"$W\"") load4 rows"
   fi
 done

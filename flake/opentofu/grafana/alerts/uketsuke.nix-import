@@ -1,0 +1,80 @@
+let
+  # Rejections that are the server's fault rather than the client's. Each one
+  # leaves a pool without a receipt. client_disconnected and upload_timeout are
+  # the client's side and stay out.
+  serverFaultCodes = "storage_failed|storage_quota|roster_unavailable|verifier_unavailable|internal_error";
+in {
+  namespace = "metsuke";
+  name = "uketsuke";
+  rule = [
+    {
+      alert = "uketsuke_down";
+      expr = ''node_systemd_unit_state{name="uketsuke.service", state="active"} == 0'';
+      for = "5m";
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: uketsuke is not active.";
+        description = "{{$labels.instance}}: uketsuke.service has not been active for 5 minutes, so no SPO can upload a report. Check `systemctl status uketsuke` and `journalctl -u uketsuke`.";
+      };
+    }
+    {
+      alert = "uketsuke_restarting";
+      expr = ''increase(node_systemd_service_restart_total{name="uketsuke.service"}[15m]) > 3'';
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: uketsuke restarted {{ printf \"%.0f\" $value }} times in 15 minutes.";
+        description = "{{$labels.instance}}: uketsuke.service is restarting repeatedly. Missing AWS credentials or an invalid config both look like this. Check `journalctl -u uketsuke`.";
+      };
+    }
+    {
+      alert = "uketsuke_metrics_scrape_failing";
+      expr = ''up{job="integrations/uketsuke"} == 0'';
+      for = "10m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: alloy cannot scrape uketsuke's /metrics.";
+        description = "{{$labels.instance}}: the integrations/uketsuke scrape of 127.0.0.1 metrics_port has failed for 10 minutes, so every other uketsuke alert is blind. If uketsuke_down is not firing, check that metrics_port in /etc/alloy/config.alloy matches the one in uketsuke's INBOX_CONFIG.";
+      };
+    }
+    {
+      # Uploads are rare, so any one counts.
+      alert = "uketsuke_server_fault_rejections";
+      expr = ''sum by (instance, code) (increase(uketsuke_requests_total{outcome="rejected", code=~"${serverFaultCodes}"}[30m])) > 0'';
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: uketsuke rejected {{ printf \"%.0f\" $value }} requests with {{$labels.code}} in 30 minutes.";
+        description = "{{$labels.instance}}: {{$labels.code}} is the server's fault and leaves a pool without a receipt. storage_quota (507): the campaign ledger has spent max_total_bytes and refuses every upload until a new campaign prefix. roster_unavailable (503): see uketsuke_roster_unusable. storage_failed (500): S3 refused or timed out, see uketsuke_s3_errors. verifier_unavailable (503) or internal_error: a fault inside uketsuke. Find the requests with `{systemd_unit=\"uketsuke.service\"} | json | message_event=\"request\" | message_code=\"{{$labels.code}}\"` in Loki.";
+      };
+    }
+    {
+      alert = "uketsuke_roster_unusable";
+      expr = "uketsuke_roster_ok == 0";
+      for = "5m";
+      labels.severity = "page";
+      annotations = {
+        summary = "{{$labels.instance}}: uketsuke cannot use the Leios key roster.";
+        description = "{{$labels.instance}}: the roster is invalid or older than roster_max_age_secs, so uketsuke refuses every upload and receipt with roster_unavailable and /healthz answers 503. metsuke_roster_stale and metsuke_roster_generation_failed say why the generator stopped.";
+      };
+    }
+    {
+      alert = "uketsuke_quota_nearly_spent";
+      expr = "uketsuke_quota_reserved_bytes / uketsuke_quota_max_bytes > 0.8";
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: uketsuke has reserved {{ $value | humanizePercentage }} of the campaign quota.";
+        description = "{{$labels.instance}}: reservations are never reclaimed, and once max_total_bytes is spent every upload gets 507 storage_quota. Raise max_total_bytes in profile-uketsuke-server, or start a new campaign with its own s3_prefix and ledger.";
+      };
+    }
+    {
+      # 404 on HEAD and 412 on a conditional PUT are normal answers, so only
+      # 5xx, transport errors and timeouts count.
+      alert = "uketsuke_s3_errors";
+      expr = ''sum by (instance, op, status) (increase(uketsuke_s3_requests_total{status=~"5..|error|timeout"}[30m])) > 0'';
+      labels.severity = "warning";
+      annotations = {
+        summary = "{{$labels.instance}}: {{ printf \"%.0f\" $value }} uketsuke S3 {{$labels.op}} requests ended in {{$labels.status}} in 30 minutes.";
+        description = "{{$labels.instance}}: S3 answered {{$labels.op}} with {{$labels.status}}. A request that fails this way earns storage_failed and no receipt; a quota reservation it held stays held until the pool retries. Check `journalctl -u uketsuke` and AWS health for S3 in the bucket's region.";
+      };
+    }
+  ];
+}
