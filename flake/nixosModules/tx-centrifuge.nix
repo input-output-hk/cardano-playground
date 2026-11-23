@@ -154,9 +154,8 @@
               outputs_per_tx = lib.mkDefault 1;
               fee = lib.mkDefault 1000000;
 
-              # Minimum-size transactions without filler metadata. Remove this
-              # setting before using tx_size; the two are mutually exclusive.
-              metadata_bytes = lib.mkDefault 0;
+              # Target full signed transaction size; mutually exclusive with metadata_bytes.
+              tx_size = lib.mkDefault 1300;
             };
           };
 
