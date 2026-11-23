@@ -149,11 +149,23 @@ def find-pool-id-files [group: string] {
 def query-pool-stake [pool_id: string, net_args: list<string>, --era: string] {
   debug-cmd "cardano-cli" ([$era, "query", "stake-snapshot", "--stake-pool-id", $pool_id] | append $net_args)
   let data = (^cardano-cli $era query stake-snapshot --stake-pool-id $pool_id ...$net_args | from json)
+  # A pool absent from all three snapshots has no entry in pools.
+  let pools = $data | get pools
+  if ($pools | is-empty) {
+    print --stderr $"Warning: pool ($pool_id) is absent from the stake snapshots; reporting zero mark/set/go stake."
+    return {
+      mark: 0
+      set: 0
+      go: 0
+      total_set: ($data | get total.stakeSet)
+    }
+  }
   # Pool stake is nested under pools.<hex-key-hash>; extract the first (only) entry
   let pool_data = (
-    $data | get pools | transpose _hash info | first | get info
+    $pools | transpose _hash info | first | get info
   )
   {
+    total_set: ($data | get total.stakeSet)
     mark: ($pool_data | get -o stakeMark | default 0)
     set: ($pool_data | get -o stakeSet | default 0)
     go: ($pool_data | get -o stakeGo | default 0)
@@ -238,7 +250,7 @@ def query-drep-totals [epoch: int, net_args: list<string>, --era: string] {
   }
 }
 # Query SPO stake distribution for network-wide totals
-def query-pool-totals [net_args: list<string>, --era: string] {
+def query-pool-totals [net_args: list<string>, --era: string, --our-pools: list<string>] {
   debug-cmd "cardano-cli" ([$era, "query", "spo-stake-distribution", "--all-spos"] | append $net_args)
   let pool_dist = (^cardano-cli $era query spo-stake-distribution --all-spos ...$net_args | from json)
   let stake_total = ($pool_dist | each { |e| $e | get 1 } | safe-sum)
@@ -248,12 +260,16 @@ def query-pool-totals [net_args: list<string>, --era: string] {
   let noconf_total = (
     $pool_dist | where { |e| ($e | get -o 2) == "drep-alwaysNoConfidence" } | each { |e| $e | get 1 } | safe-sum
   )
+  let our_stake = (
+    $pool_dist | where {|e| ($e | get 0) in $our_pools } | each {|e| $e | get 1 } | safe-sum
+  )
   let pool_count = ($pool_dist | length)
   {
     stake_total: $stake_total
     abstain_total: $abstain_total
     noconf_total: $noconf_total
     pool_count: $pool_count
+    our_stake: $our_stake
   }
 }
 # Safe sum that returns 0 for empty lists (nushell's math sum fails on empty input)
@@ -277,6 +293,33 @@ def threshold-pct [val] {
   }
   $"($pct_val)%"
 }
+# Conservative planning scenario: our eligible stake votes Yes; all other
+# stake in the supplied denominator counts against. Round funding UP to ADA.
+def vote-projection [threshold, stake: record]: nothing -> record {
+  let t = if ($threshold | describe | str starts-with 'record') {
+    $threshold.numerator / $threshold.denominator
+  } else {
+    $threshold | into float
+  }
+  if $t < 0 or $t > 1 { error make {msg: "Voting threshold must be between 0 and 1"} }
+  let gap = ([
+    0
+    ($t * $stake.total - $stake.yes)
+  ] | math max)
+  let existing = ($gap / 1_000_000 | math ceil | into int)
+  let fresh = if $gap == 0 { "0 ADA" } else if $t == 1 {
+    "unreachable by adding stake"
+  } else {
+    $"(comma-sep ($gap / (1 - $t) / 1_000_000 | math ceil | into int)) ADA"
+  }
+  {
+    Threshold: (threshold-pct $threshold)
+    "Our Yes ADA": (comma-sep ($stake.yes // 1_000_000))
+    "Required Yes ADA": (comma-sep ($t * $stake.total / 1_000_000 | math ceil | into int))
+    "Existing → Yes ADA": (comma-sep $existing)
+    "New stake needed": $fresh
+  }
+}
 # ─── Main ────────────────────────────────────────────────────────────────────
 # Query delegated stake for pools and DRep in a playground environment
 def main [
@@ -296,7 +339,9 @@ def main [
   # ── Our Pools ─────────────────────────────────────────────────────────────
   let groups = (find-groups $env_name)
   mut pool_rows: list<record> = []
-  mut our_pool_mark_total: int = 0
+  mut our_pool_set_total: int = 0
+  mut our_pool_hashes: list<string> = []
+  mut network_set_total: int = 0
   if ($groups | is-empty) {
     print $"(ansi yellow)  No pool groups found for ($env_name).(ansi reset)"
   } else {
@@ -307,7 +352,15 @@ def main [
         print -n $"  Querying ($pool_name)...\r"
         let pool_id = (sops-decrypt $pf | str trim)
         let stake = query-pool-stake $pool_id $net --era $era
-        $our_pool_mark_total = $our_pool_mark_total + $stake.mark
+        # CLI governance distributions use hex pool hashes, not bech32 IDs.
+        let pool_hash = if ($pool_id | str starts-with 'pool1') {
+          $pool_id | ^bech32 | str trim
+        } else { $pool_id }
+        if $pool_hash not-in $our_pool_hashes {
+          $our_pool_set_total = $our_pool_set_total + $stake.set
+          $our_pool_hashes = $our_pool_hashes | append $pool_hash
+        }
+        $network_set_total = $stake.total_set
         $pool_rows = ($pool_rows | append {
                     Group:               $group
                     Pool:                $pool_name
@@ -326,16 +379,25 @@ def main [
   # ── Our DRep ──────────────────────────────────────────────────────────────
   let drep_vkey = $"secrets/envs/($env_name)/drep/drep-0.vkey"
   mut our_drep_stake: int = 0
+  mut our_expired_drep_stake: int = 0
+  mut our_drep_expired = false
   if ($drep_vkey | path exists) {
     print -n "  Querying DRep...\r"
     let drep = query-drep-info $drep_vkey $net --era $era
-    $our_drep_stake = $drep.stake
+    $our_drep_expired = $drep.expiry != null and $drep.expiry < $current_epoch
+    if $our_drep_expired {
+      $our_expired_drep_stake = $drep.stake
+    }
+    $our_drep_stake = if $drep.expiry != null and $drep.expiry >= $current_epoch {
+      $drep.stake
+    } else { 0 }
     print "                          "
     let drep_row = [
       {
         "DRep ID": $drep.drep_id
         "Delegated Stake": (lovelace-to-ada $drep.stake)
         "Expiry Epoch": ($drep.expiry | default "n/a" | into string)
+        Status: (if $drep.expiry == null { "unregistered" } else if $drep.expiry >= $current_epoch { "active" } else { "expired" })
       }
     ]
     print "  DRep Delegation:"
@@ -349,7 +411,7 @@ def main [
   print -n "  Querying DRep distribution...\r"
   let drep_totals = query-drep-totals $current_epoch $net --era $era
   print -n "  Querying SPO distribution...\r"
-  let pool_totals = query-pool-totals $net --era $era
+  let pool_totals = query-pool-totals $net --era $era --our-pools $our_pool_hashes
   print "                                        "
   # ── DRep voting denominator ───────────────────────────────────────────────
   # Denominator = active DRep stake + alwaysNoConfidence (alwaysAbstain and expired are excluded)
@@ -386,18 +448,29 @@ def main [
       Detail: "active + noConfidence"
     }
     {
-      Metric: "Our DRep Stake"
+      Metric: "Our Active DRep Stake"
       Value: (lovelace-to-ada $our_drep_stake)
       Detail: (pct $our_drep_stake $drep_denominator)
     }
   ]
   print "  DRep Governance Summary:"
   print ($drep_summary | table)
-  # ── Pool voting denominator ───────────────────────────────────────────────
-  # For most actions: total - abstain (pools that don't vote count against, like DReps)
-  # For HardForkInitiation: total - abstain (same)
-  # For NoConfidence: noconf moves to yes numerator, abstain excluded
-  let pool_denominator = $pool_totals.stake_total - $pool_totals.abstain_total
+  # Use the same set snapshot for both sides of the forging percentage.
+  print "  Pool Forging Summary (current set snapshot):"
+  print ([
+    {
+      Metric: "Network Set Stake"
+      Value: (lovelace-to-ada $network_set_total)
+      Detail: "includes abstaining pools"
+    }
+    {
+      Metric: "Our Set Stake"
+      Value: (lovelace-to-ada $our_pool_set_total)
+      Detail: (pct $our_pool_set_total $network_set_total)
+    }
+  ] | table)
+  # Governance distribution share is not an action-specific approval ratio.
+  # Explicit votes, default votes and action type determine that denominator.
   let pool_summary = [
     {
       Metric: "Pool Stake Total"
@@ -415,14 +488,14 @@ def main [
       Detail: "SPOs delegated to alwaysNoConfidence"
     }
     {
-      Metric: "Pool Vote Denominator"
-      Value: (lovelace-to-ada $pool_denominator)
-      Detail: "total - abstain (varies by action type)"
+      Metric: "Pool Governance Denominator"
+      Value: (lovelace-to-ada $pool_totals.stake_total)
+      Detail: "full governance distribution; not an approval ratio"
     }
     {
-      Metric: "Our Pools Stake (mark)"
-      Value: (lovelace-to-ada $our_pool_mark_total)
-      Detail: (pct $our_pool_mark_total $pool_denominator)
+      Metric: "Our Governance Stake"
+      Value: (lovelace-to-ada $pool_totals.our_stake)
+      Detail: (pct $pool_totals.our_stake $pool_totals.stake_total)
     }
   ]
   print "  Pool Governance Summary:"
@@ -515,4 +588,121 @@ def main [
   print $"(ansi green_bold)Voting Thresholds \(from protocol parameters\):(ansi reset)"
   print ""
   print ($thresholds | table)
+  print ""
+  print "Conservative voting-stake projections (not a tally of submitted votes):"
+  print "Assumes our eligible stake votes Yes and all other counted stake votes No."
+  print "SPO baseline includes all governance stake; DRep baseline excludes expired/always-abstain stake."
+  print "No credit is taken for other Yes votes or automatic NoConfidence support."
+  print "Existing → Yes moves stake already in the denominator; new stake increases both Yes and total."
+  print "Amounts are rounded up to whole ADA. Added stake must become effective in the voting distribution."
+  print "An expired DRep must be renewed before funding it can contribute to Yes."
+  print "Committee approval and other enactment conditions still apply."
+  let projection_specs = [
+    {
+      action: "No Confidence"
+      drep: $dvt.committeeNoConfidence
+      spo: $pvt.committeeNoConfidence
+    }
+    {
+      action: "Committee (normal)"
+      drep: $dvt.committeeNormal
+      spo: $pvt.committeeNormal
+    }
+    {
+      action: "Committee (no confidence)"
+      drep: $dvt.committeeNoConfidence
+      spo: $pvt.committeeNoConfidence
+    }
+    {
+      action: "New Constitution"
+      drep: $dvt.updateToConstitution
+      spo: null
+    }
+    {
+      action: "Hard Fork"
+      drep: $dvt.hardForkInitiation
+      spo: $pvt.hardForkInitiation
+    }
+    {
+      action: "PP Network"
+      drep: $dvt.ppNetworkGroup
+      spo: null
+    }
+    {
+      action: "PP Economic"
+      drep: $dvt.ppEconomicGroup
+      spo: null
+    }
+    {
+      action: "PP Technical"
+      drep: $dvt.ppTechnicalGroup
+      spo: null
+    }
+    {
+      action: "PP Governance"
+      drep: $dvt.ppGovGroup
+      spo: null
+    }
+    {
+      action: "PP Security"
+      drep: null
+      spo: $pvt.ppSecurityGroup
+    }
+    {
+      action: "Treasury Withdrawal"
+      drep: $dvt.treasuryWithdrawal
+      spo: null
+    }
+  ]
+  let projection_voters = if $our_drep_expired {
+    [DRep, "DRep if renewed", SPO]
+  } else { [DRep, SPO] }
+  for voter in $projection_voters {
+    let is_drep = $voter != "SPO"
+    let stake = if $voter == "DRep if renewed" {
+      {
+        yes: $our_expired_drep_stake
+        total: ($drep_denominator + $our_expired_drep_stake)
+      }
+    } else if $is_drep {
+      {
+        yes: $our_drep_stake
+        total: $drep_denominator
+      }
+    } else {
+      {
+        yes: $pool_totals.our_stake
+        total: $pool_totals.stake_total
+      }
+    }
+    let field = if $is_drep { "drep" } else { "spo" }
+    print ""
+    print $"  ($voter) stake projection:"
+    if $voter == "DRep if renewed" {
+      print $"  Assumes renewal restores (lovelace-to-ada $our_expired_drep_stake) to both Yes and total, with other stake unchanged."
+      print "  New stake needed below is additional funding AFTER renewal; existing delegated stake is already included."
+    }
+    print (
+      $projection_specs | where {|row| ($row | get $field) != null } | each {|row|
+      {Action: $row.action} | merge (vote-projection ($row | get $field) $stake)
+    } | table
+    )
+    print "  New-stake equations (x, Yes and total are in ADA):"
+    print "  t = (x + Yes) / (x + total); x = max(0, (t * total - Yes) / (1 - t)), rounded up to whole ADA."
+    print "  At t = 1, adding stake cannot close an existing No-stake gap."
+    for row in ($projection_specs | where {|row| ($row | get $field) != null }) {
+      let threshold = $row | get $field
+      let t = if ($threshold | describe | str starts-with 'record') {
+        $threshold.numerator / $threshold.denominator
+      } else {
+        $threshold | into float
+      }
+      let yes_ada = lovelace-to-ada $stake.yes | str replace ' ADA' ''
+      let total_ada = lovelace-to-ada $stake.total | str replace ' ADA' ''
+      let result = vote-projection $threshold $stake
+      print $"  ($row.action): ($t) = \(x + ($yes_ada)\) / \(x + ($total_ada)\) → ($result.'New stake needed')"
+    }
+  }
+  print ""
+  print "Parameter updates spanning groups require the highest applicable DRep threshold; security updates also require SPO approval."
 }
