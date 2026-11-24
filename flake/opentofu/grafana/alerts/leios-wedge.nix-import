@@ -1,7 +1,7 @@
 let
   stalledFor = "75m";
 
-  wedgeWindow = "15m";
+  wedgeWindow = "30m";
   wedgeFor = "5m";
   minHotPeers = "5";
 

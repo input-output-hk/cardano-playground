@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Pull 1-second network data from each relay's local netdata and archive it.
-# netdata tier0 holds 1s data for ~96h+; this makes the load-test windows permanent.
+# netdata tier 0 keeps 1s data for a requested 14 days, bounded by disk; this archive
+# makes the load-test windows permanent regardless.
 # Compression happens on the remote host; the agent sandbox has no gzip.
 set -uo pipefail
 OUT="${OUT:-$(cd "$(dirname "$0")/.." && pwd)/data-1s}"

@@ -146,7 +146,7 @@ always discover them rather than assuming.
 
 - `environment` — cluster/network name; discover current values via
   `GET $GRAFANA_URL/api/datasources/proxy/uid/loki/loki/api/v1/label/environment/values`.
-  (Illustrative snapshot from one deployment: `buildkite, dijkstra, leios, mainnet, misc, preprod,
+  (Illustrative snapshot from one deployment: `dijkstra, leios, mainnet, misc, preprod,
   preview, sanchonet` — do **not** trust this list; query yours.)
 - `instance` — host, pattern `<env><group>-<role>-<az>-<n>` (e.g. `leios2-bp-b-1`, `preprod2-rel-a-1`).
 - `group` — e.g. `leios1`, `preprod2`.
