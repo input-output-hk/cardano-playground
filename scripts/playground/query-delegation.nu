@@ -14,6 +14,9 @@
 #   query-delegation.nu [env]
 #   query-delegation.nu preview
 #   query-delegation.nu preprod
+#   query-delegation.nu leios --group-regex '^leios(red)?[0-9]+$'
+# --group-regex overrides pool group discovery only; DRep and network totals
+# still use the selected environment. All matching groups must belong to it.
 #   DEBUG=1 query-delegation.nu preview
 # ─── SOPS helpers ─────────────────────────────────────────────────────────────
 def sops-config [file: string] {
@@ -134,10 +137,10 @@ def check-node-synced [environment: string, net_args: list<string>] {
 }
 # ─── Discovery ───────────────────────────────────────────────────────────────
 # Find group directories matching an environment prefix (e.g., preview → [preview1, preview2, preview3])
-def find-groups [environment: string] {
+def find-groups [pattern: string] {
   let groups_dir = "secrets/groups"
   if not ($groups_dir | path exists) { return [] }
-  ls $groups_dir | where type == dir | each { |d| $d.name | path basename } | where { |name| $name =~ $"^($environment)\\d+$" } | sort
+  ls $groups_dir | where type == dir | each { |d| $d.name | path basename } | where { |name| $name =~ $pattern } | sort
 }
 # Find pool.id files in a group's no-deploy directory
 def find-pool-id-files [group: string] {
@@ -324,8 +327,12 @@ def vote-projection [threshold, stake: record]: nothing -> record {
 # Query delegated stake for pools and DRep in a playground environment
 def main [
     environment?: string  # Playground environment (e.g. "preview"); falls back to $ENV
+    --group-regex: string # Pool group directory regex; default: ^<environment>\d+$
 ] {
   let env_name = (resolve-env $environment)
+  let group_pattern = $group_regex | default $"^($env_name)\\d+$"
+  # Validate the regex before querying the node or decrypting pool IDs.
+  "" =~ $group_pattern | ignore
   check-network $env_name
   let net = (net-args)
   print $"(ansi green_bold)Querying delegation for: ($env_name)(ansi reset)"
@@ -337,13 +344,14 @@ def main [
   print $"  Era: ($era)  Epoch: ($current_epoch)  Slot: ($tip.slot)  Sync: ($tip.syncProgress)%"
   print ""
   # ── Our Pools ─────────────────────────────────────────────────────────────
-  let groups = (find-groups $env_name)
+  let groups = (find-groups $group_pattern)
+  print $"  Pool group regex: ($group_pattern)"
   mut pool_rows: list<record> = []
   mut our_pool_set_total: int = 0
   mut our_pool_hashes: list<string> = []
   mut network_set_total: int = 0
   if ($groups | is-empty) {
-    print $"(ansi yellow)  No pool groups found for ($env_name).(ansi reset)"
+    print $"(ansi yellow)  No pool groups matched ($group_pattern).(ansi reset)"
   } else {
     for group in $groups {
       let pool_files = (find-pool-id-files $group)
