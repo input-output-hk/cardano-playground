@@ -20,6 +20,10 @@ flake: {
     serverName = "metsuke-leios.${domain}";
     listenPort = 8080;
 
+    # Loopback only and never proxied: nginx forwards all of listenPort to the
+    # public, so the exposition has a port of its own that only alloy scrapes.
+    metricsPort = 8081;
+
     metsukePackages = flake.inputs.metsuke.packages.x86_64-linux;
 
     # Where the builds under downloads come from, which is a separate question
@@ -240,6 +244,12 @@ flake: {
           developer = {
             list_max_rows = 1000;
           };
+
+          metrics = {
+            listen = "127.0.0.1:${toString metricsPort}";
+            connection_timeout_ms = 2000;
+            versions_per_pool = 4;
+          };
         };
       };
     };
@@ -286,6 +296,20 @@ flake: {
       # profile-uketsuke-server, which only runs alongside this profile. acme
       # covers certificate renewal for both vhosts.
       systemdUnitInclude = "${options.services.alloy.systemdUnitInclude.default}|(^metsuke.*)|(^uketsuke.*)|(^acme-.*)";
+
+      # Ingest counts from the server itself rather than from its journal,
+      # which a Loki ingestion limit hit by any other host drops with the rest.
+      extraAlloyConfig = ''
+        prometheus.scrape "integrations_metsuke" {
+          targets = [{
+            __address__ = "${config.services.metsuke-server.settings.metrics.listen}",
+            ${lib.concatStringsSep ",\n    " (lib.mapAttrsToList (n: v: "${n} = \"${v}\"") config.services.alloy.labels)},
+          }]
+          forward_to = [prometheus.remote_write.integrations.receiver]
+          job_name = "integrations/metsuke"
+          metrics_path = "/metrics"
+        }
+      '';
     };
 
     # Per-vhost request, status and latency metrics for both this server and

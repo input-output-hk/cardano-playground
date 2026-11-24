@@ -28178,16 +28178,16 @@
         "treefmt-nix": "treefmt-nix_17"
       },
       "locked": {
-        "lastModified": 1792534450,
-        "narHash": "sha256-TZRCFdrEaUDGJ1oY6PRfulKJ9X2QLITGOaL65GNKtn4=",
+        "lastModified": 1795532720,
+        "narHash": "sha256-v7qxtsJ/izkIPg0M18TvNLVr3kVViVUxXgCgRPRYZGw=",
         "owner": "input-output-hk",
         "repo": "metsuke",
-        "rev": "0f9fae408179a6dccf164869953dc82e6226cb5d",
+        "rev": "7e20e68ed7a1cef23ab20c9787a3364517c406b2",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/w42",
+        "ref": "mf/server-metrics",
         "repo": "metsuke",
         "type": "github"
       }

@@ -2,6 +2,15 @@ let
   # uketsuke refuses every upload at roster_max_age_secs (3h); this fires an
   # hour before that, after one missed hourly regeneration.
   rosterStaleSecs = "7200";
+
+  # Zero only while alloy scrapes metsuke-server: a scrape that fails is
+  # metsuke_metrics_scrape_failing, not a quiet fleet.
+  scraped = offset: ''0 * max(up{job="integrations/metsuke"}${offset} == 1)'';
+
+  # Pools with a submission archived in the hour before the evaluation, by the
+  # server's clock. A timestamp and not increase() on a counter, which misses a
+  # pool whose first submission is the only one in the window.
+  submittingPools = offset: cutoffSecs: ''count(max by (pool) (max_over_time(metsuke_agent_last_accepted_timestamp_seconds[1h]${offset})) > time() - ${cutoffSecs}) or ${scraped offset}'';
 in {
   namespace = "metsuke";
   name = "metsuke";
@@ -23,6 +32,52 @@ in {
       annotations = {
         summary = "{{$labels.instance}}: metsuke-server restarted {{ printf \"%.0f\" $value }} times in 15 minutes.";
         description = "{{$labels.instance}}: metsuke-server.service is restarting repeatedly. A server that refuses to start, e.g. on an unreadable roster, looks like this. Check `journalctl -u metsuke-server`.";
+      };
+    }
+    {
+      alert = "metsuke_metrics_scrape_failing";
+      expr = ''up{job="integrations/metsuke"} == 0 or absent(up{job="integrations/metsuke"})'';
+      for = "10m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "alloy cannot scrape metsuke-server's metrics.";
+        description = "The integrations/metsuke scrape of metsuke-server's metrics listener has failed or is missing for 10 minutes, so every ingest alert below is blind. If metsuke_server_down is not firing, check that the address in /etc/alloy/config.alloy matches settings.metrics.listen in the server's config.";
+      };
+    }
+    {
+      # Agents upload at least hourly, so two quiet hours is the whole fleet.
+      alert = "metsuke_no_accepted_submissions";
+      expr = "sum(increase(metsuke_submissions_accepted_total[2h])) == 0 and on() ${scraped ""}";
+      for = "10m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "metsuke-server has archived no submission for 2 hours.";
+        description = "metsuke_submissions_accepted_total has not moved in 2 hours, although agents upload at least hourly. Check metsuke_server_down, the metsuke-leios vhost, and the Refusals panel or `journalctl -u metsuke-server | grep refused`.";
+      };
+    }
+    {
+      # Pool count over the last hour against the same hour a day earlier,
+      # which rides out the daily rhythm of operators bringing agents up.
+      alert = "metsuke_submitting_pools_dropped";
+      expr = "(${submittingPools "" "3600"}) < 0.7 * (${submittingPools " offset 1d" "90000"})";
+      for = "30m";
+      labels.severity = "warning";
+      annotations = {
+        summary = "Pools submitting to metsuke dropped to {{ $value }}, over 30% fewer than a day ago.";
+        description = "Distinct pools with a submission archived in the past hour fell by over 30% against the same hour yesterday. A roster or allowlist change refusing pools, or an agent release that stopped uploading, looks like this. Check the Refusals panel and `journalctl -u metsuke-server | grep refused`.";
+      };
+    }
+    {
+      # A pool that registered a new Leios key is refused until the hourly
+      # roster picks it up; two hours of refusals is longer than that. The
+      # counter names no pool, so this is the fleet's refusals, not one pool's.
+      alert = "metsuke_leios_key_refusals";
+      expr = ''sum(increase(metsuke_submissions_refused_total{reason="leios_key_unregistered"}[30m])) > 0'';
+      for = "2h";
+      labels.severity = "warning";
+      annotations = {
+        summary = "metsuke has refused Leios-key submissions for 2 hours: the roster lists no such key.";
+        description = "metsuke-server keeps refusing submissions signed by a Leios key the roster does not list for the pool claimed, for longer than an hourly regeneration takes to pick up a rotation. Find the pools with `journalctl -u metsuke-server | grep 'no such Leios key'`, then check whether each registered the key on chain (`cardano-cli dijkstra query pool-state`) or whether the roster is stale (metsuke_roster_stale).";
       };
     }
     {

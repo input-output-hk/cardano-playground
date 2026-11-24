@@ -463,16 +463,17 @@
     {
       "type": "stat",
       "title": "Pools submitting",
-      "description": "Distinct pools with at least one metsuke upload accepted in the last hour.",
+      "description": "Distinct pools with a submission archived in the last hour, by metsuke-server's own clock. No data, rather than 0, while alloy cannot scrape it.",
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "count(sum by (pool) (count_over_time({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<pool>pool1[0-9a-z]+)-` [1h])))",
+          "expr": "count(max by (pool) (max_over_time(metsuke_agent_last_accepted_timestamp_seconds{instance=~\"$instance\"}[1h])) > time() - 3600) or 0 * max(up{job=\"integrations/metsuke\", instance=~\"$instance\"} == 1)",
           "legendFormat": "last hour",
-          "queryType": "instant",
+          "range": false,
+          "instant": true,
           "editorMode": "code",
           "refId": "A"
         }
@@ -980,16 +981,17 @@
     {
       "type": "timeseries",
       "title": "Accepted uploads /min",
-      "description": "Uploads metsuke-server accepted, by file kind, from its `accepted v1/` log lines.",
+      "description": "Submissions metsuke-server archived, by kind, from its own counters.",
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "sum by (kind) (rate({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<kind>[a-z]+)\\.jsonl\\.zst, (?P<bytes>\\d+) bytes, from agent (?P<agent>\\S+)$` [$__auto])) * 60",
+          "expr": "sum by (kind) (rate(metsuke_submissions_accepted_total{instance=~\"$instance\"}[$__rate_interval])) * 60",
           "legendFormat": "{{kind}}",
-          "queryType": "range",
+          "range": true,
+          "instant": false,
           "editorMode": "code",
           "refId": "A"
         }
@@ -1050,16 +1052,17 @@
     {
       "type": "timeseries",
       "title": "Accepted bytes /min",
-      "description": "Compressed bytes of accepted uploads, by file kind.",
+      "description": "Bytes of archived submissions as signed, which is compressed, by kind.",
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "sum by (kind) (rate({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<kind>[a-z]+)\\.jsonl\\.zst, (?P<bytes>\\d+) bytes, from agent (?P<agent>\\S+)$` | unwrap bytes [$__auto])) * 60",
+          "expr": "sum by (kind) (rate(metsuke_submission_bytes_total{instance=~\"$instance\"}[$__rate_interval])) * 60",
           "legendFormat": "{{kind}}",
-          "queryType": "range",
+          "range": true,
+          "instant": false,
           "editorMode": "code",
           "refId": "A"
         }
@@ -1124,23 +1127,25 @@
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "count(sum by (pool) (count_over_time({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<pool>pool1[0-9a-z]+)-` [1h])))",
+          "expr": "count(max by (pool) (max_over_time(metsuke_agent_last_accepted_timestamp_seconds{instance=~\"$instance\"}[1h])) > time() - 3600) or 0 * max(up{job=\"integrations/metsuke\", instance=~\"$instance\"} == 1)",
           "legendFormat": "last hour",
-          "queryType": "range",
+          "range": true,
+          "instant": false,
           "editorMode": "code",
           "refId": "A"
         },
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "count(sum by (pool) (count_over_time({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<pool>pool1[0-9a-z]+)-` [1h] offset 1d)))",
+          "expr": "count(max by (pool) (max_over_time(metsuke_agent_last_accepted_timestamp_seconds{instance=~\"$instance\"}[1h] offset 1d)) > time() - 90000) or 0 * max(up{job=\"integrations/metsuke\", instance=~\"$instance\"} offset 1d == 1)",
           "legendFormat": "a day earlier",
-          "queryType": "range",
+          "range": true,
+          "instant": false,
           "editorMode": "code",
           "refId": "B"
         }
@@ -1231,29 +1236,19 @@
     {
       "type": "timeseries",
       "title": "Refusals /h",
-      "description": "Refused uploads from identified pools, by cause, and requests from unidentified clients, mostly scanners. metsuke_roster_missing_leios_key warns when one pool is refused for its key for 2h.",
+      "description": "Refused submissions by reason, from metsuke-server's counters. unattributed is a request whose signing headers did not decode, mostly scanners. metsuke_leios_key_refusals warns when Leios-key refusals persist for 2h; find the pools in metsuke-server's journal.",
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "sum by (reason) (rate({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |~ \"^refused pool1\" | regexp `^refused (?P<pool>pool1[0-9a-z]+): (?P<code>\\d+), .*(?P<reason>allowlist|no such Leios key|sealed at)` | label_format reason=`{{ if eq .reason \"allowlist\" }}not on allowlist{{ else if eq .reason \"no such Leios key\" }}Leios key not in roster{{ else if eq .reason \"sealed at\" }}clock skew{{ else }}other{{ end }}` [$__auto])) * 3600",
+          "expr": "sum by (reason) (rate(metsuke_submissions_refused_total{instance=~\"$instance\"}[$__rate_interval])) * 3600 > 0",
           "legendFormat": "{{reason}}",
-          "queryType": "range",
+          "range": true,
+          "instant": false,
           "editorMode": "code",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "sum(rate({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"refused an unidentified client\" [$__auto])) * 3600",
-          "legendFormat": "unidentified client",
-          "queryType": "range",
-          "editorMode": "code",
-          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -1292,7 +1287,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "not on allowlist"
+              "options": "not_allowlisted"
             },
             "properties": [
               {
@@ -1307,7 +1302,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Leios key not in roster"
+              "options": "leios_key_unregistered"
             },
             "properties": [
               {
@@ -1322,7 +1317,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "clock skew"
+              "options": "clock_skew"
             },
             "properties": [
               {
@@ -1337,7 +1332,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "unidentified client"
+              "options": "unattributed"
             },
             "properties": [
               {
@@ -1515,16 +1510,17 @@
     {
       "type": "bargauge",
       "title": "Pools by agent version (24h)",
-      "description": "Distinct pools with an accepted upload from each metsuke-agent version over the last day. A pool that upgraded during the day counts under both.",
+      "description": "Distinct pools with a submission archived from each metsuke agent version over the last day. A pool that upgraded during the day counts under both. Each pool shows its four most recent versions.",
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "count by (agent) (sum by (agent, pool) (count_over_time({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<pool>pool1[0-9a-z]+)-` | regexp `-(?P<kind>[a-z]+)\\.jsonl\\.zst, (?P<bytes>\\d+) bytes, from agent (?P<agent>\\S+)$` [24h])))",
-          "legendFormat": "{{agent}}",
-          "queryType": "instant",
+          "expr": "count by (version) (max by (pool, version) (max_over_time(metsuke_agent_last_accepted_timestamp_seconds{instance=~\"$instance\"}[24h])) > time() - 86400)",
+          "legendFormat": "{{version}}",
+          "range": false,
+          "instant": true,
           "editorMode": "code",
           "refId": "A"
         }
@@ -1577,25 +1573,29 @@
       "targets": [
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "sum by (pool) (count_over_time({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<pool>pool1[0-9a-z]+)-` [24h]))",
+          "expr": "round(sum by (pool) (increase(metsuke_submissions_accepted_total{instance=~\"$instance\"}[24h])))",
           "legendFormat": "",
-          "queryType": "instant",
+          "range": false,
+          "instant": true,
           "editorMode": "code",
-          "refId": "A"
+          "refId": "A",
+          "format": "table"
         },
         {
           "datasource": {
-            "type": "loki",
-            "uid": "loki"
+            "type": "prometheus",
+            "uid": "mimir"
           },
-          "expr": "sum by (pool) (sum_over_time({instance=~\"$instance\", systemd_unit=\"metsuke-server.service\"} |= \"accepted v1/\" | regexp `-(?P<pool>pool1[0-9a-z]+)-` | regexp `-(?P<kind>[a-z]+)\\.jsonl\\.zst, (?P<bytes>\\d+) bytes, from agent (?P<agent>\\S+)$` | unwrap bytes [24h]))",
+          "expr": "round(sum by (pool) (increase(metsuke_submission_bytes_total{instance=~\"$instance\"}[24h])))",
           "legendFormat": "",
-          "queryType": "instant",
+          "range": false,
+          "instant": true,
           "editorMode": "code",
-          "refId": "B"
+          "refId": "B",
+          "format": "table"
         }
       ],
       "transformations": [
