@@ -7636,17 +7636,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1794845448,
-        "narHash": "sha256-xHwpVH1OC9nQR5eudDtrqUUwNY7d1TomNTvHLN4dFWI=",
+        "lastModified": 1795534803,
+        "narHash": "sha256-BM1LLLBEY1ewjyFWSbMIJgiGnRjjsDRgFeTecjVELVc=",
         "owner": "manveru",
         "repo": "dmq-node",
-        "rev": "d9e2ea1582897f026142350214907a70344515f4",
+        "rev": "486ef77a97c2d6c21aa99b030b66badcc18906ed",
         "type": "github"
       },
       "original": {
         "owner": "manveru",
         "repo": "dmq-node",
-        "rev": "d9e2ea1582897f026142350214907a70344515f4",
+        "rev": "486ef77a97c2d6c21aa99b030b66badcc18906ed",
         "type": "github"
       }
     },

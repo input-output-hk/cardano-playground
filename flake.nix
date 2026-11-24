@@ -42,7 +42,7 @@
     uketsuke.url = "github:input-output-hk/uketsuke/v1.2.1";
 
     # dmq-node PR #84 (NixOS module) with PR #83 (mempool notification fixes) on top.
-    dmq-node.url = "github:manveru/dmq-node/d9e2ea1582897f026142350214907a70344515f4";
+    dmq-node.url = "github:manveru/dmq-node/486ef77a97c2d6c21aa99b030b66badcc18906ed";
   };
 
   outputs = inputs: let
